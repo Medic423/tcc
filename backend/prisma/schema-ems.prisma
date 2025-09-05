@@ -1,0 +1,57 @@
+// EMS Database Schema (Port 5433)
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/ems"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL_EMS")
+}
+
+model EMSAgency {
+  id               String   @id @default(cuid())
+  name             String
+  contactName      String
+  phone            String
+  email            String
+  address          String
+  city             String
+  state            String
+  zipCode          String
+  serviceArea      String[]
+  operatingHours   Json?
+  capabilities     String[] // BLS, ALS, CCT
+  pricingStructure Json?
+  isActive         Boolean  @default(true)
+  status           String   @default("ACTIVE")
+  addedBy          String?
+  addedAt          DateTime @default(now())
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relations
+  units Unit[]
+
+  @@map("ems_agencies")
+}
+
+model Unit {
+  id             String   @id @default(cuid())
+  agencyId       String
+  unitNumber     String
+  type           String   // AMBULANCE, WHEELCHAIR_VAN, etc.
+  capabilities   String[]
+  currentStatus  String   @default("AVAILABLE")
+  currentLocation Json?
+  shiftStart     DateTime?
+  shiftEnd       DateTime?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  agency EMSAgency @relation(fields: [agencyId], references: [id])
+
+  @@map("units")
+}
