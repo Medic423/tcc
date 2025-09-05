@@ -1,0 +1,59 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL_CENTER")
+}
+
+// Center Database Models
+model CenterUser {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  userType  String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("center_users")
+}
+
+model Hospital {
+  id            String   @id @default(cuid())
+  name          String
+  address       String
+  city          String
+  state         String
+  zipCode       String
+  phone         String?
+  email         String?
+  type          String
+  capabilities  String[]
+  region        String
+  coordinates   Json?
+  operatingHours String?
+  isActive      Boolean  @default(true)
+  requiresReview Boolean @default(false)
+  approvedAt    DateTime?
+  approvedBy    String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("hospitals")
+}
+
+model SystemAnalytics {
+  id          String   @id @default(cuid())
+  metricName  String
+  metricValue Json
+  timestamp   DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  @@map("system_analytics")
+}

@@ -30,6 +30,7 @@ export class AuthService {
 
   async login(credentials: LoginCredentials): Promise<AuthResult> {
     try {
+      console.log('TCC_DEBUG: AuthService.login called with:', { email: credentials.email, password: credentials.password ? '***' : 'missing' });
       const { email, password } = credentials;
 
       // Get user from Center database
@@ -38,7 +39,10 @@ export class AuthService {
         where: { email }
       });
 
+      console.log('TCC_DEBUG: User found in database:', user ? { id: user.id, email: user.email, name: user.name, isActive: user.isActive } : 'null');
+
       if (!user) {
+        console.log('TCC_DEBUG: No user found for email:', email);
         return {
           success: false,
           error: 'Invalid email or password'

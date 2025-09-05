@@ -1,6 +1,7 @@
 import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+console.log('TCC_DEBUG: API_BASE_URL is set to:', API_BASE_URL);
 
 // Create axios instance
 const api = axios.create({
@@ -39,8 +40,11 @@ api.interceptors.response.use(
 
 // Auth API
 export const authAPI = {
-  login: (credentials: { email: string; password: string }) =>
-    api.post('/api/auth/login', credentials),
+  login: (credentials: { email: string; password: string }) => {
+    console.log('TCC_DEBUG: API login called with URL:', API_BASE_URL + '/api/auth/login');
+    console.log('TCC_DEBUG: API login called with credentials:', credentials);
+    return api.post('/api/auth/login', credentials);
+  },
   
   logout: () =>
     api.post('/api/auth/logout'),

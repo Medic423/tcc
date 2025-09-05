@@ -1,19 +1,37 @@
-// Prisma clients will be generated after running npm run db:generate
-// For now, we'll use any type to avoid compilation errors
-type PrismaClient = any;
+import { PrismaClient as CenterPrismaClient } from '@prisma/client';
+import { PrismaClient as HospitalPrismaClient } from '@prisma/hospital';
+import { PrismaClient as EMSPrismaClient } from '@prisma/ems';
 
 class DatabaseManager {
   private static instance: DatabaseManager;
-  private hospitalDB: PrismaClient;
-  private emsDB: PrismaClient;
-  private centerDB: PrismaClient;
+  private hospitalDB: HospitalPrismaClient;
+  private emsDB: EMSPrismaClient;
+  private centerDB: CenterPrismaClient;
 
   private constructor() {
-    // Prisma clients will be properly initialized after generation
-    // For now, we'll use placeholder objects
-    this.hospitalDB = {} as PrismaClient;
-    this.emsDB = {} as PrismaClient;
-    this.centerDB = {} as PrismaClient;
+    this.hospitalDB = new HospitalPrismaClient({
+      datasources: {
+        db: {
+          url: process.env.DATABASE_URL_HOSPITAL
+        }
+      }
+    });
+
+    this.emsDB = new EMSPrismaClient({
+      datasources: {
+        db: {
+          url: process.env.DATABASE_URL_EMS
+        }
+      }
+    });
+
+    this.centerDB = new CenterPrismaClient({
+      datasources: {
+        db: {
+          url: process.env.DATABASE_URL_CENTER
+        }
+      }
+    });
   }
 
   public static getInstance(): DatabaseManager {
@@ -23,15 +41,15 @@ class DatabaseManager {
     return DatabaseManager.instance;
   }
 
-  public getHospitalDB(): PrismaClient {
+  public getHospitalDB(): HospitalPrismaClient {
     return this.hospitalDB;
   }
 
-  public getEMSDB(): PrismaClient {
+  public getEMSDB(): EMSPrismaClient {
     return this.emsDB;
   }
 
-  public getCenterDB(): PrismaClient {
+  public getCenterDB(): CenterPrismaClient {
     return this.centerDB;
   }
 

@@ -1,7 +1,7 @@
-// EMS Database Schema (Port 5433)
+// EMS Database Schema
 generator client {
   provider = "prisma-client-js"
-  output   = "../node_modules/.prisma/ems"
+  output   = "../node_modules/@prisma/ems"
 }
 
 datasource db {
@@ -21,7 +21,7 @@ model EMSAgency {
   zipCode          String
   serviceArea      String[]
   operatingHours   Json?
-  capabilities     String[] // BLS, ALS, CCT
+  capabilities     String[]
   pricingStructure Json?
   isActive         Boolean  @default(true)
   status           String   @default("ACTIVE")
@@ -31,16 +31,16 @@ model EMSAgency {
   updatedAt        DateTime @updatedAt
 
   // Relations
-  units Unit[]
+  units            Unit[]
 
   @@map("ems_agencies")
 }
 
 model Unit {
   id             String   @id @default(cuid())
-  agencyId       String
+  agencyId       String?
   unitNumber     String
-  type           String   // AMBULANCE, WHEELCHAIR_VAN, etc.
+  type           String
   capabilities   String[]
   currentStatus  String   @default("AVAILABLE")
   currentLocation Json?
@@ -51,7 +51,7 @@ model Unit {
   updatedAt      DateTime @updatedAt
 
   // Relations
-  agency EMSAgency @relation(fields: [agencyId], references: [id])
+  agency         EMSAgency? @relation(fields: [agencyId], references: [id])
 
   @@map("units")
 }

@@ -26,14 +26,22 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     setError('');
 
     try {
+      console.log('TCC_DEBUG: Attempting login with:', formData);
       const response = await authAPI.login(formData);
+      console.log('TCC_DEBUG: Login response:', response.data);
       
       if (response.data.success) {
+        console.log('TCC_DEBUG: Login successful, calling onLogin');
         onLogin(response.data.user, response.data.token);
       } else {
+        console.log('TCC_DEBUG: Login failed:', response.data.error);
         setError(response.data.error || 'Login failed');
       }
     } catch (error: any) {
+      console.log('TCC_DEBUG: Login error:', error);
+      console.log('TCC_DEBUG: Error response:', error.response);
+      console.log('TCC_DEBUG: Error status:', error.response?.status);
+      console.log('TCC_DEBUG: Error data:', error.response?.data);
       setError(error.response?.data?.error || 'Login failed');
     } finally {
       setLoading(false);

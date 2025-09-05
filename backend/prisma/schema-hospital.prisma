@@ -1,7 +1,7 @@
-// Hospital Database Schema (Port 5432)
+// Hospital Database Schema
 generator client {
   provider = "prisma-client-js"
-  output   = "../node_modules/.prisma/hospital"
+  output   = "../node_modules/@prisma/hospital"
 }
 
 datasource db {
@@ -25,48 +25,39 @@ model HospitalUser {
 model Facility {
   id          String   @id @default(cuid())
   name        String
-  type        String   // HOSPITAL, CLINIC, URGENT_CARE, etc.
+  type        String
   address     String
   city        String
   state       String
   zipCode     String
   phone       String?
   email       String?
-  coordinates Json?    // {lat: number, lng: number}
+  coordinates Json?
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-
-  // Relations
-  originTransportRequests      TransportRequest[] @relation("OriginFacility")
-  destinationTransportRequests TransportRequest[] @relation("DestinationFacility")
 
   @@map("facilities")
 }
 
 model TransportRequest {
-  id                     String    @id @default(cuid())
-  patientId              String
-  originFacilityId       String
-  destinationFacilityId  String
-  transportLevel         String    // BLS, ALS, CCT
-  priority               String    // LOW, MEDIUM, HIGH, URGENT
-  status                 String    @default("PENDING")
-  specialRequirements    String?
-  requestTimestamp       DateTime  @default(now())
-  acceptedTimestamp      DateTime?
-  pickupTimestamp        DateTime?
-  completionTimestamp    DateTime?
-  assignedAgencyId       String?
-  assignedUnitId         String?
-  createdById            String
-  createdAt              DateTime  @default(now())
-  updatedAt              DateTime  @updatedAt
-
-  // Relations
-  originFacility      Facility     @relation("OriginFacility", fields: [originFacilityId], references: [id])
-  destinationFacility Facility     @relation("DestinationFacility", fields: [destinationFacilityId], references: [id])
-  createdBy           HospitalUser @relation(fields: [createdById], references: [id])
+  id                    String    @id @default(cuid())
+  patientId             String
+  originFacilityId      String?
+  destinationFacilityId String?
+  transportLevel        String
+  priority              String
+  status                String    @default("PENDING")
+  specialRequirements   String?
+  requestTimestamp      DateTime  @default(now())
+  acceptedTimestamp     DateTime?
+  pickupTimestamp       DateTime?
+  completionTimestamp   DateTime?
+  assignedAgencyId      String?
+  assignedUnitId        String?
+  createdById           String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
   @@map("transport_requests")
 }

@@ -11,7 +11,7 @@ interface User {
   userType: 'ADMIN';
 }
 
-function App() {
+function AppContent() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -34,9 +34,13 @@ function App() {
   }, []);
 
   const handleLogin = (userData: User, token: string) => {
+    console.log('TCC_DEBUG: handleLogin called with:', { userData, token });
     setUser(userData);
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(userData));
+    console.log('TCC_DEBUG: User state updated, redirecting to dashboard');
+    // Force redirect to dashboard
+    window.location.href = '/dashboard';
   };
 
   const handleLogout = () => {
@@ -44,6 +48,8 @@ function App() {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
   };
+
+  console.log('TCC_DEBUG: App render - user:', user, 'loading:', loading);
 
   if (loading) {
     return (
@@ -54,35 +60,41 @@ function App() {
   }
 
   return (
+    <div className="min-h-screen bg-gray-50">
+      <Routes>
+        <Route
+          path="/login"
+          element={
+            user ? (
+              <Navigate to="/dashboard" replace />
+            ) : (
+              <Login onLogin={handleLogin} />
+            )
+          }
+        />
+        <Route
+          path="/dashboard"
+          element={
+            user ? (
+              <TCCDashboard user={user} onLogout={handleLogout} />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+        <Route
+          path="/"
+          element={<Navigate to="/dashboard" replace />}
+        />
+      </Routes>
+    </div>
+  );
+}
+
+function App() {
+  return (
     <Router>
-      <div className="min-h-screen bg-gray-50">
-        <Routes>
-          <Route
-            path="/login"
-            element={
-              user ? (
-                <Navigate to="/dashboard" replace />
-              ) : (
-                <Login onLogin={handleLogin} />
-              )
-            }
-          />
-          <Route
-            path="/dashboard"
-            element={
-              user ? (
-                <TCCDashboard user={user} onLogout={handleLogout} />
-              ) : (
-                <Navigate to="/login" replace />
-              )
-            }
-          />
-          <Route
-            path="/"
-            element={<Navigate to="/dashboard" replace />}
-          />
-        </Routes>
-      </div>
+      <AppContent />
     </Router>
   );
 }

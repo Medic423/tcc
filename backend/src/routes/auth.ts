@@ -10,6 +10,12 @@ const router = express.Router();
  */
 router.post('/login', async (req, res) => {
   try {
+    console.log('TCC_DEBUG: Login request received:', { 
+      email: req.body.email, 
+      password: req.body.password ? '***' : 'missing',
+      body: req.body,
+      headers: req.headers
+    });
     const { email, password } = req.body;
 
     if (!email || !password) {
