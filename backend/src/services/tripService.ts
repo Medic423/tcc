@@ -1,6 +1,6 @@
 import { PrismaClient as HospitalPrismaClient } from '@prisma/hospital';
 import { PrismaClient as EMSPrisaClient } from '@prisma/ems';
-import { PrismaClient as CenterPrismaClient } from '../../node_modules/.prisma/center';
+import { PrismaClient as CenterPrismaClient } from '@prisma/center';
 import emailService from './emailService';
 
 const hospitalPrisma = new HospitalPrismaClient();

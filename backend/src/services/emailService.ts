@@ -1,5 +1,5 @@
 import nodemailer from 'nodemailer';
-import { PrismaClient } from '../../node_modules/.prisma/center';
+import { PrismaClient } from '@prisma/center';
 
 // SMS Service (placeholder for future Twilio integration)
 interface SMSData {

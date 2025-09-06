@@ -1,4 +1,4 @@
-import { PrismaClient as CenterPrismaClient } from '@prisma/client';
+import { PrismaClient as CenterPrismaClient } from '@prisma/center';
 import { PrismaClient as HospitalPrismaClient } from '@prisma/hospital';
 import { PrismaClient as EMSPrismaClient } from '@prisma/ems';
 
