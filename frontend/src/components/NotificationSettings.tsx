@@ -182,31 +182,25 @@ const NotificationSettings: React.FC = () => {
               console.log('TCC_DEBUG: Rendering message with type:', message.type, 'text:', message.text);
               return (
                 <div 
-                  className={`mb-8 p-8 rounded-xl flex items-center border-8 ${
+                  className={`mb-6 p-4 rounded-lg flex items-center border-2 ${
                     message.type === 'success' 
-                      ? 'bg-green-300 text-green-900 border-green-700 shadow-2xl' 
-                      : 'bg-red-300 text-red-900 border-red-700 shadow-2xl'
+                      ? 'bg-green-50 text-green-800 border-green-200 shadow-lg' 
+                      : 'bg-red-50 text-red-800 border-red-200 shadow-lg'
                   }`} 
                   style={{
-                    zIndex: 99999, 
-                    position: 'fixed',
-                    top: '20px',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    minHeight: '80px',
-                    fontSize: '24px',
-                    fontWeight: 'bold',
-                    width: '90%',
-                    maxWidth: '600px',
-                    animation: 'pulse 2s infinite'
+                    zIndex: 1000, 
+                    position: 'relative',
+                    minHeight: '50px',
+                    fontSize: '16px',
+                    fontWeight: '600'
                   }}
                 >
                   {message.type === 'success' ? (
-                    <CheckCircle className="h-10 w-10 mr-6 text-green-800" />
+                    <CheckCircle className="h-5 w-5 mr-3 text-green-600" />
                   ) : (
-                    <AlertCircle className="h-10 w-10 mr-6 text-red-800" />
+                    <AlertCircle className="h-5 w-5 mr-3 text-red-600" />
                   )}
-                  <span className="text-2xl font-black">{message.text}</span>
+                  <span className="text-lg font-semibold">{message.text}</span>
                 </div>
               );
             }
