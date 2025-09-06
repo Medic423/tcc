@@ -87,67 +87,33 @@ async function startServer() {
   try {
     // Check if we're in production and need to initialize the database
     if (process.env.NODE_ENV === 'production') {
-      console.log('🔧 Production mode: Initializing database...');
+      console.log('🔧 Production mode: Attempting database initialization...');
       
       // Import execSync for running commands
       const { execSync } = require('child_process');
       
-      try {
-        // Push the production schema with retry
-        console.log('📊 Pushing production schema...');
-        let retryCount = 0;
-        const maxRetries = 3;
-        
-        while (retryCount < maxRetries) {
-          try {
-            execSync('npx prisma db push --schema=prisma/schema-production.prisma', { 
-              stdio: 'inherit',
-              cwd: process.cwd(),
-              timeout: 30000 // 30 second timeout
-            });
-            break; // Success, exit retry loop
-          } catch (pushError) {
-            retryCount++;
-            console.log(`⚠️ Schema push attempt ${retryCount} failed:`, pushError instanceof Error ? pushError.message : String(pushError));
-            
-            if (retryCount < maxRetries) {
-              console.log(`🔄 Retrying in 5 seconds... (${retryCount}/${maxRetries})`);
-              await new Promise(resolve => setTimeout(resolve, 5000));
-            } else {
-              throw pushError; // Re-throw if all retries failed
-            }
-          }
+      // Try to initialize database in background, don't block server startup
+      setTimeout(async () => {
+        try {
+          console.log('📊 Attempting to push production schema...');
+          execSync('npx prisma db push --schema=prisma/schema-production.prisma', { 
+            stdio: 'inherit',
+            cwd: process.cwd(),
+            timeout: 60000 // 60 second timeout
+          });
+          
+          console.log('🌱 Attempting to seed database...');
+          execSync('npx ts-node prisma/seed.ts', { 
+            stdio: 'inherit',
+            cwd: process.cwd(),
+            timeout: 60000 // 60 second timeout
+          });
+          
+          console.log('✅ Database initialized successfully!');
+        } catch (error) {
+          console.log('⚠️ Database initialization failed (will retry on next deployment):', error instanceof Error ? error.message : String(error));
         }
-        
-        // Seed the database with retry
-        console.log('🌱 Seeding database...');
-        retryCount = 0;
-        
-        while (retryCount < maxRetries) {
-          try {
-            execSync('npx ts-node prisma/seed.ts', { 
-              stdio: 'inherit',
-              cwd: process.cwd(),
-              timeout: 30000 // 30 second timeout
-            });
-            break; // Success, exit retry loop
-          } catch (seedError) {
-            retryCount++;
-            console.log(`⚠️ Database seeding attempt ${retryCount} failed:`, seedError instanceof Error ? seedError.message : String(seedError));
-            
-            if (retryCount < maxRetries) {
-              console.log(`🔄 Retrying in 5 seconds... (${retryCount}/${maxRetries})`);
-              await new Promise(resolve => setTimeout(resolve, 5000));
-            } else {
-              throw seedError; // Re-throw if all retries failed
-            }
-          }
-        }
-        
-        console.log('✅ Database initialized successfully!');
-      } catch (error) {
-        console.log('⚠️ Database initialization failed, but continuing...', error instanceof Error ? error.message : String(error));
-      }
+      }, 10000); // Wait 10 seconds before attempting database init
     }
     
     // Start the server
