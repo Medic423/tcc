@@ -3580,3 +3580,363 @@ The notification settings should now work perfectly with the correct user email 
 
 ---
 
+_**User (2025-09-06 10:15Z)**_
+
+OK, can't you make the "Save" button act line the Email and SMS test buttons. They change to the redish color. Can't you change the "Save"button to green and update it to say "Saved" when the change is recorded successfully. 
+
+---
+
+_**Assistant**_
+
+
+
+---
+
+Absolutely! That's a great idea. Let me make the Save button behave like the test buttons - change to green and show "Saved" when successful. I'll also need to fix the backend TypeScript error first.
+
+## 🔧 **First, let me fix the backend error:**
+
+
+---
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/backend/src/services/tripService.ts</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 1, lines removed: 2
+
+```diff
+@@ -394,6 +394,5 @@
+          
+          // Get the user's actual email from the database to ensure consistency
+-         const centerDB = databaseManager.getCenterDB();
+-         const user = await centerDB.centerUser.findUnique({
++         const user = await centerPrisma.centerUser.findUnique({
+            where: { id: userId },
+            select: { email: true }
+```
+
+</details>
+
+---
+
+Now let me remove the unused import:
+
+
+---
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/backend/src/services/tripService.ts</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: undefined, lines removed: 1
+
+```diff
+@@ -3,5 +3,4 @@
+  import { PrismaClient as CenterPrismaClient } from '../../node_modules/.prisma/center';
+  import emailService from './emailService';
+- import { databaseManager } from './databaseManager';
+  
+  const hospitalPrisma = new HospitalPrismaClient();
+```
+
+</details>
+
+---
+
+## 🎨 **Now let me update the Save button to behave like the test buttons:**
+
+
+---
+
+The string to replace was not found in the file.
+
+---
+
+Let me read the current file to see the state variables:
+
+
+---
+
+Read file: undefined
+
+---
+
+Perfect! I can see the state variables. Let me add the save success state:
+
+
+---
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/NotificationSettings.tsx</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 1, lines removed: undefined
+
+```diff
+@@ -26,4 +26,5 @@
+    const [emailTestStatus, setEmailTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
+    const [smsTestStatus, setSmsTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
++   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
+  
+    useEffect(() => {
+```
+
+</details>
+
+---
+
+Now let me update the saveSettings function to use the new state:
+
+
+---
+
+The string to replace was not found in the file.
+
+---
+
+Let me find the saveSettings function:
+
+
+---
+
+
+
+---
+
+Read file: undefined
+
+---
+
+Read file: undefined
+
+---
+
+Now let me update the saveSettings function:
+
+
+---
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/NotificationSettings.tsx</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 1, lines removed: undefined
+
+```diff
+@@ -61,4 +61,5 @@
+      console.log('TCC_DEBUG: Save button clicked with settings:', settings);
+      setSaving(true);
++     setSaveStatus('saving');
+      setMessage(null);
+  
+```
+
+**Chunk 2**
+Lines added: 11, lines removed: 3
+
+```diff
+@@ -71,18 +72,26 @@
+        console.log('TCC_DEBUG: Settings saved successfully:', response.data);
+        
++       setSaveStatus('success');
+        const successMessage = { type: 'success' as const, text: 'Notification settings saved successfully!' };
+        console.log('TCC_DEBUG: Setting message to:', successMessage);
+        setMessage(successMessage);
+-       // Clear message after 3 seconds
++       
++       // Reset to idle after 3 seconds
+        setTimeout(() => {
+          console.log('TCC_DEBUG: Clearing message after timeout');
+          setMessage(null);
++         setSaveStatus('idle');
+        }, 3000);
+      } catch (error: any) {
+        console.error('TCC_DEBUG: Error saving notification settings:', error);
++       setSaveStatus('error');
+        const errorMessage = error.response?.data?.error || 'Failed to save settings';
+        setMessage({ type: 'error', text: errorMessage });
+-       // Clear error message after 5 seconds
+-       setTimeout(() => setMessage(null), 5000);
++       
++       // Reset to idle after 5 seconds
++       setTimeout(() => {
++         setMessage(null);
++         setSaveStatus('idle');
++       }, 5000);
+      } finally {
+        setSaving(false);
+```
+
+</details>
+
+---
+
+Now let me find and update the Save button to use the new styling:
+
+
+---
+
+
+
+---
+
+Read file: undefined
+
+---
+
+Now let me update the Save button to use the same styling pattern as the test buttons:
+
+
+---
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/NotificationSettings.tsx</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 20, lines removed: 2
+
+```diff
+@@ -444,11 +444,29 @@
+                onClick={saveSettings}
+                disabled={saving}
+-               className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center"
++               className={`px-6 py-2 rounded-md flex items-center transition-colors duration-200 ${
++                 saveStatus === 'success' 
++                   ? 'bg-green-600 text-white' 
++                   : saveStatus === 'error'
++                   ? 'bg-red-600 text-white'
++                   : saveStatus === 'saving'
++                   ? 'bg-blue-600 text-white'
++                   : 'bg-blue-600 text-white hover:bg-blue-700'
++               } disabled:bg-gray-400 disabled:cursor-not-allowed`}
+              >
+-               {saving ? (
++               {saveStatus === 'saving' ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Saving...
+                  </>
++               ) : saveStatus === 'success' ? (
++                 <>
++                   <CheckCircle className="h-4 w-4 mr-2" />
++                   Saved!
++                 </>
++               ) : saveStatus === 'error' ? (
++                 <>
++                   <AlertCircle className="h-4 w-4 mr-2" />
++                   Error
++                 </>
+                ) : (
+                  'Save Settings'
+```
+
+</details>
+
+---
+
+Now let me commit these changes:
+
+
+---
+
+```bash
+git add .
+```
+
+```
+scooper@MacBook-Pro-5 tcc-new-project % git add .
+scooper@MacBook-Pro-5 tcc-new-project %
+```
+
+---
+
+```bash
+git commit -m "Enhance Save button with visual feedback like test buttons
+
+- Add saveStatus state to track save button state (idle/saving/success/error)
+- Update Save button to show green 'Saved!' with checkmark on success
+- Update Save button to show red 'Error' with alert icon on failure
+- Add smooth color transitions and proper state management
+- Fix backend TypeScript error by using centerPrisma directly
+- Save button now behaves consistently with Email/SMS test buttons"
+```
+
+```
+
+[main 3e5b3ec] Enhance Save button with visual feedba
+ck like test buttons
+
+ 3 files changed, 289 insertions(+), 8 deletions(-)
+```
+
+---
+
+```bash
+git push
+```
+
+```
+
+Enumerating objects: 25, done.
+Counting objects: 100% (25/25), done.
+Delta compression using up to 14 threads
+Compressing objects: 100% (13/13), done.
+Writing objects: 100% (13/13), 3.66 KiB | 3.66 MiB/s,
+ done.
+
+Total 13 (delta 11), reused 0 (delta 0), pack-reused
+0
+
+remote: Resolving deltas: 100% (11/11), completed wit
+h 11 local objects.
+
+To https://github.com/Medic423/tcc.git
+   9e0ad5c..3e5b3ec  main -> main
+```
+
+---
+
+## ✅ **Perfect! Save Button Enhanced!**
+
+### **🎨 What I've Implemented:**
+
+#### **Save Button Now Behaves Like Test Buttons:**
+1. **Blue State**: Normal "Save Settings" button
+2. **Blue with Spinner**: "Saving..." when processing
+3. **Green with Checkmark**: "Saved!" when successful ✅
+4. **Red with Alert Icon**: "Error" when failed ❌
+
+#### **Visual Feedback Features:**
+- **Smooth color transitions** with `transition-colors duration-200`
+- **Icons**: CheckCircle for success, AlertCircle for error
+- **Auto-reset**: Button returns to normal state after 3-5 seconds
+- **Consistent styling** with Email/SMS test buttons
+
+#### **Backend Fix:**
+- Fixed TypeScript error by using `centerPrisma` directly instead of `databaseManager`
+- Backend should now compile and run without errors
+
+### **�� How It Works:**
+
+1. **Click "Save Settings"** → Button turns blue with spinner, shows "Saving..."
+2. **On Success** → Button turns green with checkmark, shows "Saved!"
+3. **On Error** → Button turns red with alert icon, shows "Error"
+4. **Auto-reset** → Button returns to normal "Save Settings" after 3 seconds
+
+### **📋 Test It:**
+
+1. **Refresh your browser** to get the latest code
+2. **Go to notification settings** and make a change
+3. **Click "Save Settings"** - you should see the button change to green "Saved!" with a checkmark
+4. **The button will automatically reset** to normal after 3 seconds
+
+The Save button now provides the same satisfying visual feedback as the Email and SMS test buttons! 🎉
+
+---
+
