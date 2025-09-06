@@ -30,6 +30,16 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Root endpoint
+app.get('/', (req, res) => {
+  res.json({
+    success: true,
+    message: 'TCC Backend API is running',
+    timestamp: new Date().toISOString(),
+    version: '1.0.0'
+  });
+});
+
 // Health check endpoint
 app.get('/health', async (req, res) => {
   try {
@@ -57,7 +67,15 @@ app.get('/health', async (req, res) => {
   }
 });
 
-// Simple test endpoint
+// API routes
+app.use('/api/auth', authRoutes);
+app.use('/api/trips', tripRoutes);
+app.use('/api/tcc/hospitals', hospitalRoutes);
+app.use('/api/tcc/agencies', agencyRoutes);
+app.use('/api/tcc/facilities', facilityRoutes);
+app.use('/api/tcc/analytics', analyticsRoutes);
+
+// Test endpoints
 app.get('/api/test', (req, res) => {
   res.json({
     success: true,
@@ -66,7 +84,6 @@ app.get('/api/test', (req, res) => {
   });
 });
 
-// Database test endpoint
 app.get('/api/test-db', async (req, res) => {
   try {
     const result = await prisma.$queryRaw`SELECT version() as version, now() as current_time`;
@@ -84,14 +101,6 @@ app.get('/api/test-db', async (req, res) => {
     });
   }
 });
-
-// API routes
-app.use('/api/auth', authRoutes);
-app.use('/api/trips', tripRoutes);
-app.use('/api/tcc/hospitals', hospitalRoutes);
-app.use('/api/tcc/agencies', agencyRoutes);
-app.use('/api/tcc/facilities', facilityRoutes);
-app.use('/api/tcc/analytics', analyticsRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {
