@@ -378,14 +378,27 @@ export class TripService {
         }
       });
 
-      return settings?.metricValue || {
+      const defaultSettings = {
         emailNotifications: true,
         smsNotifications: true,
         newTripAlerts: true,
         statusUpdates: true,
-        emailAddress: null,
-        phoneNumber: null
+        emailAddress: '',
+        phoneNumber: ''
       };
+
+      if (settings?.metricValue) {
+        // Ensure emailAddress and phoneNumber are always strings
+        const metricValue = settings.metricValue as any;
+        return {
+          ...defaultSettings,
+          ...metricValue,
+          emailAddress: metricValue.emailAddress || '',
+          phoneNumber: metricValue.phoneNumber || ''
+        };
+      }
+
+      return defaultSettings;
     } catch (error) {
       console.error('TCC_DEBUG: Error getting notification settings:', error);
       return {
@@ -393,8 +406,8 @@ export class TripService {
         smsNotifications: true,
         newTripAlerts: true,
         statusUpdates: true,
-        emailAddress: null,
-        phoneNumber: null
+        emailAddress: '',
+        phoneNumber: ''
       };
     }
   }
