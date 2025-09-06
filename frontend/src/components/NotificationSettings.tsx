@@ -155,6 +155,14 @@ const NotificationSettings: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto p-6">
+      <style>
+        {`
+          @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+          }
+        `}
+      </style>
       <div className="bg-white rounded-lg shadow-lg">
         <div className="px-6 py-4 border-b border-gray-200">
           <div className="flex items-center">
@@ -174,25 +182,31 @@ const NotificationSettings: React.FC = () => {
               console.log('TCC_DEBUG: Rendering message with type:', message.type, 'text:', message.text);
               return (
                 <div 
-                  className={`mb-6 p-6 rounded-lg flex items-center border-4 ${
+                  className={`mb-8 p-8 rounded-xl flex items-center border-8 ${
                     message.type === 'success' 
-                      ? 'bg-green-200 text-green-900 border-green-600 shadow-2xl' 
-                      : 'bg-red-200 text-red-900 border-red-600 shadow-2xl'
+                      ? 'bg-green-300 text-green-900 border-green-700 shadow-2xl' 
+                      : 'bg-red-300 text-red-900 border-red-700 shadow-2xl'
                   }`} 
                   style={{
-                    zIndex: 9999, 
-                    position: 'relative',
-                    minHeight: '60px',
-                    fontSize: '18px',
-                    fontWeight: 'bold'
+                    zIndex: 99999, 
+                    position: 'fixed',
+                    top: '20px',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    minHeight: '80px',
+                    fontSize: '24px',
+                    fontWeight: 'bold',
+                    width: '90%',
+                    maxWidth: '600px',
+                    animation: 'pulse 2s infinite'
                   }}
                 >
                   {message.type === 'success' ? (
-                    <CheckCircle className="h-8 w-8 mr-4 text-green-700" />
+                    <CheckCircle className="h-10 w-10 mr-6 text-green-800" />
                   ) : (
-                    <AlertCircle className="h-8 w-8 mr-4 text-red-700" />
+                    <AlertCircle className="h-10 w-10 mr-6 text-red-800" />
                   )}
-                  <span className="text-xl font-bold">{message.text}</span>
+                  <span className="text-2xl font-black">{message.text}</span>
                 </div>
               );
             }
