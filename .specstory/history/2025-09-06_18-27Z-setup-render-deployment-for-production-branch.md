@@ -4979,3 +4979,373 @@ To https://github.com/Medic423/tcc.git
 
 ---
 
+_**User (2025-09-06 16:26Z)**_
+
+Still showing the endpoint not found.
+
+---
+
+_**Assistant**_
+
+The endpoint is still not being found. Let me check if there's an issue with the route definition or if the server is actually running the updated code. Let me add a simple test endpoint first to verify the server is working:
+
+
+---
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/backend/src/index.ts</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 9, lines removed: undefined
+
+```diff
+@@ -57,4 +57,13 @@
+    }
+  });
++ 
++ // Simple test endpoint
++ app.get('/api/test', (req, res) => {
++   res.json({
++     success: true,
++     message: 'API is working',
++     timestamp: new Date().toISOString()
++   });
++ });
+  
+  // Database test endpoint
+```
+
+</details>
+
+---
+
+Now let me commit and push this:
+
+
+---
+
+```bash
+git add . && git commit -m "feat: Add simple test endpoint to verify API routing"
+```
+
+```
+
+[production 4b2c9fb] feat: Add simple test endpoint t
+o verify API routing
+
+ 1 file changed, 28 insertions(+)
+```
+
+---
+
+```bash
+git push origin production
+```
+
+```
+
+Enumerating objects: 9, done.
+Counting objects: 100% (9/9), done.
+Delta compression using up to 14 threads
+Compressing objects: 100% (5/5), done.
+Writing objects: 100% (5/5), 845 bytes | 845.00 KiB/s
+, done.
+
+Total 5 (delta 3), reused 0 (delta 0), pack-reused 0
+remote: Resolving deltas: 100% (3/3), completed with
+3 local objects.
+
+To https://github.com/Medic423/tcc.git
+   fba82e1..4b2c9fb  production -> production
+```
+
+---
+
+## 🔍 **Added Simple Test Endpoint**
+
+**Now try these endpoints:**
+
+1. **Simple test**: `https://tcc-backend-l8u8.onrender.com/api/test`
+   - Should return: `{"success": true, "message": "API is working", "timestamp": "..."}`
+
+2. **Database test**: `https://tcc-backend-l8u8.onrender.com/api/test-db`
+   - Should return database connection details or error
+
+3. **Health check**: `https://tcc-backend-l8u8.onrender.com/health`
+   - Should return health status
+
+**If the simple test endpoint works but the database test doesn't:**
+- The API routing is working
+- The issue is specifically with the database connection
+
+**If neither endpoint works:**
+- There might be a deployment issue
+- The server might not be running the updated code
+
+**Try the simple test endpoint first** - this will tell us if the API routing is working at all! 🔍
+
+---
+
+_**User (2025-09-06 16:26Z)**_
+
+API Test and DB test:  {"success":false,"error":"Endpoint not found"}
+
+{"status":"unhealthy","timestamp":"2025-09-06T20:19:39.343Z","databases":"disconnected"}
+
+---
+
+_**Assistant**_
+
+The issue is that the API endpoints are not being found, but the health check is working. This suggests there might be a routing issue or the server is not loading the updated code. Let me check if there's a problem with the route definitions.
+
+Let me add a root endpoint to test basic routing:
+
+
+---
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/backend/src/index.ts</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 10, lines removed: undefined
+
+```diff
+@@ -30,4 +30,14 @@
+  app.use(express.json());
+  app.use(express.urlencoded({ extended: true }));
++ 
++ // Root endpoint
++ app.get('/', (req, res) => {
++   res.json({
++     success: true,
++     message: 'TCC Backend API is running',
++     timestamp: new Date().toISOString(),
++     version: '1.0.0'
++   });
++ });
+  
+  // Health check endpoint
+```
+
+</details>
+
+---
+
+Now let me also check if there's an issue with the 404 handler that might be catching all routes. Let me look at the 404 handler:
+
+
+---
+
+
+
+---
+
+Let me read the 404 handler section:
+
+
+---
+
+Read file: undefined
+
+---
+
+The 404 handler looks correct. Let me check if there's an issue with the route order. Let me move the test endpoints to be right after the health check and before the API routes:
+
+
+---
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/backend/src/index.ts</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: undefined, lines removed: 28
+
+```diff
+@@ -67,32 +67,4 @@
+    }
+  });
+- 
+- // Simple test endpoint
+- app.get('/api/test', (req, res) => {
+-   res.json({
+-     success: true,
+-     message: 'API is working',
+-     timestamp: new Date().toISOString()
+-   });
+- });
+- 
+- // Database test endpoint
+- app.get('/api/test-db', async (req, res) => {
+-   try {
+-     const result = await prisma.$queryRaw`SELECT version() as version, now() as current_time`;
+-     res.json({
+-       success: true,
+-       message: 'Database connection successful',
+-       data: result
+-     });
+-   } catch (error) {
+-     res.json({
+-       success: false,
+-       message: 'Database connection failed',
+-       error: error instanceof Error ? error.message : String(error),
+-       databaseUrl: process.env.DATABASE_URL ? 'Set' : 'Not set'
+-     });
+-   }
+- });
+  
+  // API routes
+```
+
+</details>
+
+---
+
+Now let me add the test endpoints after the API routes but before the 404 handler:
+
+
+---
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/backend/src/index.ts</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 27, lines removed: undefined
+
+```diff
+@@ -75,4 +75,31 @@
+  app.use('/api/tcc/facilities', facilityRoutes);
+  app.use('/api/tcc/analytics', analyticsRoutes);
++ 
++ // Test endpoints
++ app.get('/api/test', (req, res) => {
++   res.json({
++     success: true,
++     message: 'API is working',
++     timestamp: new Date().toISOString()
++   });
++ });
++ 
++ app.get('/api/test-db', async (req, res) => {
++   try {
++     const result = await prisma.$queryRaw`SELECT version() as version, now() as current_time`;
++     res.json({
++       success: true,
++       message: 'Database connection successful',
++       data: result
++     });
++   } catch (error) {
++     res.json({
++       success: false,
++       message: 'Database connection failed',
++       error: error instanceof Error ? error.message : String(error),
++       databaseUrl: process.env.DATABASE_URL ? 'Set' : 'Not set'
++     });
++   }
++ });
+  
+  // 404 handler
+```
+
+</details>
+
+---
+
+Now let me commit and push this change:
+
+
+---
+
+```bash
+git add . && git commit -m "fix: Add root endpoint and move test endpoints after API routes"
+```
+
+```
+
+[production 7b23041] fix: Add root endpoint and move
+test endpoints after API routes
+
+ 2 files changed, 198 insertions(+), 10 deletions(-)
+```
+
+---
+
+```bash
+git push origin production
+```
+
+```
+
+Enumerating objects: 15, done.
+Counting objects: 100% (15/15), done.
+Delta compression using up to 14 threads
+Compressing objects: 100% (8/8), done.
+Writing objects: 100% (8/8), 1.80 KiB | 1.80 MiB/s, d
+one.
+
+Total 8 (delta 5), reused 0 (delta 0), pack-reused 0
+remote: Resolving deltas: 100% (5/5), completed with
+5 local objects.
+
+To https://github.com/Medic423/tcc.git
+   4b2c9fb..7b23041  production -> production
+```
+
+---
+
+## 🔧 **Fixed Route Order and Added Root Endpoint**
+
+**What I changed:**
+1. ✅ **Added root endpoint**: `https://tcc-backend-l8u8.onrender.com/` 
+2. ✅ **Moved test endpoints** after API routes but before 404 handler
+3. ✅ **Fixed route order** to prevent conflicts
+
+**Now try these endpoints in order:**
+
+1. **Root endpoint**: `https://tcc-backend-l8u8.onrender.com/`
+   - Should return: `{"success": true, "message": "TCC Backend API is running", ...}`
+
+2. **API test**: `https://tcc-backend-l8u8.onrender.com/api/test`
+   - Should return: `{"success": true, "message": "API is working", ...}`
+
+3. **Database test**: `https://tcc-backend-l8u8.onrender.com/api/test-db`
+   - Should return database connection details or error
+
+4. **Health check**: `https://tcc-backend-l8u8.onrender.com/health`
+   - Should return health status
+
+**The root endpoint should definitely work** - if it doesn't, there's a fundamental issue with the deployment. If it works but the API endpoints don't, we'll know it's a routing issue.
+
+**Try the root endpoint first** - this will tell us if the server is running the updated code! 🔍
+
+---
+
+_**User (2025-09-06 16:26Z)**_
+
+Nope:
+
+success: false
+error: "Endpoint not found"
+
+---
+
+_**Assistant**_
+
+The root endpoint is also returning "Endpoint not found", which means there's a fundamental issue with the deployment. The server is not running the updated code. Let me check if there's a build or deployment issue.
+
+Let me check the current deployment status and see what's happening:
+
+
+---
+
+
+
+---
+
+
+
+---
+

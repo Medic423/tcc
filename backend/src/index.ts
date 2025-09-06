@@ -86,7 +86,7 @@ app.get('/api/test', (req, res) => {
 
 app.get('/api/test-db', async (req, res) => {
   try {
-    const result = await prisma.$queryRaw`SELECT version() as version, now() as current_time`;
+    const result = await databaseManager.getPrismaClient().$queryRaw`SELECT version() as version, now() as current_time`;
     res.json({
       success: true,
       message: 'Database connection successful',
