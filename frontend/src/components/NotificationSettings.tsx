@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Bell, Mail, Settings, CheckCircle, AlertCircle } from 'lucide-react';
+import { api } from '../services/api';
 
 interface NotificationSettings {
   emailNotifications: boolean;
@@ -36,22 +37,16 @@ const NotificationSettings: React.FC = () => {
 
   const fetchSettings = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/trips/notifications/settings', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
+      const response = await api.get('/api/trips/notifications/settings');
+      
+      if (response.data.success) {
         // Ensure emailAddress and phoneNumber are always strings, not null
         const settingsData = {
-          ...data.data,
-          emailAddress: data.data.emailAddress || '',
-          phoneNumber: data.data.phoneNumber || ''
+          ...response.data.data,
+          emailAddress: response.data.data.emailAddress || '',
+          phoneNumber: response.data.data.phoneNumber || ''
         };
+        console.log('TCC_DEBUG: Fetched settings for user:', settingsData);
         setSettings(settingsData);
       }
     } catch (error) {
@@ -67,41 +62,25 @@ const NotificationSettings: React.FC = () => {
     setMessage(null);
 
     try {
-      const token = localStorage.getItem('token');
       console.log('TCC_DEBUG: Sending settings to API:', settings);
       
-      const response = await fetch('/api/trips/notifications/settings', {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(settings)
-      });
+      const response = await api.put('/api/trips/notifications/settings', settings);
 
       console.log('TCC_DEBUG: API response status:', response.status);
-
-      if (response.ok) {
-        const responseData = await response.json();
-        console.log('TCC_DEBUG: Settings saved successfully:', responseData);
-        const successMessage = { type: 'success' as const, text: 'Notification settings saved successfully!' };
-        console.log('TCC_DEBUG: Setting message to:', successMessage);
-        setMessage(successMessage);
-        // Clear message after 3 seconds
-        setTimeout(() => {
-          console.log('TCC_DEBUG: Clearing message after timeout');
-          setMessage(null);
-        }, 3000);
-      } else {
-        const errorData = await response.json();
-        console.log('TCC_DEBUG: Save failed:', errorData);
-        setMessage({ type: 'error', text: errorData.error || 'Failed to save settings' });
-        // Clear error message after 5 seconds
-        setTimeout(() => setMessage(null), 5000);
-      }
-    } catch (error) {
+      console.log('TCC_DEBUG: Settings saved successfully:', response.data);
+      
+      const successMessage = { type: 'success' as const, text: 'Notification settings saved successfully!' };
+      console.log('TCC_DEBUG: Setting message to:', successMessage);
+      setMessage(successMessage);
+      // Clear message after 3 seconds
+      setTimeout(() => {
+        console.log('TCC_DEBUG: Clearing message after timeout');
+        setMessage(null);
+      }, 3000);
+    } catch (error: any) {
       console.error('TCC_DEBUG: Error saving notification settings:', error);
-      setMessage({ type: 'error', text: 'Failed to save settings' });
+      const errorMessage = error.response?.data?.error || 'Failed to save settings';
+      setMessage({ type: 'error', text: errorMessage });
       // Clear error message after 5 seconds
       setTimeout(() => setMessage(null), 5000);
     } finally {
@@ -114,27 +93,20 @@ const NotificationSettings: React.FC = () => {
     setMessage(null);
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/trips/test-email', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await api.post('/api/trips/test-email');
 
-      if (response.ok) {
+      if (response.data.success) {
         setEmailTestStatus('success');
         setMessage({ type: 'success', text: 'Email service connection successful!' });
       } else {
         setEmailTestStatus('error');
-        const errorData = await response.json();
-        setMessage({ type: 'error', text: errorData.error || 'Email service connection failed' });
+        setMessage({ type: 'error', text: response.data.error || 'Email service connection failed' });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('TCC_DEBUG: Error testing email connection:', error);
       setEmailTestStatus('error');
-      setMessage({ type: 'error', text: 'Email service connection failed' });
+      const errorMessage = error.response?.data?.error || 'Email service connection failed';
+      setMessage({ type: 'error', text: errorMessage });
     }
   };
 
@@ -143,27 +115,20 @@ const NotificationSettings: React.FC = () => {
     setMessage(null);
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/trips/test-sms', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await api.post('/api/trips/test-sms');
 
-      if (response.ok) {
+      if (response.data.success) {
         setSmsTestStatus('success');
         setMessage({ type: 'success', text: 'SMS service connection successful!' });
       } else {
         setSmsTestStatus('error');
-        const errorData = await response.json();
-        setMessage({ type: 'error', text: errorData.error || 'SMS service connection failed' });
+        setMessage({ type: 'error', text: response.data.error || 'SMS service connection failed' });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('TCC_DEBUG: Error testing SMS connection:', error);
       setSmsTestStatus('error');
-      setMessage({ type: 'error', text: 'SMS service connection failed' });
+      const errorMessage = error.response?.data?.error || 'SMS service connection failed';
+      setMessage({ type: 'error', text: errorMessage });
     }
   };
 
@@ -205,17 +170,17 @@ const NotificationSettings: React.FC = () => {
           {(() => {
             console.log('TCC_DEBUG: Rendering message section, message state:', message);
             return message && (
-              <div className={`mb-6 p-4 rounded-lg flex items-center ${
+              <div className={`mb-6 p-4 rounded-lg flex items-center border-2 ${
                 message.type === 'success' 
-                  ? 'bg-green-50 text-green-800 border border-green-200' 
-                  : 'bg-red-50 text-red-800 border border-red-200'
-              }`}>
+                  ? 'bg-green-100 text-green-900 border-green-400 shadow-lg' 
+                  : 'bg-red-100 text-red-900 border-red-400 shadow-lg'
+              }`} style={{zIndex: 1000, position: 'relative'}}>
                 {message.type === 'success' ? (
-                  <CheckCircle className="h-5 w-5 mr-2" />
+                  <CheckCircle className="h-6 w-6 mr-3 text-green-600" />
                 ) : (
-                  <AlertCircle className="h-5 w-5 mr-2" />
+                  <AlertCircle className="h-6 w-6 mr-3 text-red-600" />
                 )}
-                {message.text}
+                <span className="font-semibold text-lg">{message.text}</span>
               </div>
             );
           })()}
