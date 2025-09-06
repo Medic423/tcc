@@ -29,6 +29,11 @@ const NotificationSettings: React.FC = () => {
     fetchSettings();
   }, []);
 
+  // Force re-render when component mounts to ensure fresh state
+  useEffect(() => {
+    console.log('TCC_DEBUG: NotificationSettings component mounted with settings:', settings);
+  }, [settings]);
+
   const fetchSettings = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -51,11 +56,14 @@ const NotificationSettings: React.FC = () => {
   };
 
   const saveSettings = async () => {
+    console.log('TCC_DEBUG: Save button clicked with settings:', settings);
     setSaving(true);
     setMessage(null);
 
     try {
       const token = localStorage.getItem('token');
+      console.log('TCC_DEBUG: Sending settings to API:', settings);
+      
       const response = await fetch('/api/trips/notifications/settings', {
         method: 'PUT',
         headers: {
@@ -65,12 +73,17 @@ const NotificationSettings: React.FC = () => {
         body: JSON.stringify(settings)
       });
 
+      console.log('TCC_DEBUG: API response status:', response.status);
+
       if (response.ok) {
+        const responseData = await response.json();
+        console.log('TCC_DEBUG: Settings saved successfully:', responseData);
         setMessage({ type: 'success', text: 'Notification settings saved successfully!' });
         // Clear message after 3 seconds
         setTimeout(() => setMessage(null), 3000);
       } else {
         const errorData = await response.json();
+        console.log('TCC_DEBUG: Save failed:', errorData);
         setMessage({ type: 'error', text: errorData.error || 'Failed to save settings' });
         // Clear error message after 5 seconds
         setTimeout(() => setMessage(null), 5000);
@@ -144,10 +157,15 @@ const NotificationSettings: React.FC = () => {
   };
 
   const handleSettingChange = (key: keyof NotificationSettings, value: boolean | string) => {
-    setSettings(prev => ({
-      ...prev,
-      [key]: value
-    }));
+    console.log('TCC_DEBUG: Setting change:', { key, value, currentSettings: settings });
+    setSettings(prev => {
+      const newSettings = {
+        ...prev,
+        [key]: value
+      };
+      console.log('TCC_DEBUG: New settings after change:', newSettings);
+      return newSettings;
+    });
   };
 
   if (loading) {
