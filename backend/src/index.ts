@@ -93,19 +93,56 @@ async function startServer() {
       const { execSync } = require('child_process');
       
       try {
-        // Push the production schema
+        // Push the production schema with retry
         console.log('📊 Pushing production schema...');
-        execSync('npx prisma db push --schema=prisma/schema-production.prisma', { 
-          stdio: 'inherit',
-          cwd: process.cwd()
-        });
+        let retryCount = 0;
+        const maxRetries = 3;
         
-        // Seed the database
+        while (retryCount < maxRetries) {
+          try {
+            execSync('npx prisma db push --schema=prisma/schema-production.prisma', { 
+              stdio: 'inherit',
+              cwd: process.cwd(),
+              timeout: 30000 // 30 second timeout
+            });
+            break; // Success, exit retry loop
+          } catch (pushError) {
+            retryCount++;
+            console.log(`⚠️ Schema push attempt ${retryCount} failed:`, pushError instanceof Error ? pushError.message : String(pushError));
+            
+            if (retryCount < maxRetries) {
+              console.log(`🔄 Retrying in 5 seconds... (${retryCount}/${maxRetries})`);
+              await new Promise(resolve => setTimeout(resolve, 5000));
+            } else {
+              throw pushError; // Re-throw if all retries failed
+            }
+          }
+        }
+        
+        // Seed the database with retry
         console.log('🌱 Seeding database...');
-        execSync('npx ts-node prisma/seed.ts', { 
-          stdio: 'inherit',
-          cwd: process.cwd()
-        });
+        retryCount = 0;
+        
+        while (retryCount < maxRetries) {
+          try {
+            execSync('npx ts-node prisma/seed.ts', { 
+              stdio: 'inherit',
+              cwd: process.cwd(),
+              timeout: 30000 // 30 second timeout
+            });
+            break; // Success, exit retry loop
+          } catch (seedError) {
+            retryCount++;
+            console.log(`⚠️ Database seeding attempt ${retryCount} failed:`, seedError instanceof Error ? seedError.message : String(seedError));
+            
+            if (retryCount < maxRetries) {
+              console.log(`🔄 Retrying in 5 seconds... (${retryCount}/${maxRetries})`);
+              await new Promise(resolve => setTimeout(resolve, 5000));
+            } else {
+              throw seedError; // Re-throw if all retries failed
+            }
+          }
+        }
         
         console.log('✅ Database initialized successfully!');
       } catch (error) {
