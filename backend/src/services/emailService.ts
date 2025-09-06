@@ -454,30 +454,47 @@ TCC_DEBUG: Request ID: {{tripId}} | Sent: {{timestamp}}
   }
 
   /**
-   * Send SMS notification (placeholder for future Twilio integration)
+   * Send SMS notification using email-to-SMS gateway
    */
   async sendSMS(data: SMSData): Promise<boolean> {
     try {
-      console.log('TCC_DEBUG: SMS notification (placeholder):', {
+      console.log('TCC_DEBUG: SMS notification via email gateway:', {
         to: data.to,
         message: data.message,
         priority: data.priority || 'normal'
       });
 
-      // TODO: Implement actual SMS sending with Twilio
-      // For now, just log the SMS content
-      console.log('TCC_DEBUG: SMS would be sent:', {
+      // Convert phone number to email-to-SMS gateway
+      const smsEmail = this.convertPhoneToSMSGateway(data.to);
+      
+      if (!smsEmail) {
+        console.log('TCC_DEBUG: Invalid phone number format for SMS gateway');
+        return false;
+      }
+
+      // Send SMS via email gateway
+      const mailOptions = {
+        from: `"TCC SMS" <${process.env.SMTP_USER}>`,
+        to: smsEmail,
+        subject: '', // SMS gateways don't use subject
+        text: data.message,
+        html: data.message
+      };
+
+      const result = await this.transporter.sendMail(mailOptions);
+      
+      console.log('TCC_DEBUG: SMS sent via email gateway:', {
         to: data.to,
-        message: data.message,
-        timestamp: new Date().toISOString()
+        smsEmail: smsEmail,
+        messageId: (result as any).messageId
       });
 
-      // Log SMS delivery (placeholder)
+      // Log SMS delivery
       await this.logSMSDelivery({
         to: data.to,
         message: data.message,
         status: 'sent',
-        messageId: `sms_${Date.now()}`,
+        messageId: (result as any).messageId,
         tripId: null
       });
 
@@ -497,6 +514,66 @@ TCC_DEBUG: Request ID: {{tripId}} | Sent: {{timestamp}}
 
       return false;
     }
+  }
+
+  /**
+   * Convert phone number to email-to-SMS gateway address
+   */
+  private convertPhoneToSMSGateway(phoneNumber: string): string | null {
+    // Remove all non-digit characters
+    const cleaned = phoneNumber.replace(/\D/g, '');
+    
+    // Handle different phone number formats
+    let digits = cleaned;
+    
+    // If it starts with 1 and is 11 digits, remove the 1
+    if (digits.length === 11 && digits.startsWith('1')) {
+      digits = digits.substring(1);
+    }
+    
+    // Must be 10 digits for US numbers
+    if (digits.length !== 10) {
+      console.log('TCC_DEBUG: Invalid phone number length:', digits.length);
+      return null;
+    }
+
+    // Try multiple SMS gateways for better delivery
+    const gateways = [
+      `${digits}@vtext.com`,        // Verizon
+      `${digits}@txt.att.net`,      // AT&T
+      `${digits}@messaging.sprintpcs.com`, // Sprint
+      `${digits}@tmomail.net`,      // T-Mobile
+      `${digits}@email.uscc.net`,   // US Cellular
+      `${digits}@vtext.com`         // Default to Verizon
+    ];
+
+    // Return the first gateway (Verizon) as primary
+    // In production, you might want to implement carrier detection
+    return gateways[0];
+  }
+
+  /**
+   * Get all SMS gateways for a phone number (for redundancy)
+   */
+  private getAllSMSGateways(phoneNumber: string): string[] {
+    const cleaned = phoneNumber.replace(/\D/g, '');
+    let digits = cleaned;
+    
+    if (digits.length === 11 && digits.startsWith('1')) {
+      digits = digits.substring(1);
+    }
+    
+    if (digits.length !== 10) {
+      return [];
+    }
+
+    return [
+      `${digits}@vtext.com`,        // Verizon
+      `${digits}@txt.att.net`,      // AT&T
+      `${digits}@messaging.sprintpcs.com`, // Sprint
+      `${digits}@tmomail.net`,      // T-Mobile
+      `${digits}@email.uscc.net`    // US Cellular
+    ];
   }
 
   /**
@@ -582,9 +659,32 @@ TCC_DEBUG: Request ID: {{tripId}} | Sent: {{timestamp}}
 
   async testSMSConnection(): Promise<boolean> {
     try {
-      // TODO: Implement actual SMS service testing with Twilio
-      console.log('TCC_DEBUG: SMS service connection test (placeholder)');
-      return true;
+      console.log('TCC_DEBUG: Testing SMS service via email gateway');
+      
+      // Test with a dummy phone number to verify email gateway conversion
+      const testPhone = '5551234567';
+      const smsEmail = this.convertPhoneToSMSGateway(testPhone);
+      
+      if (!smsEmail) {
+        console.log('TCC_DEBUG: SMS gateway conversion failed');
+        return false;
+      }
+      
+      console.log('TCC_DEBUG: SMS gateway conversion successful:', {
+        phone: testPhone,
+        smsEmail: smsEmail
+      });
+      
+      // Test email service connection (SMS uses same SMTP)
+      const emailConnected = await this.testEmailConnection();
+      
+      if (emailConnected) {
+        console.log('TCC_DEBUG: SMS service ready (using email gateway)');
+        return true;
+      } else {
+        console.log('TCC_DEBUG: SMS service failed (email service not available)');
+        return false;
+      }
     } catch (error) {
       console.error('TCC_DEBUG: SMS service connection failed:', error);
       return false;

@@ -219,7 +219,7 @@ const NotificationSettings: React.FC = () => {
                 </label>
                 <input
                   type="email"
-                  value={settings.emailAddress || ''}
+                  value={settings.emailAddress ?? ''}
                   onChange={(e) => handleSettingChange('emailAddress', e.target.value)}
                   placeholder="Enter your email address"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -260,7 +260,7 @@ const NotificationSettings: React.FC = () => {
                 </label>
                 <input
                   type="tel"
-                  value={settings.phoneNumber || ''}
+                  value={settings.phoneNumber ?? ''}
                   onChange={(e) => handleSettingChange('phoneNumber', e.target.value)}
                   placeholder="Enter your phone number (e.g., +1234567890)"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
