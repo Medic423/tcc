@@ -82,17 +82,56 @@ app.use((error: any, req: express.Request, res: express.Response, next: express.
   });
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`🚀 TCC Backend server running on port ${PORT}`);
-  console.log(`📊 Health check: http://localhost:${PORT}/health`);
-  console.log(`🔐 Auth endpoint: http://localhost:${PORT}/api/auth/login`);
-  console.log(`🚗 Trips API: http://localhost:${PORT}/api/trips`);
-  console.log(`🏥 Hospitals API: http://localhost:${PORT}/api/tcc/hospitals`);
-  console.log(`🚑 Agencies API: http://localhost:${PORT}/api/tcc/agencies`);
-  console.log(`🏢 Facilities API: http://localhost:${PORT}/api/tcc/facilities`);
-  console.log(`📈 Analytics API: http://localhost:${PORT}/api/tcc/analytics`);
-});
+// Initialize database and start server
+async function startServer() {
+  try {
+    // Check if we're in production and need to initialize the database
+    if (process.env.NODE_ENV === 'production') {
+      console.log('🔧 Production mode: Initializing database...');
+      
+      // Import execSync for running commands
+      const { execSync } = require('child_process');
+      
+      try {
+        // Push the production schema
+        console.log('📊 Pushing production schema...');
+        execSync('npx prisma db push --schema=prisma/schema-production.prisma', { 
+          stdio: 'inherit',
+          cwd: process.cwd()
+        });
+        
+        // Seed the database
+        console.log('🌱 Seeding database...');
+        execSync('npx ts-node prisma/seed.ts', { 
+          stdio: 'inherit',
+          cwd: process.cwd()
+        });
+        
+        console.log('✅ Database initialized successfully!');
+      } catch (error) {
+        console.log('⚠️ Database initialization failed, but continuing...', error.message);
+      }
+    }
+    
+    // Start the server
+    app.listen(PORT, () => {
+      console.log(`🚀 TCC Backend server running on port ${PORT}`);
+      console.log(`📊 Health check: http://localhost:${PORT}/health`);
+      console.log(`🔐 Auth endpoint: http://localhost:${PORT}/api/auth/login`);
+      console.log(`🚗 Trips API: http://localhost:${PORT}/api/trips`);
+      console.log(`🏥 Hospitals API: http://localhost:${PORT}/api/tcc/hospitals`);
+      console.log(`🚑 Agencies API: http://localhost:${PORT}/api/tcc/agencies`);
+      console.log(`🏢 Facilities API: http://localhost:${PORT}/api/tcc/facilities`);
+      console.log(`📈 Analytics API: http://localhost:${PORT}/api/tcc/analytics`);
+    });
+  } catch (error) {
+    console.error('❌ Failed to start server:', error);
+    process.exit(1);
+  }
+}
+
+// Start the server
+startServer();
 
 // Graceful shutdown
 process.on('SIGINT', async () => {
