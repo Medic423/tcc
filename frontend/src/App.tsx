@@ -74,7 +74,7 @@ function AppContent() {
           }
         />
         <Route
-          path="/dashboard"
+          path="/dashboard/*"
           element={
             user ? (
               <TCCDashboard user={user} onLogout={handleLogout} />
