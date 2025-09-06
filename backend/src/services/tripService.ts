@@ -15,7 +15,7 @@ export interface CreateTripRequest {
   readyEnd: string; // ISO string
   isolation: boolean;
   bariatric: boolean;
-  createdById: string;
+  createdById: string | null;
 }
 
 export interface UpdateTripStatusRequest {
@@ -47,7 +47,7 @@ export class TripService {
           readyEnd: new Date(data.readyEnd),
           isolation: data.isolation,
           bariatric: data.bariatric,
-          createdById: data.createdById,
+          createdById: data.createdById || null,
         },
         include: {
           originFacility: true,

@@ -58,7 +58,7 @@ router.post('/', async (req, res) => {
       readyEnd,
       isolation: isolation || false,
       bariatric: bariatric || false,
-      createdById: 'temp-user-id', // TODO: Get from authenticated user
+      createdById: null, // TODO: Get from authenticated user
     };
 
     const result = await tripService.createTrip(tripData);
