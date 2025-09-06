@@ -109,7 +109,7 @@ async function startServer() {
         
         console.log('✅ Database initialized successfully!');
       } catch (error) {
-        console.log('⚠️ Database initialization failed, but continuing...', error.message);
+        console.log('⚠️ Database initialization failed, but continuing...', error instanceof Error ? error.message : String(error));
       }
     }
     
