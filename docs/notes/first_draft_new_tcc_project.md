@@ -205,6 +205,20 @@
 - [x] POST /api/trips/:id/decline
 - [ ] Basic optimization endpoints
 
+#### **2.3 Email Notification System**
+**Backend: Notification Service**
+- [ ] Email service setup (SMTP configuration)
+- [ ] Email templates for trip notifications
+- [ ] New trip request notifications to EMS agencies
+- [ ] Trip status update notifications to healthcare facilities
+- [ ] Email delivery tracking and error handling
+- [ ] Configuration for different notification types
+
+**Frontend: Notification Settings**
+- [ ] User notification preferences
+- [ ] Email address management
+- [ ] Notification history/logs
+
 ### **Phase 3: Route Optimization & Revenue Engine (1-2 weeks)**
 
 #### **3.1 Revenue Optimization Engine**
