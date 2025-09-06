@@ -90,7 +90,7 @@ export class TripService {
       const trips = await prisma.trip.findMany({
         where,
         orderBy: {
-          requestTimestamp: 'desc',
+          createdAt: 'desc',
         },
       });
 
@@ -179,15 +179,6 @@ export class TripService {
       const agencies = await prisma.agency.findMany({
         where: {
           isActive: true,
-          status: 'ACTIVE',
-        },
-        include: {
-          units: {
-            where: {
-              isActive: true,
-              currentStatus: 'AVAILABLE',
-            },
-          },
         },
       });
 
@@ -210,11 +201,10 @@ export class TripService {
       const agencies = await prisma.agency.findMany({
         where: {
           isActive: true,
-          status: 'ACTIVE',
         },
         select: {
-          email: true,
-          phone: true,
+          // email field not available in unified Agency model
+          // phone field not available in unified Agency model
           name: true,
         },
       });
@@ -280,7 +270,7 @@ export class TripService {
           // Get agency details for accepted notification
           const agency = await prisma.agency.findUnique({
             where: { id: trip.assignedAgencyId || '' },
-            select: { name: true, phone: true }
+            select: { name: true }
           });
           
           // Unit information not available in unified schema
@@ -360,7 +350,7 @@ export class TripService {
         const metricValue = settings.metricValue as any;
         
         // Get the user's actual email from the database to ensure consistency
-        const user = await centerPrisma.centerUser.findUnique({
+        const user = await prisma.centerUser.findUnique({
           where: { id: userId },
           select: { email: true }
         });

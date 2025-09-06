@@ -32,9 +32,9 @@ export interface FacilityListResult {
 
 export class FacilityService {
   async createFacility(data: FacilityData): Promise<any> {
-    const hospitalDB = databaseManager.getHospitalDB();
+    const prisma = databaseManager.getPrismaClient();
     
-    return await hospitalDB.facility.create({
+    return await prisma.facility.create({
       data: {
         name: data.name,
         type: data.type,
@@ -44,14 +44,14 @@ export class FacilityService {
         zipCode: data.zipCode,
         phone: data.phone,
         email: data.email,
-        coordinates: data.coordinates,
+        region: data.state, // Use state as region for now
         isActive: data.isActive ?? true
       }
     });
   }
 
   async getFacilities(filters: FacilitySearchFilters = {}): Promise<FacilityListResult> {
-    const hospitalDB = databaseManager.getHospitalDB();
+    const prisma = databaseManager.getPrismaClient();
     const { page = 1, limit = 50, ...whereFilters } = filters;
     const skip = (page - 1) * limit;
 
@@ -73,13 +73,13 @@ export class FacilityService {
     }
 
     const [facilities, total] = await Promise.all([
-      hospitalDB.facility.findMany({
+      prisma.facility.findMany({
         where,
         orderBy: { name: 'asc' },
         skip,
         take: limit
       }),
-      hospitalDB.facility.count({ where })
+      prisma.facility.count({ where })
     ]);
 
     return {
@@ -91,15 +91,15 @@ export class FacilityService {
   }
 
   async getFacilityById(id: string): Promise<any | null> {
-    const hospitalDB = databaseManager.getHospitalDB();
-    return await hospitalDB.facility.findUnique({
+    const prisma = databaseManager.getPrismaClient();
+    return await prisma.facility.findUnique({
       where: { id }
     });
   }
 
   async updateFacility(id: string, data: Partial<FacilityData>): Promise<any> {
-    const hospitalDB = databaseManager.getHospitalDB();
-    return await hospitalDB.facility.update({
+    const prisma = databaseManager.getPrismaClient();
+    return await prisma.facility.update({
       where: { id },
       data: {
         ...data,
@@ -109,15 +109,15 @@ export class FacilityService {
   }
 
   async deleteFacility(id: string): Promise<void> {
-    const hospitalDB = databaseManager.getHospitalDB();
-    await hospitalDB.facility.delete({
+    const prisma = databaseManager.getPrismaClient();
+    await prisma.facility.delete({
       where: { id }
     });
   }
 
   async searchFacilities(query: string): Promise<any[]> {
-    const hospitalDB = databaseManager.getHospitalDB();
-    return await hospitalDB.facility.findMany({
+    const prisma = databaseManager.getPrismaClient();
+    return await prisma.facility.findMany({
       where: {
         OR: [
           { name: { contains: query, mode: 'insensitive' } },
