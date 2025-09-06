@@ -57,6 +57,34 @@ app.get('/health', async (req, res) => {
   }
 });
 
+// Simple test endpoint
+app.get('/api/test', (req, res) => {
+  res.json({
+    success: true,
+    message: 'API is working',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Database test endpoint
+app.get('/api/test-db', async (req, res) => {
+  try {
+    const result = await prisma.$queryRaw`SELECT version() as version, now() as current_time`;
+    res.json({
+      success: true,
+      message: 'Database connection successful',
+      data: result
+    });
+  } catch (error) {
+    res.json({
+      success: false,
+      message: 'Database connection failed',
+      error: error instanceof Error ? error.message : String(error),
+      databaseUrl: process.env.DATABASE_URL ? 'Set' : 'Not set'
+    });
+  }
+});
+
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/trips', tripRoutes);
