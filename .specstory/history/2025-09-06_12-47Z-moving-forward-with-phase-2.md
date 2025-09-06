@@ -1447,11 +1447,262 @@ Let me wait and test the backend:
 
 ---
 
+```bash
+sleep 5 && curl -X GET http://localhost:5001/health
+```
+
+```
+scooper@MacBook-Pro-5 tcc-new-project % sleep 5 && curl -X GET http://localhost:5001/health
+curl: (7) Failed to connect to localhost port 5001 after 0 ms: Couldn't connect to server
+scooper@MacBook-Pro-5 tcc-new-project %
+```
+
+---
+
+Let me check if there are any compilation errors by running the build:
 
 
 ---
 
+```bash
+cd /Users/scooper/Code/tcc-new-project/backend && npm run build
+```
 
+```
+scooper@MacBook-Pro-5 tcc-new-project % cd /Users/scooper/Code/tcc-new-project/backend && npm run build
+
+> tcc-backend@1.0.0 build
+> tsc
+
+src/routes/trips.ts:61:7 - error TS2322: Type 'null' is not assignable to type 'string'.
+
+61       createdById: null, // TODO: Get from authenticated user
+         ~~~~~~~~~~~
+
+  src/services/tripService.ts:18:3
+    18   createdById: string;
+         ~~~~~~~~~~~
+    The expected type comes from property 'createdById' which is declared here on type 'CreateTripRequest'
+
+
+Found 1 error in src/routes/trips.ts:61
+
+scooper@MacBook-Pro-5 backend %
+```
+
+---
+
+I need to fix the TypeScript error. Let me update the interface to allow null for createdById:
+
+
+---
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/backend/src/services/tripService.ts</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -16,5 +16,5 @@
+    isolation: boolean;
+    bariatric: boolean;
+-   createdById: string;
++   createdById: string | null;
+  }
+  
+```
+
+</details>
+
+---
+
+Now let me test the build again:
+
+
+---
+
+```bash
+npm run build
+```
+
+```
+scooper@MacBook-Pro-5 backend % npm run build
+
+> tcc-backend@1.0.0 build
+> tsc
+
+scooper@MacBook-Pro-5 backend %
+```
+
+---
+
+Great! Now let me start the backend server:
+
+
+---
+
+```bash
+npm run dev
+```
+
+---
+
+Now let me start the frontend server:
+
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project/frontend && npm run dev
+```
+
+---
+
+Let me wait and test both servers:
+
+
+---
+
+```bash
+sleep 5 && curl -X GET http://localhost:5001/health && echo "Backend OK" && curl -X GET http://localhost:3000 | head -5
+```
+
+```
+scooper@MacBook-Pro-5 backend % sleep 5 && curl -X GET http://localhost:5001/health && echo "Backend OK" && 
+curl -X GET http://localhost:3000 | head -5
+{"status":"healthy","timestamp":"2025-09-06T13:02:04.302Z","databases":"connected"}Backend OK
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   634  100   634    0     0   284k      0 --:--:-- --:--:-- --:--:--  309k
+<!doctype html>
+<html lang="en">
+  <head>
+    <script type="module">import { injectIntoGlobalHook } from "/@react-refresh";
+injectIntoGlobalHook(window);
+scooper@MacBook-Pro-5 backend %
+```
+
+---
+
+Perfect! Both servers are now running properly. Let me test the trip creation API to make sure it's working:
+
+
+---
+
+```bash
+curl -X POST http://localhost:5001/api/trips \
+  -H "Content-Type: application/json" \
+  -d '{
+    "patientId": "PAT-003",
+    "originFacilityId": "cmf77kfi80000104vqab7vfsi",
+    "destinationFacilityId": "cmf77kfic0001104vs4e6sz6k",
+    "transportLevel": "BLS",
+    "priority": "MEDIUM",
+    "specialRequirements": "Test trip",
+    "readyStart": "2025-09-06T15:00:00Z",
+    "readyEnd": "2025-09-06T17:00:00Z",
+    "isolation": false,
+    "bariatric": false
+  }'
+```
+
+```
+
+{"success":true,"message":"Transport request created successfully","data":{"id":"cmf89wzo40001wpjs0b63zxd7",
+"patientId":"PAT-003","originFacilityId":"cmf77kfi80000104vqab7vfsi","destinationFacilityId":"cmf77kfic00011
+04vs4e6sz6k","transportLevel":"BLS","priority":"MEDIUM","status":"PENDING","specialRequirements":"Test trip"
+,"requestTimestamp":"2025-09-06T13:02:10.325Z","acceptedTimestamp":null,"pickupTimestamp":null,"completionTi
+mestamp":null,"assignedAgencyId":null,"assignedUnitId":null,"createdById":null,"readyStart":"2025-09-06T15:0
+0:00.000Z","readyEnd":"2025-09-06T17:00:00.000Z","isolation":false,"bariatric":false,"createdAt":"2025-09-06
+T13:02:10.325Z","updatedAt":"2025-09-06T13:02:10.325Z","originFacility":{"id":"cmf77kfi80000104vqab7vfsi","n
+ame":"Altoona Regional Emergency Department","type":"HOSPITAL","address":"620 Howard Ave","city":"Altoona","
+state":"PA","zipCode":"16601","phone":"(814) 889-2011","email":"emergency@altoonaregional.org","coordinates"
+:{"lat":40.5187,"lng":-78.3947},"isActive":true,"createdAt":"2025-09-05T19:08:38.912Z","updatedAt":"2025-09-
+05T19:08:38.912Z"},"destinationFacility":{"id":"cmf77kfic0001104vs4e6sz6k","name":"UPMC Bedford Emergency De
+partment","type":"HOSPITAL","address":"10455 Lincoln Hwy","city":"Everett","state":"PA","zipCode":"15537","p
+hone":"(814) 623-3331","email":"emergency@upmc.edu","coordinates":{"lat":40.0115,"lng":-78.3734},"isActive":
+true,"createdAt":"2025-09-05T19:08:38.916Z","updatedAt":"2025-09-05T19:08:38.916Z"},"createdBy":null}}%
+
+```
+
+---
+
+Excellent! The API is working perfectly now. Let me commit these fixes:
+
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git add . && git commit -m "Fix trip creation foreign key constraint issue
+
+- Allow null values for createdById in trip creation
+- Fix TypeScript interface to support null createdById
+- Resolve database constraint violation when creating trips
+- Both frontend and backend now running properly on correct ports"
+```
+
+```
+scooper@MacBook-Pro-5 backend % cd /Users/scooper/Code/tcc-new-project && git add . && git commit -m "Fix tr
+ip creation foreign key constraint issue
+
+- Allow null values for createdById in trip creation
+- Fix TypeScript interface to support null createdById
+- Resolve database constraint vicd /Users/scooper/Code/tcc-new-project && git add . && git commit -m "Fix tr
+- Both frontend and backend now running properly on correct ports"
+[main 46bd696] Fix trip creation foreign key constraint issue
+ 3 files changed, 1283 insertions(+), 3 deletions(-)
+scooper@MacBook-Pro-5 tcc-new-project %
+```
+
+---
+
+```bash
+git push origin main
+```
+
+```
+scooper@MacBook-Pro-5 tcc-new-project % git push origin main
+Enumerating objects: 21, done.
+Counting objects: 100% (21/21), done.
+Delta compression using up to 14 threads
+Compressing objects: 100% (11/11), done.
+Writing objects: 100% (11/11), 10.46 KiB | 10.46 MiB/s, done.
+Total 11 (delta 7), reused 0 (delta 0), pack-reused 0
+remote: Resolving deltas: 100% (7/7), completed with 7 local objects.
+To https://github.com/Medic423/tcc.git
+   293115b..46bd696  main -> main
+scooper@MacBook-Pro-5 tcc-new-project %
+```
+
+---
+
+Perfect! Now both servers are running properly. Here's the current status:
+
+## ✅ **Servers are now running correctly:**
+
+- **Backend**: http://localhost:5001 ✅
+- **Frontend**: http://localhost:3000 ✅
+
+## 🔧 **Issues Fixed:**
+
+1. **Foreign Key Constraint**: Fixed the database constraint violation by allowing `null` values for `createdById`
+2. **TypeScript Error**: Updated the interface to support `string | null` for `createdById`
+3. **Port Conflicts**: Cleared all conflicting processes and restarted cleanly
+
+## 🚀 **Ready to Test:**
+
+You can now access the application at **http://localhost:3000** and:
+
+1. **Login** with admin credentials (admin@tcc.com / admin123)
+2. **Navigate** to the different tabs in the TCC dashboard
+3. **Test the Healthcare Portal** - Create new transport requests
+4. **Test the EMS Dashboard** - View and manage transport requests
+
+The tabs should now work properly. The issue was that the backend had a compilation error due to the foreign key constraint, which prevented it from starting properly. Now that it's fixed, both the frontend and backend are running smoothly.
+
+Try refreshing your browser and clicking on the tabs - they should work now!
 
 ---
 
