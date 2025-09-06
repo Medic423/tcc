@@ -1,8 +1,11 @@
 import { PrismaClient as HospitalPrismaClient } from '@prisma/hospital';
 import { PrismaClient as EMSPrisaClient } from '@prisma/ems';
+import { PrismaClient as CenterPrismaClient } from '../../node_modules/.prisma/center';
+import emailService from './emailService';
 
 const hospitalPrisma = new HospitalPrismaClient();
 const emsPrisma = new EMSPrisaClient();
+const centerPrisma = new CenterPrismaClient();
 
 export interface CreateTripRequest {
   patientId: string;
@@ -57,6 +60,10 @@ export class TripService {
       });
 
       console.log('TCC_DEBUG: Trip created successfully:', trip.id);
+      
+      // Send email notifications to EMS agencies
+      await this.sendNewTripNotifications(trip);
+      
       return { success: true, data: trip };
     } catch (error) {
       console.error('TCC_DEBUG: Error creating trip:', error);
@@ -177,6 +184,10 @@ export class TripService {
       });
 
       console.log('TCC_DEBUG: Trip status updated:', trip.id);
+      
+      // Send email notifications for status changes
+      await this.sendStatusUpdateNotifications(trip, data.status);
+      
       return { success: true, data: trip };
     } catch (error) {
       console.error('TCC_DEBUG: Error updating trip status:', error);
@@ -211,6 +222,174 @@ export class TripService {
     } catch (error) {
       console.error('TCC_DEBUG: Error getting agencies:', error);
       return { success: false, error: 'Failed to fetch EMS agencies' };
+    }
+  }
+
+  /**
+   * Send email notifications for new trip requests
+   */
+  private async sendNewTripNotifications(trip: any) {
+    try {
+      console.log('TCC_DEBUG: Sending new trip notifications for:', trip.id);
+      
+      // Get all active EMS agencies with email addresses
+      const agencies = await emsPrisma.eMSAgency.findMany({
+        where: {
+          isActive: true,
+          status: 'ACTIVE',
+        },
+        select: {
+          email: true,
+          name: true,
+        },
+      });
+
+      const agencyEmails = agencies
+        .filter((agency: any) => agency.email)
+        .map((agency: any) => agency.email!);
+
+      if (agencyEmails.length === 0) {
+        console.log('TCC_DEBUG: No agency emails found for notifications');
+        return;
+      }
+
+      // Send notification to all agencies
+      const success = await emailService.sendNewTripNotification(trip, agencyEmails);
+      
+      if (success) {
+        console.log('TCC_DEBUG: New trip notifications sent successfully');
+      } else {
+        console.log('TCC_DEBUG: Failed to send new trip notifications');
+      }
+    } catch (error) {
+      console.error('TCC_DEBUG: Error sending new trip notifications:', error);
+    }
+  }
+
+  /**
+   * Send email notifications for trip status updates
+   */
+  private async sendStatusUpdateNotifications(trip: any, newStatus: string) {
+    try {
+      console.log('TCC_DEBUG: Sending status update notifications for:', trip.id, 'Status:', newStatus);
+      
+      // Get hospital email from the facility
+      const hospitalEmail = trip.originFacility?.email;
+      
+      if (!hospitalEmail) {
+        console.log('TCC_DEBUG: No hospital email found for status update notification');
+        return;
+      }
+
+      let success = false;
+
+      // Send different notifications based on status
+      switch (newStatus) {
+        case 'ACCEPTED':
+          // Get agency details for accepted notification
+          const agency = await emsPrisma.eMSAgency.findUnique({
+            where: { id: trip.assignedAgencyId || '' },
+            select: { name: true, phone: true }
+          });
+          
+          const unit = await emsPrisma.unit.findUnique({
+            where: { id: trip.assignedUnitId || '' },
+            select: { unitNumber: true }
+          });
+
+          const tripWithAgency = {
+            ...trip,
+            assignedAgency: agency,
+            assignedUnit: unit
+          };
+
+          success = await emailService.sendTripAcceptedNotification(tripWithAgency, hospitalEmail);
+          break;
+        
+        case 'IN_PROGRESS':
+        case 'COMPLETED':
+        case 'CANCELLED':
+          success = await emailService.sendTripStatusUpdate(trip, hospitalEmail);
+          break;
+        
+        default:
+          console.log('TCC_DEBUG: No notification needed for status:', newStatus);
+          return;
+      }
+
+      if (success) {
+        console.log('TCC_DEBUG: Status update notifications sent successfully');
+      } else {
+        console.log('TCC_DEBUG: Failed to send status update notifications');
+      }
+    } catch (error) {
+      console.error('TCC_DEBUG: Error sending status update notifications:', error);
+    }
+  }
+
+  /**
+   * Get email notification settings for a user
+   */
+  async getNotificationSettings(userId: string) {
+    try {
+      const settings = await centerPrisma.systemAnalytics.findFirst({
+        where: {
+          metricName: 'notification_settings',
+          metricValue: {
+            path: ['userId'],
+            equals: userId
+          }
+        }
+      });
+
+      return settings?.metricValue || {
+        emailNotifications: true,
+        newTripAlerts: true,
+        statusUpdates: true,
+        emailAddress: null
+      };
+    } catch (error) {
+      console.error('TCC_DEBUG: Error getting notification settings:', error);
+      return {
+        emailNotifications: true,
+        newTripAlerts: true,
+        statusUpdates: true,
+        emailAddress: null
+      };
+    }
+  }
+
+  /**
+   * Update email notification settings for a user
+   */
+  async updateNotificationSettings(userId: string, settings: any) {
+    try {
+      await centerPrisma.systemAnalytics.upsert({
+        where: {
+          id: `notification_settings_${userId}`
+        },
+        update: {
+          metricValue: {
+            userId,
+            ...settings,
+            updatedAt: new Date().toISOString()
+          }
+        },
+        create: {
+          metricName: 'notification_settings',
+          metricValue: {
+            userId,
+            ...settings,
+            createdAt: new Date().toISOString()
+          }
+        }
+      });
+
+      console.log('TCC_DEBUG: Notification settings updated for user:', userId);
+      return { success: true };
+    } catch (error) {
+      console.error('TCC_DEBUG: Error updating notification settings:', error);
+      return { success: false, error: 'Failed to update notification settings' };
     }
   }
 }

@@ -251,4 +251,117 @@ router.get('/agencies/available', async (req, res) => {
   }
 });
 
+/**
+ * GET /api/trips/notifications/settings
+ * Get notification settings for a user
+ */
+router.get('/notifications/settings', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
+  try {
+    console.log('TCC_DEBUG: Get notification settings request for user:', req.user?.id);
+    
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        error: 'User not authenticated'
+      });
+    }
+
+    const settings = await tripService.getNotificationSettings(userId);
+
+    res.json({
+      success: true,
+      data: settings
+    });
+
+  } catch (error) {
+    console.error('TCC_DEBUG: Get notification settings error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+});
+
+/**
+ * PUT /api/trips/notifications/settings
+ * Update notification settings for a user
+ */
+router.put('/notifications/settings', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
+  try {
+    console.log('TCC_DEBUG: Update notification settings request for user:', req.user?.id);
+    
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        error: 'User not authenticated'
+      });
+    }
+
+    const { emailNotifications, newTripAlerts, statusUpdates, emailAddress } = req.body;
+
+    const settings = {
+      emailNotifications: emailNotifications !== undefined ? emailNotifications : true,
+      newTripAlerts: newTripAlerts !== undefined ? newTripAlerts : true,
+      statusUpdates: statusUpdates !== undefined ? statusUpdates : true,
+      emailAddress: emailAddress || null
+    };
+
+    const result = await tripService.updateNotificationSettings(userId, settings);
+
+    if (!result.success) {
+      return res.status(400).json({
+        success: false,
+        error: result.error
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Notification settings updated successfully',
+      data: settings
+    });
+
+  } catch (error) {
+    console.error('TCC_DEBUG: Update notification settings error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+});
+
+/**
+ * POST /api/trips/test-email
+ * Test email service connection
+ */
+router.post('/test-email', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
+  try {
+    console.log('TCC_DEBUG: Test email service request');
+    
+    const emailService = (await import('../services/emailService')).default;
+    const isConnected = await emailService.testEmailConnection();
+
+    if (isConnected) {
+      res.json({
+        success: true,
+        message: 'Email service connection successful'
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        error: 'Email service connection failed'
+      });
+    }
+
+  } catch (error) {
+    console.error('TCC_DEBUG: Test email service error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+});
+
 export default router;
