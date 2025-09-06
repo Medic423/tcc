@@ -10,6 +10,7 @@ import hospitalRoutes from './routes/hospitals';
 import agencyRoutes from './routes/agencies';
 import facilityRoutes from './routes/facilities';
 import analyticsRoutes from './routes/analytics';
+import tripRoutes from './routes/trips';
 
 // Load environment variables
 dotenv.config();
@@ -58,6 +59,7 @@ app.get('/health', async (req, res) => {
 
 // API routes
 app.use('/api/auth', authRoutes);
+app.use('/api/trips', tripRoutes);
 app.use('/api/tcc/hospitals', hospitalRoutes);
 app.use('/api/tcc/agencies', agencyRoutes);
 app.use('/api/tcc/facilities', facilityRoutes);
@@ -85,6 +87,7 @@ app.listen(PORT, () => {
   console.log(`🚀 TCC Backend server running on port ${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/health`);
   console.log(`🔐 Auth endpoint: http://localhost:${PORT}/api/auth/login`);
+  console.log(`🚗 Trips API: http://localhost:${PORT}/api/trips`);
   console.log(`🏥 Hospitals API: http://localhost:${PORT}/api/tcc/hospitals`);
   console.log(`🚑 Agencies API: http://localhost:${PORT}/api/tcc/agencies`);
   console.log(`🏢 Facilities API: http://localhost:${PORT}/api/tcc/facilities`);

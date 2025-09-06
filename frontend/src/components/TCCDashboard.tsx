@@ -8,19 +8,24 @@ import {
   BarChart3, 
   LogOut,
   Menu,
-  X
+  X,
+  Plus,
+  ClipboardList
 } from 'lucide-react';
 import Overview from './Overview';
 import Hospitals from './Hospitals';
 import Agencies from './Agencies';
 import Facilities from './Facilities';
 import Analytics from './Analytics';
+import HealthcarePortal from './HealthcarePortal';
+import EMSDashboard from './EMSDashboard';
 
 interface User {
   id: string;
   email: string;
   name: string;
-  userType: 'ADMIN';
+  userType: 'ADMIN' | 'HOSPITAL' | 'EMS';
+  hospitalName?: string;
 }
 
 interface TCCDashboardProps {
@@ -32,13 +37,37 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
 
-  const navigation = [
-    { name: 'Overview', href: '/dashboard', icon: Home },
-    { name: 'Hospitals', href: '/dashboard/hospitals', icon: Building2 },
-    { name: 'EMS Agencies', href: '/dashboard/agencies', icon: Truck },
-    { name: 'Facilities', href: '/dashboard/facilities', icon: MapPin },
-    { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
-  ];
+  const getNavigation = () => {
+    const baseNavigation = [
+      { name: 'Overview', href: '/dashboard', icon: Home },
+    ];
+
+    if (user.userType === 'ADMIN') {
+      return [
+        ...baseNavigation,
+        { name: 'Hospitals', href: '/dashboard/hospitals', icon: Building2 },
+        { name: 'EMS Agencies', href: '/dashboard/agencies', icon: Truck },
+        { name: 'Facilities', href: '/dashboard/facilities', icon: MapPin },
+        { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
+      ];
+    } else if (user.userType === 'HOSPITAL') {
+      return [
+        ...baseNavigation,
+        { name: 'Create Trip', href: '/dashboard/healthcare-portal', icon: Plus },
+        { name: 'My Trips', href: '/dashboard/my-trips', icon: ClipboardList },
+      ];
+    } else if (user.userType === 'EMS') {
+      return [
+        ...baseNavigation,
+        { name: 'Available Trips', href: '/dashboard/ems-dashboard', icon: Truck },
+        { name: 'My Assignments', href: '/dashboard/my-assignments', icon: ClipboardList },
+      ];
+    }
+
+    return baseNavigation;
+  };
+
+  const navigation = getNavigation();
 
   const currentPage = navigation.find(item => 
     location.pathname === item.href || 
@@ -142,6 +171,11 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
                     <p className="text-xs font-medium text-gray-500 group-hover:text-gray-700">
                       {user.email}
                     </p>
+                    {user.hospitalName && (
+                      <p className="text-xs font-medium text-gray-400 group-hover:text-gray-600">
+                        {user.hospitalName}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <button
@@ -193,6 +227,10 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
                 <Route path="/agencies/*" element={<Agencies />} />
                 <Route path="/facilities/*" element={<Facilities />} />
                 <Route path="/analytics/*" element={<Analytics />} />
+                <Route path="/healthcare-portal" element={<HealthcarePortal />} />
+                <Route path="/ems-dashboard" element={<EMSDashboard />} />
+                <Route path="/my-trips" element={<div className="text-center py-12"><h3 className="text-lg font-medium text-gray-900">My Trips</h3><p className="text-gray-500">Coming soon...</p></div>} />
+                <Route path="/my-assignments" element={<div className="text-center py-12"><h3 className="text-lg font-medium text-gray-900">My Assignments</h3><p className="text-gray-500">Coming soon...</p></div>} />
               </Routes>
             </div>
           </div>

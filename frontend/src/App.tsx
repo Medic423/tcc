@@ -8,7 +8,8 @@ interface User {
   id: string;
   email: string;
   name: string;
-  userType: 'ADMIN';
+  userType: 'ADMIN' | 'HOSPITAL' | 'EMS';
+  hospitalName?: string;
 }
 
 function AppContent() {

@@ -131,4 +131,22 @@ export const analyticsAPI = {
     api.get('/api/tcc/analytics/hospitals'),
 };
 
+// Trips API
+export const tripsAPI = {
+  create: (data: any) =>
+    api.post('/api/trips', data),
+  
+  getAll: (params?: any) =>
+    api.get('/api/trips', { params }),
+  
+  getById: (id: string) =>
+    api.get(`/api/trips/${id}`),
+  
+  updateStatus: (id: string, data: any) =>
+    api.put(`/api/trips/${id}/status`, data),
+  
+  getAvailableAgencies: () =>
+    api.get('/api/trips/agencies/available'),
+};
+
 export default api;
