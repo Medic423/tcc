@@ -340,17 +340,25 @@ router.put('/notifications/settings', authenticateAdmin, async (req: Authenticat
  */
 router.post('/test-email', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
   try {
-    console.log('TCC_DEBUG: Test email service request');
+    console.log('TCC_DEBUG: Test email service request received');
+    console.log('TCC_DEBUG: Authenticated user:', req.user);
     
+    console.log('TCC_DEBUG: Importing email service...');
     const emailService = (await import('../services/emailService')).default;
+    console.log('TCC_DEBUG: Email service imported successfully');
+    
+    console.log('TCC_DEBUG: Testing email connection...');
     const isConnected = await emailService.testEmailConnection();
+    console.log('TCC_DEBUG: Email connection test result:', isConnected);
 
     if (isConnected) {
+      console.log('TCC_DEBUG: Email service connection successful');
       res.json({
         success: true,
         message: 'Email service connection successful'
       });
     } else {
+      console.log('TCC_DEBUG: Email service connection failed');
       res.status(500).json({
         success: false,
         error: 'Email service connection failed'
@@ -359,9 +367,10 @@ router.post('/test-email', authenticateAdmin, async (req: AuthenticatedRequest, 
 
   } catch (error) {
     console.error('TCC_DEBUG: Test email service error:', error);
+    console.error('TCC_DEBUG: Error stack:', error.stack);
     res.status(500).json({
       success: false,
-      error: 'Internal server error'
+      error: 'Internal server error: ' + error.message
     });
   }
 });
@@ -372,17 +381,25 @@ router.post('/test-email', authenticateAdmin, async (req: AuthenticatedRequest, 
  */
 router.post('/test-sms', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
   try {
-    console.log('TCC_DEBUG: Test SMS service request');
+    console.log('TCC_DEBUG: Test SMS service request received');
+    console.log('TCC_DEBUG: Authenticated user:', req.user);
     
+    console.log('TCC_DEBUG: Importing email service for SMS...');
     const emailService = (await import('../services/emailService')).default;
+    console.log('TCC_DEBUG: Email service imported successfully for SMS');
+    
+    console.log('TCC_DEBUG: Testing SMS connection...');
     const isConnected = await emailService.testSMSConnection();
+    console.log('TCC_DEBUG: SMS connection test result:', isConnected);
 
     if (isConnected) {
+      console.log('TCC_DEBUG: SMS service connection successful');
       res.json({
         success: true,
         message: 'SMS service connection successful'
       });
     } else {
+      console.log('TCC_DEBUG: SMS service connection failed');
       res.status(500).json({
         success: false,
         error: 'SMS service connection failed'
@@ -391,9 +408,10 @@ router.post('/test-sms', authenticateAdmin, async (req: AuthenticatedRequest, re
 
   } catch (error) {
     console.error('TCC_DEBUG: Test SMS service error:', error);
+    console.error('TCC_DEBUG: Error stack:', error.stack);
     res.status(500).json({
       success: false,
-      error: 'Internal server error'
+      error: 'Internal server error: ' + error.message
     });
   }
 });

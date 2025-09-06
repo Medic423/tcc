@@ -169,20 +169,34 @@ const NotificationSettings: React.FC = () => {
         <div className="p-6">
           {(() => {
             console.log('TCC_DEBUG: Rendering message section, message state:', message);
-            return message && (
-              <div className={`mb-6 p-4 rounded-lg flex items-center border-2 ${
-                message.type === 'success' 
-                  ? 'bg-green-100 text-green-900 border-green-400 shadow-lg' 
-                  : 'bg-red-100 text-red-900 border-red-400 shadow-lg'
-              }`} style={{zIndex: 1000, position: 'relative'}}>
-                {message.type === 'success' ? (
-                  <CheckCircle className="h-6 w-6 mr-3 text-green-600" />
-                ) : (
-                  <AlertCircle className="h-6 w-6 mr-3 text-red-600" />
-                )}
-                <span className="font-semibold text-lg">{message.text}</span>
-              </div>
-            );
+            console.log('TCC_DEBUG: Message truthy check:', !!message);
+            if (message) {
+              console.log('TCC_DEBUG: Rendering message with type:', message.type, 'text:', message.text);
+              return (
+                <div 
+                  className={`mb-6 p-6 rounded-lg flex items-center border-4 ${
+                    message.type === 'success' 
+                      ? 'bg-green-200 text-green-900 border-green-600 shadow-2xl' 
+                      : 'bg-red-200 text-red-900 border-red-600 shadow-2xl'
+                  }`} 
+                  style={{
+                    zIndex: 9999, 
+                    position: 'relative',
+                    minHeight: '60px',
+                    fontSize: '18px',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  {message.type === 'success' ? (
+                    <CheckCircle className="h-8 w-8 mr-4 text-green-700" />
+                  ) : (
+                    <AlertCircle className="h-8 w-8 mr-4 text-red-700" />
+                  )}
+                  <span className="text-xl font-bold">{message.text}</span>
+                </div>
+              );
+            }
+            return null;
           })()}
 
           <div className="space-y-6">

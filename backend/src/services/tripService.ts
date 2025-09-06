@@ -387,14 +387,14 @@ export class TripService {
         phoneNumber: ''
       };
 
-      if (settings?.metricValue) {
+      if (settings?.metricValue && typeof settings.metricValue === 'object') {
         // Ensure emailAddress and phoneNumber are always strings
         const metricValue = settings.metricValue as any;
         return {
           ...defaultSettings,
-          ...metricValue,
-          emailAddress: metricValue.emailAddress || '',
-          phoneNumber: metricValue.phoneNumber || ''
+          ...(typeof metricValue === 'object' ? metricValue : {}),
+          emailAddress: metricValue?.emailAddress || '',
+          phoneNumber: metricValue?.phoneNumber || ''
         };
       }
 
