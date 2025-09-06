@@ -45,22 +45,22 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
     if (user.userType === 'ADMIN') {
       return [
         ...baseNavigation,
-        { name: 'Hospitals', href: '/dashboard/hospitals', icon: Building2 },
-        { name: 'EMS Agencies', href: '/dashboard/agencies', icon: Truck },
-        { name: 'Facilities', href: '/dashboard/facilities', icon: MapPin },
-        { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
+        { name: 'Hospitals', href: 'hospitals', icon: Building2 },
+        { name: 'EMS Agencies', href: 'agencies', icon: Truck },
+        { name: 'Facilities', href: 'facilities', icon: MapPin },
+        { name: 'Analytics', href: 'analytics', icon: BarChart3 },
       ];
     } else if (user.userType === 'HOSPITAL') {
       return [
         ...baseNavigation,
-        { name: 'Create Trip', href: '/dashboard/healthcare-portal', icon: Plus },
-        { name: 'My Trips', href: '/dashboard/my-trips', icon: ClipboardList },
+        { name: 'Create Trip', href: 'healthcare-portal', icon: Plus },
+        { name: 'My Trips', href: 'my-trips', icon: ClipboardList },
       ];
     } else if (user.userType === 'EMS') {
       return [
         ...baseNavigation,
-        { name: 'Available Trips', href: '/dashboard/ems-dashboard', icon: Truck },
-        { name: 'My Assignments', href: '/dashboard/my-assignments', icon: ClipboardList },
+        { name: 'Available Trips', href: 'ems-dashboard', icon: Truck },
+        { name: 'My Assignments', href: 'my-assignments', icon: ClipboardList },
       ];
     }
 
