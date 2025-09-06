@@ -299,13 +299,15 @@ router.put('/notifications/settings', authenticateAdmin, async (req: Authenticat
       });
     }
 
-    const { emailNotifications, newTripAlerts, statusUpdates, emailAddress } = req.body;
+    const { emailNotifications, smsNotifications, newTripAlerts, statusUpdates, emailAddress, phoneNumber } = req.body;
 
     const settings = {
       emailNotifications: emailNotifications !== undefined ? emailNotifications : true,
+      smsNotifications: smsNotifications !== undefined ? smsNotifications : true,
       newTripAlerts: newTripAlerts !== undefined ? newTripAlerts : true,
       statusUpdates: statusUpdates !== undefined ? statusUpdates : true,
-      emailAddress: emailAddress || null
+      emailAddress: emailAddress || null,
+      phoneNumber: phoneNumber || null
     };
 
     const result = await tripService.updateNotificationSettings(userId, settings);
@@ -357,6 +359,38 @@ router.post('/test-email', authenticateAdmin, async (req: AuthenticatedRequest, 
 
   } catch (error) {
     console.error('TCC_DEBUG: Test email service error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+});
+
+/**
+ * POST /api/trips/test-sms
+ * Test SMS service connection
+ */
+router.post('/test-sms', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
+  try {
+    console.log('TCC_DEBUG: Test SMS service request');
+    
+    const emailService = (await import('../services/emailService')).default;
+    const isConnected = await emailService.testSMSConnection();
+
+    if (isConnected) {
+      res.json({
+        success: true,
+        message: 'SMS service connection successful'
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        error: 'SMS service connection failed'
+      });
+    }
+
+  } catch (error) {
+    console.error('TCC_DEBUG: Test SMS service error:', error);
     res.status(500).json({
       success: false,
       error: 'Internal server error'

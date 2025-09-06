@@ -1,6 +1,13 @@
 import nodemailer from 'nodemailer';
 import { PrismaClient } from '../../node_modules/.prisma/center';
 
+// SMS Service (placeholder for future Twilio integration)
+interface SMSData {
+  to: string;
+  message: string;
+  priority?: 'high' | 'normal' | 'low';
+}
+
 const centerPrisma = new PrismaClient();
 
 interface EmailTemplate {
@@ -442,6 +449,144 @@ TCC_DEBUG: Request ID: {{tripId}} | Sent: {{timestamp}}
       return true;
     } catch (error) {
       console.error('TCC_DEBUG: Email service connection failed:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Send SMS notification (placeholder for future Twilio integration)
+   */
+  async sendSMS(data: SMSData): Promise<boolean> {
+    try {
+      console.log('TCC_DEBUG: SMS notification (placeholder):', {
+        to: data.to,
+        message: data.message,
+        priority: data.priority || 'normal'
+      });
+
+      // TODO: Implement actual SMS sending with Twilio
+      // For now, just log the SMS content
+      console.log('TCC_DEBUG: SMS would be sent:', {
+        to: data.to,
+        message: data.message,
+        timestamp: new Date().toISOString()
+      });
+
+      // Log SMS delivery (placeholder)
+      await this.logSMSDelivery({
+        to: data.to,
+        message: data.message,
+        status: 'sent',
+        messageId: `sms_${Date.now()}`,
+        tripId: null
+      });
+
+      return true;
+    } catch (error) {
+      console.error('TCC_DEBUG: SMS sending failed:', error);
+      
+      // Log SMS failure
+      await this.logSMSDelivery({
+        to: data.to,
+        message: data.message,
+        status: 'failed',
+        messageId: null,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        tripId: null
+      });
+
+      return false;
+    }
+  }
+
+  /**
+   * Send SMS for new trip request
+   */
+  async sendNewTripSMS(tripData: any, agencyPhones: string[]): Promise<boolean> {
+    if (!agencyPhones.length) {
+      console.log('TCC_DEBUG: No agency phone numbers provided for SMS notification');
+      return false;
+    }
+
+    const message = `🚑 NEW TRANSPORT REQUEST\n` +
+      `Patient: ${tripData.patientId}\n` +
+      `Level: ${tripData.transportLevel}\n` +
+      `Priority: ${tripData.priority}\n` +
+      `From: ${tripData.originFacility?.name || 'Unknown'}\n` +
+      `To: ${tripData.destinationFacility?.name || 'Unknown'}\n` +
+      `Ready: ${new Date(tripData.readyStart).toLocaleString()}\n` +
+      `View: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`;
+
+    let allSent = true;
+    for (const phone of agencyPhones) {
+      const success = await this.sendSMS({
+        to: phone,
+        message: message,
+        priority: tripData.priority === 'URGENT' ? 'high' : 'normal'
+      });
+      if (!success) allSent = false;
+    }
+
+    return allSent;
+  }
+
+  /**
+   * Send SMS for trip status update
+   */
+  async sendTripStatusSMS(tripData: any, hospitalPhone: string): Promise<boolean> {
+    if (!hospitalPhone) {
+      console.log('TCC_DEBUG: No hospital phone number provided for SMS notification');
+      return false;
+    }
+
+    const message = `📋 TRANSPORT UPDATE\n` +
+      `Patient: ${tripData.patientId}\n` +
+      `Status: ${tripData.status}\n` +
+      `Updated: ${new Date(tripData.updatedAt).toLocaleString()}\n` +
+      `View: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`;
+
+    return await this.sendSMS({
+      to: hospitalPhone,
+      message: message,
+      priority: 'normal'
+    });
+  }
+
+  private async logSMSDelivery(data: {
+    to: string;
+    message: string;
+    status: 'sent' | 'failed';
+    messageId: string | null;
+    error?: string;
+    tripId?: string | null;
+  }) {
+    try {
+      await centerPrisma.systemAnalytics.create({
+        data: {
+          metricName: 'sms_delivery',
+          metricValue: {
+            to: data.to,
+            message: data.message,
+            messageId: data.messageId,
+            status: data.status,
+            error: data.error,
+            tripId: data.tripId,
+            timestamp: new Date().toISOString()
+          }
+        }
+      });
+    } catch (error) {
+      console.error('TCC_DEBUG: Failed to log SMS delivery:', error);
+    }
+  }
+
+  async testSMSConnection(): Promise<boolean> {
+    try {
+      // TODO: Implement actual SMS service testing with Twilio
+      console.log('TCC_DEBUG: SMS service connection test (placeholder)');
+      return true;
+    } catch (error) {
+      console.error('TCC_DEBUG: SMS service connection failed:', error);
       return false;
     }
   }

@@ -3,22 +3,27 @@ import { Bell, Mail, Settings, CheckCircle, AlertCircle } from 'lucide-react';
 
 interface NotificationSettings {
   emailNotifications: boolean;
+  smsNotifications: boolean;
   newTripAlerts: boolean;
   statusUpdates: boolean;
   emailAddress: string | null;
+  phoneNumber: string | null;
 }
 
 const NotificationSettings: React.FC = () => {
   const [settings, setSettings] = useState<NotificationSettings>({
     emailNotifications: true,
+    smsNotifications: true,
     newTripAlerts: true,
     statusUpdates: true,
-    emailAddress: null
+    emailAddress: null,
+    phoneNumber: null
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [emailTestStatus, setEmailTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
+  const [smsTestStatus, setSmsTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
 
   useEffect(() => {
     fetchSettings();
@@ -62,13 +67,19 @@ const NotificationSettings: React.FC = () => {
 
       if (response.ok) {
         setMessage({ type: 'success', text: 'Notification settings saved successfully!' });
+        // Clear message after 3 seconds
+        setTimeout(() => setMessage(null), 3000);
       } else {
         const errorData = await response.json();
         setMessage({ type: 'error', text: errorData.error || 'Failed to save settings' });
+        // Clear error message after 5 seconds
+        setTimeout(() => setMessage(null), 5000);
       }
     } catch (error) {
       console.error('TCC_DEBUG: Error saving notification settings:', error);
       setMessage({ type: 'error', text: 'Failed to save settings' });
+      // Clear error message after 5 seconds
+      setTimeout(() => setMessage(null), 5000);
     } finally {
       setSaving(false);
     }
@@ -100,6 +111,35 @@ const NotificationSettings: React.FC = () => {
       console.error('TCC_DEBUG: Error testing email connection:', error);
       setEmailTestStatus('error');
       setMessage({ type: 'error', text: 'Email service connection failed' });
+    }
+  };
+
+  const testSMSConnection = async () => {
+    setSmsTestStatus('testing');
+    setMessage(null);
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/trips/test-sms', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        setSmsTestStatus('success');
+        setMessage({ type: 'success', text: 'SMS service connection successful!' });
+      } else {
+        setSmsTestStatus('error');
+        const errorData = await response.json();
+        setMessage({ type: 'error', text: errorData.error || 'SMS service connection failed' });
+      }
+    } catch (error) {
+      console.error('TCC_DEBUG: Error testing SMS connection:', error);
+      setSmsTestStatus('error');
+      setMessage({ type: 'error', text: 'SMS service connection failed' });
     }
   };
 
@@ -190,6 +230,47 @@ const NotificationSettings: React.FC = () => {
               </div>
             )}
 
+            {/* SMS Notifications Toggle */}
+            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div className="flex items-center">
+                <Bell className="h-5 w-5 text-gray-600 mr-3" />
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900">SMS Notifications</h3>
+                  <p className="text-sm text-gray-600">
+                    Receive SMS text messages for urgent transport requests
+                  </p>
+                </div>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={settings.smsNotifications}
+                  onChange={(e) => handleSettingChange('smsNotifications', e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+              </label>
+            </div>
+
+            {/* Phone Number */}
+            {settings.smsNotifications && (
+              <div className="p-4 bg-green-50 rounded-lg">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Phone Number
+                </label>
+                <input
+                  type="tel"
+                  value={settings.phoneNumber || ''}
+                  onChange={(e) => handleSettingChange('phoneNumber', e.target.value)}
+                  placeholder="Enter your phone number (e.g., +1234567890)"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                />
+                <p className="text-xs text-gray-600 mt-1">
+                  This phone number will receive SMS notifications for urgent transport requests
+                </p>
+              </div>
+            )}
+
             {/* New Trip Alerts */}
             <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
               <div className="flex items-center">
@@ -245,44 +326,87 @@ const NotificationSettings: React.FC = () => {
             </div>
           </div>
 
-          {/* Email Service Test */}
-          <div className="mt-8 p-4 bg-yellow-50 rounded-lg">
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Email Service Test</h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Test the email service connection to ensure notifications are working properly.
-            </p>
-            <button
-              onClick={testEmailConnection}
-              disabled={emailTestStatus === 'testing'}
-              className={`px-4 py-2 rounded-md text-sm font-medium ${
-                emailTestStatus === 'testing'
-                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  : emailTestStatus === 'success'
-                  ? 'bg-green-600 text-white hover:bg-green-700'
-                  : emailTestStatus === 'error'
-                  ? 'bg-red-600 text-white hover:bg-red-700'
-                  : 'bg-blue-600 text-white hover:bg-blue-700'
-              }`}
-            >
-              {emailTestStatus === 'testing' ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white inline-block mr-2"></div>
-                  Testing...
-                </>
-              ) : emailTestStatus === 'success' ? (
-                <>
-                  <CheckCircle className="h-4 w-4 inline-block mr-2" />
-                  Connection Successful
-                </>
-              ) : emailTestStatus === 'error' ? (
-                <>
-                  <AlertCircle className="h-4 w-4 inline-block mr-2" />
-                  Connection Failed
-                </>
-              ) : (
-                'Test Email Connection'
-              )}
-            </button>
+          {/* Service Tests */}
+          <div className="mt-8 space-y-4">
+            {/* Email Service Test */}
+            <div className="p-4 bg-yellow-50 rounded-lg">
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Email Service Test</h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Test the email service connection to ensure notifications are working properly.
+              </p>
+              <button
+                onClick={testEmailConnection}
+                disabled={emailTestStatus === 'testing'}
+                className={`px-4 py-2 rounded-md text-sm font-medium ${
+                  emailTestStatus === 'testing'
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : emailTestStatus === 'success'
+                    ? 'bg-green-600 text-white hover:bg-green-700'
+                    : emailTestStatus === 'error'
+                    ? 'bg-red-600 text-white hover:bg-red-700'
+                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                }`}
+              >
+                {emailTestStatus === 'testing' ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white inline-block mr-2"></div>
+                    Testing...
+                  </>
+                ) : emailTestStatus === 'success' ? (
+                  <>
+                    <CheckCircle className="h-4 w-4 inline-block mr-2" />
+                    Connection Successful
+                  </>
+                ) : emailTestStatus === 'error' ? (
+                  <>
+                    <AlertCircle className="h-4 w-4 inline-block mr-2" />
+                    Connection Failed
+                  </>
+                ) : (
+                  'Test Email Connection'
+                )}
+              </button>
+            </div>
+
+            {/* SMS Service Test */}
+            <div className="p-4 bg-green-50 rounded-lg">
+              <h3 className="text-lg font-medium text-gray-900 mb-2">SMS Service Test</h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Test the SMS service connection (placeholder for future Twilio integration).
+              </p>
+              <button
+                onClick={testSMSConnection}
+                disabled={smsTestStatus === 'testing'}
+                className={`px-4 py-2 rounded-md text-sm font-medium ${
+                  smsTestStatus === 'testing'
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : smsTestStatus === 'success'
+                    ? 'bg-green-600 text-white hover:bg-green-700'
+                    : smsTestStatus === 'error'
+                    ? 'bg-red-600 text-white hover:bg-red-700'
+                    : 'bg-green-600 text-white hover:bg-green-700'
+                }`}
+              >
+                {smsTestStatus === 'testing' ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white inline-block mr-2"></div>
+                    Testing...
+                  </>
+                ) : smsTestStatus === 'success' ? (
+                  <>
+                    <CheckCircle className="h-4 w-4 inline-block mr-2" />
+                    Connection Successful
+                  </>
+                ) : smsTestStatus === 'error' ? (
+                  <>
+                    <AlertCircle className="h-4 w-4 inline-block mr-2" />
+                    Connection Failed
+                  </>
+                ) : (
+                  'Test SMS Connection'
+                )}
+              </button>
+            </div>
           </div>
 
           {/* Save Button */}

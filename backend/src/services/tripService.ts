@@ -232,7 +232,7 @@ export class TripService {
     try {
       console.log('TCC_DEBUG: Sending new trip notifications for:', trip.id);
       
-      // Get all active EMS agencies with email addresses
+      // Get all active EMS agencies with email addresses and phone numbers
       const agencies = await emsPrisma.eMSAgency.findMany({
         where: {
           isActive: true,
@@ -240,6 +240,7 @@ export class TripService {
         },
         select: {
           email: true,
+          phone: true,
           name: true,
         },
       });
@@ -248,18 +249,32 @@ export class TripService {
         .filter((agency: any) => agency.email)
         .map((agency: any) => agency.email!);
 
-      if (agencyEmails.length === 0) {
+      const agencyPhones = agencies
+        .filter((agency: any) => agency.phone)
+        .map((agency: any) => agency.phone!);
+
+      // Send email notifications
+      if (agencyEmails.length > 0) {
+        const emailSuccess = await emailService.sendNewTripNotification(trip, agencyEmails);
+        if (emailSuccess) {
+          console.log('TCC_DEBUG: New trip email notifications sent successfully');
+        } else {
+          console.log('TCC_DEBUG: Failed to send new trip email notifications');
+        }
+      } else {
         console.log('TCC_DEBUG: No agency emails found for notifications');
-        return;
       }
 
-      // Send notification to all agencies
-      const success = await emailService.sendNewTripNotification(trip, agencyEmails);
-      
-      if (success) {
-        console.log('TCC_DEBUG: New trip notifications sent successfully');
+      // Send SMS notifications
+      if (agencyPhones.length > 0) {
+        const smsSuccess = await emailService.sendNewTripSMS(trip, agencyPhones);
+        if (smsSuccess) {
+          console.log('TCC_DEBUG: New trip SMS notifications sent successfully');
+        } else {
+          console.log('TCC_DEBUG: Failed to send new trip SMS notifications');
+        }
       } else {
-        console.log('TCC_DEBUG: Failed to send new trip notifications');
+        console.log('TCC_DEBUG: No agency phone numbers found for SMS notifications');
       }
     } catch (error) {
       console.error('TCC_DEBUG: Error sending new trip notifications:', error);
@@ -273,15 +288,17 @@ export class TripService {
     try {
       console.log('TCC_DEBUG: Sending status update notifications for:', trip.id, 'Status:', newStatus);
       
-      // Get hospital email from the facility
+      // Get hospital email and phone from the facility
       const hospitalEmail = trip.originFacility?.email;
+      const hospitalPhone = trip.originFacility?.phone;
       
-      if (!hospitalEmail) {
-        console.log('TCC_DEBUG: No hospital email found for status update notification');
+      if (!hospitalEmail && !hospitalPhone) {
+        console.log('TCC_DEBUG: No hospital contact information found for status update notification');
         return;
       }
 
-      let success = false;
+      let emailSuccess = false;
+      let smsSuccess = false;
 
       // Send different notifications based on status
       switch (newStatus) {
@@ -303,13 +320,29 @@ export class TripService {
             assignedUnit: unit
           };
 
-          success = await emailService.sendTripAcceptedNotification(tripWithAgency, hospitalEmail);
+          // Send email notification
+          if (hospitalEmail) {
+            emailSuccess = await emailService.sendTripAcceptedNotification(tripWithAgency, hospitalEmail);
+          }
+
+          // Send SMS notification
+          if (hospitalPhone) {
+            smsSuccess = await emailService.sendTripStatusSMS(trip, hospitalPhone);
+          }
           break;
         
         case 'IN_PROGRESS':
         case 'COMPLETED':
         case 'CANCELLED':
-          success = await emailService.sendTripStatusUpdate(trip, hospitalEmail);
+          // Send email notification
+          if (hospitalEmail) {
+            emailSuccess = await emailService.sendTripStatusUpdate(trip, hospitalEmail);
+          }
+
+          // Send SMS notification
+          if (hospitalPhone) {
+            smsSuccess = await emailService.sendTripStatusSMS(trip, hospitalPhone);
+          }
           break;
         
         default:
@@ -317,8 +350,11 @@ export class TripService {
           return;
       }
 
-      if (success) {
-        console.log('TCC_DEBUG: Status update notifications sent successfully');
+      if (emailSuccess || smsSuccess) {
+        console.log('TCC_DEBUG: Status update notifications sent successfully', {
+          email: emailSuccess,
+          sms: smsSuccess
+        });
       } else {
         console.log('TCC_DEBUG: Failed to send status update notifications');
       }
@@ -344,17 +380,21 @@ export class TripService {
 
       return settings?.metricValue || {
         emailNotifications: true,
+        smsNotifications: true,
         newTripAlerts: true,
         statusUpdates: true,
-        emailAddress: null
+        emailAddress: null,
+        phoneNumber: null
       };
     } catch (error) {
       console.error('TCC_DEBUG: Error getting notification settings:', error);
       return {
         emailNotifications: true,
+        smsNotifications: true,
         newTripAlerts: true,
         statusUpdates: true,
-        emailAddress: null
+        emailAddress: null,
+        phoneNumber: null
       };
     }
   }
