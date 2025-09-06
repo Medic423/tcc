@@ -5341,11 +5341,301 @@ Let me check the current deployment status and see what's happening:
 
 ---
 
+```bash
+git log --oneline -5
+```
+
+```
+
+7b23041 (HEAD -> production, origin/production) fix:
+Add root endpoint and move test endpoints after API r
+outes
+
+4b2c9fb feat: Add simple test endpoint to verify API
+routing
+
+fba82e1 fix: Move database test endpoint before API r
+outes to prevent 404
+
+c7455b1 feat: Add database test endpoint for debuggin
+g connection issues
+
+9cfa6cc fix: Move database initialization to backgrou
+nd and update production.env with correct DATABASE_UR
+L
+
+```
+
+---
+
+The commits are there. Let me check if there's an issue with the build process. Let me try building locally to see if there are any errors:
 
 
 ---
 
+```bash
+cd backend && npm run build:prod
+```
 
+```
+
+
+> tcc-backend@1.0.0 build:prod
+> prisma generate --schema=prisma/schema-production.p
+risma && tsc
+
+
+Environment variables loaded from .env
+Prisma schema loaded from prisma/schema-production.pr
+isma
+
+
+✔ Generated Prisma Client (v5.22.0) to ./node_modules
+/@prisma/client in 37ms
+
+
+Start by importing your Prisma Client (See: https://p
+ris.ly/d/importing-client)
+
+
+Tip: Interested in query caching in just a few lines
+of code? Try Accelerate today! https://pris.ly/tip-3-
+accelerate
+
+
+src/index.ts:89:26 - error TS2304: Cannot find name '
+prisma'.
+
+
+89     const result = await prisma.$queryRaw`SELECT v
+ersion() as version, now() as current_time`;
+
+                            ~~~~~~
+
+
+Found 1 error in src/index.ts:89
+
+```
+
+---
+
+Found the issue! There's a TypeScript error - `prisma` is not defined in the database test endpoint. I need to import it or use the databaseManager. Let me fix this:
+
+
+---
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/backend/src/index.ts</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -87,5 +87,5 @@
+  app.get('/api/test-db', async (req, res) => {
+    try {
+-     const result = await prisma.$queryRaw`SELECT version() as version, now() as current_time`;
++     const result = await databaseManager.prisma.$queryRaw`SELECT version() as version, now() as current_time`;
+      res.json({
+        success: true,
+```
+
+</details>
+
+---
+
+Now let me test the build again:
+
+
+---
+
+```bash
+npm run build:prod
+```
+
+```
+
+
+> tcc-backend@1.0.0 build:prod
+> prisma generate --schema=prisma/schema-production.p
+risma && tsc
+
+
+Environment variables loaded from .env
+Prisma schema loaded from prisma/schema-production.pr
+isma
+
+
+✔ Generated Prisma Client (v5.22.0) to ./node_modules
+/@prisma/client in 28ms
+
+
+Start by importing your Prisma Client (See: https://p
+ris.ly/d/importing-client)
+
+
+Help us improve the Prisma ORM for everyone. Share yo
+ur feedback in a short 2-min survey: https://pris.ly/
+orm/survey/release-5-22
+
+
+src/index.ts:89:42 - error TS2341: Property 'prisma'
+is private and only accessible within class 'Database
+Manager'.
+
+
+89     const result = await databaseManager.prisma.$q
+ueryRaw`SELECT version() as version, now() as current
+_time`;
+
+                                            ~~~~~~
+
+
+Found 1 error in src/index.ts:89
+
+```
+
+---
+
+The `prisma` property is private. Let me check the databaseManager to see how to access the prisma client:
+
+
+---
+
+Read file: undefined
+
+---
+
+I need to use `getPrismaClient()` method. Let me fix this:
+
+
+---
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/backend/src/index.ts</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -87,5 +87,5 @@
+  app.get('/api/test-db', async (req, res) => {
+    try {
+-     const result = await databaseManager.prisma.$queryRaw`SELECT version() as version, now() as current_time`;
++     const result = await databaseManager.getPrismaClient().$queryRaw`SELECT version() as version, now() as current_time`;
+      res.json({
+        success: true,
+```
+
+</details>
+
+---
+
+Now let me test the build again:
+
+
+---
+
+```bash
+npm run build:prod
+```
+
+```
+
+
+> tcc-backend@1.0.0 build:prod
+> prisma generate --schema=prisma/schema-production.p
+risma && tsc
+
+
+Environment variables loaded from .env
+Prisma schema loaded from prisma/schema-production.pr
+isma
+
+
+✔ Generated Prisma Client (v5.22.0) to ./node_modules
+/@prisma/client in 31ms
+
+
+Start by importing your Prisma Client (See: https://p
+ris.ly/d/importing-client)
+
+
+Help us improve the Prisma ORM for everyone. Share yo
+ur feedback in a short 2-min survey: https://pris.ly/
+orm/survey/release-5-22
+
+
+```
+
+---
+
+Great! The build is now successful. Let me commit and push this fix:
+
+
+---
+
+```bash
+cd .. && git add . && git commit -m "fix: Use getPrismaClient() method for database test endpoint"
+```
+
+```
+
+[production ec82874] fix: Use getPrismaClient() metho
+d for database test endpoint
+
+ 3 files changed, 372 insertions(+), 1 deletion(-)
+```
+
+---
+
+```bash
+git push origin production
+```
+
+```
+
+Enumerating objects: 21, done.
+Counting objects: 100% (21/21), done.
+Delta compression using up to 14 threads
+Compressing objects: 100% (11/11), done.
+Writing objects: 100% (11/11), 2.70 KiB | 2.70 MiB/s,
+ done.
+
+Total 11 (delta 8), reused 0 (delta 0), pack-reused 0
+remote: Resolving deltas: 100% (8/8), completed with
+8 local objects.
+
+To https://github.com/Medic423/tcc.git
+   7b23041..ec82874  production -> production
+```
+
+---
+
+## �� **Fixed TypeScript Build Error**
+
+**What I fixed:**
+1. ✅ **TypeScript error**: Used `databaseManager.getPrismaClient()` instead of `databaseManager.prisma`
+2. ✅ **Build now succeeds**: No more compilation errors
+3. ✅ **Deployment should work**: The build was failing, preventing deployment
+
+**The issue was:**
+- The build was failing due to a TypeScript error
+- Render couldn't deploy the broken build
+- That's why all endpoints were returning "Endpoint not found"
+
+**Now the deployment should work! Try these endpoints:**
+
+1. **Root endpoint**: `https://tcc-backend-l8u8.onrender.com/`
+2. **API test**: `https://tcc-backend-l8u8.onrender.com/api/test`
+3. **Database test**: `https://tcc-backend-l8u8.onrender.com/api/test-db`
+4. **Health check**: `https://tcc-backend-l8u8.onrender.com/health`
+
+**The build should now succeed and the endpoints should work!** ��
+
+This was the root cause - the TypeScript compilation was failing, so Render couldn't deploy the updated code. Now that it builds successfully, the deployment should work properly!
 
 ---
 

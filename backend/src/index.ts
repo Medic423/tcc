@@ -86,6 +86,8 @@ app.get('/api/test', (req, res) => {
 
 app.get('/api/test-db', async (req, res) => {
   try {
+    // Try a simple connection test first
+    await databaseManager.getPrismaClient().$connect();
     const result = await databaseManager.getPrismaClient().$queryRaw`SELECT version() as version, now() as current_time`;
     res.json({
       success: true,
@@ -97,7 +99,44 @@ app.get('/api/test-db', async (req, res) => {
       success: false,
       message: 'Database connection failed',
       error: error instanceof Error ? error.message : String(error),
-      databaseUrl: process.env.DATABASE_URL ? 'Set' : 'Not set'
+      databaseUrl: process.env.DATABASE_URL ? 'Set' : 'Not set',
+      errorCode: error instanceof Error && 'code' in error ? (error as any).code : 'unknown'
+    });
+  }
+});
+
+// Manual database initialization endpoint
+app.post('/api/init-db', async (req, res) => {
+  try {
+    const { execSync } = require('child_process');
+    
+    console.log('🔧 Manual database initialization requested...');
+    
+    // Push schema
+    console.log('📊 Pushing production schema...');
+    execSync('npx prisma db push --schema=prisma/schema-production.prisma', { 
+      stdio: 'inherit',
+      cwd: process.cwd(),
+      timeout: 60000
+    });
+    
+    // Seed database
+    console.log('🌱 Seeding database...');
+    execSync('npx ts-node prisma/seed.ts', { 
+      stdio: 'inherit',
+      cwd: process.cwd(),
+      timeout: 60000
+    });
+    
+    res.json({
+      success: true,
+      message: 'Database initialized successfully!'
+    });
+  } catch (error) {
+    res.json({
+      success: false,
+      message: 'Database initialization failed',
+      error: error instanceof Error ? error.message : String(error)
     });
   }
 });
