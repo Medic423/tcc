@@ -10,12 +10,12 @@ try {
   process.chdir(path.join(__dirname));
   
   console.log('📊 Generating Prisma clients...');
-  execSync('npx prisma generate --schema=prisma/schema.prisma', { stdio: 'inherit' });
+  execSync('npx prisma generate --schema=prisma/schema-center.prisma', { stdio: 'inherit' });
   execSync('npx prisma generate --schema=prisma/schema-hospital.prisma', { stdio: 'inherit' });
   execSync('npx prisma generate --schema=prisma/schema-ems.prisma', { stdio: 'inherit' });
   
   console.log('🗄️ Pushing database schema...');
-  execSync('npx prisma db push --schema=prisma/schema.prisma', { stdio: 'inherit' });
+  execSync('npx prisma db push --schema=prisma/schema-center.prisma', { stdio: 'inherit' });
   execSync('npx prisma db push --schema=prisma/schema-hospital.prisma', { stdio: 'inherit' });
   execSync('npx prisma db push --schema=prisma/schema-ems.prisma', { stdio: 'inherit' });
   
