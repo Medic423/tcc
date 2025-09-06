@@ -365,12 +365,12 @@ router.post('/test-email', authenticateAdmin, async (req: AuthenticatedRequest, 
       });
     }
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('TCC_DEBUG: Test email service error:', error);
-    console.error('TCC_DEBUG: Error stack:', error.stack);
+    console.error('TCC_DEBUG: Error stack:', error?.stack);
     res.status(500).json({
       success: false,
-      error: 'Internal server error: ' + error.message
+      error: 'Internal server error: ' + (error?.message || 'Unknown error')
     });
   }
 });
@@ -406,12 +406,12 @@ router.post('/test-sms', authenticateAdmin, async (req: AuthenticatedRequest, re
       });
     }
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('TCC_DEBUG: Test SMS service error:', error);
-    console.error('TCC_DEBUG: Error stack:', error.stack);
+    console.error('TCC_DEBUG: Error stack:', error?.stack);
     res.status(500).json({
       success: false,
-      error: 'Internal server error: ' + error.message
+      error: 'Internal server error: ' + (error?.message || 'Unknown error')
     });
   }
 });
