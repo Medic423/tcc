@@ -2,7 +2,6 @@ import { PrismaClient as HospitalPrismaClient } from '@prisma/hospital';
 import { PrismaClient as EMSPrisaClient } from '@prisma/ems';
 import { PrismaClient as CenterPrismaClient } from '../../node_modules/.prisma/center';
 import emailService from './emailService';
-import { databaseManager } from './databaseManager';
 
 const hospitalPrisma = new HospitalPrismaClient();
 const emsPrisma = new EMSPrisaClient();
@@ -393,8 +392,7 @@ export class TripService {
         const metricValue = settings.metricValue as any;
         
         // Get the user's actual email from the database to ensure consistency
-        const centerDB = databaseManager.getCenterDB();
-        const user = await centerDB.centerUser.findUnique({
+        const user = await centerPrisma.centerUser.findUnique({
           where: { id: userId },
           select: { email: true }
         });

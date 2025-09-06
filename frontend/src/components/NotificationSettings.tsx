@@ -25,6 +25,7 @@ const NotificationSettings: React.FC = () => {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [emailTestStatus, setEmailTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
   const [smsTestStatus, setSmsTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
 
   useEffect(() => {
     fetchSettings();
@@ -59,6 +60,7 @@ const NotificationSettings: React.FC = () => {
   const saveSettings = async () => {
     console.log('TCC_DEBUG: Save button clicked with settings:', settings);
     setSaving(true);
+    setSaveStatus('saving');
     setMessage(null);
 
     try {
@@ -69,20 +71,28 @@ const NotificationSettings: React.FC = () => {
       console.log('TCC_DEBUG: API response status:', response.status);
       console.log('TCC_DEBUG: Settings saved successfully:', response.data);
       
+      setSaveStatus('success');
       const successMessage = { type: 'success' as const, text: 'Notification settings saved successfully!' };
       console.log('TCC_DEBUG: Setting message to:', successMessage);
       setMessage(successMessage);
-      // Clear message after 3 seconds
+      
+      // Reset to idle after 3 seconds
       setTimeout(() => {
         console.log('TCC_DEBUG: Clearing message after timeout');
         setMessage(null);
+        setSaveStatus('idle');
       }, 3000);
     } catch (error: any) {
       console.error('TCC_DEBUG: Error saving notification settings:', error);
+      setSaveStatus('error');
       const errorMessage = error.response?.data?.error || 'Failed to save settings';
       setMessage({ type: 'error', text: errorMessage });
-      // Clear error message after 5 seconds
-      setTimeout(() => setMessage(null), 5000);
+      
+      // Reset to idle after 5 seconds
+      setTimeout(() => {
+        setMessage(null);
+        setSaveStatus('idle');
+      }, 5000);
     } finally {
       setSaving(false);
     }
@@ -433,12 +443,30 @@ const NotificationSettings: React.FC = () => {
             <button
               onClick={saveSettings}
               disabled={saving}
-              className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center"
+              className={`px-6 py-2 rounded-md flex items-center transition-colors duration-200 ${
+                saveStatus === 'success' 
+                  ? 'bg-green-600 text-white' 
+                  : saveStatus === 'error'
+                  ? 'bg-red-600 text-white'
+                  : saveStatus === 'saving'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-blue-600 text-white hover:bg-blue-700'
+              } disabled:bg-gray-400 disabled:cursor-not-allowed`}
             >
-              {saving ? (
+              {saveStatus === 'saving' ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                   Saving...
+                </>
+              ) : saveStatus === 'success' ? (
+                <>
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Saved!
+                </>
+              ) : saveStatus === 'error' ? (
+                <>
+                  <AlertCircle className="h-4 w-4 mr-2" />
+                  Error
                 </>
               ) : (
                 'Save Settings'
