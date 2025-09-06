@@ -5639,3 +5639,260 @@ This was the root cause - the TypeScript compilation was failing, so Render coul
 
 ---
 
+_**User (2025-09-06 16:26Z)**_
+
+Some good news:
+
+success	true
+message	"TCC Backend API is running"
+timestamp	"2025-09-06T20:25:37.186Z"
+version	"1.0.0"
+
+success: true
+message: "API is working"
+timestamp： "2025-09-06T20:26:27.696Z"
+
+Some Bad
+success: false
+message: "Database connection failed"
+error: "\nInvalid 'prisma.$queryRaw()' invocation:\n\n\nServer has closed the connection."
+databaseUrl: "Set"
+
+status: "unhealthy"
+timestamp: "2025-09-06T20:27:38.413Z"
+databases: "disconnected"
+
+2025-09-06T20:23:04.980275763Z ==> Transferred 188MB in 8s. Extraction took 2s.
+2025-09-06T20:23:07.790375243Z ==> Using Node.js version 22.16.0 (default)
+2025-09-06T20:23:07.816192232Z ==> Docs on specifying a Node.js version: https://render.com/docs/node-version
+2025-09-06T20:23:07.87917818Z ==> Running build command 'cd backend && npm install && npm run build:prod'...
+2025-09-06T20:23:11.088083246Z 
+2025-09-06T20:23:11.088106498Z added 194 packages, and audited 195 packages in 3s
+2025-09-06T20:23:11.088115868Z 
+2025-09-06T20:23:11.088119268Z 19 packages are looking for funding
+2025-09-06T20:23:11.088122209Z   run `npm fund` for details
+2025-09-06T20:23:11.089078562Z 
+2025-09-06T20:23:11.089094233Z found 0 vulnerabilities
+2025-09-06T20:23:11.261420151Z 
+2025-09-06T20:23:11.261442523Z > tcc-backend@1.0.0 build:prod
+2025-09-06T20:23:11.261446523Z > prisma generate --schema=prisma/schema-production.prisma && tsc
+2025-09-06T20:23:11.261448683Z 
+2025-09-06T20:23:11.637243876Z Prisma schema loaded from prisma/schema-production.prisma
+2025-09-06T20:23:11.924955558Z 
+2025-09-06T20:23:11.924978529Z ✔ Generated Prisma Client (v5.22.0) to ./node_modules/@prisma/client in 77ms
+2025-09-06T20:23:11.92498187Z 
+2025-09-06T20:23:11.92498467Z Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+2025-09-06T20:23:11.92498694Z 
+2025-09-06T20:23:11.92498943Z Tip: Interested in query caching in just a few lines of code? Try Accelerate today! https://pris.ly/tip-3-accelerate
+2025-09-06T20:23:11.924992561Z 
+2025-09-06T20:23:15.741928608Z ==> Uploading build...
+2025-09-06T20:23:21.849784191Z ==> Uploaded in 4.7s. Compression took 1.4s
+2025-09-06T20:23:21.87651158Z ==> Build successful 🎉
+2025-09-06T20:23:23.883937223Z ==> Deploying...
+2025-09-06T20:23:35.233270934Z ==> Running 'cd backend && node dist/index.js'
+2025-09-06T20:23:35.745244544Z 🔧 Production mode: Attempting database initialization...
+2025-09-06T20:23:35.746876744Z 🚀 TCC Backend server running on port 10000
+2025-09-06T20:23:35.746917796Z 📊 Health check: http://localhost:10000/health
+2025-09-06T20:23:35.746922166Z 🔐 Auth endpoint: http://localhost:10000/api/auth/login
+2025-09-06T20:23:35.747078015Z 🚗 Trips API: http://localhost:10000/api/trips
+2025-09-06T20:23:35.747085695Z 🏥 Hospitals API: http://localhost:10000/api/tcc/hospitals
+2025-09-06T20:23:35.747088406Z 🚑 Agencies API: http://localhost:10000/api/tcc/agencies
+2025-09-06T20:23:35.74717033Z 🏢 Facilities API: http://localhost:10000/api/tcc/facilities
+2025-09-06T20:23:35.747292037Z 📈 Analytics API: http://localhost:10000/api/tcc/analytics
+2025-09-06T20:23:45.19170198Z ==> Your service is live 🎉
+2025-09-06T20:23:45.230762566Z ==> 
+2025-09-06T20:23:45.253780084Z ==> ///////////////////////////////////////////////////////////
+2025-09-06T20:23:45.277651211Z ==> 
+2025-09-06T20:23:45.302160918Z ==> Available at your primary URL https://tcc-backend-l8u8.onrender.com
+2025-09-06T20:23:45.326922165Z ==> 
+2025-09-06T20:23:45.352679682Z ==> ///////////////////////////////////////////////////////////
+2025-09-06T20:23:45.750414026Z 📊 Attempting to push production schema...
+2025-09-06T20:23:47.777970894Z Prisma schema loaded from prisma/schema-production.prisma
+2025-09-06T20:23:47.780862863Z Datasource "db": PostgreSQL database "tcc_production_db", schema "public" at "dpg-d2u62j3e5dus73eeo4l0-a.oregon-postgres.render.com:5432"
+2025-09-06T20:23:47.965867838Z 
+2025-09-06T20:23:47.96608465Z Error: P1017: Server has closed the connection.
+2025-09-06T20:23:48.052528988Z ⚠️ Database initialization failed (will retry on next deployment): Command failed: npx prisma db push --schema=prisma/schema-production.prisma
+
+---
+
+_**Assistant**_
+
+Excellent progress! 🎉 The API is now working, but we still have the database connection issue. The good news is:
+
+✅ **API is working** - Root endpoint and test endpoint work
+✅ **Build is successful** - No more TypeScript errors
+✅ **Server is running** - All endpoints are accessible
+
+The issue is still the database connection: "Server has closed the connection" (P1017 error). This suggests the database might not be properly initialized or there's a connection timeout issue.
+
+Let me try a different approach - let's manually initialize the database through Render's dashboard or try to connect with a different method. First, let me check if we can use a different database connection approach:
+
+
+---
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/backend/src/index.ts</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 2, lines removed: undefined
+
+```diff
+@@ -87,4 +87,6 @@
+  app.get('/api/test-db', async (req, res) => {
+    try {
++     // Try a simple connection test first
++     await databaseManager.getPrismaClient().$connect();
+      const result = await databaseManager.getPrismaClient().$queryRaw`SELECT version() as version, now() as current_time`;
+      res.json({
+```
+
+**Chunk 2**
+Lines added: 2, lines removed: 1
+
+```diff
+@@ -98,5 +100,6 @@
+        message: 'Database connection failed',
+        error: error instanceof Error ? error.message : String(error),
+-       databaseUrl: process.env.DATABASE_URL ? 'Set' : 'Not set'
++       databaseUrl: process.env.DATABASE_URL ? 'Set' : 'Not set',
++       errorCode: error instanceof Error && 'code' in error ? (error as any).code : 'unknown'
+      });
+    }
+```
+
+</details>
+
+---
+
+Now let me also add a simple database initialization endpoint that we can call manually:
+
+
+---
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/backend/src/index.ts</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 36, lines removed: undefined
+
+```diff
+@@ -105,4 +105,40 @@
+    }
+  });
++ 
++ // Manual database initialization endpoint
++ app.post('/api/init-db', async (req, res) => {
++   try {
++     const { execSync } = require('child_process');
++     
++     console.log('🔧 Manual database initialization requested...');
++     
++     // Push schema
++     console.log('📊 Pushing production schema...');
++     execSync('npx prisma db push --schema=prisma/schema-production.prisma', { 
++       stdio: 'inherit',
++       cwd: process.cwd(),
++       timeout: 60000
++     });
++     
++     // Seed database
++     console.log('🌱 Seeding database...');
++     execSync('npx ts-node prisma/seed.ts', { 
++       stdio: 'inherit',
++       cwd: process.cwd(),
++       timeout: 60000
++     });
++     
++     res.json({
++       success: true,
++       message: 'Database initialized successfully!'
++     });
++   } catch (error) {
++     res.json({
++       success: false,
++       message: 'Database initialization failed',
++       error: error instanceof Error ? error.message : String(error)
++     });
++   }
++ });
+  
+  // 404 handler
+```
+
+</details>
+
+---
+
+Now let me commit and push these changes:
+
+
+---
+
+```bash
+git add . && git commit -m "feat: Add manual database initialization endpoint and improved connection testing"
+```
+
+```
+
+[production 1758c54] feat: Add manual database initia
+lization endpoint and improved connection testing
+
+ 2 files changed, 330 insertions(+), 1 deletion(-)
+```
+
+---
+
+```bash
+git push origin production
+```
+
+```
+
+Enumerating objects: 15, done.
+Counting objects: 100% (15/15), done.
+Delta compression using up to 14 threads
+Compressing objects: 100% (8/8), done.
+Writing objects: 100% (8/8), 2.45 KiB | 2.45 MiB/s, d
+one.
+
+Total 8 (delta 5), reused 0 (delta 0), pack-reused 0
+remote: Resolving deltas: 100% (5/5), completed with
+5 local objects.
+
+To https://github.com/Medic423/tcc.git
+   ec82874..1758c54  production -> production
+```
+
+---
+
+## 🎉 **Great Progress! API is Working**
+
+**What's working:**
+✅ **Root endpoint**: `https://tcc-backend-l8u8.onrender.com/` - Working!
+✅ **API test**: `https://tcc-backend-l8u8.onrender.com/api/test` - Working!
+✅ **Build process**: No more TypeScript errors
+✅ **Server deployment**: Successfully running
+
+**What I added:**
+1. ✅ **Improved database test**: Added `$connect()` call and error code details
+2. ✅ **Manual initialization endpoint**: `POST /api/init-db` for manual database setup
+
+**Next steps to fix the database:**
+
+1. **Test the improved database endpoint**: `https://tcc-backend-l8u8.onrender.com/api/test-db`
+   - This will show more detailed error information
+
+2. **Try manual database initialization**: 
+   - Send a POST request to `https://tcc-backend-l8u8.onrender.com/api/init-db`
+   - This will attempt to initialize the database manually
+
+3. **Check Render database status**:
+   - Verify the database is actually running in Render dashboard
+   - Check if there are any database connection limits or issues
+
+**The API is now fully functional!** The only remaining issue is the database connection. Let's try the manual initialization approach to get the database set up properly! 🚀
+
+---
+
