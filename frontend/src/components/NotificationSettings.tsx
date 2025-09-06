@@ -6,8 +6,8 @@ interface NotificationSettings {
   smsNotifications: boolean;
   newTripAlerts: boolean;
   statusUpdates: boolean;
-  emailAddress: string | null;
-  phoneNumber: string | null;
+  emailAddress: string;
+  phoneNumber: string;
 }
 
 const NotificationSettings: React.FC = () => {
@@ -16,8 +16,8 @@ const NotificationSettings: React.FC = () => {
     smsNotifications: true,
     newTripAlerts: true,
     statusUpdates: true,
-    emailAddress: null,
-    phoneNumber: null
+    emailAddress: '',
+    phoneNumber: ''
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -46,7 +46,13 @@ const NotificationSettings: React.FC = () => {
 
       if (response.ok) {
         const data = await response.json();
-        setSettings(data.data);
+        // Ensure emailAddress and phoneNumber are always strings, not null
+        const settingsData = {
+          ...data.data,
+          emailAddress: data.data.emailAddress || '',
+          phoneNumber: data.data.phoneNumber || ''
+        };
+        setSettings(settingsData);
       }
     } catch (error) {
       console.error('TCC_DEBUG: Error fetching notification settings:', error);
@@ -78,9 +84,14 @@ const NotificationSettings: React.FC = () => {
       if (response.ok) {
         const responseData = await response.json();
         console.log('TCC_DEBUG: Settings saved successfully:', responseData);
-        setMessage({ type: 'success', text: 'Notification settings saved successfully!' });
+        const successMessage = { type: 'success' as const, text: 'Notification settings saved successfully!' };
+        console.log('TCC_DEBUG: Setting message to:', successMessage);
+        setMessage(successMessage);
         // Clear message after 3 seconds
-        setTimeout(() => setMessage(null), 3000);
+        setTimeout(() => {
+          console.log('TCC_DEBUG: Clearing message after timeout');
+          setMessage(null);
+        }, 3000);
       } else {
         const errorData = await response.json();
         console.log('TCC_DEBUG: Save failed:', errorData);
@@ -191,20 +202,23 @@ const NotificationSettings: React.FC = () => {
         </div>
 
         <div className="p-6">
-          {message && (
-            <div className={`mb-6 p-4 rounded-lg flex items-center ${
-              message.type === 'success' 
-                ? 'bg-green-50 text-green-800 border border-green-200' 
-                : 'bg-red-50 text-red-800 border border-red-200'
-            }`}>
-              {message.type === 'success' ? (
-                <CheckCircle className="h-5 w-5 mr-2" />
-              ) : (
-                <AlertCircle className="h-5 w-5 mr-2" />
-              )}
-              {message.text}
-            </div>
-          )}
+          {(() => {
+            console.log('TCC_DEBUG: Rendering message section, message state:', message);
+            return message && (
+              <div className={`mb-6 p-4 rounded-lg flex items-center ${
+                message.type === 'success' 
+                  ? 'bg-green-50 text-green-800 border border-green-200' 
+                  : 'bg-red-50 text-red-800 border border-red-200'
+              }`}>
+                {message.type === 'success' ? (
+                  <CheckCircle className="h-5 w-5 mr-2" />
+                ) : (
+                  <AlertCircle className="h-5 w-5 mr-2" />
+                )}
+                {message.text}
+              </div>
+            );
+          })()}
 
           <div className="space-y-6">
             {/* Email Notifications Toggle */}
@@ -237,7 +251,7 @@ const NotificationSettings: React.FC = () => {
                 </label>
                 <input
                   type="email"
-                  value={settings.emailAddress ?? ''}
+                  value={settings.emailAddress}
                   onChange={(e) => handleSettingChange('emailAddress', e.target.value)}
                   placeholder="Enter your email address"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -278,7 +292,7 @@ const NotificationSettings: React.FC = () => {
                 </label>
                 <input
                   type="tel"
-                  value={settings.phoneNumber ?? ''}
+                  value={settings.phoneNumber}
                   onChange={(e) => handleSettingChange('phoneNumber', e.target.value)}
                   placeholder="Enter your phone number (e.g., +1234567890)"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
