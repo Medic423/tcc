@@ -1,11 +1,7 @@
-import { PrismaClient as HospitalPrismaClient } from '@prisma/hospital';
-import { PrismaClient as EMSPrisaClient } from '@prisma/ems';
-import { PrismaClient as CenterPrismaClient } from '@prisma/center';
+import { databaseManager } from './databaseManager';
 import emailService from './emailService';
 
-const hospitalPrisma = new HospitalPrismaClient();
-const emsPrisma = new EMSPrisaClient();
-const centerPrisma = new CenterPrismaClient();
+const prisma = databaseManager.getPrismaClient();
 
 export interface CreateTripRequest {
   patientId: string;
@@ -38,24 +34,17 @@ export class TripService {
     console.log('TCC_DEBUG: Creating trip with data:', data);
     
     try {
-      const trip = await hospitalPrisma.transportRequest.create({
+      const trip = await prisma.trip.create({
         data: {
-          patientId: data.patientId,
-          originFacilityId: data.originFacilityId,
-          destinationFacilityId: data.destinationFacilityId,
-          transportLevel: data.transportLevel,
+          tripNumber: `TRP-${Date.now()}`,
+          patientName: data.patientId, // Using patientId as patientName for now
+          fromLocation: data.originFacilityId,
+          toLocation: data.destinationFacilityId,
+          scheduledTime: new Date(data.readyStart),
+          status: 'PENDING',
           priority: data.priority,
-          specialRequirements: data.specialRequirements,
-          readyStart: new Date(data.readyStart),
-          readyEnd: new Date(data.readyEnd),
-          isolation: data.isolation,
-          bariatric: data.bariatric,
-          createdById: data.createdById || null,
-        },
-        include: {
-          originFacility: true,
-          destinationFacility: true,
-          createdBy: true,
+          notes: data.specialRequirements,
+          assignedTo: null,
         },
       });
 
@@ -98,13 +87,8 @@ export class TripService {
         where.assignedAgencyId = filters.agencyId;
       }
 
-      const trips = await hospitalPrisma.transportRequest.findMany({
+      const trips = await prisma.trip.findMany({
         where,
-        include: {
-          originFacility: true,
-          destinationFacility: true,
-          createdBy: true,
-        },
         orderBy: {
           requestTimestamp: 'desc',
         },
@@ -125,13 +109,8 @@ export class TripService {
     console.log('TCC_DEBUG: Getting trip by ID:', id);
     
     try {
-      const trip = await hospitalPrisma.transportRequest.findUnique({
+      const trip = await prisma.trip.findUnique({
         where: { id },
-        include: {
-          originFacility: true,
-          destinationFacility: true,
-          createdBy: true,
-        },
       });
 
       if (!trip) {
@@ -173,14 +152,9 @@ export class TripService {
         updateData.completionTimestamp = new Date(data.completionTimestamp);
       }
 
-      const trip = await hospitalPrisma.transportRequest.update({
+      const trip = await prisma.trip.update({
         where: { id },
         data: updateData,
-        include: {
-          originFacility: true,
-          destinationFacility: true,
-          createdBy: true,
-        },
       });
 
       console.log('TCC_DEBUG: Trip status updated:', trip.id);
@@ -202,7 +176,7 @@ export class TripService {
     console.log('TCC_DEBUG: Getting available EMS agencies');
     
     try {
-      const agencies = await emsPrisma.eMSAgency.findMany({
+      const agencies = await prisma.agency.findMany({
         where: {
           isActive: true,
           status: 'ACTIVE',
@@ -233,7 +207,7 @@ export class TripService {
       console.log('TCC_DEBUG: Sending new trip notifications for:', trip.id);
       
       // Get all active EMS agencies with email addresses and phone numbers
-      const agencies = await emsPrisma.eMSAgency.findMany({
+      const agencies = await prisma.agency.findMany({
         where: {
           isActive: true,
           status: 'ACTIVE',
@@ -304,20 +278,17 @@ export class TripService {
       switch (newStatus) {
         case 'ACCEPTED':
           // Get agency details for accepted notification
-          const agency = await emsPrisma.eMSAgency.findUnique({
+          const agency = await prisma.agency.findUnique({
             where: { id: trip.assignedAgencyId || '' },
             select: { name: true, phone: true }
           });
           
-          const unit = await emsPrisma.unit.findUnique({
-            where: { id: trip.assignedUnitId || '' },
-            select: { unitNumber: true }
-          });
+          // Unit information not available in unified schema
 
           const tripWithAgency = {
             ...trip,
             assignedAgency: agency,
-            assignedUnit: unit
+            assignedUnit: null // Unit not available in unified schema
           };
 
           // Send email notification
@@ -368,13 +339,10 @@ export class TripService {
    */
   async getNotificationSettings(userId: string) {
     try {
-      const settings = await centerPrisma.systemAnalytics.findFirst({
+      const settings = await prisma.systemAnalytics.findFirst({
         where: {
           metricName: 'notification_settings',
-          metricValue: {
-            path: ['userId'],
-            equals: userId
-          }
+          userId: userId
         }
       });
 
@@ -424,24 +392,24 @@ export class TripService {
    */
   async updateNotificationSettings(userId: string, settings: any) {
     try {
-      await centerPrisma.systemAnalytics.upsert({
+      await prisma.systemAnalytics.upsert({
         where: {
           id: `notification_settings_${userId}`
         },
         update: {
           metricValue: {
-            userId,
             ...settings,
             updatedAt: new Date().toISOString()
-          }
+          },
+          userId: userId
         },
         create: {
           metricName: 'notification_settings',
           metricValue: {
-            userId,
             ...settings,
             createdAt: new Date().toISOString()
-          }
+          },
+          userId: userId
         }
       });
 

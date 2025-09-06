@@ -36,30 +36,34 @@ export interface AgencyListResult {
 
 export class AgencyService {
   async createAgency(data: AgencyData): Promise<any> {
-    const emsDB = databaseManager.getEMSDB();
+    const prisma = databaseManager.getPrismaClient();
     
-    return await emsDB.eMSAgency.create({
+    return await prisma.agency.create({
       data: {
         name: data.name,
-        contactName: data.contactName,
-        phone: data.phone,
-        email: data.email,
-        address: data.address,
-        city: data.city,
-        state: data.state,
-        zipCode: data.zipCode,
-        serviceArea: data.serviceArea,
-        operatingHours: data.operatingHours,
-        capabilities: data.capabilities,
-        pricingStructure: data.pricingStructure,
+        type: 'EMS', // Default type for EMS agencies
+        region: data.serviceArea[0] || 'Unknown', // Use first service area as region
+        contactInfo: {
+          contactName: data.contactName,
+          phone: data.phone,
+          email: data.email,
+          address: data.address,
+          city: data.city,
+          state: data.state,
+          zipCode: data.zipCode,
+          serviceArea: data.serviceArea,
+          operatingHours: data.operatingHours,
+          capabilities: data.capabilities,
+          pricingStructure: data.pricingStructure,
+          status: data.status ?? 'ACTIVE',
+        },
         isActive: data.isActive ?? true,
-        status: data.status ?? 'ACTIVE'
       }
     });
   }
 
   async getAgencies(filters: AgencySearchFilters = {}): Promise<AgencyListResult> {
-    const emsDB = databaseManager.getEMSDB();
+    const prisma = databaseManager.getPrismaClient();
     const { page = 1, limit = 50, ...whereFilters } = filters;
     const skip = (page - 1) * limit;
 
@@ -81,16 +85,13 @@ export class AgencyService {
     }
 
     const [agencies, total] = await Promise.all([
-      emsDB.eMSAgency.findMany({
+      prisma.agency.findMany({
         where,
         orderBy: { name: 'asc' },
         skip,
         take: limit,
-        include: {
-          units: true
-        }
       }),
-      emsDB.eMSAgency.count({ where })
+      prisma.agency.count({ where })
     ]);
 
     return {
@@ -102,44 +103,38 @@ export class AgencyService {
   }
 
   async getAgencyById(id: string): Promise<any | null> {
-    const emsDB = databaseManager.getEMSDB();
-    return await emsDB.eMSAgency.findUnique({
+    const prisma = databaseManager.getPrismaClient();
+    return await prisma.agency.findUnique({
       where: { id },
-      include: {
-        units: true
-      }
     });
   }
 
   async updateAgency(id: string, data: Partial<AgencyData>): Promise<any> {
-    const emsDB = databaseManager.getEMSDB();
-    return await emsDB.eMSAgency.update({
+    const prisma = databaseManager.getPrismaClient();
+    return await prisma.agency.update({
       where: { id },
       data: {
         ...data,
         updatedAt: new Date()
       },
-      include: {
-        units: true
-      }
     });
   }
 
   async deleteAgency(id: string): Promise<void> {
-    const emsDB = databaseManager.getEMSDB();
-    await emsDB.eMSAgency.delete({
+    const prisma = databaseManager.getPrismaClient();
+    await prisma.agency.delete({
       where: { id }
     });
   }
 
   async searchAgencies(query: string): Promise<any[]> {
-    const emsDB = databaseManager.getEMSDB();
-    return await emsDB.eMSAgency.findMany({
+    const prisma = databaseManager.getPrismaClient();
+    return await prisma.agency.findMany({
       where: {
         OR: [
           { name: { contains: query, mode: 'insensitive' } },
-          { contactName: { contains: query, mode: 'insensitive' } },
-          { city: { contains: query, mode: 'insensitive' } }
+          { contactInfo: { path: ['contactName'], string_contains: query } },
+          { contactInfo: { path: ['city'], string_contains: query } }
         ],
         isActive: true
       },

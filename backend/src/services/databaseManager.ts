@@ -1,34 +1,14 @@
-import { PrismaClient as CenterPrismaClient } from '@prisma/center';
-import { PrismaClient as HospitalPrismaClient } from '@prisma/hospital';
-import { PrismaClient as EMSPrismaClient } from '@prisma/ems';
+import { PrismaClient } from '@prisma/client';
 
 class DatabaseManager {
   private static instance: DatabaseManager;
-  private hospitalDB: HospitalPrismaClient;
-  private emsDB: EMSPrismaClient;
-  private centerDB: CenterPrismaClient;
+  private prisma: PrismaClient;
 
   private constructor() {
-    this.hospitalDB = new HospitalPrismaClient({
+    this.prisma = new PrismaClient({
       datasources: {
         db: {
-          url: process.env.DATABASE_URL_HOSPITAL
-        }
-      }
-    });
-
-    this.emsDB = new EMSPrismaClient({
-      datasources: {
-        db: {
-          url: process.env.DATABASE_URL_EMS
-        }
-      }
-    });
-
-    this.centerDB = new CenterPrismaClient({
-      datasources: {
-        db: {
-          url: process.env.DATABASE_URL_CENTER
+          url: process.env.DATABASE_URL
         }
       }
     });
@@ -41,25 +21,26 @@ class DatabaseManager {
     return DatabaseManager.instance;
   }
 
-  public getHospitalDB(): HospitalPrismaClient {
-    return this.hospitalDB;
+  public getPrismaClient(): PrismaClient {
+    return this.prisma;
   }
 
-  public getEMSDB(): EMSPrismaClient {
-    return this.emsDB;
+  // Backward compatibility methods for existing service calls
+  public getCenterDB(): PrismaClient {
+    return this.prisma;
   }
 
-  public getCenterDB(): CenterPrismaClient {
-    return this.centerDB;
+  public getEMSDB(): PrismaClient {
+    return this.prisma;
+  }
+
+  public getHospitalDB(): PrismaClient {
+    return this.prisma;
   }
 
   public async healthCheck(): Promise<boolean> {
     try {
-      await Promise.all([
-        this.hospitalDB.$queryRaw`SELECT 1`,
-        this.emsDB.$queryRaw`SELECT 1`,
-        this.centerDB.$queryRaw`SELECT 1`
-      ]);
+      await this.prisma.$queryRaw`SELECT 1`;
       return true;
     } catch (error) {
       console.error('Database health check failed:', error);
@@ -68,11 +49,7 @@ class DatabaseManager {
   }
 
   public async disconnect(): Promise<void> {
-    await Promise.all([
-      this.hospitalDB.$disconnect(),
-      this.emsDB.$disconnect(),
-      this.centerDB.$disconnect()
-    ]);
+    await this.prisma.$disconnect();
   }
 }
 
