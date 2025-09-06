@@ -49,14 +49,64 @@ npm start
 
 ## Render Deployment
 
-1. **Set Environment Variables in Render Dashboard:**
-   - `DATABASE_URL`: Your PostgreSQL database URL
-   - `JWT_SECRET`: Your JWT secret key
+### Option 1: Using render.yaml (Recommended)
+
+1. **Push the production branch to GitHub**
+2. **Connect your GitHub repository to Render**
+3. **Use the included `render.yaml` configuration file**
+4. **Render will automatically:**
+   - Create a PostgreSQL database
+   - Set up environment variables
+   - Deploy the backend service
+
+### Option 2: Manual Configuration
+
+1. **Create a new Web Service in Render Dashboard:**
+   - **Name:** `tcc-backend`
+   - **Environment:** `Node`
+   - **Region:** `Oregon` (or closest to your users)
+   - **Branch:** `production`
+   - **Root Directory:** `backend`
+
+2. **Set Environment Variables:**
    - `NODE_ENV`: `production`
+   - `PORT`: `5001`
+   - `JWT_SECRET`: Generate a secure random string
+   - `DATABASE_URL`: Your PostgreSQL database URL (from Render database)
+   - `FRONTEND_URL`: `https://your-frontend-app.onrender.com`
+   - `SMTP_HOST`: `smtp.gmail.com`
+   - `SMTP_PORT`: `587`
+   - `SMTP_USER`: Your email address
+   - `SMTP_PASS`: Your app password
 
-2. **Build Command:** `npm run build:prod`
+3. **Build Command:** `npm install && npm run build:prod`
 
-3. **Start Command:** `npm start`
+4. **Start Command:** `npm start`
+
+### Database Setup
+
+1. **Create a PostgreSQL database in Render:**
+   - **Name:** `tcc-database`
+   - **Plan:** `Starter` (free tier)
+   - **Region:** Same as your service
+
+2. **The database will be automatically provisioned with the unified schema**
+
+### Health Check
+
+After deployment, verify the service is running:
+```bash
+curl https://your-backend-app.onrender.com/health
+```
+
+Expected response:
+```json
+{
+  "status": "healthy",
+  "timestamp": "2025-09-06T18:30:55.904Z",
+  "databases": "connected"
+}
+```
 
 ## Key Differences
 

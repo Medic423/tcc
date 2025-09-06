@@ -6,11 +6,14 @@
   "scripts": {
     "dev": "nodemon src/index.ts",
     "build": "prisma generate && tsc",
+    "build:prod": "prisma generate --schema=prisma/schema-production.prisma && tsc",
     "start": "node dist/index.js",
     "setup-db": "node setup-db.js",
     "start:prod": "npm run setup-db && node dist/index.js",
     "db:generate": "prisma generate --schema=prisma/schema-center.prisma && prisma generate --schema=prisma/schema-hospital.prisma && prisma generate --schema=prisma/schema-ems.prisma",
+    "db:generate:prod": "prisma generate --schema=prisma/schema-production.prisma",
     "db:push": "prisma db push --schema=prisma/schema-center.prisma && prisma db push --schema=prisma/schema-hospital.prisma && prisma db push --schema=prisma/schema-ems.prisma",
+    "db:push:prod": "prisma db push --schema=prisma/schema-production.prisma",
     "db:seed": "ts-node prisma/seed.ts"
   },
   "dependencies": {
