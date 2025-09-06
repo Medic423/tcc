@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Bell, Mail, Settings, CheckCircle, AlertCircle } from 'lucide-react';
-import { api } from '../services/api';
+import api from '../services/api';
 
 interface NotificationSettings {
   emailNotifications: boolean;
