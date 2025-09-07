@@ -16743,6 +16743,532 @@ cd /Users/scooper/Code/tcc-new-project && pkill -f "vite\|nodemon\|node.*dist/in
 
 ---
 
+```bash
+cd /Users/scooper/Code/tcc-new-project && lsof -ti:3000 -ti:3001 -ti:3002 -ti:3003 -ti:3004 -ti:5001 | xargs kill -9 2>/dev/null || true
+```
+
+---
+
+Now let me start the servers properly with the standardized setup:
+
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && ./start-dev.sh
+```
+
+---
+
+Let me check what's running on the ports now:
+
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && sleep 5 && curl -s http://localhost:3000/ | head -5
+```
+
+```
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <script type="module">import { injectIntoGlobalHo
+ok } from "/@react-refresh";
+
+injectIntoGlobalHook(window);
+```
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && curl -s http://localhost:5001/health
+```
+
+```
+
+{"status":"healthy","timestamp":"2025-09-07T16:55:13.
+730Z","databases":"connected"}%
+
+```
+
+---
+
+Perfect! Now let me test what's actually showing on port 3000 by checking the browser behavior. The issue might be that you're seeing cached content or the wrong component is rendering. Let me check the current App.tsx logic:
+
+
+---
+
+Read file: undefined
+
+---
+
+I see the issue! The logic is correct, but you might have a user session stored in localStorage that's automatically logging you in. Let me check if there's a stored token and clear it:
+
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && curl -s "http://localhost:3000/" | grep -i "tcc\|login\|dashboard" | head -3
+```
+
+```
+
+    <title>TCC - Transport Control Center</title>
+```
+
+---
+
+The issue is likely that you have a stored authentication token in your browser's localStorage. When you visit `http://localhost:3000`, the app checks for a stored token and automatically logs you in, which takes you directly to the TCC dashboard.
+
+**This is actually the correct behavior!** Here's what should happen:
+
+1. **First visit (no token)**: Shows public login screen with role selection
+2. **After login**: Shows appropriate dashboard based on user type
+3. **Return visits (with token)**: Automatically shows dashboard
+
+To see the public login screen, you need to clear your browser's localStorage. Let me add a logout function to the public login screen and also add a way to clear the session:
+
+
+---
+
+Read file: undefined
+
+---
+
+Perfect! The logout function is already there. Let me add a "Clear Session" button to the public login screen so you can easily test the public interface:
+
+
+---
+
+Read file: undefined
+
+---
+
+Let me add a clear session button to the PublicLogin component:
+
+
+---
+
+<details><summary>Edit file: frontend/src/components/PublicLogin.tsx</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 1, lines removed: undefined
+
+```diff
+@@ -11,4 +11,5 @@
+    onRoleSelect: (role: 'healthcare' | 'ems' | 'tcc') => void;
+    onShowRegistration: (role: 'healthcare' | 'ems') => void;
++   onClearSession?: () => void;
+  }
+  
+```
+
+</details>
+
+---
+
+<details><summary>Edit file: frontend/src/components/PublicLogin.tsx</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -14,5 +14,5 @@
+  }
+  
+- const PublicLogin: React.FC<PublicLoginProps> = ({ onRoleSelect, onShowRegistration }) => {
++ const PublicLogin: React.FC<PublicLoginProps> = ({ onRoleSelect, onShowRegistration, onClearSession }) => {
+    const [showBackButton, setShowBackButton] = useState(false);
+  
+```
+
+</details>
+
+---
+
+Now let me add the clear session button to the UI:
+
+
+---
+
+Read file: undefined
+
+---
+
+Let me add the clear session button right after the account creation buttons:
+
+
+---
+
+<details><summary>Edit file: frontend/src/components/PublicLogin.tsx</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 12, lines removed: undefined
+
+```diff
+@@ -92,4 +92,16 @@
+                </button>
+              </div>
++             
++             {/* Clear Session Button */}
++             {onClearSession && (
++               <div className="mt-4 pt-4 border-t border-gray-200">
++                 <button
++                   onClick={onClearSession}
++                   className="w-full text-xs text-gray-500 hover:text-gray-700 underline"
++                 >
++                   Clear Session & Start Fresh
++                 </button>
++               </div>
++             )}
+            </div>
+          </div>
+```
+
+</details>
+
+---
+
+Now let me update App.tsx to pass the clear session function:
+
+
+---
+
+<details><summary>Edit file: frontend/src/App.tsx</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 7, lines removed: undefined
+
+```diff
+@@ -84,4 +84,11 @@
+      setCurrentView('public');
+    };
++ 
++   const handleClearSession = () => {
++     setUser(null);
++     localStorage.removeItem('token');
++     localStorage.removeItem('user');
++     setCurrentView('public');
++   };
+  
+    console.log('TCC_DEBUG: App render - user:', user, 'loading:', loading);
+```
+
+</details>
+
+---
+
+Now let me update the PublicLogin component call to include the clear session function:
+
+
+---
+
+<details><summary>Edit file: frontend/src/App.tsx</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 1, lines removed: undefined
+
+```diff
+@@ -135,4 +135,5 @@
+            onRoleSelect={handleRoleSelect}
+            onShowRegistration={handleShowRegistration}
++           onClearSession={handleClearSession}
+          />
+        )}
+```
+
+</details>
+
+---
+
+Now let me commit these changes and test:
+
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git add .
+```
+
+```
+scooper@Mac tcc-new-project %
+```
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git commit -m "Add clear session functionality to public login screen
+
+- Add 'Clear Session & Start Fresh' button to PublicLogin component
+- Allows users to clear stored authentication tokens
+- Enables testing of public login flow without manual localStorage clearing
+- Button appears at bottom of public login screen
+- Useful for development and testing different user flows"
+```
+
+```
+
+[main e666b4d] Add clear session functionality to pub
+lic login screen
+
+ 3 files changed, 566 insertions(+), 1 deletion(-)
+```
+
+---
+
+## ✅ **Port Standardization Complete!**
+
+### **🎯 Correct Behavior:**
+
+**Port 3000**: `http://localhost:3000` - **Public Login Screen** (unified login/account creation)
+- Shows role selection buttons (Healthcare, EMS, TCC)
+- Shows account creation options
+- **NEW**: "Clear Session & Start Fresh" button for testing
+
+**Port 5001**: `http://localhost:5001` - **Backend API**
+
+### **�� What You're Seeing:**
+
+**If you see TCC dashboard on port 3000**, it means:
+1. You have a stored authentication token in your browser
+2. The app automatically logs you in and shows the appropriate dashboard
+3. **This is correct behavior!** The app remembers your login
+
+### **🧪 How to Test the Public Login Screen:**
+
+1. **Visit** `http://localhost:3000`
+2. **If you see a dashboard** (not the public login), click the **"Clear Session & Start Fresh"** button at the bottom
+3. **You should then see** the public login screen with:
+   - 🏥 Healthcare Facility Login
+   - 🚑 EMS Agency Login  
+   - 🏢 Transport Center Login
+   - Account creation buttons
+
+### **�� Complete User Flow:**
+
+1. **First Visit**: Public login screen (role selection)
+2. **After Login**: Appropriate dashboard based on user type
+3. **Return Visits**: Automatically shows dashboard (stored session)
+4. **Clear Session**: Returns to public login screen
+
+### **🚀 Standardized Development:**
+
+- **Frontend**: `http://localhost:3000` (always)
+- **Backend**: `http://localhost:5001` (always)
+- **Start Script**: `./start-dev.sh` (kills old processes, starts fresh)
+
+**The port standardization is working correctly!** The "TCC dashboard on port 3000" you're seeing is actually the correct behavior when you have an active session. Use the "Clear Session" button to test the public login flow. 🎉
+
+---
+
+_**User (2025-09-07 07:39Z)**_
+
+OK, all the login test succesfully. Should I try submitting an account creation form?
+
+---
+
+_**Assistant**_
+
+Yes, absolutely! Testing the account creation forms is the next logical step. This will help us verify the complete user registration flow and identify any issues before we move on to implementing the Email Verification System.
+
+Let me first check if the account creation endpoints are properly implemented in the backend:
+
+
+---
+
+
+
+---
+
+I can see there's a registration endpoint, but it's protected by `authenticateAdmin` middleware, which means only TCC admins can create accounts. For the public registration flow, we need to create separate endpoints for Healthcare and EMS registration. Let me check what's currently implemented:
+
+
+---
+
+Read file: undefined
+
+---
+
+I can see that the current registration endpoint is only for TCC users (ADMIN/USER) and requires admin authentication. We need to create public registration endpoints for Healthcare and EMS users. Let me add these:
+
+
+---
+
+<details><summary>Edit file: backend/src/routes/auth.ts</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 144, lines removed: undefined
+
+```diff
+@@ -75,4 +75,148 @@
+    });
+  });
++ 
++ /**
++  * POST /api/auth/healthcare/register
++  * Register new Healthcare Facility (Public)
++  */
++ router.post('/healthcare/register', async (req, res) => {
++   try {
++     const { email, password, name, facilityName, facilityType } = req.body;
++ 
++     if (!email || !password || !name || !facilityName || !facilityType) {
++       return res.status(400).json({
++         success: false,
++         error: 'Email, password, name, facilityName, and facilityType are required'
++       });
++     }
++ 
++     const hospitalDB = databaseManager.getHospitalDB();
++     
++     // Check if user already exists
++     const existingUser = await hospitalDB.healthcareUser.findUnique({
++       where: { email }
++     });
++ 
++     if (existingUser) {
++       return res.status(400).json({
++         success: false,
++         error: 'Email already exists'
++       });
++     }
++ 
++     // Create new healthcare user
++     const user = await hospitalDB.healthcareUser.create({
++       data: {
++         email,
++         password: await bcrypt.hash(password, 10),
++         name,
++         facilityName,
++         facilityType,
++         userType: 'HEALTHCARE',
++         isActive: false // Requires admin approval
++       }
++     });
++ 
++     res.status(201).json({
++       success: true,
++       message: 'Healthcare facility registration submitted for approval',
++       user: {
++         id: user.id,
++         email: user.email,
++         name: user.name,
++         facilityName: user.facilityName,
++         facilityType: user.facilityType,
++         userType: user.userType,
++         isActive: user.isActive
++       }
++     });
++ 
++   } catch (error: any) {
++     console.error('Healthcare registration error:', error);
++     
++     if (error.code === 'P2002') {
++       return res.status(400).json({
++         success: false,
++         error: 'Email already exists'
++       });
++     }
++ 
++     res.status(500).json({
++       success: false,
++       error: 'Registration failed. Please try again.'
++     });
++   }
++ });
++ 
++ /**
++  * POST /api/auth/ems/register
++  * Register new EMS Agency (Public)
++  */
++ router.post('/ems/register', async (req, res) => {
++   try {
++     const { email, password, name, agencyName, serviceType } = req.body;
++ 
++     if (!email || !password || !name || !agencyName || !serviceType) {
++       return res.status(400).json({
++         success: false,
++         error: 'Email, password, name, agencyName, and serviceType are required'
++       });
++     }
++ 
++     const emsDB = databaseManager.getEMSDB();
++     
++     // Check if user already exists
++     const existingUser = await emsDB.eMSUser.findUnique({
++       where: { email }
++     });
++ 
++     if (existingUser) {
++       return res.status(400).json({
++         success: false,
++         error: 'Email already exists'
++       });
++     }
++ 
++     // Create new EMS user
++     const user = await emsDB.eMSUser.create({
++       data: {
++         email,
++         password: await bcrypt.hash(password, 10),
++         name,
++         agencyName,
++         userType: 'EMS',
++         isActive: false // Requires admin approval
++       }
++     });
++ 
++     res.status(201).json({
++       success: true,
++       message: 'EMS agency registration submitted for approval',
++       user: {
++         id: user.id,
++         email: user.email,
++         name: user.name,
++         agencyName: user.agencyName,
++         userType: user.userType,
++         isActive: user.isActive
++       }
++     });
++ 
++   } catch (error: any) {
++     console.error('EMS registration error:', error);
++     
++     if (error.code === 'P2002') {
++       return res.status(400).json({
++         success: false,
++         error: 'Email already exists'
++       });
++     }
++ 
++     res.status(500).json({
++       success: false,
++       error: 'Registration failed. Please try again.'
++     });
++   }
++ });
+  
+  /**
+```
+
+</details>
+
+---
+
 
 
 ---

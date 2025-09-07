@@ -81,18 +81,27 @@ const HealthcareRegistration: React.FC<HealthcareRegistrationProps> = ({ onBack,
     }
 
     try {
-      // TODO: Implement API call to register healthcare facility
+      // Import authAPI dynamically to avoid circular imports
+      const { authAPI } = await import('../services/api');
+      
       console.log('Registering healthcare facility:', formData);
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const response = await authAPI.healthcareRegister({
+        email: formData.email,
+        password: formData.password,
+        name: formData.contactName,
+        facilityName: formData.facilityName,
+        facilityType: formData.facilityType
+      });
       
       setSuccess(true);
       setTimeout(() => {
         onSuccess();
       }, 2000);
     } catch (err: any) {
-      setError(err.message || 'Registration failed. Please try again.');
+      console.error('Healthcare registration error:', err);
+      const errorMessage = err.response?.data?.error || err.message || 'Registration failed. Please try again.';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

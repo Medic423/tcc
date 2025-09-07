@@ -76,6 +76,150 @@ router.get('/verify', authenticateAdmin, (req: AuthenticatedRequest, res) => {
 });
 
 /**
+ * POST /api/auth/healthcare/register
+ * Register new Healthcare Facility (Public)
+ */
+router.post('/healthcare/register', async (req, res) => {
+  try {
+    const { email, password, name, facilityName, facilityType } = req.body;
+
+    if (!email || !password || !name || !facilityName || !facilityType) {
+      return res.status(400).json({
+        success: false,
+        error: 'Email, password, name, facilityName, and facilityType are required'
+      });
+    }
+
+    const hospitalDB = databaseManager.getHospitalDB();
+    
+    // Check if user already exists
+    const existingUser = await hospitalDB.healthcareUser.findUnique({
+      where: { email }
+    });
+
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        error: 'Email already exists'
+      });
+    }
+
+    // Create new healthcare user
+    const user = await hospitalDB.healthcareUser.create({
+      data: {
+        email,
+        password: await bcrypt.hash(password, 10),
+        name,
+        facilityName,
+        facilityType,
+        userType: 'HEALTHCARE',
+        isActive: false // Requires admin approval
+      }
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Healthcare facility registration submitted for approval',
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        facilityName: user.facilityName,
+        facilityType: user.facilityType,
+        userType: user.userType,
+        isActive: user.isActive
+      }
+    });
+
+  } catch (error: any) {
+    console.error('Healthcare registration error:', error);
+    
+    if (error.code === 'P2002') {
+      return res.status(400).json({
+        success: false,
+        error: 'Email already exists'
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      error: 'Registration failed. Please try again.'
+    });
+  }
+});
+
+/**
+ * POST /api/auth/ems/register
+ * Register new EMS Agency (Public)
+ */
+router.post('/ems/register', async (req, res) => {
+  try {
+    const { email, password, name, agencyName, serviceType } = req.body;
+
+    if (!email || !password || !name || !agencyName || !serviceType) {
+      return res.status(400).json({
+        success: false,
+        error: 'Email, password, name, agencyName, and serviceType are required'
+      });
+    }
+
+    const emsDB = databaseManager.getEMSDB();
+    
+    // Check if user already exists
+    const existingUser = await emsDB.eMSUser.findUnique({
+      where: { email }
+    });
+
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        error: 'Email already exists'
+      });
+    }
+
+    // Create new EMS user
+    const user = await emsDB.eMSUser.create({
+      data: {
+        email,
+        password: await bcrypt.hash(password, 10),
+        name,
+        agencyName,
+        userType: 'EMS',
+        isActive: false // Requires admin approval
+      }
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'EMS agency registration submitted for approval',
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        agencyName: user.agencyName,
+        userType: user.userType,
+        isActive: user.isActive
+      }
+    });
+
+  } catch (error: any) {
+    console.error('EMS registration error:', error);
+    
+    if (error.code === 'P2002') {
+      return res.status(400).json({
+        success: false,
+        error: 'Email already exists'
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      error: 'Registration failed. Please try again.'
+    });
+  }
+});
+
+/**
  * POST /api/auth/register
  * Register new user (Admin only)
  */
