@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './components/Login';
 import TCCDashboard from './components/TCCDashboard';
+import HealthcareDashboard from './components/HealthcareDashboard';
+import EMSDashboard from './components/EMSDashboard';
 import PublicLogin from './components/PublicLogin';
 import HealthcareRegistration from './components/HealthcareRegistration';
 import EMSRegistration from './components/EMSRegistration';
@@ -92,22 +94,30 @@ function AppContent() {
     );
   }
 
-  // If user is logged in, show dashboard
+  // If user is logged in, show appropriate dashboard based on user type
   if (user) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Routes>
-          <Route
-            path="/dashboard/*"
-            element={<TCCDashboard user={user} onLogout={handleLogout} />}
-          />
-          <Route
-            path="*"
-            element={<Navigate to="/dashboard" replace />}
-          />
-        </Routes>
-      </div>
-    );
+    // Show different dashboards based on user type
+    if (user.userType === 'HEALTHCARE') {
+      return <HealthcareDashboard user={user} onLogout={handleLogout} />;
+    } else if (user.userType === 'EMS') {
+      return <EMSDashboard user={user} onLogout={handleLogout} />;
+    } else {
+      // ADMIN and USER types go to TCC Dashboard
+      return (
+        <div className="min-h-screen bg-gray-50">
+          <Routes>
+            <Route
+              path="/dashboard/*"
+              element={<TCCDashboard user={user} onLogout={handleLogout} />}
+            />
+            <Route
+              path="*"
+              element={<Navigate to="/dashboard" replace />}
+            />
+          </Routes>
+        </div>
+      );
+    }
   }
 
   // If not logged in, show public interface
