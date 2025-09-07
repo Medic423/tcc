@@ -38,8 +38,10 @@ const HealthcareLogin: React.FC<HealthcareLoginProps> = ({ onBack, onLogin }) =>
       });
 
       const data = await response.json();
+      console.log('TCC_DEBUG: Healthcare login response:', data);
 
       if (response.ok) {
+        console.log('TCC_DEBUG: Calling onLogin with:', data.user, data.token);
         onLogin(data.user, data.token);
       } else {
         setError(data.message || 'Login failed');

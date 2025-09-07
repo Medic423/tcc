@@ -52,10 +52,12 @@ function AppContent() {
 
   const handleLogin = (userData: User, token: string) => {
     console.log('TCC_DEBUG: handleLogin called with:', { userData, token });
+    console.log('TCC_DEBUG: userData type:', typeof userData, 'token type:', typeof token);
     setUser(userData);
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(userData));
     console.log('TCC_DEBUG: User state updated, redirecting to dashboard');
+    console.log('TCC_DEBUG: User type:', userData.userType);
     // Force redirect to dashboard
     window.location.href = '/dashboard';
   };
@@ -139,40 +141,71 @@ function AppContent() {
   // If not logged in, show public interface
   return (
     <div className="min-h-screen bg-gray-50">
-      {currentView === 'public' && (
-        <PublicLogin 
-          onRoleSelect={handleRoleSelect}
-          onShowRegistration={handleShowRegistration}
-          onClearSession={handleClearSession}
-        />
-      )}
-      {currentView === 'healthcare-register' && (
-        <HealthcareRegistration 
-          onBack={handleBackToPublic}
-          onSuccess={handleRegistrationSuccess}
-        />
-      )}
-      {currentView === 'ems-register' && (
-        <EMSRegistration 
-          onBack={handleBackToPublic}
-          onSuccess={handleRegistrationSuccess}
-        />
-      )}
-          {currentView === 'login' && (
-            <Login onLogin={handleLogin} />
-          )}
-          {currentView === 'healthcare-login' && (
-            <HealthcareLogin 
-              onBack={handleBackToPublic}
-              onLogin={handleLogin}
-            />
-          )}
-          {currentView === 'ems-login' && (
-            <EMSLogin 
-              onBack={handleBackToPublic}
-              onLogin={handleLogin}
-            />
-          )}
+      <Routes>
+        <Route path="/test/healthcare" element={
+          <HealthcareDashboard 
+            user={{
+              id: 'test',
+              email: 'test@example.com',
+              name: 'Test Healthcare User',
+              userType: 'HEALTHCARE',
+              facilityName: 'Test Hospital',
+              facilityType: 'HOSPITAL'
+            }} 
+            onLogout={() => window.location.href = '/'} 
+          />
+        } />
+        <Route path="/test/ems" element={
+          <EMSDashboard 
+            user={{
+              id: 'test',
+              email: 'test@example.com',
+              name: 'Test EMS User',
+              userType: 'EMS',
+              agencyName: 'Test EMS Agency'
+            }} 
+            onLogout={() => window.location.href = '/'} 
+          />
+        } />
+        <Route path="*" element={
+          <>
+            {currentView === 'public' && (
+              <PublicLogin 
+                onRoleSelect={handleRoleSelect}
+                onShowRegistration={handleShowRegistration}
+                onClearSession={handleClearSession}
+              />
+            )}
+            {currentView === 'healthcare-register' && (
+              <HealthcareRegistration 
+                onBack={handleBackToPublic}
+                onSuccess={handleRegistrationSuccess}
+              />
+            )}
+            {currentView === 'ems-register' && (
+              <EMSRegistration 
+                onBack={handleBackToPublic}
+                onSuccess={handleRegistrationSuccess}
+              />
+            )}
+            {currentView === 'login' && (
+              <Login onLogin={handleLogin} />
+            )}
+            {currentView === 'healthcare-login' && (
+              <HealthcareLogin 
+                onBack={handleBackToPublic}
+                onLogin={handleLogin}
+              />
+            )}
+            {currentView === 'ems-login' && (
+              <EMSLogin 
+                onBack={handleBackToPublic}
+                onLogin={handleLogin}
+              />
+            )}
+          </>
+        } />
+      </Routes>
     </div>
   );
 }
