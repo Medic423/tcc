@@ -55,7 +55,7 @@ export interface HospitalActivity {
 
 export class AnalyticsService {
   async getSystemOverview(): Promise<SystemOverview> {
-    const prisma = databaseManager.getPrismaClient();
+    const prisma = databaseManager.getCenterDB();
 
     const [
       totalHospitals,
@@ -69,10 +69,10 @@ export class AnalyticsService {
     ] = await Promise.all([
       prisma.hospital.count(),
       prisma.hospital.count({ where: { isActive: true } }),
-      prisma.agency.count(),
-      prisma.agency.count({ where: { isActive: true } }),
-      prisma.facility.count(),
-      prisma.facility.count({ where: { isActive: true } }),
+      prisma.eMSAgency.count(),
+      prisma.eMSAgency.count({ where: { isActive: true } }),
+      0, // No facilities in Center database
+      0, // No facilities in Center database
       0, // Units not available in unified schema
       0  // Units not available in unified schema
     ]);
@@ -145,45 +145,25 @@ export class AnalyticsService {
   }
 
   async getAgencyPerformance(): Promise<AgencyPerformance[]> {
-    const prisma = databaseManager.getPrismaClient();
+    const prisma = databaseManager.getCenterDB();
 
-    const agencies = await prisma.agency.findMany({
+    const agencies = await prisma.eMSAgency.findMany({
       where: { isActive: true },
     });
 
     const performanceData: AgencyPerformance[] = [];
 
     for (const agency of agencies) {
-      const totalTrips = await prisma.trip.count({
-        where: { assignedTo: agency.id }
-      });
-
-      const acceptedTrips = await prisma.trip.count({
-        where: { 
-          assignedTo: agency.id,
-          status: { in: ['ACCEPTED', 'IN_TRANSIT', 'COMPLETED'] }
-        }
-      });
-
-      const completedTrips = await prisma.trip.count({
-        where: { 
-          assignedTo: agency.id,
-          status: 'COMPLETED'
-        }
-      });
-
-      // Calculate average response time (simplified)
-      const averageResponseTime = 0; // TODO: Implement actual calculation
-
+      // Since Center database doesn't have trip data, return basic agency info
       performanceData.push({
         agencyId: agency.id,
         agencyName: agency.name,
-        totalTrips,
-        acceptedTrips,
-        completedTrips,
-        averageResponseTime,
-        totalUnits: 0, // Units not available in unified schema
-        activeUnits: 0  // Units not available in unified schema
+        totalTrips: 0, // Trip data not available in Center database
+        acceptedTrips: 0,
+        completedTrips: 0,
+        averageResponseTime: 0,
+        totalUnits: 0, // Units not available in Center database
+        activeUnits: 0  // Units not available in Center database
       });
     }
 
