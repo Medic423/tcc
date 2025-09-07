@@ -36,34 +36,30 @@ export interface AgencyListResult {
 
 export class AgencyService {
   async createAgency(data: AgencyData): Promise<any> {
-    const prisma = databaseManager.getPrismaClient();
+    const prisma = databaseManager.getCenterDB();
     
-    return await prisma.agency.create({
+    return await prisma.eMSAgency.create({
       data: {
         name: data.name,
-        type: 'EMS',
-        region: data.city + ', ' + data.state,
-        contactInfo: {
-          contactName: data.contactName,
-          phone: data.phone,
-          email: data.email,
-          address: data.address,
-          city: data.city,
-          state: data.state,
-          zipCode: data.zipCode,
-          serviceArea: data.serviceArea || [],
-          operatingHours: data.operatingHours,
-          capabilities: data.capabilities,
-          pricingStructure: data.pricingStructure,
-          status: data.status ?? 'ACTIVE',
-        },
+        contactName: data.contactName,
+        phone: data.phone,
+        email: data.email,
+        address: data.address,
+        city: data.city,
+        state: data.state,
+        zipCode: data.zipCode,
+        serviceArea: data.serviceArea || [],
+        operatingHours: data.operatingHours,
+        capabilities: data.capabilities,
+        pricingStructure: data.pricingStructure,
+        status: data.status ?? 'ACTIVE',
         isActive: data.isActive ?? true,
       }
     });
   }
 
   async getAgencies(filters: AgencySearchFilters = {}): Promise<AgencyListResult> {
-    const prisma = databaseManager.getPrismaClient();
+    const prisma = databaseManager.getCenterDB();
     const { page = 1, limit = 50, ...whereFilters } = filters;
     const skip = (page - 1) * limit;
 
@@ -72,26 +68,26 @@ export class AgencyService {
       where.name = { contains: whereFilters.name, mode: 'insensitive' };
     }
     if (whereFilters.city) {
-      where.contactInfo = { path: ['city'], string_contains: whereFilters.city };
+      where.city = { contains: whereFilters.city, mode: 'insensitive' };
     }
     if (whereFilters.state) {
-      where.contactInfo = { path: ['state'], string_contains: whereFilters.state };
+      where.state = { contains: whereFilters.state, mode: 'insensitive' };
     }
     if (whereFilters.capabilities && whereFilters.capabilities.length > 0) {
-      where.contactInfo = { path: ['capabilities'], array_contains: whereFilters.capabilities };
+      where.capabilities = { hasSome: whereFilters.capabilities };
     }
     if (whereFilters.isActive !== undefined) {
       where.isActive = whereFilters.isActive;
     }
 
     const [agencies, total] = await Promise.all([
-      prisma.agency.findMany({
+      prisma.eMSAgency.findMany({
         where,
         orderBy: { name: 'asc' },
         skip,
         take: limit,
       }),
-      prisma.agency.count({ where })
+      prisma.eMSAgency.count({ where })
     ]);
 
     return {
@@ -103,37 +99,31 @@ export class AgencyService {
   }
 
   async getAgencyById(id: string): Promise<any | null> {
-    const prisma = databaseManager.getPrismaClient();
-    return await prisma.agency.findUnique({
+    const prisma = databaseManager.getCenterDB();
+    return await prisma.eMSAgency.findUnique({
       where: { id },
     });
   }
 
   async updateAgency(id: string, data: Partial<AgencyData>): Promise<any> {
-    const prisma = databaseManager.getPrismaClient();
+    const prisma = databaseManager.getCenterDB();
     
-    // Update contactInfo with new data
-    const contactInfo = {
-      contactName: data.contactName,
-      phone: data.phone,
-      email: data.email,
-      address: data.address,
-      city: data.city,
-      state: data.state,
-      zipCode: data.zipCode,
-      serviceArea: data.serviceArea || [],
-      operatingHours: data.operatingHours,
-      capabilities: data.capabilities,
-      pricingStructure: data.pricingStructure,
-      status: data.status ?? 'ACTIVE',
-    };
-
-    return await prisma.agency.update({
+    return await prisma.eMSAgency.update({
       where: { id },
       data: {
         name: data.name,
-        region: data.city + ', ' + data.state,
-        contactInfo: contactInfo,
+        contactName: data.contactName,
+        phone: data.phone,
+        email: data.email,
+        address: data.address,
+        city: data.city,
+        state: data.state,
+        zipCode: data.zipCode,
+        serviceArea: data.serviceArea || [],
+        operatingHours: data.operatingHours,
+        capabilities: data.capabilities,
+        pricingStructure: data.pricingStructure,
+        status: data.status ?? 'ACTIVE',
         isActive: data.isActive,
         updatedAt: new Date()
       },
@@ -141,20 +131,20 @@ export class AgencyService {
   }
 
   async deleteAgency(id: string): Promise<void> {
-    const prisma = databaseManager.getPrismaClient();
-    await prisma.agency.delete({
+    const prisma = databaseManager.getCenterDB();
+    await prisma.eMSAgency.delete({
       where: { id }
     });
   }
 
   async searchAgencies(query: string): Promise<any[]> {
-    const prisma = databaseManager.getPrismaClient();
-    return await prisma.agency.findMany({
+    const prisma = databaseManager.getCenterDB();
+    return await prisma.eMSAgency.findMany({
       where: {
         OR: [
           { name: { contains: query, mode: 'insensitive' } },
-          { contactInfo: { path: ['contactName'], string_contains: query } },
-          { contactInfo: { path: ['city'], string_contains: query } }
+          { contactName: { contains: query, mode: 'insensitive' } },
+          { city: { contains: query, mode: 'insensitive' } }
         ],
         isActive: true
       },

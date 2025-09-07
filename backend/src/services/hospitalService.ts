@@ -142,6 +142,34 @@ export class HospitalService {
       orderBy: { name: 'asc' }
     });
   }
+
+  async approveHospital(id: string, approvedBy: string): Promise<any> {
+    const centerDB = databaseManager.getCenterDB();
+    return await centerDB.hospital.update({
+      where: { id },
+      data: {
+        isActive: true,
+        requiresReview: false,
+        approvedAt: new Date(),
+        approvedBy: approvedBy,
+        updatedAt: new Date()
+      }
+    });
+  }
+
+  async rejectHospital(id: string, approvedBy: string): Promise<any> {
+    const centerDB = databaseManager.getCenterDB();
+    return await centerDB.hospital.update({
+      where: { id },
+      data: {
+        isActive: false,
+        requiresReview: false,
+        approvedAt: new Date(),
+        approvedBy: approvedBy,
+        updatedAt: new Date()
+      }
+    });
+  }
 }
 
 export const hospitalService = new HospitalService();

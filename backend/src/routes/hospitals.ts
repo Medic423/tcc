@@ -192,4 +192,70 @@ router.get('/search', async (req, res) => {
   }
 });
 
+/**
+ * PUT /api/tcc/hospitals/:id/approve
+ * Approve hospital
+ */
+router.put('/:id/approve', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const approvedBy = (req as any).user?.id; // Get user ID from auth middleware
+
+    if (!approvedBy) {
+      return res.status(401).json({
+        success: false,
+        error: 'User not authenticated'
+      });
+    }
+
+    const hospital = await hospitalService.approveHospital(id, approvedBy);
+
+    res.json({
+      success: true,
+      message: 'Hospital approved successfully',
+      data: hospital
+    });
+
+  } catch (error) {
+    console.error('Approve hospital error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to approve hospital'
+    });
+  }
+});
+
+/**
+ * PUT /api/tcc/hospitals/:id/reject
+ * Reject hospital
+ */
+router.put('/:id/reject', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const approvedBy = (req as any).user?.id; // Get user ID from auth middleware
+
+    if (!approvedBy) {
+      return res.status(401).json({
+        success: false,
+        error: 'User not authenticated'
+      });
+    }
+
+    const hospital = await hospitalService.rejectHospital(id, approvedBy);
+
+    res.json({
+      success: true,
+      message: 'Hospital rejected successfully',
+      data: hospital
+    });
+
+  } catch (error) {
+    console.error('Reject hospital error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to reject hospital'
+    });
+  }
+});
+
 export default router;

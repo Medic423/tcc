@@ -57,19 +57,87 @@ const Hospitals: React.FC = () => {
 
   const handleApprove = async (hospitalId: string) => {
     try {
-      // TODO: Implement approve functionality
-      console.log('Approve hospital:', hospitalId);
+      const response = await fetch(`/api/tcc/hospitals/${hospitalId}/approve`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to approve hospital');
+      }
+
+      const data = await response.json();
+      console.log('Hospital approved:', data);
+      
+      // Refresh the hospitals list
+      await fetchHospitals();
     } catch (err) {
       console.error('Error approving hospital:', err);
+      setError('Failed to approve hospital');
     }
   };
 
   const handleReject = async (hospitalId: string) => {
     try {
-      // TODO: Implement reject functionality
-      console.log('Reject hospital:', hospitalId);
+      const response = await fetch(`/api/tcc/hospitals/${hospitalId}/reject`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to reject hospital');
+      }
+
+      const data = await response.json();
+      console.log('Hospital rejected:', data);
+      
+      // Refresh the hospitals list
+      await fetchHospitals();
     } catch (err) {
       console.error('Error rejecting hospital:', err);
+      setError('Failed to reject hospital');
+    }
+  };
+
+  const handleEdit = (hospitalId: string) => {
+    // TODO: Implement edit functionality - open edit modal/form
+    console.log('Edit hospital:', hospitalId);
+    // For now, just show an alert
+    alert('Edit functionality will be implemented in the next phase');
+  };
+
+  const handleDelete = async (hospitalId: string) => {
+    if (!window.confirm('Are you sure you want to delete this hospital? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/tcc/hospitals/${hospitalId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete hospital');
+      }
+
+      const data = await response.json();
+      console.log('Hospital deleted:', data);
+      
+      // Refresh the hospitals list
+      await fetchHospitals();
+    } catch (err) {
+      console.error('Error deleting hospital:', err);
+      setError('Failed to delete hospital');
     }
   };
 
@@ -211,10 +279,18 @@ const Hospitals: React.FC = () => {
                             </button>
                           </>
                         )}
-                        <button className="text-blue-600 hover:text-blue-900">
+                        <button 
+                          onClick={() => handleEdit(hospital.id)}
+                          className="text-blue-600 hover:text-blue-900"
+                          title="Edit hospital"
+                        >
                           <Edit className="h-4 w-4" />
                         </button>
-                        <button className="text-red-600 hover:text-red-900">
+                        <button 
+                          onClick={() => handleDelete(hospital.id)}
+                          className="text-red-600 hover:text-red-900"
+                          title="Delete hospital"
+                        >
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
