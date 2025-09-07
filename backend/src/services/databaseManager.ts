@@ -15,7 +15,7 @@ class DatabaseManager {
         }
       },
       // Add connection configuration for Render PostgreSQL
-      log: ['error', 'warn'],
+      log: process.env.NODE_ENV === 'production' ? ['error'] : ['error', 'warn'],
       errorFormat: 'pretty',
     });
   }
