@@ -41,8 +41,8 @@ export class AgencyService {
     return await prisma.agency.create({
       data: {
         name: data.name,
-        type: 'EMS', // Default type for EMS agencies
-        region: data.serviceArea[0] || 'Unknown', // Use first service area as region
+        type: 'EMS',
+        region: data.city + ', ' + data.state,
         contactInfo: {
           contactName: data.contactName,
           phone: data.phone,
@@ -51,7 +51,7 @@ export class AgencyService {
           city: data.city,
           state: data.state,
           zipCode: data.zipCode,
-          serviceArea: data.serviceArea,
+          serviceArea: data.serviceArea || [],
           operatingHours: data.operatingHours,
           capabilities: data.capabilities,
           pricingStructure: data.pricingStructure,
@@ -72,13 +72,13 @@ export class AgencyService {
       where.name = { contains: whereFilters.name, mode: 'insensitive' };
     }
     if (whereFilters.city) {
-      where.city = { contains: whereFilters.city, mode: 'insensitive' };
+      where.contactInfo = { path: ['city'], string_contains: whereFilters.city };
     }
     if (whereFilters.state) {
-      where.state = whereFilters.state;
+      where.contactInfo = { path: ['state'], string_contains: whereFilters.state };
     }
     if (whereFilters.capabilities && whereFilters.capabilities.length > 0) {
-      where.capabilities = { hasSome: whereFilters.capabilities };
+      where.contactInfo = { path: ['capabilities'], array_contains: whereFilters.capabilities };
     }
     if (whereFilters.isActive !== undefined) {
       where.isActive = whereFilters.isActive;
@@ -111,10 +111,30 @@ export class AgencyService {
 
   async updateAgency(id: string, data: Partial<AgencyData>): Promise<any> {
     const prisma = databaseManager.getPrismaClient();
+    
+    // Update contactInfo with new data
+    const contactInfo = {
+      contactName: data.contactName,
+      phone: data.phone,
+      email: data.email,
+      address: data.address,
+      city: data.city,
+      state: data.state,
+      zipCode: data.zipCode,
+      serviceArea: data.serviceArea || [],
+      operatingHours: data.operatingHours,
+      capabilities: data.capabilities,
+      pricingStructure: data.pricingStructure,
+      status: data.status ?? 'ACTIVE',
+    };
+
     return await prisma.agency.update({
       where: { id },
       data: {
-        ...data,
+        name: data.name,
+        region: data.city + ', ' + data.state,
+        contactInfo: contactInfo,
+        isActive: data.isActive,
         updatedAt: new Date()
       },
     });
