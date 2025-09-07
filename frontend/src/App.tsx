@@ -51,6 +51,7 @@ function AppContent() {
   }, []);
 
   const handleLogin = (userData: User, token: string) => {
+    alert('TCC_DEBUG: handleLogin called with userData and token!');
     console.log('TCC_DEBUG: handleLogin called with:', { userData, token });
     console.log('TCC_DEBUG: userData type:', typeof userData, 'token type:', typeof token);
     setUser(userData);
@@ -58,6 +59,7 @@ function AppContent() {
     localStorage.setItem('user', JSON.stringify(userData));
     console.log('TCC_DEBUG: User state updated, redirecting to dashboard');
     console.log('TCC_DEBUG: User type:', userData.userType);
+    alert('TCC_DEBUG: About to redirect to dashboard');
     // Force redirect to dashboard
     window.location.href = '/dashboard';
   };

@@ -24,6 +24,7 @@ const HealthcareLogin: React.FC<HealthcareLoginProps> = ({ onBack, onLogin }) =>
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    alert('TCC_DEBUG: Healthcare login form submitted!');
     setIsLoading(true);
     setError('');
 
@@ -39,9 +40,11 @@ const HealthcareLogin: React.FC<HealthcareLoginProps> = ({ onBack, onLogin }) =>
 
       const data = await response.json();
       console.log('TCC_DEBUG: Healthcare login response:', data);
+      alert('TCC_DEBUG: Response received: ' + JSON.stringify(data));
 
       if (response.ok) {
         console.log('TCC_DEBUG: Calling onLogin with:', data.user, data.token);
+        alert('TCC_DEBUG: Calling onLogin with user and token');
         onLogin(data.user, data.token);
       } else {
         setError(data.message || 'Login failed');
