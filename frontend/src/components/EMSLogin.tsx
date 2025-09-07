@@ -40,7 +40,7 @@ const EMSLogin: React.FC<EMSLoginProps> = ({ onBack, onLogin }) => {
       const data = await response.json();
 
       if (response.ok) {
-        onLogin(data.user);
+        onLogin(data.user, data.token);
       } else {
         setError(data.message || 'Login failed');
       }
