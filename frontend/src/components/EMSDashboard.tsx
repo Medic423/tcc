@@ -9,7 +9,11 @@ import {
   XCircle,
   Filter,
   RefreshCw,
-  Calendar
+  Calendar,
+  TrendingUp,
+  Link,
+  DollarSign,
+  Activity
 } from 'lucide-react';
 import { tripsAPI } from '../services/api';
 
@@ -57,6 +61,35 @@ interface Filters {
   priority: string;
 }
 
+interface BackhaulPair {
+  request1: TransportRequest;
+  request2: TransportRequest;
+  distance: number;
+  timeWindow: number;
+  revenueBonus: number;
+  efficiency: number;
+}
+
+interface OptimizationMetrics {
+  totalRevenue: number;
+  loadedMileRatio: number;
+  revenuePerHour: number;
+  backhaulPairs: number;
+  averageEfficiency: number;
+  potentialRevenueIncrease: number;
+}
+
+interface Unit {
+  id: string;
+  unitNumber: string;
+  status: string;
+  capabilities: string[];
+  currentLocation: {
+    lat: number;
+    lng: number;
+  };
+}
+
 const EMSDashboard: React.FC = () => {
   const [trips, setTrips] = useState<TransportRequest[]>([]);
   const [loading, setLoading] = useState(false);
@@ -70,10 +103,79 @@ const EMSDashboard: React.FC = () => {
   });
 
   const [showFilters, setShowFilters] = useState(false);
+  
+  // Optimization state
+  const [showOptimization, setShowOptimization] = useState(false);
+  const [backhaulPairs, setBackhaulPairs] = useState<BackhaulPair[]>([]);
+  const [optimizationMetrics, setOptimizationMetrics] = useState<OptimizationMetrics | null>(null);
+  const [units, setUnits] = useState<Unit[]>([]);
 
   useEffect(() => {
     loadTrips();
+    loadOptimizationData();
   }, [filters]);
+
+  // Mock optimization data - in production this would come from API
+  const loadOptimizationData = () => {
+    // Mock backhaul pairs
+    const mockBackhaulPairs: BackhaulPair[] = [
+      {
+        request1: trips[0],
+        request2: trips[1],
+        distance: 3.2,
+        timeWindow: 15,
+        revenueBonus: 25.0,
+        efficiency: 0.85
+      },
+      {
+        request1: trips[2],
+        request2: trips[3],
+        distance: 5.1,
+        timeWindow: 30,
+        revenueBonus: 25.0,
+        efficiency: 0.72
+      }
+    ].filter(pair => pair.request1 && pair.request2);
+
+    // Mock optimization metrics
+    const mockMetrics: OptimizationMetrics = {
+      totalRevenue: 1250.0,
+      loadedMileRatio: 0.82,
+      revenuePerHour: 45.5,
+      backhaulPairs: mockBackhaulPairs.length,
+      averageEfficiency: 0.78,
+      potentialRevenueIncrease: 150.0
+    };
+
+    // Mock units
+    const mockUnits: Unit[] = [
+      {
+        id: 'unit-001',
+        unitNumber: 'A-101',
+        status: 'AVAILABLE',
+        capabilities: ['BLS', 'ALS'],
+        currentLocation: { lat: 40.7128, lng: -74.0060 }
+      },
+      {
+        id: 'unit-002',
+        unitNumber: 'A-102',
+        status: 'ON_CALL',
+        capabilities: ['BLS'],
+        currentLocation: { lat: 40.7589, lng: -73.9851 }
+      },
+      {
+        id: 'unit-003',
+        unitNumber: 'C-201',
+        status: 'AVAILABLE',
+        capabilities: ['BLS', 'ALS', 'CCT'],
+        currentLocation: { lat: 40.7505, lng: -73.9934 }
+      }
+    ];
+
+    setBackhaulPairs(mockBackhaulPairs);
+    setOptimizationMetrics(mockMetrics);
+    setUnits(mockUnits);
+  };
 
   const loadTrips = async () => {
     try {
@@ -189,6 +291,17 @@ const EMSDashboard: React.FC = () => {
             </div>
             <div className="flex items-center space-x-3">
               <button
+                onClick={() => setShowOptimization(!showOptimization)}
+                className={`inline-flex items-center px-3 py-2 border shadow-sm text-sm leading-4 font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                  showOptimization 
+                    ? 'border-primary-500 text-primary-700 bg-primary-50 focus:ring-primary-500' 
+                    : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50 focus:ring-primary-500'
+                }`}
+              >
+                <TrendingUp className="h-4 w-4 mr-2" />
+                Optimization
+              </button>
+              <button
                 onClick={() => setShowFilters(!showFilters)}
                 className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
               >
@@ -254,6 +367,118 @@ const EMSDashboard: React.FC = () => {
                 </select>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Optimization Panel */}
+        {showOptimization && (
+          <div className="px-6 py-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Revenue Analytics */}
+              <div className="bg-white rounded-lg p-4 shadow-sm">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-lg font-semibold text-gray-900">Revenue Analytics</h3>
+                  <DollarSign className="h-5 w-5 text-green-600" />
+                </div>
+                {optimizationMetrics && (
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">Total Revenue:</span>
+                      <span className="text-sm font-medium text-gray-900">${optimizationMetrics.totalRevenue.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">Revenue/Hour:</span>
+                      <span className="text-sm font-medium text-gray-900">${optimizationMetrics.revenuePerHour.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">Loaded Mile Ratio:</span>
+                      <span className="text-sm font-medium text-gray-900">{(optimizationMetrics.loadedMileRatio * 100).toFixed(1)}%</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Backhaul Opportunities */}
+              <div className="bg-white rounded-lg p-4 shadow-sm">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-lg font-semibold text-gray-900">Backhaul Opportunities</h3>
+                  <Link className="h-5 w-5 text-blue-600" />
+                </div>
+                {optimizationMetrics && (
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">Available Pairs:</span>
+                      <span className="text-sm font-medium text-gray-900">{optimizationMetrics.backhaulPairs}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">Avg Efficiency:</span>
+                      <span className="text-sm font-medium text-gray-900">{(optimizationMetrics.averageEfficiency * 100).toFixed(1)}%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">Potential Increase:</span>
+                      <span className="text-sm font-medium text-green-600">+${optimizationMetrics.potentialRevenueIncrease.toFixed(2)}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Unit Management */}
+              <div className="bg-white rounded-lg p-4 shadow-sm">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-lg font-semibold text-gray-900">Unit Management</h3>
+                  <Activity className="h-5 w-5 text-purple-600" />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-600">Available Units:</span>
+                    <span className="text-sm font-medium text-gray-900">{units.filter(u => u.status === 'AVAILABLE').length}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-600">On Call:</span>
+                    <span className="text-sm font-medium text-gray-900">{units.filter(u => u.status === 'ON_CALL').length}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-600">Total Units:</span>
+                    <span className="text-sm font-medium text-gray-900">{units.length}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Backhaul Pairs List */}
+            {backhaulPairs.length > 0 && (
+              <div className="mt-6">
+                <h4 className="text-md font-semibold text-gray-900 mb-3">Recommended Backhaul Pairs</h4>
+                <div className="space-y-3">
+                  {backhaulPairs.slice(0, 3).map((pair, index) => (
+                    <div key={index} className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center space-x-2">
+                          <Link className="h-4 w-4 text-blue-600" />
+                          <span className="text-sm font-medium text-gray-900">Pair #{index + 1}</span>
+                          <span className="text-xs text-gray-500">Efficiency: {(pair.efficiency * 100).toFixed(1)}%</span>
+                        </div>
+                        <span className="text-sm font-medium text-green-600">+${pair.revenueBonus.toFixed(2)} bonus</span>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
+                        <div>
+                          <span className="font-medium">Request 1:</span> {pair.request1?.patientId || 'N/A'} ({pair.request1?.transportLevel || 'N/A'})
+                        </div>
+                        <div>
+                          <span className="font-medium">Request 2:</span> {pair.request2?.patientId || 'N/A'} ({pair.request2?.transportLevel || 'N/A'})
+                        </div>
+                        <div>
+                          <span className="font-medium">Distance:</span> {pair.distance.toFixed(1)} miles
+                        </div>
+                        <div>
+                          <span className="font-medium">Time Window:</span> {pair.timeWindow} minutes
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

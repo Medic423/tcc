@@ -11,6 +11,7 @@ import agencyRoutes from './routes/agencies';
 import facilityRoutes from './routes/facilities';
 import analyticsRoutes from './routes/analytics';
 import tripRoutes from './routes/trips';
+import optimizationRoutes from './routes/optimization';
 
 // Load environment variables
 dotenv.config();
@@ -74,6 +75,7 @@ app.use('/api/tcc/hospitals', hospitalRoutes);
 app.use('/api/tcc/agencies', agencyRoutes);
 app.use('/api/tcc/facilities', facilityRoutes);
 app.use('/api/tcc/analytics', analyticsRoutes);
+app.use('/api/optimize', optimizationRoutes);
 
 // Test endpoints
 app.get('/api/test', (req, res) => {
