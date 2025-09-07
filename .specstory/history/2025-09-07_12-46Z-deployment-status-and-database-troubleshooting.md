@@ -17269,6 +17269,457 @@ Lines added: 144, lines removed: undefined
 
 ---
 
+Now I need to add the bcrypt import at the top of the file:
+
+
+---
+
+Read file: undefined
+
+---
+
+Great! bcrypt is already imported. Now I need to update the frontend API service to include the new registration endpoints:
+
+
+---
+
+Read file: undefined
+
+---
+
+Let me find the authAPI section:
+
+
+---
+
+
+
+---
+
+Read file: undefined
+
+---
+
+I need to add the new registration endpoints to the authAPI. Let me update it:
+
+
+---
+
+<details><summary>Edit file: frontend/src/services/api.ts</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 6, lines removed: undefined
+
+```diff
+@@ -56,4 +56,10 @@
+      api.post('/api/auth/register', userData),
+  
++   healthcareRegister: (userData: { email: string; password: string; name: string; facilityName: string; facilityType: string }) =>
++     api.post('/api/auth/healthcare/register', userData),
++ 
++   emsRegister: (userData: { email: string; password: string; name: string; agencyName: string; serviceType: string }) =>
++     api.post('/api/auth/ems/register', userData),
++ 
+    getUsers: () =>
+      api.get('/api/auth/users'),
+```
+
+</details>
+
+---
+
+Now I need to update the registration components to use these new API endpoints. Let me check the HealthcareRegistration component:
+
+
+---
+
+Read file: undefined
+
+---
+
+Let me find the submit handler in the HealthcareRegistration component:
+
+
+---
+
+
+
+---
+
+Read file: undefined
+
+---
+
+I can see the TODO comment. Let me update the handleSubmit function to use the actual API:
+
+
+---
+
+<details><summary>Edit file: frontend/src/components/HealthcareRegistration.tsx</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 10, lines removed: 3
+
+```diff
+@@ -82,9 +82,16 @@
+  
+      try {
+-       // TODO: Implement API call to register healthcare facility
++       // Import authAPI dynamically to avoid circular imports
++       const { authAPI } = await import('../services/api');
++       
+        console.log('Registering healthcare facility:', formData);
+        
+-       // Simulate API call
+-       await new Promise(resolve => setTimeout(resolve, 2000));
++       const response = await authAPI.healthcareRegister({
++         email: formData.email,
++         password: formData.password,
++         name: formData.contactName,
++         facilityName: formData.facilityName,
++         facilityType: formData.facilityType
++       });
+        
+        setSuccess(true);
+```
+
+</details>
+
+---
+
+Now let me update the error handling:
+
+
+---
+
+Read file: undefined
+
+---
+
+Let me update the error handling to properly handle API errors:
+
+
+---
+
+<details><summary>Edit file: frontend/src/components/HealthcareRegistration.tsx</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 3, lines removed: 1
+
+```diff
+@@ -100,5 +100,7 @@
+        }, 2000);
+      } catch (err: any) {
+-       setError(err.message || 'Registration failed. Please try again.');
++       console.error('Healthcare registration error:', err);
++       const errorMessage = err.response?.data?.error || err.message || 'Registration failed. Please try again.';
++       setError(errorMessage);
+      } finally {
+        setLoading(false);
+```
+
+</details>
+
+---
+
+Now let me do the same for the EMSRegistration component:
+
+
+---
+
+
+
+---
+
+Read file: undefined
+
+---
+
+<details><summary>Edit file: frontend/src/components/EMSRegistration.tsx</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 10, lines removed: 3
+
+```diff
+@@ -121,9 +121,16 @@
+  
+      try {
+-       // TODO: Implement API call to register EMS agency
++       // Import authAPI dynamically to avoid circular imports
++       const { authAPI } = await import('../services/api');
++       
+        console.log('Registering EMS agency:', formData);
+        
+-       // Simulate API call
+-       await new Promise(resolve => setTimeout(resolve, 2000));
++       const response = await authAPI.emsRegister({
++         email: formData.email,
++         password: formData.password,
++         name: formData.contactName,
++         agencyName: formData.agencyName,
++         serviceType: formData.serviceType
++       });
+        
+        setSuccess(true);
+```
+
+**Chunk 2**
+Lines added: 3, lines removed: 1
+
+```diff
+@@ -132,5 +139,7 @@
+        }, 2000);
+      } catch (err: any) {
+-       setError(err.message || 'Registration failed. Please try again.');
++       console.error('EMS registration error:', err);
++       const errorMessage = err.response?.data?.error || err.message || 'Registration failed. Please try again.';
++       setError(errorMessage);
+      } finally {
+        setLoading(false);
+```
+
+</details>
+
+---
+
+Now let me rebuild the backend and test the registration:
+
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project/backend && npm run build
+```
+
+```
+
+
+> tcc-backend@1.0.0 build
+> prisma generate && tsc
+
+Environment variables loaded from .env
+Prisma schema loaded from prisma/schema.prisma
+
+✔ Generated Prisma Client (v5.22.0) to ./node_modules
+/@prisma/client in 39ms
+
+
+Start by importing your Prisma Client (See: https://p
+ris.ly/d/importing-client)
+
+
+Tip: Need your database queries to be 1000x faster? A
+ccelerate offers you that and more: https://pris.ly/t
+ip-2-accelerate
+
+
+```
+
+---
+
+Now let me test the registration endpoints directly:
+
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && curl -X POST http://localhost:5001/api/auth/healthcare/register -H "Content-Type: application/json" -d '{"email":"test-healthcare@example.com","password":"test123","name":"Test Contact","facilityName":"Test Hospital","facilityType":"HOSPITAL"}'
+```
+
+```
+
+{"success":false,"error":"Endpoint not found"}%
+
+```
+
+---
+
+The endpoint isn't found, which means the backend server needs to be restarted to pick up the new routes. Let me restart the servers:
+
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && pkill -f "vite\|nodemon\|node.*dist/index.js" && sleep 2
+```
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && ./start-dev.sh
+```
+
+---
+
+Let me wait a moment and then test the registration endpoint:
+
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && sleep 5 && curl -X POST http://localhost:5001/api/auth/healthcare/register -H "Content-Type: application/json" -d '{"email":"test-healthcare@example.com","password":"test123","name":"Test Contact","facilityName":"Test Hospital","facilityType":"HOSPITAL"}'
+```
+
+```
+
+{"success":true,"message":"Healthcare facility regist
+ration submitted for approval","user":{"id":"cmf9y1br
+s0000lizfy8kx47bq","email":"test-healthcare@example.c
+om","name":"Test Contact","facilityName":"Test Hospit
+al","facilityType":"HOSPITAL","userType":"HEALTHCARE"
+,"isActive":false}}%
+
+```
+
+---
+
+Excellent! The healthcare registration endpoint is working. Let me test the EMS registration endpoint:
+
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && curl -X POST http://localhost:5001/api/auth/ems/register -H "Content-Type: application/json" -d '{"email":"test-ems@example.com","password":"test123","name":"Test EMS Contact","agencyName":"Test EMS Agency","serviceType":"EMS"}'
+```
+
+```
+
+{"success":true,"message":"EMS agency registration su
+bmitted for approval","user":{"id":"cmf9y1h4d0000szsd
+yrw0e19v","email":"test-ems@example.com","name":"Test
+ EMS Contact","agencyName":"Test EMS Agency","userTyp
+e":"EMS","isActive":false}}%
+
+```
+
+---
+
+Perfect! Both registration endpoints are working. Now let me commit these changes and then you can test the account creation forms:
+
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git add .
+```
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git commit -m "Implement public registration endpoints for Healthcare and EMS
+
+- Add /api/auth/healthcare/register endpoint for healthcare facility registration
+- Add /api/auth/ems/register endpoint for EMS agency registration
+- Both endpoints create users with isActive=false (requires admin approval)
+- Update frontend API service with new registration methods
+- Update HealthcareRegistration and EMSRegistration components to use real API
+- Add proper error handling for API responses
+- Test both endpoints successfully with curl
+- Registration forms now fully functional for testing"
+```
+
+```
+
+[main 545b4ff] Implement public registration endpoint
+s for Healthcare and EMS
+
+ 5 files changed, 702 insertions(+), 8 deletions(-)
+```
+
+---
+
+## Todo List
+
+- [x] Create PublicLogin component with role selection buttons
+- [x] Create Healthcare and EMS registration forms
+- [ ] Add simple email link verification system
+- [ ] Add configurable monthly trip limits system
+- [ ] Add TCC admin approval queue interface
+- [x] Merge production branch to main branch
+- [x] Update planning document with current progress
+- [x] Create backup to external drive
+- [x] Implement EMS Agency login flow
+- [x] Implement Healthcare Facility login flow
+- [x] Create placeholder dashboard components for Healthcare and EMS users
+- [x] Standardize development ports (Frontend: 3000, Backend: 5001)
+- [x] Implement public registration API endpoints for Healthcare and EMS
+
+---
+
+## ✅ **Account Creation Forms Ready for Testing!**
+
+### **🎯 What's Been Implemented:**
+
+1. **✅ Backend Registration Endpoints:**
+   - `POST /api/auth/healthcare/register` - Healthcare facility registration
+   - `POST /api/auth/ems/register` - EMS agency registration
+   - Both create users with `isActive: false` (requires admin approval)
+   - Proper validation and error handling
+
+2. **✅ Frontend Integration:**
+   - Updated API service with new registration methods
+   - HealthcareRegistration component now calls real API
+   - EMSRegistration component now calls real API
+   - Proper error handling and success messages
+
+3. **✅ Tested Successfully:**
+   - Healthcare registration: ✅ Working
+   - EMS registration: ✅ Working
+   - Both create users in appropriate databases
+
+### **🧪 Ready to Test Account Creation:**
+
+**Visit**: `http://localhost:3000`
+
+**Test Flow:**
+1. **Click "Create Healthcare Facility Account"** 
+2. **Fill out the form** with test data
+3. **Submit** - should show success message
+4. **Click "Create EMS Agency Account"**
+5. **Fill out the form** with test data  
+6. **Submit** - should show success message
+
+### **📋 Test Data Suggestions:**
+
+**Healthcare Facility:**
+- Facility Name: `Test Hospital`
+- Facility Type: `HOSPITAL`
+- Contact Name: `John Doe`
+- Email: `test-healthcare2@example.com`
+- Password: `test123456`
+
+**EMS Agency:**
+- Agency Name: `Test EMS Agency`
+- Service Type: `EMS`
+- Contact Name: `Jane Smith`
+- Email: `test-ems2@example.com`
+- Password: `test123456`
+
+### **�� What to Expect:**
+- ✅ **Success**: "Registration submitted for approval" message
+- ✅ **Error Handling**: Clear error messages for validation issues
+- ✅ **Database**: Users created with `isActive: false` (pending approval)
+
+**Go ahead and test the account creation forms!** This will help us verify the complete registration flow before implementing the Email Verification System. 🚀
+
+---
+
+_**User (2025-09-07 07:39Z)**_
+
+I received a "success" message adding a hospital, UPMC, with the email verifiction message. I should see this in the "Hospitals" tab of the TCC dashboard but it is blank.
+
+---
+
+_**Assistant**_
+
 
 
 ---

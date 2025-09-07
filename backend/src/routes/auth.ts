@@ -117,6 +117,24 @@ router.post('/healthcare/register', async (req, res) => {
       }
     });
 
+    // Also create a corresponding Hospital record in Center database for TCC dashboard
+    const centerDB = databaseManager.getCenterDB();
+    await centerDB.hospital.create({
+      data: {
+        name: facilityName,
+        address: 'Address to be provided', // Will be updated when approved
+        city: 'City to be provided',
+        state: 'State to be provided',
+        zipCode: '00000',
+        email: email,
+        type: facilityType,
+        capabilities: [], // Will be updated when approved
+        region: 'Region to be determined',
+        isActive: false, // Requires admin approval
+        requiresReview: true // Flag for admin review
+      }
+    });
+
     res.status(201).json({
       success: true,
       message: 'Healthcare facility registration submitted for approval',
@@ -186,6 +204,25 @@ router.post('/ems/register', async (req, res) => {
         agencyName,
         userType: 'EMS',
         isActive: false // Requires admin approval
+      }
+    });
+
+    // Also create a corresponding EMSAgency record in Center database for TCC dashboard
+    const centerDB = databaseManager.getCenterDB();
+    await centerDB.eMSAgency.create({
+      data: {
+        name: agencyName,
+        contactName: name,
+        phone: 'Phone to be provided', // Will be updated when approved
+        email: email,
+        address: 'Address to be provided',
+        city: 'City to be provided',
+        state: 'State to be provided',
+        zipCode: '00000',
+        serviceArea: [], // Will be updated when approved
+        capabilities: [], // Will be updated when approved
+        isActive: false, // Requires admin approval
+        requiresReview: true // Flag for admin review
       }
     });
 
