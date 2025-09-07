@@ -51,6 +51,12 @@ export const authAPI = {
   
   verify: () =>
     api.get('/api/auth/verify'),
+
+  register: (userData: { email: string; password: string; name: string; userType: 'ADMIN' | 'USER' }) =>
+    api.post('/api/auth/register', userData),
+
+  getUsers: () =>
+    api.get('/api/auth/users'),
 };
 
 // Hospitals API

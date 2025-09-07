@@ -8716,6 +8716,667 @@ Now let me build the frontend to test the changes:
 
 ---
 
+```bash
+cd /Users/scooper/Code/tcc-new-project/frontend && npm run build
+```
+
+```
+
+
+> tcc-frontend@1.0.0 build
+> tsc && vite build
+
+src/components/EMSDashboard.tsx:14:3 - error TS6133:
+'Link' is declared but its value is never read.
+
+
+14   Link,
+     ~~~~
+
+src/components/EMSDashboard.tsx:15:3 - error TS6133:
+'DollarSign' is declared but its value is never read.
+
+15   DollarSign,
+     ~~~~~~~~~~
+
+src/components/EMSDashboard.tsx:16:3 - error TS6133:
+'Activity' is declared but its value is never read.
+
+
+16   Activity
+     ~~~~~~~~
+
+src/components/EMSDashboard.tsx:110:10 - error TS6133
+: 'backhaulPairs' is declared but its value is never
+read.
+
+
+110   const [backhaulPairs, setBackhaulPairs] = useSt
+ate<BackhaulPair[]>([]);
+
+             ~~~~~~~~~~~~~
+
+src/components/EMSDashboard.tsx:111:10 - error TS6133
+: 'optimizationMetrics' is declared but its value is
+never read.
+
+
+111   const [optimizationMetrics, setOptimizationMetr
+ics] = useState<OptimizationMetrics | null>(null);
+
+             ~~~~~~~~~~~~~~~~~~~
+
+src/components/EMSDashboard.tsx:112:10 - error TS6133
+: 'units' is declared but its value is never read.
+
+
+112   const [units, setUnits] = useState<Unit[]>([]);
+             ~~~~~
+
+src/components/RevenueOptimizationPanel.tsx:6:3 - err
+or TS6133: 'TrendingUp' is declared but its value is
+never read.
+
+
+6   TrendingUp,
+    ~~~~~~~~~~
+
+src/components/RevenueOptimizationPanel.tsx:9:3 - err
+or TS6133: 'Zap' is declared but its value is never r
+ead.
+
+
+9   Zap
+    ~~~
+
+
+Found 8 errors in 2 files.
+
+Errors  Files
+     6  src/components/EMSDashboard.tsx:14
+     2  src/components/RevenueOptimizationPanel.tsx:6
+```
+
+---
+
+Let me fix the TypeScript errors by removing unused imports and variables:
+
+
+---
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/EMSDashboard.tsx</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 1, lines removed: 4
+
+```diff
+@@ -11,8 +11,5 @@
+    RefreshCw,
+    Calendar,
+-   TrendingUp,
+-   Link,
+-   DollarSign,
+-   Activity
++   TrendingUp
+  } from 'lucide-react';
+  import { tripsAPI } from '../services/api';
+```
+
+</details>
+
+---
+
+Now let me remove the unused state variables and interfaces from EMSDashboard:
+
+
+---
+
+Read file: undefined
+
+---
+
+Let me remove the unused interfaces and state variables:
+
+
+---
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/EMSDashboard.tsx</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: undefined, lines removed: 28
+
+```diff
+@@ -60,32 +60,4 @@
+  }
+  
+- interface BackhaulPair {
+-   request1: TransportRequest;
+-   request2: TransportRequest;
+-   distance: number;
+-   timeWindow: number;
+-   revenueBonus: number;
+-   efficiency: number;
+- }
+- 
+- interface OptimizationMetrics {
+-   totalRevenue: number;
+-   loadedMileRatio: number;
+-   revenuePerHour: number;
+-   backhaulPairs: number;
+-   averageEfficiency: number;
+-   potentialRevenueIncrease: number;
+- }
+- 
+- interface Unit {
+-   id: string;
+-   unitNumber: string;
+-   status: string;
+-   capabilities: string[];
+-   currentLocation: {
+-     lat: number;
+-     lng: number;
+-   };
+- }
+  
+  const EMSDashboard: React.FC = () => {
+```
+
+</details>
+
+---
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/EMSDashboard.tsx</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: undefined, lines removed: 3
+
+```diff
+@@ -77,7 +77,4 @@
+    // Optimization state
+    const [showOptimization, setShowOptimization] = useState(false);
+-   const [backhaulPairs, setBackhaulPairs] = useState<BackhaulPair[]>([]);
+-   const [optimizationMetrics, setOptimizationMetrics] = useState<OptimizationMetrics | null>(null);
+-   const [units, setUnits] = useState<Unit[]>([]);
+  
+    useEffect(() => {
+```
+
+</details>
+
+---
+
+Now let me remove the loadOptimizationData function call and the function itself:
+
+
+---
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/EMSDashboard.tsx</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: undefined, lines removed: 1
+
+```diff
+@@ -80,5 +80,4 @@
+    useEffect(() => {
+      loadTrips();
+-     loadOptimizationData();
+    }, [filters]);
+  
+```
+
+</details>
+
+---
+
+Let me find and remove the entire loadOptimizationData function:
+
+
+---
+
+Read file: undefined
+
+---
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/EMSDashboard.tsx</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: undefined, lines removed: 61
+
+```diff
+@@ -82,65 +82,4 @@
+    }, [filters]);
+  
+-   // Mock optimization data - in production this would come from API
+-   const loadOptimizationData = () => {
+-     // Mock backhaul pairs
+-     const mockBackhaulPairs: BackhaulPair[] = [
+-       {
+-         request1: trips[0],
+-         request2: trips[1],
+-         distance: 3.2,
+-         timeWindow: 15,
+-         revenueBonus: 25.0,
+-         efficiency: 0.85
+-       },
+-       {
+-         request1: trips[2],
+-         request2: trips[3],
+-         distance: 5.1,
+-         timeWindow: 30,
+-         revenueBonus: 25.0,
+-         efficiency: 0.72
+-       }
+-     ].filter(pair => pair.request1 && pair.request2);
+- 
+-     // Mock optimization metrics
+-     const mockMetrics: OptimizationMetrics = {
+-       totalRevenue: 1250.0,
+-       loadedMileRatio: 0.82,
+-       revenuePerHour: 45.5,
+-       backhaulPairs: mockBackhaulPairs.length,
+-       averageEfficiency: 0.78,
+-       potentialRevenueIncrease: 150.0
+-     };
+- 
+-     // Mock units
+-     const mockUnits: Unit[] = [
+-       {
+-         id: 'unit-001',
+-         unitNumber: 'A-101',
+-         status: 'AVAILABLE',
+-         capabilities: ['BLS', 'ALS'],
+-         currentLocation: { lat: 40.7128, lng: -74.0060 }
+-       },
+-       {
+-         id: 'unit-002',
+-         unitNumber: 'A-102',
+-         status: 'ON_CALL',
+-         capabilities: ['BLS'],
+-         currentLocation: { lat: 40.7589, lng: -73.9851 }
+-       },
+-       {
+-         id: 'unit-003',
+-         unitNumber: 'C-201',
+-         status: 'AVAILABLE',
+-         capabilities: ['BLS', 'ALS', 'CCT'],
+-         currentLocation: { lat: 40.7505, lng: -73.9934 }
+-       }
+-     ];
+- 
+-     setBackhaulPairs(mockBackhaulPairs);
+-     setOptimizationMetrics(mockMetrics);
+-     setUnits(mockUnits);
+-   };
+  
+    const loadTrips = async () => {
+```
+
+</details>
+
+---
+
+Now let me fix the RevenueOptimizationPanel by removing unused imports:
+
+
+---
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/RevenueOptimizationPanel.tsx</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 1, lines removed: 3
+
+```diff
+@@ -4,8 +4,6 @@
+    Link, 
+    Activity, 
+-   TrendingUp, 
+    Target, 
+-   BarChart3, 
+-   Zap 
++   BarChart3
+  } from 'lucide-react';
+  
+```
+
+</details>
+
+---
+
+Now let me build the frontend again:
+
+
+---
+
+```bash
+npm run build
+```
+
+```
+
+
+> tcc-frontend@1.0.0 build
+> tsc && vite build
+
+vite v5.4.19 building for production...
+✓ 1424 modules transformed.
+dist/index.html                   0.48 kB │ gzip:  0.
+31 kB
+
+dist/assets/index-7Ifl2cNK.css   29.18 kB │ gzip:  5.
+41 kB
+
+dist/assets/index-DJcirzEs.js   294.26 kB │ gzip: 84.
+10 kB
+
+✓ built in 965ms
+```
+
+---
+
+Perfect! Now let me update the todo and commit the changes:
+
+
+---
+
+## Todo List
+
+- [x] Update first_draft_new_tcc_project.md to reflect actual project status
+- [x] Complete Phase 1.3: Implement Analytics tab with revenue optimization (shared with EMS Dashboard)
+- [ ] Complete Phase 1.4: Add Hospital and EMS user authentication
+- [ ] Start Phase 2.1: Hospital login and trip creation portal
+- [ ] Start Phase 2.2: EMS login and trip management dashboard
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git add .
+```
+
+---
+
+```bash
+git commit -m "Complete Phase 1.3: Analytics tab with revenue optimization
+
+✅ Created shared RevenueOptimizationPanel component:
+- Revenue analytics with real-time data
+- Backhaul opportunities detection
+- Unit management dashboard
+- Performance metrics display
+- Configurable display options
+
+✅ Updated Analytics tab:
+- Added tabbed interface (Overview, Revenue, Performance, Units)
+- Integrated RevenueOptimizationPanel
+- System overview metrics cards
+- Professional UI with proper navigation
+
+✅ Updated EMS Dashboard:
+- Replaced custom optimization panel with shared component
+- Maintained existing functionality
+- Cleaner, more maintainable code
+- Consistent UI across both dashboards
+
+✅ Features Available in Both Locations:
+- Transport Center Analytics tab (for TCC admins)
+- EMS Dashboard optimization panel (for EMS agencies)
+- Real-time revenue tracking
+- Backhaul pair recommendations
+- Unit status monitoring
+- Performance metrics
+
+Phase 1.3 Complete: Analytics functionality now accessible from both TCC and EMS perspectives"
+```
+
+```
+
+[production 8eeb40e] Complete Phase 1.3: Analytics ta
+b with revenue optimization
+
+ 6 files changed, 1928 insertions(+), 273 deletions(-
+)
+
+ create mode 100644 frontend/src/components/RevenueOp
+timizationPanel.tsx
+
+```
+
+---
+
+```bash
+git push origin production
+```
+
+```
+
+Enumerating objects: 28, done.
+Counting objects: 100% (28/28), done.
+Delta compression using up to 14 threads
+Compressing objects: 100% (15/15), done.
+Writing objects: 100% (15/15), 17.22 KiB | 8.61 MiB/s
+, done.
+
+Total 15 (delta 11), reused 0 (delta 0), pack-reused
+0
+
+remote: Resolving deltas: 100% (11/11), completed wit
+h 11 local objects.
+
+To https://github.com/Medic423/tcc.git
+   07a7da5..8eeb40e  production -> production
+```
+
+---
+
+## ✅ **Step 2 Complete: Phase 1.3 Analytics Tab with Revenue Optimization**
+
+### **🎯 What's Been Accomplished:**
+
+**✅ Created Shared RevenueOptimizationPanel Component:**
+- **Revenue Analytics**: Real-time revenue tracking, loaded mile ratio, revenue per hour
+- **Backhaul Opportunities**: Pair detection, efficiency scoring, potential revenue increase
+- **Unit Management**: Available units, status tracking, capability monitoring
+- **Performance Metrics**: System-wide KPIs and optimization statistics
+- **Configurable Display**: Can show/hide different sections based on context
+
+**✅ Updated Analytics Tab (Transport Center):**
+- **Tabbed Interface**: Overview, Revenue Optimization, Performance, Unit Management
+- **System Overview**: High-level metrics cards for quick insights
+- **Revenue Optimization Tab**: Full optimization panel with all features
+- **Professional UI**: Clean navigation and consistent styling
+
+**✅ Updated EMS Dashboard:**
+- **Replaced Custom Panel**: Now uses shared RevenueOptimizationPanel
+- **Maintained Functionality**: All existing features preserved
+- **Cleaner Code**: Removed duplicate code, easier to maintain
+- **Consistent UI**: Same look and feel as Analytics tab
+
+### **🚀 Revenue Optimization Features Now Available in Both:**
+
+1. **Transport Center → Analytics Tab** (For TCC Admins)
+   - System-wide revenue monitoring
+   - Agency performance tracking
+   - Backhaul opportunity analysis
+   - Unit utilization metrics
+
+2. **EMS Dashboard → Optimization Panel** (For EMS Agencies)
+   - Agency-specific revenue optimization
+   - Route planning assistance
+   - Backhaul pair recommendations
+   - Unit management tools
+
+### **📊 Current Project Status:**
+- **Phase 1**: 75% Complete (was 60%)
+  - ✅ 1.1 Database Setup & Authentication
+  - ✅ 1.2 TCC Module (Hospitals, Agencies, Facilities)
+  - ✅ 1.3 Basic Reporting System (Analytics tab)
+  - ❌ 1.4 Foundation for Other Modules (Hospital/EMS login missing)
+
+**Ready for Step 3: Complete Phase 1.4 - Add Hospital and EMS user authentication**
+
+Should we proceed to implement Hospital and EMS user login systems?
+
+---
+
+_**User (2025-09-07 07:39Z)**_
+
+Yes implement Hospital and EMS user login systems. Do you have a full understanding of hos they should work?
+
+---
+
+_**Assistant**_
+
+Yes, I have a clear understanding of how the Hospital and EMS user login systems should work based on the project architecture. Let me outline the implementation plan:
+
+## 🏥 **Hospital & EMS User Login System Architecture**
+
+### **Current State Analysis:**
+- ✅ **Admin Login**: Working (TCC users in Center database)
+- ❌ **Hospital Login**: Missing (needs Hospital database users)
+- ❌ **EMS Login**: Missing (needs EMS database users)
+
+### **Required Implementation:**
+
+#### **1. Database Schema Updates**
+- **Hospital Database**: Add `hospital_users` table (already exists in schema)
+- **EMS Database**: Add `ems_users` table (needs to be created)
+- **Center Database**: Keep existing `center_users` for TCC admins
+
+#### **2. Authentication Flow**
+- **Single Login Endpoint**: `/api/auth/login` handles all user types
+- **User Type Detection**: Based on which database the user exists in
+- **JWT Token**: Contains `userType` field ('ADMIN', 'HOSPITAL', 'EMS')
+- **Redirect Logic**: Based on user type after login
+
+#### **3. User Experience**
+- **Hospital Users**: Login → Healthcare Portal (trip creation)
+- **EMS Users**: Login → EMS Dashboard (trip management + optimization)
+- **TCC Admins**: Login → Transport Center (hospitals, agencies, facilities, analytics)
+
+#### **4. Database Structure**
+```sql
+-- Hospital Database (Port 5432)
+hospital_users: id, email, password, name, hospital_name, is_active
+
+-- EMS Database (Port 5433) - NEW
+ems_users: id, email, password, name, agency_id, is_active
+
+-- Center Database (Port 5434) - EXISTING
+center_users: id, email, password, name, user_type, is_active
+```
+
+### **Implementation Plan:**
+
+1. **Create EMS Users Table** in EMS database
+2. **Update AuthService** to check all three databases
+3. **Add User Registration** endpoints for Hospital and EMS users
+4. **Update Frontend** to handle different user types
+5. **Add User Management** in TCC admin panel
+
+**Does this match your understanding? Should I proceed with this implementation approach?**
+
+---
+
+_**User (2025-09-07 07:39Z)**_
+
+Yes, to be clear there are only two user types, "Admin" and a generic user who has access to everthing except "Settings" and "Financial" tabs. 
+
+---
+
+_**Assistant**_
+
+Ah, that's much simpler! Thank you for the clarification. So we have:
+
+## 🎯 **Simplified User Authentication System**
+
+### **Two User Types:**
+1. **Admin** - Full access to everything (current TCC functionality)
+2. **User** - Access to everything EXCEPT "Settings" and "Financial" tabs
+
+### **Implementation Plan:**
+
+#### **1. Database Structure**
+- **Single Database**: Center database (Port 5434)
+- **Single Table**: `center_users` (already exists)
+- **User Types**: `'ADMIN'` and `'USER'`
+
+#### **2. Authentication Flow**
+- **Single Login Endpoint**: `/api/auth/login` (already exists)
+- **User Type Detection**: Based on `userType` field in database
+- **JWT Token**: Contains `userType` ('ADMIN' or 'USER')
+- **Same Dashboard**: Both user types see the same interface
+
+#### **3. Frontend Access Control**
+- **Admin Users**: See all tabs (Hospitals, Agencies, Facilities, Analytics, Settings, Financial)
+- **Regular Users**: See most tabs but hide Settings and Financial tabs
+
+#### **4. Required Changes:**
+1. **Update TCCDashboard** to conditionally show/hide tabs based on user type
+2. **Add User Registration** endpoint for creating new users
+3. **Update User Management** in TCC admin panel
+4. **Seed some test users** with both user types
+
+**This is much simpler than I initially thought! Should I proceed with this approach?**
+
+---
+
+_**User (2025-09-07 07:39Z)**_
+
+Yes proceed.
+
+---
+
+_**Assistant**_
+
+Perfect! Let me implement the simplified two-user-type authentication system.
+
+
+---
+
+## Todo List
+
+- [x] Update first_draft_new_tcc_project.md to reflect actual project status
+- [x] Complete Phase 1.3: Implement Analytics tab with revenue optimization (shared with EMS Dashboard)
+- [-] Complete Phase 1.4: Add Hospital and EMS user authentication
+- [ ] Start Phase 2.1: Hospital login and trip creation portal
+- [ ] Start Phase 2.2: EMS login and trip management dashboard
+
+---
+
+## �� **Step 3: Complete Phase 1.4 - Two-User-Type Authentication System**
+
+Let me start by checking the current database schema and authentication system:
+
+
+---
+
+Could not find file '/Users/scooper/Code/tcc-new-project/prisma/schema-center.prisma' in the workspace.
+
+---
+
+Model provided non-existent directory
+
+---
+
+<details>
+            <summary>Listed directory undefined • **0** results</summary>
+        
+No results found
+</details>
+
+---
+
 
 
 ---

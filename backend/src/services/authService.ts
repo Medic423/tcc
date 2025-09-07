@@ -2,11 +2,11 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { databaseManager } from './databaseManager';
 
-export interface AdminUser {
+export interface User {
   id: string;
   email: string;
   name: string;
-  userType: 'ADMIN';
+  userType: 'ADMIN' | 'USER';
 }
 
 export interface LoginCredentials {
@@ -16,7 +16,7 @@ export interface LoginCredentials {
 
 export interface AuthResult {
   success: boolean;
-  user?: AdminUser;
+  user?: User;
   token?: string;
   error?: string;
 }
@@ -70,22 +70,22 @@ export class AuthService {
         {
           id: user.id,
           email: user.email,
-          userType: 'ADMIN'
+          userType: user.userType
         },
         this.jwtSecret,
         { expiresIn: '24h' }
       );
 
-      const adminUser: AdminUser = {
+      const userData: User = {
         id: user.id,
         email: user.email,
         name: user.name,
-        userType: 'ADMIN'
+        userType: user.userType as 'ADMIN' | 'USER'
       };
 
       return {
         success: true,
-        user: adminUser,
+        user: userData,
         token
       };
 
@@ -98,11 +98,11 @@ export class AuthService {
     }
   }
 
-  async verifyToken(token: string): Promise<AdminUser | null> {
+  async verifyToken(token: string): Promise<User | null> {
     try {
       const decoded = jwt.verify(token, this.jwtSecret) as any;
       
-      if (decoded.userType !== 'ADMIN') {
+      if (!['ADMIN', 'USER'].includes(decoded.userType)) {
         return null;
       }
 
@@ -120,7 +120,7 @@ export class AuthService {
         id: user.id,
         email: user.email,
         name: user.name,
-        userType: 'ADMIN'
+        userType: user.userType as 'ADMIN' | 'USER'
       };
 
     } catch (error) {
@@ -129,11 +129,12 @@ export class AuthService {
     }
   }
 
-  async createAdminUser(userData: {
+  async createUser(userData: {
     email: string;
     password: string;
     name: string;
-  }): Promise<AdminUser> {
+    userType: 'ADMIN' | 'USER';
+  }): Promise<User> {
     const centerDB = databaseManager.getCenterDB();
     
     // Hash password
@@ -145,7 +146,7 @@ export class AuthService {
         email: userData.email,
         password: hashedPassword,
         name: userData.name,
-        userType: 'ADMIN'
+        userType: userData.userType
       }
     });
 
@@ -153,8 +154,24 @@ export class AuthService {
       id: user.id,
       email: user.email,
       name: user.name,
-      userType: 'ADMIN'
+      userType: user.userType as 'ADMIN' | 'USER'
     };
+  }
+
+  async createAdminUser(userData: {
+    email: string;
+    password: string;
+    name: string;
+  }): Promise<User> {
+    return this.createUser({ ...userData, userType: 'ADMIN' });
+  }
+
+  async createRegularUser(userData: {
+    email: string;
+    password: string;
+    name: string;
+  }): Promise<User> {
+    return this.createUser({ ...userData, userType: 'USER' });
   }
 }
 

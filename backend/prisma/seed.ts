@@ -25,6 +25,19 @@ async function main() {
     });
     console.log('✅ Admin user created:', adminUser.email);
 
+    // Create regular user
+    const regularUser = await centerDB.centerUser.upsert({
+      where: { email: 'user@tcc.com' },
+      update: {},
+      create: {
+        email: 'user@tcc.com',
+        password: hashedPassword,
+        name: 'TCC User',
+        userType: 'USER'
+      }
+    });
+    console.log('✅ Regular user created:', regularUser.email);
+
     // Create sample hospitals
     const hospital1 = await centerDB.hospital.create({
       data: {

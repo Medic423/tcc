@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
-import { authService, AdminUser } from '../services/authService';
+import { authService, User } from '../services/authService';
 
 export interface AuthenticatedRequest extends Request {
-  user?: AdminUser;
+  user?: User;
 }
 
 export const authenticateAdmin = async (
