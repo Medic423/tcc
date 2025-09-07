@@ -114,7 +114,7 @@ const Hospitals: React.FC = () => {
       // Clear the current session and redirect to main page for registration
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.location.href = '/';
+      window.location.href = '/?register=healthcare';
     }
   };
 
@@ -190,8 +190,8 @@ const Hospitals: React.FC = () => {
                 // Clear the current session and redirect to main page for registration
                 localStorage.removeItem('token');
                 localStorage.removeItem('user');
-                // Redirect to main page which will show the public login/registration
-                window.location.href = '/';
+                // Redirect to main page with healthcare registration parameter
+                window.location.href = '/?register=healthcare';
               }}
               className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
             >

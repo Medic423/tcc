@@ -38,6 +38,15 @@ function AppContent() {
       setLoading(false);
     };
 
+    // Check for URL parameters to automatically show registration forms
+    const urlParams = new URLSearchParams(window.location.search);
+    const registerParam = urlParams.get('register');
+    if (registerParam === 'healthcare') {
+      setCurrentView('healthcare-register');
+    } else if (registerParam === 'ems') {
+      setCurrentView('ems-register');
+    }
+
     checkAuth();
   }, []);
 
