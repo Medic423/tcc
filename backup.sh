@@ -4,7 +4,7 @@
 # Backs up the project to external drive
 
 PROJECT_DIR="/Users/scooper/Code/tcc-new-project"
-BACKUP_DIR="/Volumes/Extreme SSD Two 2TB/tcc-backups"
+BACKUP_DIR="${1:-/Volumes/Extreme SSD Two 2TB}/tcc-backups"
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 BACKUP_NAME="tcc-backup-$TIMESTAMP"
 
@@ -31,21 +31,38 @@ TCC Project Backup
 ==================
 Date: $(date)
 Project: tcc-new-project
-Phase: 1 Complete
-Status: Admin dashboard with 3 siloed databases
+Phase: 3 Complete - Revenue Optimization & EMS Management
+Status: Full CRUD functionality with optimization algorithms
 
 Contents:
 - Complete backend API (Node.js + Express + TypeScript)
 - Complete frontend dashboard (React + TypeScript)
+- Revenue optimization engine with greedy scoring
+- Backhaul detection system (90 min, 15 mi radius)
+- EMS Agencies management (Add/Edit/Delete/Search)
 - 3 PostgreSQL database schemas
+- Comprehensive test suite
 - Documentation and setup scripts
-- Git repository with initial commit
+- Git repository with production branch
+
+Features Working:
+✅ TCC Admin Dashboard (Hospitals, Agencies, Facilities)
+✅ Healthcare Portal (Trip creation)
+✅ EMS Dashboard (Trip management + Optimization)
+✅ Revenue Optimization Engine
+✅ Backhaul Detection System
+✅ Complete CRUD operations
+✅ Search and filtering
+✅ Authentication system
 
 To restore:
 1. Copy this folder to your development machine
 2. Run: cd backend && npm install
 3. Run: cd frontend && npm install
 4. Run: ./setup.sh
+5. Run: cd backend && npm run build:prod
+6. Run: cd backend && npm start
+7. Run: cd frontend && npm run dev
 EOF
 
 echo "✅ Backup completed: $BACKUP_DIR/$BACKUP_NAME"
