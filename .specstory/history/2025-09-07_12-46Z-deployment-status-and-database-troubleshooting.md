@@ -15990,9 +15990,214 @@ Now let me test the login flows. First, let me check if the frontend is running 
 
 ---
 
+```bash
+cd /Users/scooper/Code/tcc-new-project && curl -s http://localhost:3001/ | head -5
+```
+
+```
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <script type="module">import { injectIntoGlobalHo
+ok } from "/@react-refresh";
+
+injectIntoGlobalHook(window);
+```
+
+---
+
+Great! The frontend is running on port 3001. Now let me test the EMS login:
 
 
 ---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && curl -X POST http://localhost:5001/api/auth/ems/login -H "Content-Type: application/json" -d '{"email":"ems@test.com","password":"ems123"}'
+```
+
+```
+
+{"success":true,"message":"Login successful","user":{
+"id":"cmf9wwdmo0000mr55x6q80o3e","email":"ems@test.co
+m","name":"Test EMS User","userType":"EMS","agencyNam
+e":"Test EMS Agency"},"token":"eyJhbGciOiJIUzI1NiIsIn
+R5cCI6IkpXVCJ9.eyJpZCI6ImNtZjl3d2RtbzAwMDBtcjU1eDZxOD
+BvM2UiLCJlbWFpbCI6ImVtc0B0ZXN0LmNvbSIsInVzZXJUeXBlIjo
+iRU1TIiwiaWF0IjoxNzU3MjYzNDMxLCJleHAiOjE3NTczNDk4MzF9
+.hbWi8oIP74MzvbkFIGJejiLfmk6VFjOH2PN0R4hl8mc"}%
+
+```
+
+---
+
+Perfect! Now let me test the Healthcare login:
+
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && curl -X POST http://localhost:5001/api/auth/healthcare/login -H "Content-Type: application/json" -d '{"email":"healthcare@test.com","password":"healthcare123"}'
+```
+
+```
+
+{"success":true,"message":"Login successful","user":{
+"id":"cmf9wwdog0000a58jvky6k6fc","email":"healthcare@
+test.com","name":"Test Healthcare User","userType":"H
+EALTHCARE","facilityName":"Test Healthcare Facility",
+"facilityType":"HOSPITAL"},"token":"eyJhbGciOiJIUzI1N
+iIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtZjl3d2RvZzAwMDBhNThqd
+mt5Nms2ZmMiLCJlbWFpbCI6ImhlYWx0aGNhcmVAdGVzdC5jb20iLC
+J1c2VyVHlwZSI6IkhFQUxUSENBUkUiLCJpYXQiOjE3NTcyNjM0Mzg
+sImV4cCI6MTc1NzM0OTgzOH0.DrEwDo9ZwrDlEX1MLnowGEM8CqDI
+PE8g7AZILJppuyI"}%
+
+```
+
+---
+
+Excellent! Both login endpoints are working. Now let me commit these changes and update the todos:
+
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git add .
+```
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git commit -m "Add placeholder dashboard components for Healthcare and EMS users
+
+- Create HealthcareDashboard component with tabs for Overview, Transport Requests, Create Request, and Settings
+- Create EMSDashboard component with tabs for Overview, Available Trips, My Trips, Route Optimization, and Settings
+- Update App.tsx to route users to appropriate dashboard based on userType
+- Healthcare users see HealthcareDashboard with green theme
+- EMS users see EMSDashboard with orange theme
+- Both dashboards include sample data and placeholder functionality
+- All login flows now have complete user experience from login to dashboard"
+```
+
+```
+
+[main d6f833f] Add placeholder dashboard components f
+or Healthcare and EMS users
+
+ 4 files changed, 2734 insertions(+), 403 deletions(-
+)
+
+ create mode 100644 frontend/src/components/Healthcar
+eDashboard.tsx
+
+```
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git push origin main
+```
+
+```
+
+Enumerating objects: 20, done.
+Counting objects: 100% (20/20), done.
+Delta compression using up to 14 threads
+Compressing objects: 100% (11/11), done.
+Writing objects: 100% (11/11), 14.05 KiB | 7.03 MiB/s
+, done.
+
+Total 11 (delta 7), reused 0 (delta 0), pack-reused 0
+remote: Resolving deltas: 100% (7/7), completed with
+6 local objects.
+
+To https://github.com/Medic423/tcc.git
+   e2f0b24..d6f833f  main -> main
+```
+
+---
+
+## Todo List
+
+- [x] Create PublicLogin component with role selection buttons
+- [x] Create Healthcare and EMS registration forms
+- [ ] Add simple email link verification system
+- [ ] Add configurable monthly trip limits system
+- [ ] Add TCC admin approval queue interface
+- [x] Merge production branch to main branch
+- [x] Update planning document with current progress
+- [x] Create backup to external drive
+- [x] Implement EMS Agency login flow
+- [x] Implement Healthcare Facility login flow
+- [x] Create placeholder dashboard components for Healthcare and EMS users
+
+---
+
+## ✅ **Complete Login Flow Testing Ready!**
+
+### **🎯 What's Been Completed:**
+
+1. **✅ Healthcare Dashboard Component:**
+   - **Green theme** with Building2 icon
+   - **Tabs**: Overview, Transport Requests, Create Request, Settings
+   - **Sample data** for transport requests with status indicators
+   - **Placeholder functionality** for trip creation
+   - **User info display** with facility name and type
+
+2. **✅ EMS Dashboard Component:**
+   - **Orange theme** with Truck icon
+   - **Tabs**: Overview, Available Trips, My Trips, Route Optimization, Settings
+   - **Interactive features** for accepting/declining trips
+   - **Revenue tracking** and performance metrics
+   - **Placeholder functionality** for route optimization
+
+3. **✅ App.tsx Routing Logic:**
+   - **User type detection** - routes to appropriate dashboard
+   - **HEALTHCARE** → HealthcareDashboard
+   - **EMS** → EMSDashboard  
+   - **ADMIN/USER** → TCCDashboard (existing)
+
+4. **✅ Complete User Journey:**
+   - **Public Login Screen** → Role Selection
+   - **Login Forms** → Authentication
+   - **Dashboard Display** → Role-specific interface
+   - **Logout Functionality** → Return to public screen
+
+### **🚀 Ready for Full Testing:**
+
+**Frontend**: `http://localhost:3001/`
+**Backend**: `http://localhost:5001/`
+
+**Test Credentials:**
+- **EMS**: `ems@test.com` / `ems123`
+- **Healthcare**: `healthcare@test.com` / `healthcare123`
+- **TCC Admin**: `admin@tcc.com` / `admin123`
+- **TCC User**: `user@tcc.com` / `admin123`
+
+### **📋 Complete Testing Flow:**
+
+1. **Visit** `http://localhost:3001/`
+2. **Click "EMS Agency Login"** → Test EMS login → See EMS Dashboard
+3. **Click "Healthcare Facility Login"** → Test Healthcare login → See Healthcare Dashboard  
+4. **Click "Transport Center Login"** → Test TCC login → See TCC Dashboard
+5. **Test logout** from each dashboard → Return to public screen
+
+### **🎉 All Login Flows Now Complete!**
+
+The system now provides a complete user experience from public login through role-specific dashboards. This is perfect for testing the Email Verification System and other upcoming features! 
+
+**Next Priority**: Email Verification System implementation 🚀
+
+---
+
+_**User (2025-09-07 07:39Z)**_
+
+We need to standarize our ports. Currently the main log-in is on 3004. 
+
+---
+
+_**Assistant**_
 
 
 
