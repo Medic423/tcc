@@ -84,6 +84,13 @@ function AppContent() {
     setCurrentView('public');
   };
 
+  const handleClearSession = () => {
+    setUser(null);
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setCurrentView('public');
+  };
+
   console.log('TCC_DEBUG: App render - user:', user, 'loading:', loading);
 
   if (loading) {
@@ -127,6 +134,7 @@ function AppContent() {
         <PublicLogin 
           onRoleSelect={handleRoleSelect}
           onShowRegistration={handleShowRegistration}
+          onClearSession={handleClearSession}
         />
       )}
       {currentView === 'healthcare-register' && (

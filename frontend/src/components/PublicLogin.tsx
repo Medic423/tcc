@@ -10,9 +10,10 @@ import {
 interface PublicLoginProps {
   onRoleSelect: (role: 'healthcare' | 'ems' | 'tcc') => void;
   onShowRegistration: (role: 'healthcare' | 'ems') => void;
+  onClearSession?: () => void;
 }
 
-const PublicLogin: React.FC<PublicLoginProps> = ({ onRoleSelect, onShowRegistration }) => {
+const PublicLogin: React.FC<PublicLoginProps> = ({ onRoleSelect, onShowRegistration, onClearSession }) => {
   const [showBackButton, setShowBackButton] = useState(false);
 
   const handleRoleClick = (role: 'healthcare' | 'ems' | 'tcc') => {
@@ -90,6 +91,18 @@ const PublicLogin: React.FC<PublicLoginProps> = ({ onRoleSelect, onShowRegistrat
                 Create EMS Agency Account
               </button>
             </div>
+            
+            {/* Clear Session Button */}
+            {onClearSession && (
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <button
+                  onClick={onClearSession}
+                  className="w-full text-xs text-gray-500 hover:text-gray-700 underline"
+                >
+                  Clear Session & Start Fresh
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
