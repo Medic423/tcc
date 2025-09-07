@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './components/Login';
 import TCCDashboard from './components/TCCDashboard';
+import PublicLogin from './components/PublicLogin';
+import HealthcareRegistration from './components/HealthcareRegistration';
+import EMSRegistration from './components/EMSRegistration';
 import { authAPI } from './services/api';
 
 interface User {
@@ -14,6 +17,7 @@ interface User {
 function AppContent() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [currentView, setCurrentView] = useState<'public' | 'healthcare-register' | 'ems-register' | 'login'>('public');
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -47,6 +51,32 @@ function AppContent() {
     setUser(null);
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    setCurrentView('public');
+  };
+
+  const handleRoleSelect = (role: 'healthcare' | 'ems' | 'tcc') => {
+    if (role === 'tcc') {
+      setCurrentView('login');
+    } else {
+      // For healthcare and EMS, show login form (we'll implement this later)
+      setCurrentView('login');
+    }
+  };
+
+  const handleShowRegistration = (role: 'healthcare' | 'ems') => {
+    if (role === 'healthcare') {
+      setCurrentView('healthcare-register');
+    } else {
+      setCurrentView('ems-register');
+    }
+  };
+
+  const handleRegistrationSuccess = () => {
+    setCurrentView('public');
+  };
+
+  const handleBackToPublic = () => {
+    setCurrentView('public');
   };
 
   console.log('TCC_DEBUG: App render - user:', user, 'loading:', loading);
@@ -59,34 +89,48 @@ function AppContent() {
     );
   }
 
+  // If user is logged in, show dashboard
+  if (user) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Routes>
+          <Route
+            path="/dashboard/*"
+            element={<TCCDashboard user={user} onLogout={handleLogout} />}
+          />
+          <Route
+            path="*"
+            element={<Navigate to="/dashboard" replace />}
+          />
+        </Routes>
+      </div>
+    );
+  }
+
+  // If not logged in, show public interface
   return (
     <div className="min-h-screen bg-gray-50">
-      <Routes>
-        <Route
-          path="/login"
-          element={
-            user ? (
-              <Navigate to="/dashboard" replace />
-            ) : (
-              <Login onLogin={handleLogin} />
-            )
-          }
+      {currentView === 'public' && (
+        <PublicLogin 
+          onRoleSelect={handleRoleSelect}
+          onShowRegistration={handleShowRegistration}
         />
-        <Route
-          path="/dashboard/*"
-          element={
-            user ? (
-              <TCCDashboard user={user} onLogout={handleLogout} />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
+      )}
+      {currentView === 'healthcare-register' && (
+        <HealthcareRegistration 
+          onBack={handleBackToPublic}
+          onSuccess={handleRegistrationSuccess}
         />
-        <Route
-          path="/"
-          element={<Navigate to="/dashboard" replace />}
+      )}
+      {currentView === 'ems-register' && (
+        <EMSRegistration 
+          onBack={handleBackToPublic}
+          onSuccess={handleRegistrationSuccess}
         />
-      </Routes>
+      )}
+      {currentView === 'login' && (
+        <Login onLogin={handleLogin} />
+      )}
     </div>
   );
 }

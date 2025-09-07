@@ -9,15 +9,20 @@
 ## 🎯 **CURRENT PROGRESS STATUS**
 
 
-### **🔄 Phase 1: IN PROGRESS (60%)**
+### **🔄 Phase 1: IN PROGRESS (70%)**
 - [x] Database setup with siloed architecture
 - [x] TCC admin dashboard with full CRUD operations
 - [x] Hospital, EMS agency, and facility management
-- [x] Authentication system with JWT (Admin only)
-- [ ] Basic reporting and analytics (Analytics tab placeholder)
-- [ ] Foundation for other modules (Hospital/EMS login missing)
+- [x] Authentication system with JWT (Admin/User types)
+- [x] Basic reporting and analytics (Analytics tab with revenue optimization)
+- [ ] Public login screen with role selection
+- [ ] Account creation and approval queue system
 
 ### **❌ Phase 2: NOT STARTED (0%)**
+- [ ] Public login screen with role selection (Healthcare/EMS/TCC)
+- [ ] Account creation flows with different forms for each role
+- [ ] Approval queue system for new accounts
+- [ ] Freemium tier implementation
 - [ ] Healthcare Portal with trip creation form
 - [ ] EMS Dashboard with trip management
 - [ ] Trip API endpoints (create, read, update)
@@ -41,6 +46,50 @@
 
 ---
 
+## 🌐 **PUBLIC LOGIN SCREEN ARCHITECTURE**
+
+### **Domain Structure:**
+- **Main Domain**: `tcc.com` - Public login screen with role selection
+- **TCC Admin**: `admin.tcc.com` - Transport Control Center dashboard
+- **User Dashboards**: `app.tcc.com` - Healthcare and EMS user dashboards
+
+### **Public Login Screen Features:**
+1. **Role Selection Buttons**:
+   - 🏥 **Healthcare Facility Login** (Green)
+   - 🚑 **EMS Agency Login** (Orange) 
+   - 🏢 **Transport Center Login** (Blue)
+
+2. **Account Creation Flows**:
+   - **Healthcare Facility Registration**:
+     - Facility type dropdown (Hospital, Clinic, Urgent Care, Rehabilitation, Doctor's Office, Dialysis Center, etc.)
+     - Facility information form
+     - Contact person details
+     - Service area selection
+   - **EMS Agency Registration**:
+     - Service type dropdown (EMS, Wheelchair Van, Other)
+     - Agency information form
+     - Service capabilities
+     - Coverage area selection
+
+3. **Approval Queue System**:
+   - New accounts go to TCC admin approval queue
+   - Email notifications to TCC admins
+   - Account status tracking (Pending, Approved, Rejected)
+   - Email notifications to applicants
+
+### **Freemium Model Implementation:**
+- **Free Tier Features**:
+  - Healthcare: Post trips, monitor status, basic email/SMS notifications
+  - EMS: View trips with 100-mile radius filter, trip type filtering (ALS/BLS/CCT)
+  - Monthly trip limits (e.g., 10 trips per month for free users)
+- **Paid Tier Features**:
+  - Unlimited trips
+  - Advanced analytics and reporting
+  - Priority support
+  - All optimization features
+- **Upgrade Prompts**: Throughout the interface for free users
+
+---
 
 ## 🎯 **CORE REQUIREMENTS ANALYSIS**
 
@@ -459,16 +508,17 @@
 
 ### **Immediate Actions (This Week):**
 1. ✅ **Update planning document** - COMPLETED
-2. **Complete Phase 1.3: Analytics Tab** - Move revenue optimization UI from EMS Dashboard to Analytics tab
-3. **Complete Phase 1.4: Hospital/EMS Authentication** - Add login for Hospital and EMS users
-4. **Start Phase 2.1: Hospital Portal** - Trip creation interface for hospitals
-5. **Start Phase 2.2: EMS Dashboard** - Trip management interface for EMS agencies
+2. ✅ **Complete Phase 1.3: Analytics Tab** - COMPLETED
+3. ✅ **Complete Phase 1.4: Two-User-Type Authentication** - COMPLETED
+4. **Create Public Login Screen** - Role selection with account creation flows
+5. **Implement Approval Queue System** - TCC admin approval for new accounts
+6. **Add Freemium Tier Logic** - Free vs paid user feature restrictions
 
 ### **Current Priority Order:**
-1. **Phase 1.3** - Analytics tab with revenue optimization (2-3 hours)
-2. **Phase 1.4** - Hospital/EMS authentication (4-6 hours)  
-3. **Phase 2.1** - Hospital trip creation portal (6-8 hours)
-4. **Phase 2.2** - EMS trip management dashboard (6-8 hours)
+1. **Public Login Screen** - Role selection and account creation (4-6 hours)
+2. **Approval Queue System** - TCC admin approval workflow (3-4 hours)
+3. **Freemium Implementation** - User tier restrictions and upgrade prompts (2-3 hours)
+4. **Domain Setup** - Configure subdomains for different user types (1-2 hours)
 
 ### **Ready to Start Development:**
 - ✅ All requirements clarified
