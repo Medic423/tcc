@@ -24,7 +24,6 @@ const HealthcareLogin: React.FC<HealthcareLoginProps> = ({ onBack, onLogin }) =>
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert('TCC_DEBUG: Healthcare login form submitted!');
     setIsLoading(true);
     setError('');
 
@@ -39,12 +38,8 @@ const HealthcareLogin: React.FC<HealthcareLoginProps> = ({ onBack, onLogin }) =>
       });
 
       const data = await response.json();
-      console.log('TCC_DEBUG: Healthcare login response:', data);
-      alert('TCC_DEBUG: Response received: ' + JSON.stringify(data));
 
       if (response.ok) {
-        console.log('TCC_DEBUG: Calling onLogin with:', data.user, data.token);
-        alert('TCC_DEBUG: Calling onLogin with user and token');
         onLogin(data.user, data.token);
       } else {
         setError(data.message || 'Login failed');
@@ -137,8 +132,8 @@ const HealthcareLogin: React.FC<HealthcareLoginProps> = ({ onBack, onLogin }) =>
           <div className="text-center">
             <div className="text-sm text-gray-600">
               <p className="font-medium">Demo Credentials:</p>
-              <p><strong>Email:</strong> healthcare@test.com</p>
-              <p><strong>Password:</strong> healthcare123</p>
+              <p><strong>Email:</strong> admin@altoonaregional.org</p>
+              <p><strong>Password:</strong> upmc123</p>
             </div>
           </div>
         </form>

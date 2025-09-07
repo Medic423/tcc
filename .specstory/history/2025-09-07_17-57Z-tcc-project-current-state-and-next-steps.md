@@ -6936,3 +6936,296 @@ The alerts will show us the exact point where the login flow is breaking, so we 
 
 ---
 
+_**User (2025-09-07 07:39Z)**_
+
+I saw 1-3. For number 4 the login works, but when you say redirect fails you mean it didn't navigate to the healthcare facility page component, not back to the log in screen correct?
+
+---
+
+_**Assistant**_
+
+Exactly! You're absolutely right. The login is working (alerts 1-3), and alert 4 shows that `handleLogin` is being called, but the redirect is failing to show the **Healthcare Dashboard component** - it's not going back to the login screen, but it's also not showing the proper healthcare facility dashboard.
+
+This means the issue is in the redirect logic. Let me check what's happening. The problem is likely that the redirect is going to `/dashboard` but the healthcare dashboard should be shown directly without routing.
+
+Let me look at the current redirect logic:
+
+
+---
+
+Read file: undefined
+
+---
+
+I see the issue! The problem is that the healthcare dashboard is shown directly (line 121), but the redirect is going to `/dashboard` which triggers the routing logic for ADMIN users. 
+
+The issue is that when we redirect to `/dashboard`, the URL changes but the user state might not be properly set yet, or there's a timing issue. Let me fix this by removing the redirect for healthcare users since they should see their dashboard directly:
+
+
+---
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/App.tsx</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 10, lines removed: 4
+
+```diff
+@@ -58,9 +58,15 @@
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(userData));
+-     console.log('TCC_DEBUG: User state updated, redirecting to dashboard');
++     console.log('TCC_DEBUG: User state updated');
+      console.log('TCC_DEBUG: User type:', userData.userType);
+-     alert('TCC_DEBUG: About to redirect to dashboard');
+-     // Force redirect to dashboard
+-     window.location.href = '/dashboard';
++     
++     // Only redirect for ADMIN/USER types, healthcare/EMS show their dashboards directly
++     if (userData.userType === 'ADMIN' || userData.userType === 'USER') {
++       alert('TCC_DEBUG: Redirecting to TCC dashboard');
++       window.location.href = '/dashboard';
++     } else {
++       alert('TCC_DEBUG: Healthcare/EMS user - showing dashboard directly');
++       // No redirect needed, the component will re-render with the new user state
++     }
+    };
+  
+```
+
+</details>
+
+---
+
+Now let me commit this fix and test:
+
+
+---
+
+```bash
+git add . && git commit -m "Fix healthcare login redirect logic
+
+- Healthcare and EMS users should show their dashboards directly without redirect
+- Only ADMIN/USER types should redirect to /dashboard
+- This fixes the issue where healthcare login was redirecting to wrong dashboard
+- Healthcare users will now see HealthcareDashboard component directly"
+```
+
+```
+
+[main ab0cc89] Fix healthcare login redirect logic
+ 2 files changed, 314 insertions(+), 4 deletions(-)
+```
+
+---
+
+Perfect! Now let me update the todo list:
+
+
+---
+
+## Todo List
+
+- [x] Create admin credentials for UPMC Altoona healthcare facility
+- [x] Test healthcare login flow to verify it shows healthcare dashboard
+- [x] Verify healthcare dashboard displays correctly for UPMC Altoona user
+- [x] Fix healthcare and EMS login components to pass token to handleLogin
+- [x] Fix TypeScript interfaces for healthcare and EMS login components
+- [x] Test healthcare login with fixed interfaces and debug logging
+- [x] Add alert debugging to track login flow execution
+- [x] Test healthcare login with alert debugging to identify failure point
+- [x] Fix healthcare login redirect logic to show dashboard directly
+- [-] Test healthcare login with fixed redirect logic
+
+---
+
+## ✅ **FIXED: Healthcare Login Redirect Logic**
+
+### **🐛 The Problem**
+You were absolutely right! The login was working (alerts 1-3), but the redirect was failing to show the **Healthcare Dashboard component**. The issue was:
+
+- Healthcare users were being redirected to `/dashboard` 
+- But healthcare users should see their dashboard **directly** without routing
+- The redirect was causing the wrong dashboard to show
+
+### **🔧 The Fix**
+I updated the `handleLogin` function to handle different user types correctly:
+
+#### **Before:**
+```typescript
+// All users redirected to /dashboard
+window.location.href = '/dashboard';
+```
+
+#### **After:**
+```typescript
+// Only redirect ADMIN/USER types, healthcare/EMS show dashboards directly
+if (userData.userType === 'ADMIN' || userData.userType === 'USER') {
+  window.location.href = '/dashboard';
+} else {
+  // No redirect needed, component re-renders with new user state
+}
+```
+
+---
+
+### **🎯 How It Works Now**
+
+#### **Healthcare Login Flow:**
+1. ✅ User enters credentials
+2. ✅ Backend validates and returns user data + token
+3. ✅ Frontend calls `onLogin(data.user, data.token)`
+4. ✅ `handleLogin` receives both parameters
+5. ✅ User state is set with `setUser(userData)`
+6. ✅ **No redirect** - component re-renders automatically
+7. ✅ **Healthcare Dashboard shows directly** (because `user.userType === 'HEALTHCARE'`)
+
+#### **Expected Alert Sequence:**
+1. ✅ `"TCC_DEBUG: Healthcare login form submitted!"`
+2. ✅ `"TCC_DEBUG: Response received: [data]"`
+3. ✅ `"TCC_DEBUG: Calling onLogin with user and token"`
+4. ✅ `"TCC_DEBUG: handleLogin called with userData and token!"`
+5. ✅ `"TCC_DEBUG: Healthcare/EMS user - showing dashboard directly"`
+
+---
+
+### **🚀 Ready to Test Again!**
+
+**Now test the healthcare login:**
+
+1. **Go to:** `http://localhost:3000`
+2. **Select:** "Healthcare Facility"
+3. **Login with:**
+   - **Email:** `admin@altoonaregional.org`
+   - **Password:** `upmc123`
+4. **Click:** "Sign In"
+
+**You should now see:**
+- Alert #5: `"TCC_DEBUG: Healthcare/EMS user - showing dashboard directly"`
+- **Healthcare Dashboard** with "Altoona Regional Health System" header
+- **No redirect** - dashboard shows immediately
+
+**This should finally work!** 🎉
+
+---
+
+_**User (2025-09-07 07:39Z)**_
+
+Works pefectly. You can clean-up the testing screens and implement the same functionality for logging in as an EMS agency. To test that I will need login credentials for any EMS agency in the system.
+
+---
+
+_**Assistant**_
+
+
+
+---
+
+Excellent! 🎉 The healthcare login is working perfectly. Now let me clean up the testing screens and implement the same functionality for EMS agencies.
+
+## �� **Step 1: Clean Up Testing Screens**
+
+First, let me remove the debug alerts and test routes:
+
+
+---
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/App.tsx</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 1, lines removed: 9
+
+```diff
+@@ -52,21 +52,13 @@
+  
+    const handleLogin = (userData: User, token: string) => {
+-     alert('TCC_DEBUG: handleLogin called with userData and token!');
+-     console.log('TCC_DEBUG: handleLogin called with:', { userData, token });
+-     console.log('TCC_DEBUG: userData type:', typeof userData, 'token type:', typeof token);
+      setUser(userData);
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(userData));
+-     console.log('TCC_DEBUG: User state updated');
+-     console.log('TCC_DEBUG: User type:', userData.userType);
+      
+      // Only redirect for ADMIN/USER types, healthcare/EMS show their dashboards directly
+      if (userData.userType === 'ADMIN' || userData.userType === 'USER') {
+-       alert('TCC_DEBUG: Redirecting to TCC dashboard');
+        window.location.href = '/dashboard';
+-     } else {
+-       alert('TCC_DEBUG: Healthcare/EMS user - showing dashboard directly');
+-       // No redirect needed, the component will re-render with the new user state
+      }
++     // No redirect needed for healthcare/EMS - component re-renders with new user state
+    };
+  
+```
+
+</details>
+
+---
+
+The string to replace was not found in the file.
+
+---
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/App.tsx</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: undefined, lines removed: 25
+
+```diff
+@@ -143,29 +143,4 @@
+      <div className="min-h-screen bg-gray-50">
+        <Routes>
+-         <Route path="/test/healthcare" element={
+-           <HealthcareDashboard 
+-             user={{
+-               id: 'test',
+-               email: 'test@example.com',
+-               name: 'Test Healthcare User',
+-               userType: 'HEALTHCARE',
+-               facilityName: 'Test Hospital',
+-               facilityType: 'HOSPITAL'
+-             }} 
+-             onLogout={() => window.location.href = '/'} 
+-           />
+-         } />
+-         <Route path="/test/ems" element={
+-           <EMSDashboard 
+-             user={{
+-               id: 'test',
+-               email: 'test@example.com',
+-               name: 'Test EMS User',
+-               userType: 'EMS',
+-               agencyName: 'Test EMS Agency'
+-             }} 
+-             onLogout={() => window.location.href = '/'} 
+-           />
+-         } />
+          <Route path="*" element={
+            <>
+```
+
+</details>
+
+---
+
+Now let me clean up the debug alerts from the healthcare login component:
+
+
+---
+
+
+
+---
+
+
+
+---
+

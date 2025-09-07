@@ -51,23 +51,15 @@ function AppContent() {
   }, []);
 
   const handleLogin = (userData: User, token: string) => {
-    alert('TCC_DEBUG: handleLogin called with userData and token!');
-    console.log('TCC_DEBUG: handleLogin called with:', { userData, token });
-    console.log('TCC_DEBUG: userData type:', typeof userData, 'token type:', typeof token);
     setUser(userData);
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(userData));
-    console.log('TCC_DEBUG: User state updated');
-    console.log('TCC_DEBUG: User type:', userData.userType);
     
     // Only redirect for ADMIN/USER types, healthcare/EMS show their dashboards directly
     if (userData.userType === 'ADMIN' || userData.userType === 'USER') {
-      alert('TCC_DEBUG: Redirecting to TCC dashboard');
       window.location.href = '/dashboard';
-    } else {
-      alert('TCC_DEBUG: Healthcare/EMS user - showing dashboard directly');
-      // No redirect needed, the component will re-render with the new user state
     }
+    // No redirect needed for healthcare/EMS - component re-renders with new user state
   };
 
   const handleLogout = () => {
@@ -150,31 +142,6 @@ function AppContent() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Routes>
-        <Route path="/test/healthcare" element={
-          <HealthcareDashboard 
-            user={{
-              id: 'test',
-              email: 'test@example.com',
-              name: 'Test Healthcare User',
-              userType: 'HEALTHCARE',
-              facilityName: 'Test Hospital',
-              facilityType: 'HOSPITAL'
-            }} 
-            onLogout={() => window.location.href = '/'} 
-          />
-        } />
-        <Route path="/test/ems" element={
-          <EMSDashboard 
-            user={{
-              id: 'test',
-              email: 'test@example.com',
-              name: 'Test EMS User',
-              userType: 'EMS',
-              agencyName: 'Test EMS Agency'
-            }} 
-            onLogout={() => window.location.href = '/'} 
-          />
-        } />
         <Route path="*" element={
           <>
             {currentView === 'public' && (
