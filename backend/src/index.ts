@@ -112,12 +112,21 @@ app.post('/api/init-db', async (req, res) => {
     
     console.log('🔧 Manual database initialization requested...');
     
+    // First, try to wake up the database with a simple connection
+    console.log('🔌 Attempting to wake up database...');
+    try {
+      await databaseManager.healthCheck();
+      console.log('✅ Database is awake and responsive');
+    } catch (error) {
+      console.log('⚠️ Database appears to be sleeping, continuing with initialization...');
+    }
+    
     // Push schema
     console.log('📊 Pushing production schema...');
     execSync('npx prisma db push --schema=prisma/schema-production.prisma', { 
       stdio: 'inherit',
       cwd: process.cwd(),
-      timeout: 60000
+      timeout: 120000 // Increased timeout to 2 minutes
     });
     
     // Seed database
@@ -125,7 +134,7 @@ app.post('/api/init-db', async (req, res) => {
     execSync('npx ts-node prisma/seed.ts', { 
       stdio: 'inherit',
       cwd: process.cwd(),
-      timeout: 60000
+      timeout: 120000 // Increased timeout to 2 minutes
     });
     
     res.json({

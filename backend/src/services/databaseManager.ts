@@ -3,6 +3,9 @@ import { PrismaClient } from '@prisma/client';
 class DatabaseManager {
   private static instance: DatabaseManager;
   private prisma: PrismaClient;
+  private connectionRetries = 0;
+  private maxRetries = 5;
+  private retryDelay = 2000; // 2 seconds
 
   private constructor() {
     this.prisma = new PrismaClient({
@@ -10,7 +13,10 @@ class DatabaseManager {
         db: {
           url: process.env.DATABASE_URL
         }
-      }
+      },
+      // Add connection configuration for Render PostgreSQL
+      log: ['error', 'warn'],
+      errorFormat: 'pretty',
     });
   }
 
@@ -39,13 +45,38 @@ class DatabaseManager {
   }
 
   public async healthCheck(): Promise<boolean> {
-    try {
+    return await this.executeWithRetry(async () => {
       await this.prisma.$queryRaw`SELECT 1`;
       return true;
+    });
+  }
+
+  private async executeWithRetry<T>(operation: () => Promise<T>): Promise<T> {
+    try {
+      const result = await operation();
+      this.connectionRetries = 0; // Reset retry counter on success
+      return result;
     } catch (error) {
-      console.error('Database health check failed:', error);
-      return false;
+      console.error(`Database operation failed (attempt ${this.connectionRetries + 1}/${this.maxRetries}):`, error);
+      
+      if (this.connectionRetries < this.maxRetries) {
+        this.connectionRetries++;
+        console.log(`Retrying in ${this.retryDelay}ms...`);
+        await this.delay(this.retryDelay);
+        
+        // Exponential backoff
+        this.retryDelay = Math.min(this.retryDelay * 1.5, 10000);
+        
+        return await this.executeWithRetry(operation);
+      } else {
+        console.error('Max retries reached, giving up');
+        throw error;
+      }
     }
+  }
+
+  private delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 
   public async disconnect(): Promise<void> {
