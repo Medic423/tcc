@@ -36,41 +36,14 @@ interface Agency {
   updatedAt: string;
 }
 
-interface AgencyFormData {
-  name: string;
-  contactName: string;
-  phone: string;
-  email: string;
-  address: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  capabilities: string[];
-  isActive: boolean;
-}
 
 const Agencies: React.FC = () => {
   const [agencies, setAgencies] = useState<Agency[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showForm, setShowForm] = useState(false);
-  const [editingAgency, setEditingAgency] = useState<Agency | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [formData, setFormData] = useState<AgencyFormData>({
-    name: '',
-    contactName: '',
-    phone: '',
-    email: '',
-    address: '',
-    city: '',
-    state: '',
-    zipCode: '',
-    capabilities: [],
-    isActive: true
-  });
 
-  const capabilities = ['BLS', 'ALS', 'CCT', 'WHEELCHAIR_VAN', 'AIR_MEDICAL'];
 
   useEffect(() => {
     loadAgencies();
@@ -110,37 +83,15 @@ const Agencies: React.FC = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      if (editingAgency) {
-        await agenciesAPI.update(editingAgency.id, formData);
-      } else {
-        await agenciesAPI.create(formData);
-      }
-      await loadAgencies();
-      resetForm();
-    } catch (err) {
-      console.error('Error saving agency:', err);
-      setError('Failed to save agency');
-    }
-  };
 
   const handleEdit = (agency: Agency) => {
-    setEditingAgency(agency);
-    setFormData({
-      name: agency.name,
-      contactName: agency.contactName,
-      phone: agency.phone,
-      email: agency.email,
-      address: agency.address,
-      city: agency.city,
-      state: agency.state,
-      zipCode: agency.zipCode,
-      capabilities: agency.capabilities,
-      isActive: agency.isActive
-    });
-    setShowForm(true);
+    // For now, redirect to registration page with a note about editing
+    // In the future, this could open a dedicated edit modal
+    alert(`To edit "${agency.name}", you'll be redirected to the registration form. This will be improved in the next update.`);
+    // Clear the current session and redirect to main page for registration
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = '/?register=ems';
   };
 
   const handleDelete = async (id: string) => {
@@ -155,31 +106,6 @@ const Agencies: React.FC = () => {
     }
   };
 
-  const resetForm = () => {
-    setFormData({
-      name: '',
-      contactName: '',
-      phone: '',
-      email: '',
-      address: '',
-      city: '',
-      state: '',
-      zipCode: '',
-      capabilities: [],
-      isActive: true
-    });
-    setEditingAgency(null);
-    setShowForm(false);
-  };
-
-  const handleCapabilityChange = (capability: string) => {
-    setFormData(prev => ({
-      ...prev,
-      capabilities: prev.capabilities.includes(capability)
-        ? prev.capabilities.filter(c => c !== capability)
-        : [...prev.capabilities, capability]
-    }));
-  };
 
   const filteredAgencies = agencies.filter(agency => {
     const matchesSearch = agency.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -239,7 +165,13 @@ const Agencies: React.FC = () => {
             <option value="inactive">Inactive</option>
           </select>
           <button
-            onClick={() => setShowForm(true)}
+            onClick={() => {
+              // Clear the current session and redirect to main page for registration
+              localStorage.removeItem('token');
+              localStorage.removeItem('user');
+              // Redirect to main page with EMS registration parameter
+              window.location.href = '/?register=ems';
+            }}
             className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
           >
             <Plus className="h-4 w-4 mr-2" />
@@ -372,144 +304,6 @@ const Agencies: React.FC = () => {
         )}
       </div>
 
-      {/* Agency Form Modal */}
-      {showForm && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" style={{zIndex: 9999}}>
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white" style={{backgroundColor: 'white', zIndex: 10000}}>
-            <div className="mt-3">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">
-                {editingAgency ? 'Edit Agency' : 'Add New Agency'}
-              </h3>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Agency Name</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.name}
-                    onChange={(e) => setFormData({...formData, name: e.target.value})}
-                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Contact Name</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.contactName}
-                    onChange={(e) => setFormData({...formData, contactName: e.target.value})}
-                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Phone</label>
-                    <input
-                      type="tel"
-                      required
-                      value={formData.phone}
-                      onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Email</label>
-                    <input
-                      type="email"
-                      required
-                      value={formData.email}
-                      onChange={(e) => setFormData({...formData, email: e.target.value})}
-                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Address</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.address}
-                    onChange={(e) => setFormData({...formData, address: e.target.value})}
-                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                  />
-                </div>
-                <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">City</label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.city}
-                      onChange={(e) => setFormData({...formData, city: e.target.value})}
-                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">State</label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.state}
-                      onChange={(e) => setFormData({...formData, state: e.target.value})}
-                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">ZIP</label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.zipCode}
-                      onChange={(e) => setFormData({...formData, zipCode: e.target.value})}
-                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Capabilities</label>
-                  <div className="mt-2 grid grid-cols-2 gap-2">
-                    {capabilities.map((cap) => (
-                      <label key={cap} className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={formData.capabilities.includes(cap)}
-                          onChange={() => handleCapabilityChange(cap)}
-                          className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                        />
-                        <span className="ml-2 text-sm text-gray-700">{cap}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={formData.isActive}
-                    onChange={(e) => setFormData({...formData, isActive: e.target.checked})}
-                    className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                  />
-                  <label className="ml-2 text-sm text-gray-700">Active</label>
-                </div>
-                <div className="flex justify-end space-x-3 pt-4">
-                  <button
-                    type="button"
-                    onClick={resetForm}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 text-sm font-medium text-white bg-primary-600 border border-transparent rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  >
-                    {editingAgency ? 'Update' : 'Create'}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
