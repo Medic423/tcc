@@ -110,8 +110,11 @@ const Hospitals: React.FC = () => {
     if (hospital) {
       // For now, redirect to registration page with a note about editing
       // In the future, this could open a dedicated edit modal
-      alert(`To edit "${hospital.name}", please use the registration form on the main page. This will be improved in the next update.`);
-      window.open('/', '_blank');
+      alert(`To edit "${hospital.name}", you'll be redirected to the registration form. This will be improved in the next update.`);
+      // Clear the current session and redirect to main page for registration
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/';
     }
   };
 
@@ -184,12 +187,11 @@ const Hospitals: React.FC = () => {
             <h3 className="text-lg font-medium text-gray-900">Healthcare Facilities List</h3>
             <button 
               onClick={() => {
-                // Redirect to main page and open healthcare registration in new tab
-                window.open('/', '_blank');
-                // Also show a message to guide the user
-                setTimeout(() => {
-                  alert('Please click "Healthcare Facility Registration" on the main page to add a new facility.');
-                }, 1000);
+                // Clear the current session and redirect to main page for registration
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                // Redirect to main page which will show the public login/registration
+                window.location.href = '/';
               }}
               className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
             >
