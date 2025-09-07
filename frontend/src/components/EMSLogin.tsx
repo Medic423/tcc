@@ -3,7 +3,7 @@ import { ArrowLeft, Truck, AlertCircle } from 'lucide-react';
 
 interface EMSLoginProps {
   onBack: () => void;
-  onLogin: (user: any) => void;
+  onLogin: (user: any, token: string) => void;
 }
 
 const EMSLogin: React.FC<EMSLoginProps> = ({ onBack, onLogin }) => {

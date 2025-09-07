@@ -3,7 +3,7 @@ import { ArrowLeft, Building2, AlertCircle } from 'lucide-react';
 
 interface HealthcareLoginProps {
   onBack: () => void;
-  onLogin: (user: any) => void;
+  onLogin: (user: any, token: string) => void;
 }
 
 const HealthcareLogin: React.FC<HealthcareLoginProps> = ({ onBack, onLogin }) => {
