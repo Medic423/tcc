@@ -41,7 +41,7 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
   const getNavigation = () => {
     const baseNavigation = [
       { name: 'Overview', href: '/dashboard', icon: Home },
-      { name: 'Hospitals', href: '/dashboard/hospitals', icon: Building2 },
+      { name: 'Healthcare Facilities', href: '/dashboard/hospitals', icon: Building2 },
       { name: 'EMS Agencies', href: '/dashboard/agencies', icon: Truck },
       { name: 'Facilities', href: '/dashboard/facilities', icon: MapPin },
       { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },

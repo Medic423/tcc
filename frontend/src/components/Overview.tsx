@@ -51,7 +51,7 @@ const Overview: React.FC = () => {
 
   const stats = [
     {
-      name: 'Total Hospitals',
+      name: 'Total Healthcare Facilities',
       value: overview?.totalHospitals || 0,
       active: overview?.activeHospitals || 0,
       icon: Building2,
@@ -136,10 +136,10 @@ const Overview: React.FC = () => {
             </div>
             <div className="mt-4">
               <h3 className="text-lg font-medium text-gray-900">
-                Manage Hospitals
+                Manage Healthcare Facilities
               </h3>
               <p className="mt-2 text-sm text-gray-500">
-                Add, edit, or remove hospitals from the system.
+                Add, edit, or remove healthcare facilities from the system.
               </p>
             </div>
           </a>

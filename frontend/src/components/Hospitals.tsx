@@ -25,6 +25,9 @@ const Hospitals: React.FC = () => {
   const [hospitals, setHospitals] = useState<Hospital[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingHospital, setEditingHospital] = useState<Hospital | null>(null);
 
   useEffect(() => {
     fetchHospitals();
@@ -106,10 +109,11 @@ const Hospitals: React.FC = () => {
   };
 
   const handleEdit = (hospitalId: string) => {
-    // TODO: Implement edit functionality - open edit modal/form
-    console.log('Edit hospital:', hospitalId);
-    // For now, just show an alert
-    alert('Edit functionality will be implemented in the next phase');
+    const hospital = hospitals.find(h => h.id === hospitalId);
+    if (hospital) {
+      setEditingHospital(hospital);
+      setShowEditModal(true);
+    }
   };
 
   const handleDelete = async (hospitalId: string) => {
@@ -169,19 +173,22 @@ const Hospitals: React.FC = () => {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Hospitals</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Healthcare Facilities</h1>
         <p className="mt-1 text-sm text-gray-500">
-          Manage hospitals in the system. {hospitals.length} hospitals found.
+          Manage healthcare facilities in the system. {hospitals.length} facilities found.
         </p>
       </div>
 
       <div className="bg-white shadow rounded-lg overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200">
           <div className="flex justify-between items-center">
-            <h3 className="text-lg font-medium text-gray-900">Hospital List</h3>
-            <button className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+            <h3 className="text-lg font-medium text-gray-900">Healthcare Facilities List</h3>
+            <button 
+              onClick={() => setShowAddModal(true)}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+            >
               <Plus className="h-4 w-4 mr-2" />
-              Add Hospital
+              Add Healthcare Facility
             </button>
           </div>
         </div>
@@ -200,7 +207,7 @@ const Hospitals: React.FC = () => {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Hospital
+                    Facility
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Location
@@ -302,6 +309,140 @@ const Hospitals: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Add Hospital Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Add Healthcare Facility</h3>
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                // TODO: Implement add hospital functionality
+                alert('Add hospital functionality will be implemented in the next phase');
+                setShowAddModal(false);
+              }}>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Facility Name</label>
+                    <input
+                      type="text"
+                      required
+                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                      placeholder="Enter facility name"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Email</label>
+                    <input
+                      type="email"
+                      required
+                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                      placeholder="Enter email"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Type</label>
+                    <select
+                      required
+                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                    >
+                      <option value="">Select type</option>
+                      <option value="HOSPITAL">Hospital</option>
+                      <option value="CLINIC">Clinic</option>
+                      <option value="URGENT_CARE">Urgent Care</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="flex justify-end space-x-3 mt-6">
+                  <button
+                    type="button"
+                    onClick={() => setShowAddModal(false)}
+                    className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+                  >
+                    Add Facility
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Hospital Modal */}
+      {showEditModal && editingHospital && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Edit Healthcare Facility</h3>
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                // TODO: Implement edit hospital functionality
+                alert('Edit hospital functionality will be implemented in the next phase');
+                setShowEditModal(false);
+                setEditingHospital(null);
+              }}>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Facility Name</label>
+                    <input
+                      type="text"
+                      required
+                      defaultValue={editingHospital.name}
+                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Email</label>
+                    <input
+                      type="email"
+                      required
+                      defaultValue={editingHospital.email || ''}
+                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Type</label>
+                    <select
+                      required
+                      defaultValue={editingHospital.type}
+                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                    >
+                      <option value="HOSPITAL">Hospital</option>
+                      <option value="CLINIC">Clinic</option>
+                      <option value="URGENT_CARE">Urgent Care</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="flex justify-end space-x-3 mt-6">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowEditModal(false);
+                      setEditingHospital(null);
+                    }}
+                    className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+                  >
+                    Update Facility
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
