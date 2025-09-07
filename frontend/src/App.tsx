@@ -58,8 +58,8 @@ function AppContent() {
     if (role === 'tcc') {
       setCurrentView('login');
     } else {
-      // For healthcare and EMS, show login form (we'll implement this later)
-      setCurrentView('login');
+      // For healthcare and EMS, show a message that login is coming soon
+      alert(`${role === 'healthcare' ? 'Healthcare' : 'EMS'} login is coming soon! Please use the registration form to create an account.`);
     }
   };
 

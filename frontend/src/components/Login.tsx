@@ -5,7 +5,7 @@ interface User {
   id: string;
   email: string;
   name: string;
-  userType: 'ADMIN';
+  userType: 'ADMIN' | 'USER';
 }
 
 interface LoginProps {
@@ -127,8 +127,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           <div className="text-center">
             <div className="text-sm text-gray-600">
               <p className="font-medium">Demo Credentials:</p>
-              <p>Email: admin@tcc.com</p>
-              <p>Password: admin123</p>
+              <p><strong>Admin:</strong> admin@tcc.com / admin123</p>
+              <p><strong>User:</strong> user@tcc.com / admin123</p>
             </div>
           </div>
         </form>
