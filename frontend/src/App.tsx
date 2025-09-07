@@ -5,19 +5,21 @@ import TCCDashboard from './components/TCCDashboard';
 import PublicLogin from './components/PublicLogin';
 import HealthcareRegistration from './components/HealthcareRegistration';
 import EMSRegistration from './components/EMSRegistration';
+import HealthcareLogin from './components/HealthcareLogin';
+import EMSLogin from './components/EMSLogin';
 import { authAPI } from './services/api';
 
 interface User {
   id: string;
   email: string;
   name: string;
-  userType: 'ADMIN' | 'USER';
+  userType: 'ADMIN' | 'USER' | 'HEALTHCARE' | 'EMS';
 }
 
 function AppContent() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [currentView, setCurrentView] = useState<'public' | 'healthcare-register' | 'ems-register' | 'login'>('public');
+  const [currentView, setCurrentView] = useState<'public' | 'healthcare-register' | 'ems-register' | 'login' | 'healthcare-login' | 'ems-login'>('public');
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -57,9 +59,10 @@ function AppContent() {
   const handleRoleSelect = (role: 'healthcare' | 'ems' | 'tcc') => {
     if (role === 'tcc') {
       setCurrentView('login');
-    } else {
-      // For healthcare and EMS, show a message that login is coming soon
-      alert(`${role === 'healthcare' ? 'Healthcare' : 'EMS'} login is coming soon! Please use the registration form to create an account.`);
+    } else if (role === 'healthcare') {
+      setCurrentView('healthcare-login');
+    } else if (role === 'ems') {
+      setCurrentView('ems-login');
     }
   };
 
@@ -128,9 +131,21 @@ function AppContent() {
           onSuccess={handleRegistrationSuccess}
         />
       )}
-      {currentView === 'login' && (
-        <Login onLogin={handleLogin} />
-      )}
+          {currentView === 'login' && (
+            <Login onLogin={handleLogin} />
+          )}
+          {currentView === 'healthcare-login' && (
+            <HealthcareLogin 
+              onBack={handleBackToPublic}
+              onLogin={handleLogin}
+            />
+          )}
+          {currentView === 'ems-login' && (
+            <EMSLogin 
+              onBack={handleBackToPublic}
+              onLogin={handleLogin}
+            />
+          )}
     </div>
   );
 }

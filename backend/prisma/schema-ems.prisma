@@ -9,6 +9,23 @@ datasource db {
   url      = env("DATABASE_URL_EMS")
 }
 
+model EMSUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  password     String
+  name         String
+  agencyName   String
+  isActive     Boolean  @default(true)
+  userType     String   @default("EMS") // EMS, ADMIN
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  transportRequests TransportRequest[]
+
+  @@map("ems_users")
+}
+
 model EMSAgency {
   id               String   @id @default(cuid())
   name             String
@@ -54,4 +71,33 @@ model Unit {
   agency         EMSAgency? @relation(fields: [agencyId], references: [id])
 
   @@map("units")
+}
+
+model TransportRequest {
+  id                    String    @id @default(cuid())
+  patientId             String
+  originFacilityId      String?
+  destinationFacilityId String?
+  transportLevel        String
+  priority              String
+  status                String    @default("PENDING")
+  specialRequirements   String?
+  requestTimestamp      DateTime  @default(now())
+  acceptedTimestamp     DateTime?
+  pickupTimestamp       DateTime?
+  completionTimestamp   DateTime?
+  assignedAgencyId      String?
+  assignedUnitId        String?
+  createdById           String?
+  readyStart            DateTime?
+  readyEnd              DateTime?
+  isolation             Boolean   @default(false)
+  bariatric             Boolean   @default(false)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  // Relations
+  createdBy             EMSUser? @relation(fields: [createdById], references: [id])
+
+  @@map("transport_requests")
 }

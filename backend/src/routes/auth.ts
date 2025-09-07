@@ -1,6 +1,9 @@
 import express from 'express';
 import { authService } from '../services/authService';
 import { authenticateAdmin, AuthenticatedRequest } from '../middleware/authenticateAdmin';
+import { databaseManager } from '../services/databaseManager';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 
 const router = express.Router();
 
@@ -174,6 +177,167 @@ router.get('/users', authenticateAdmin, async (req: AuthenticatedRequest, res) =
 
   } catch (error) {
     console.error('Get users error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+});
+
+/**
+ * POST /api/auth/ems/login
+ * EMS Agency login endpoint
+ */
+router.post('/ems/login', async (req, res) => {
+  try {
+    console.log('TCC_DEBUG: EMS Login request received:', { 
+      email: req.body.email, 
+      password: req.body.password ? '***' : 'missing'
+    });
+    
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        error: 'Email and password are required'
+      });
+    }
+
+    const emsDB = databaseManager.getEMSDB();
+    const user = await emsDB.eMSUser.findUnique({
+      where: { email }
+    });
+
+    if (!user) {
+      console.log('TCC_DEBUG: No EMS user found for email:', email);
+      return res.status(401).json({
+        success: false,
+        error: 'Invalid credentials'
+      });
+    }
+
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    if (!isValidPassword) {
+      return res.status(401).json({
+        success: false,
+        error: 'Invalid credentials'
+      });
+    }
+
+    if (!user.isActive) {
+      return res.status(401).json({
+        success: false,
+        error: 'Account is deactivated'
+      });
+    }
+
+    const token = jwt.sign(
+      { 
+        id: user.id, 
+        email: user.email, 
+        userType: 'EMS' 
+      },
+      process.env.JWT_SECRET || 'fallback-secret',
+      { expiresIn: '24h' }
+    );
+
+    res.json({
+      success: true,
+      message: 'Login successful',
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        userType: 'EMS',
+        agencyName: user.agencyName
+      },
+      token
+    });
+
+  } catch (error) {
+    console.error('EMS Login error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+});
+
+/**
+ * POST /api/auth/healthcare/login
+ * Healthcare Facility login endpoint
+ */
+router.post('/healthcare/login', async (req, res) => {
+  try {
+    console.log('TCC_DEBUG: Healthcare Login request received:', { 
+      email: req.body.email, 
+      password: req.body.password ? '***' : 'missing'
+    });
+    
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        error: 'Email and password are required'
+      });
+    }
+
+    const hospitalDB = databaseManager.getHospitalDB();
+    const user = await hospitalDB.healthcareUser.findUnique({
+      where: { email }
+    });
+
+    if (!user) {
+      console.log('TCC_DEBUG: No Healthcare user found for email:', email);
+      return res.status(401).json({
+        success: false,
+        error: 'Invalid credentials'
+      });
+    }
+
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    if (!isValidPassword) {
+      return res.status(401).json({
+        success: false,
+        error: 'Invalid credentials'
+      });
+    }
+
+    if (!user.isActive) {
+      return res.status(401).json({
+        success: false,
+        error: 'Account is deactivated'
+      });
+    }
+
+    const token = jwt.sign(
+      { 
+        id: user.id, 
+        email: user.email, 
+        userType: 'HEALTHCARE' 
+      },
+      process.env.JWT_SECRET || 'fallback-secret',
+      { expiresIn: '24h' }
+    );
+
+    res.json({
+      success: true,
+      message: 'Login successful',
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        userType: 'HEALTHCARE',
+        facilityName: user.facilityName,
+        facilityType: user.facilityType
+      },
+      token
+    });
+
+  } catch (error) {
+    console.error('Healthcare Login error:', error);
     res.status(500).json({
       success: false,
       error: 'Internal server error'

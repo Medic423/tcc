@@ -25,6 +25,24 @@ model HospitalUser {
   @@map("hospital_users")
 }
 
+model HealthcareUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  password     String
+  name         String
+  facilityName String
+  facilityType String   // HOSPITAL, CLINIC, URGENT_CARE, etc.
+  isActive     Boolean  @default(true)
+  userType     String   @default("HEALTHCARE") // HEALTHCARE, ADMIN
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  transportRequests TransportRequest[] @relation("HealthcareTransportRequests")
+
+  @@map("healthcare_users")
+}
+
 model Facility {
   id          String   @id @default(cuid())
   name        String
@@ -63,6 +81,7 @@ model TransportRequest {
   assignedAgencyId      String?
   assignedUnitId        String?
   createdById           String?
+  healthcareCreatedById String?
   readyStart            DateTime?
   readyEnd              DateTime?
   isolation             Boolean   @default(false)
@@ -74,6 +93,7 @@ model TransportRequest {
   originFacility        Facility?     @relation("OriginFacility", fields: [originFacilityId], references: [id])
   destinationFacility   Facility?     @relation("DestinationFacility", fields: [destinationFacilityId], references: [id])
   createdBy             HospitalUser? @relation(fields: [createdById], references: [id])
+  createdByHealthcare   HealthcareUser? @relation("HealthcareTransportRequests", fields: [healthcareCreatedById], references: [id])
 
   @@map("transport_requests")
 }

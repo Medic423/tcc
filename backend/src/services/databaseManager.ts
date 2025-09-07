@@ -1,8 +1,12 @@
 import { PrismaClient } from '@prisma/client';
+import { PrismaClient as EMSPrismaClient } from '@prisma/ems';
+import { PrismaClient as HospitalPrismaClient } from '@prisma/hospital';
 
 class DatabaseManager {
   private static instance: DatabaseManager;
   private prisma: PrismaClient;
+  private emsPrisma: EMSPrismaClient;
+  private hospitalPrisma: HospitalPrismaClient;
   private connectionRetries = 0;
   private maxRetries = 5;
   private retryDelay = 2000; // 2 seconds
@@ -15,6 +19,26 @@ class DatabaseManager {
         }
       },
       // Add connection configuration for Render PostgreSQL
+      log: process.env.NODE_ENV === 'production' ? ['error'] : ['error', 'warn'],
+      errorFormat: 'pretty',
+    });
+
+    this.emsPrisma = new EMSPrismaClient({
+      datasources: {
+        db: {
+          url: process.env.DATABASE_URL_EMS
+        }
+      },
+      log: process.env.NODE_ENV === 'production' ? ['error'] : ['error', 'warn'],
+      errorFormat: 'pretty',
+    });
+
+    this.hospitalPrisma = new HospitalPrismaClient({
+      datasources: {
+        db: {
+          url: process.env.DATABASE_URL_HOSPITAL
+        }
+      },
       log: process.env.NODE_ENV === 'production' ? ['error'] : ['error', 'warn'],
       errorFormat: 'pretty',
     });
@@ -36,12 +60,12 @@ class DatabaseManager {
     return this.prisma;
   }
 
-  public getEMSDB(): PrismaClient {
-    return this.prisma;
+  public getEMSDB(): EMSPrismaClient {
+    return this.emsPrisma;
   }
 
-  public getHospitalDB(): PrismaClient {
-    return this.prisma;
+  public getHospitalDB(): HospitalPrismaClient {
+    return this.hospitalPrisma;
   }
 
   public async healthCheck(): Promise<boolean> {
