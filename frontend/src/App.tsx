@@ -57,11 +57,17 @@ function AppContent() {
     setUser(userData);
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(userData));
-    console.log('TCC_DEBUG: User state updated, redirecting to dashboard');
+    console.log('TCC_DEBUG: User state updated');
     console.log('TCC_DEBUG: User type:', userData.userType);
-    alert('TCC_DEBUG: About to redirect to dashboard');
-    // Force redirect to dashboard
-    window.location.href = '/dashboard';
+    
+    // Only redirect for ADMIN/USER types, healthcare/EMS show their dashboards directly
+    if (userData.userType === 'ADMIN' || userData.userType === 'USER') {
+      alert('TCC_DEBUG: Redirecting to TCC dashboard');
+      window.location.href = '/dashboard';
+    } else {
+      alert('TCC_DEBUG: Healthcare/EMS user - showing dashboard directly');
+      // No redirect needed, the component will re-render with the new user state
+    }
   };
 
   const handleLogout = () => {

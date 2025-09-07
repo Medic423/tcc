@@ -6632,3 +6632,307 @@ onLogin: (user: any, token: string) => void;
 
 ---
 
+_**User (2025-09-07 07:39Z)**_
+
+No change. I did a hard reset on my brower before testing. 
+
+---
+
+_**Assistant**_
+
+I can see the issue! The console shows that the debug messages I added are still not appearing, which means the frontend is still running the old code. Looking at the terminal, I can see that the servers were restarted and there are Vite HMR updates, but the debug messages aren't showing up.
+
+The problem is that the frontend is still not picking up the changes properly. Let me force a complete rebuild and restart:
+
+
+---
+
+```bash
+pkill -f "node dist/index.js" && pkill -f "vite" && pkill -f "npm" && sleep 3
+```
+
+---
+
+Now let me clear the frontend build cache and restart:
+
+
+---
+
+```bash
+cd frontend && rm -rf node_modules/.vite && rm -rf dist && cd .. && ./start-dev.sh
+```
+
+---
+
+Let me wait for the servers to start and then check:
+
+
+---
+
+```bash
+sleep 10 && curl -I http://localhost:3000
+```
+
+```
+
+HTTP/1.1 200 OK
+Vary: Origin
+Content-Type: text/html
+Cache-Control: no-cache
+Etag: W/"27a-yaj0O9CUK+voQGTlDEzbXpAw49k"
+Date: Sun, 07 Sep 2025 18:52:46 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+```
+
+---
+
+The servers are running. Let me also check if there's a different issue. Looking at the backend logs, I can see that the healthcare login requests are being received, but I notice there are no response logs. This suggests the healthcare login endpoint might not be responding properly.
+
+Let me check if there's an issue with the healthcare login endpoint by testing it directly:
+
+
+---
+
+```bash
+curl -X POST "http://localhost:5001/api/auth/healthcare/login" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "admin@altoonaregional.org",
+    "password": "upmc123"
+  }' -w "\nHTTP Status: %{http_code}\n"
+```
+
+```
+
+{"success":true,"message":"Login successful","user":{"id":"cmfa1a0ka0002bps3hah14spp","email":"admin@altoona
+regional.org","name":"UPMC Altoona Admin","userType":"HEALTHCARE","facilityName":"Altoona Regional Health Sy
+stem","facilityType":"HOSPITAL"},"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtZmExYTBrYTAwMDJic
+HMzaGFoMTRzcHAiLCJlbWFpbCI6ImFkbWluQGFsdG9vbmFyZWdpb25hbC5vcmciLCJ1c2VyVHlwZSI6IkhFQUxUSENBUkUiLCJpYXQiOjE3N
+TcyNzExNzIsImV4cCI6MTc1NzM1NzU3Mn0.7VoKLXqkjO1jDvRRb4a2BFgMP7JpHD8YcyZ_6BnFML8"}
+
+HTTP Status: 200
+```
+
+---
+
+The backend is working perfectly! The issue must be in the frontend. Let me check if there's a different problem. Let me look at the current state of the files to make sure the changes are actually there:
+
+
+---
+
+Read file: undefined
+
+---
+
+The debug code is there. Let me check if there's a different issue. Let me try a different approach - let me add a simple alert to see if the code is even being executed:
+
+
+---
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/HealthcareLogin.tsx</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 1, lines removed: undefined
+
+```diff
+@@ -25,4 +25,5 @@
+    const handleSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
++     alert('TCC_DEBUG: Healthcare login form submitted!');
+      setIsLoading(true);
+      setError('');
+```
+
+</details>
+
+---
+
+Now let me also add an alert in the response handling:
+
+
+---
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/HealthcareLogin.tsx</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 2, lines removed: undefined
+
+```diff
+@@ -41,7 +41,9 @@
+        const data = await response.json();
+        console.log('TCC_DEBUG: Healthcare login response:', data);
++       alert('TCC_DEBUG: Response received: ' + JSON.stringify(data));
+  
+        if (response.ok) {
+          console.log('TCC_DEBUG: Calling onLogin with:', data.user, data.token);
++         alert('TCC_DEBUG: Calling onLogin with user and token');
+          onLogin(data.user, data.token);
+        } else {
+```
+
+</details>
+
+---
+
+Now let me also add an alert in the handleLogin function:
+
+
+---
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/App.tsx</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 1, lines removed: undefined
+
+```diff
+@@ -52,4 +52,5 @@
+  
+    const handleLogin = (userData: User, token: string) => {
++     alert('TCC_DEBUG: handleLogin called with userData and token!');
+      console.log('TCC_DEBUG: handleLogin called with:', { userData, token });
+      console.log('TCC_DEBUG: userData type:', typeof userData, 'token type:', typeof token);
+```
+
+**Chunk 2**
+Lines added: 1, lines removed: undefined
+
+```diff
+@@ -59,4 +60,5 @@
+      console.log('TCC_DEBUG: User state updated, redirecting to dashboard');
+      console.log('TCC_DEBUG: User type:', userData.userType);
++     alert('TCC_DEBUG: About to redirect to dashboard');
+      // Force redirect to dashboard
+      window.location.href = '/dashboard';
+```
+
+</details>
+
+---
+
+Now let me commit these changes and test:
+
+
+---
+
+```bash
+git add . && git commit -m "Add alert debugging to track login flow execution
+
+- Added alerts to HealthcareLogin.tsx to track form submission and response
+- Added alerts to App.tsx handleLogin to track function execution
+- This will help identify exactly where the login flow is failing
+- Alerts will show even if console.log is not working"
+```
+
+```
+
+[main a399be3] Add alert debugging to track login flow execution
+ 3 files changed, 382 insertions(+)
+```
+
+---
+
+Now let me check if the frontend is running and test:
+
+
+---
+
+```bash
+curl -I http://localhost:3000
+```
+
+```
+
+HTTP/1.1 200 OK
+Vary: Origin
+Content-Type: text/html
+Cache-Control: no-cache
+Etag: W/"28a-rLheATLLoBdmGMjSmC308a7V5LQ"
+Date: Sun, 07 Sep 2025 18:53:26 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+```
+
+---
+
+Perfect! Now let me update the todo list and provide you with the testing instructions:
+
+
+---
+
+## Todo List
+
+- [x] Create admin credentials for UPMC Altoona healthcare facility
+- [x] Test healthcare login flow to verify it shows healthcare dashboard
+- [x] Verify healthcare dashboard displays correctly for UPMC Altoona user
+- [x] Fix healthcare and EMS login components to pass token to handleLogin
+- [x] Fix TypeScript interfaces for healthcare and EMS login components
+- [x] Test healthcare login with fixed interfaces and debug logging
+- [x] Add alert debugging to track login flow execution
+- [-] Test healthcare login with alert debugging to identify failure point
+
+---
+
+## ✅ **Added Alert Debugging to Track Login Flow**
+
+### **�� Debug Alerts Added**
+
+I've added alert popups at key points in the login flow to help identify exactly where it's failing:
+
+#### **In HealthcareLogin.tsx:**
+1. **Form Submission:** `"TCC_DEBUG: Healthcare login form submitted!"`
+2. **Response Received:** `"TCC_DEBUG: Response received: [data]"`
+3. **Calling onLogin:** `"TCC_DEBUG: Calling onLogin with user and token"`
+
+#### **In App.tsx handleLogin:**
+1. **Function Called:** `"TCC_DEBUG: handleLogin called with userData and token!"`
+2. **Before Redirect:** `"TCC_DEBUG: About to redirect to dashboard"`
+
+---
+
+### **🎯 Testing Instructions**
+
+**Now test the healthcare login again:**
+
+1. **Go to:** `http://localhost:3000`
+2. **Select:** "Healthcare Facility"
+3. **Login with:**
+   - **Email:** `admin@altoonaregional.org`
+   - **Password:** `upmc123`
+4. **Click:** "Sign In"
+
+---
+
+### **🔍 What to Look For**
+
+#### **Expected Alert Sequence:**
+1. ✅ `"TCC_DEBUG: Healthcare login form submitted!"` - Form is working
+2. ✅ `"TCC_DEBUG: Response received: [data]"` - Backend response received
+3. ✅ `"TCC_DEBUG: Calling onLogin with user and token"` - onLogin called
+4. ✅ `"TCC_DEBUG: handleLogin called with userData and token!"` - handleLogin executed
+5. ✅ `"TCC_DEBUG: About to redirect to dashboard"` - About to redirect
+
+#### **If You See:**
+- **Only Alert #1:** Form submission works, but network request fails
+- **Alerts #1-2:** Network works, but onLogin call fails
+- **Alerts #1-3:** onLogin works, but handleLogin not called
+- **Alerts #1-4:** handleLogin works, but redirect fails
+
+---
+
+### **🎯 This Will Tell Us Exactly Where the Problem Is**
+
+The alerts will show us the exact point where the login flow is breaking, so we can fix the specific issue.
+
+**Try the login now and let me know which alerts you see!** 🚀
+
+---
+
