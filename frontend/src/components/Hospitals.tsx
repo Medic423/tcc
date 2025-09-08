@@ -13,6 +13,8 @@ interface Hospital {
   type: string;
   capabilities: string[];
   region: string;
+  latitude?: number;
+  longitude?: number;
   isActive: boolean;
   requiresReview: boolean;
   approvedAt?: string;
@@ -116,10 +118,13 @@ const Hospitals: React.FC = () => {
     email: '',
     type: '',
     capabilities: [] as string[],
-    region: ''
+    region: '',
+    latitude: '',
+    longitude: ''
   });
   const [editLoading, setEditLoading] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
+  const [geocoding, setGeocoding] = useState(false);
 
   const handleEdit = (hospitalId: string) => {
     const hospital = hospitals.find(h => h.id === hospitalId);
@@ -135,7 +140,9 @@ const Hospitals: React.FC = () => {
         email: hospital.email || '',
         type: hospital.type,
         capabilities: hospital.capabilities,
-        region: hospital.region
+        region: hospital.region,
+        latitude: hospital.latitude?.toString() || '',
+        longitude: hospital.longitude?.toString() || ''
       });
       setEditError(null);
     }
@@ -147,6 +154,47 @@ const Hospitals: React.FC = () => {
       ...prev,
       [name]: value
     }));
+  };
+
+  // Geocoding function using OpenStreetMap Nominatim API (free)
+  const geocodeAddress = async () => {
+    if (!editFormData.address || !editFormData.city || !editFormData.state || !editFormData.zipCode) {
+      setEditError('Please fill in address, city, state, and ZIP code before looking up coordinates');
+      return;
+    }
+
+    setGeocoding(true);
+    setEditError(null);
+
+    try {
+      const fullAddress = `${editFormData.address}, ${editFormData.city}, ${editFormData.state} ${editFormData.zipCode}`;
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(fullAddress)}&limit=1`
+      );
+      
+      if (!response.ok) {
+        throw new Error('Geocoding service unavailable');
+      }
+
+      const data = await response.json();
+      
+      if (data && data.length > 0) {
+        const result = data[0];
+        setEditFormData(prev => ({
+          ...prev,
+          latitude: result.lat,
+          longitude: result.lon
+        }));
+        setEditError(null);
+      } else {
+        setEditError('Address not found. Please enter coordinates manually.');
+      }
+    } catch (err) {
+      console.error('Geocoding error:', err);
+      setEditError('Failed to lookup coordinates. Please enter them manually.');
+    } finally {
+      setGeocoding(false);
+    }
   };
 
   const handleEditSubmit = async (e: React.FormEvent) => {
@@ -528,6 +576,84 @@ const Hospitals: React.FC = () => {
                     className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                     required
                   />
+                </div>
+
+                {/* Location Coordinates */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-center mb-3">
+                    <Building2 className="h-5 w-5 text-blue-600 mr-2" />
+                    <h3 className="text-sm font-medium text-blue-800">Location Coordinates</h3>
+                  </div>
+                  <p className="text-sm text-blue-700 mb-4">
+                    Location coordinates are required for agency distance calculations. You can either lookup coordinates automatically or enter them manually.
+                  </p>
+                  
+                  <div className="space-y-4">
+                    {/* Geocoding Button */}
+                    <div>
+                      <button
+                        type="button"
+                        onClick={geocodeAddress}
+                        disabled={geocoding || !editFormData.address || !editFormData.city || !editFormData.state || !editFormData.zipCode}
+                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {geocoding ? (
+                          <>
+                            <div className="animate-spin -ml-1 mr-3 h-4 w-4 text-white">
+                              <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+                            </div>
+                            Looking up...
+                          </>
+                        ) : (
+                          <>
+                            <Building2 className="h-4 w-4 mr-2" />
+                            Lookup Coordinates
+                          </>
+                        )}
+                      </button>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Click to automatically find coordinates from the address
+                      </p>
+                    </div>
+
+                    {/* Manual Coordinate Entry */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Latitude
+                        </label>
+                        <input
+                          type="number"
+                          step="any"
+                          name="latitude"
+                          value={editFormData.latitude}
+                          onChange={handleEditInputChange}
+                          className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="e.g., 40.1234"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Longitude
+                        </label>
+                        <input
+                          type="number"
+                          step="any"
+                          name="longitude"
+                          value={editFormData.longitude}
+                          onChange={handleEditInputChange}
+                          className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="e.g., -78.5678"
+                        />
+                      </div>
+                    </div>
+                    
+                    {editFormData.latitude && editFormData.longitude && (
+                      <div className="text-sm text-green-600 bg-green-50 border border-green-200 rounded p-2">
+                        ✓ Coordinates set: {editFormData.latitude}, {editFormData.longitude}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="flex justify-end space-x-3 pt-4">

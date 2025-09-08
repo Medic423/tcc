@@ -82,13 +82,39 @@ router.get('/verify', authenticateAdmin, (req: AuthenticatedRequest, res) => {
  */
 router.post('/healthcare/register', async (req, res) => {
   try {
-    const { email, password, name, facilityName, facilityType } = req.body;
+    const { 
+      email, 
+      password, 
+      name, 
+      facilityName, 
+      facilityType, 
+      address, 
+      city, 
+      state, 
+      zipCode, 
+      phone, 
+      latitude, 
+      longitude 
+    } = req.body;
 
     if (!email || !password || !name || !facilityName || !facilityType) {
       return res.status(400).json({
         success: false,
         error: 'Email, password, name, facilityName, and facilityType are required'
       });
+    }
+
+    // Validate coordinates if provided
+    if (latitude && longitude) {
+      const lat = parseFloat(latitude);
+      const lng = parseFloat(longitude);
+      
+      if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid latitude or longitude coordinates'
+        });
+      }
     }
 
     const hospitalDB = databaseManager.getHospitalDB();
@@ -123,14 +149,17 @@ router.post('/healthcare/register', async (req, res) => {
     await centerDB.hospital.create({
       data: {
         name: facilityName,
-        address: 'Address to be provided', // Will be updated when approved
-        city: 'City to be provided',
-        state: 'State to be provided',
-        zipCode: '00000',
+        address: address || 'Address to be provided',
+        city: city || 'City to be provided',
+        state: state || 'State to be provided',
+        zipCode: zipCode || '00000',
+        phone: phone || null,
         email: email,
         type: facilityType,
         capabilities: [], // Will be updated when approved
         region: 'Region to be determined',
+        latitude: latitude ? parseFloat(latitude) : null,
+        longitude: longitude ? parseFloat(longitude) : null,
         isActive: false, // Requires admin approval
         requiresReview: true // Flag for admin review
       }
@@ -357,13 +386,41 @@ router.put('/ems/agency/update', authenticateAdmin, async (req: AuthenticatedReq
  */
 router.post('/ems/register', async (req, res) => {
   try {
-    const { email, password, name, agencyName, serviceType } = req.body;
+    const { 
+      email, 
+      password, 
+      name, 
+      agencyName, 
+      serviceType, 
+      address, 
+      city, 
+      state, 
+      zipCode, 
+      phone, 
+      latitude, 
+      longitude, 
+      capabilities, 
+      operatingHours 
+    } = req.body;
 
     if (!email || !password || !name || !agencyName || !serviceType) {
       return res.status(400).json({
         success: false,
         error: 'Email, password, name, agencyName, and serviceType are required'
       });
+    }
+
+    // Validate coordinates if provided
+    if (latitude && longitude) {
+      const lat = parseFloat(latitude);
+      const lng = parseFloat(longitude);
+      
+      if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid latitude or longitude coordinates'
+        });
+      }
     }
 
     const emsDB = databaseManager.getEMSDB();
@@ -398,14 +455,15 @@ router.post('/ems/register', async (req, res) => {
       data: {
         name: agencyName,
         contactName: name,
-        phone: 'Phone to be provided', // Will be updated when approved
+        phone: phone || 'Phone to be provided',
         email: email,
-        address: 'Address to be provided',
-        city: 'City to be provided',
-        state: 'State to be provided',
-        zipCode: '00000',
-        serviceArea: [], // Will be updated when approved
-        capabilities: [], // Will be updated when approved
+        address: address || 'Address to be provided',
+        city: city || 'City to be provided',
+        state: state || 'State to be provided',
+        zipCode: zipCode || '00000',
+        capabilities: capabilities || [],
+        latitude: latitude ? parseFloat(latitude) : null,
+        longitude: longitude ? parseFloat(longitude) : null,
         isActive: false, // Requires admin approval
         requiresReview: true // Flag for admin review
       }

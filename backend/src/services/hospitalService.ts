@@ -12,6 +12,8 @@ export interface HospitalData {
   capabilities: string[];
   region: string;
   coordinates?: { lat: number; lng: number };
+  latitude?: number;
+  longitude?: number;
   operatingHours?: string;
   isActive?: boolean;
   requiresReview?: boolean;
@@ -52,6 +54,8 @@ export class HospitalService {
         capabilities: data.capabilities,
         region: data.region,
         coordinates: data.coordinates,
+        latitude: data.latitude,
+        longitude: data.longitude,
         operatingHours: data.operatingHours,
         isActive: data.isActive ?? true,
         requiresReview: data.requiresReview ?? false

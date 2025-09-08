@@ -580,8 +580,8 @@ export class TripService {
         select: { latitude: true, longitude: true, name: true }
       });
 
-      if (!hospital || !hospital.latitude || !hospital.longitude) {
-        throw new Error('Hospital location not found');
+      if (!hospital) {
+        throw new Error('Hospital not found');
       }
 
       // Get all active agencies from EMS database
@@ -606,8 +606,20 @@ export class TripService {
         }
       });
 
+      // Check if hospital has location data
+      if (!hospital.latitude || !hospital.longitude) {
+        console.log(`TCC_DEBUG: Hospital ${hospital.name} has no location data, returning all agencies`);
+        return {
+          success: true,
+          data: agencies,
+          message: `Found ${agencies.length} agencies available for notification (no location filtering - hospital location unknown)`
+        };
+      }
+
       // For now, return all agencies since we don't have coordinates in the EMS schema
       // In a real implementation, you would add latitude/longitude fields to the EMS schema
+      // and calculate distance between hospital and agencies
+      console.log(`TCC_DEBUG: Hospital ${hospital.name} has location data, returning all agencies (distance filtering not yet implemented)`);
       return {
         success: true,
         data: agencies,

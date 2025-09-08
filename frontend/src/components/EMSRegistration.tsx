@@ -26,7 +26,8 @@ const EMSRegistration: React.FC<EMSRegistrationProps> = ({ onBack, onSuccess }) 
     city: '',
     state: '',
     zipCode: '',
-    serviceArea: '',
+    latitude: '',
+    longitude: '',
     capabilities: [] as string[],
     operatingHours: {
       start: '',
@@ -39,6 +40,7 @@ const EMSRegistration: React.FC<EMSRegistrationProps> = ({ onBack, onSuccess }) 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [geocoding, setGeocoding] = useState(false);
 
   const serviceTypes = [
     'EMS',
@@ -67,6 +69,47 @@ const EMSRegistration: React.FC<EMSRegistrationProps> = ({ onBack, onSuccess }) 
     'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC',
     'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'
   ];
+
+  // Geocoding function using OpenStreetMap Nominatim API (free)
+  const geocodeAddress = async () => {
+    if (!formData.address || !formData.city || !formData.state || !formData.zipCode) {
+      setError('Please fill in address, city, state, and ZIP code before looking up coordinates');
+      return;
+    }
+
+    setGeocoding(true);
+    setError(null);
+
+    try {
+      const fullAddress = `${formData.address}, ${formData.city}, ${formData.state} ${formData.zipCode}`;
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(fullAddress)}&limit=1`
+      );
+      
+      if (!response.ok) {
+        throw new Error('Geocoding service unavailable');
+      }
+
+      const data = await response.json();
+      
+      if (data && data.length > 0) {
+        const result = data[0];
+        setFormData(prev => ({
+          ...prev,
+          latitude: result.lat,
+          longitude: result.lon
+        }));
+        setError(null);
+      } else {
+        setError('Address not found. Please enter coordinates manually.');
+      }
+    } catch (err) {
+      console.error('Geocoding error:', err);
+      setError('Failed to lookup coordinates. Please enter them manually.');
+    } finally {
+      setGeocoding(false);
+    }
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -119,6 +162,35 @@ const EMSRegistration: React.FC<EMSRegistrationProps> = ({ onBack, onSuccess }) 
       return;
     }
 
+    // Coordinate validation
+    if (!formData.latitude || !formData.longitude) {
+      setError('Location coordinates are required. Please lookup or enter latitude and longitude.');
+      setLoading(false);
+      return;
+    }
+
+    // Validate coordinate ranges
+    const lat = parseFloat(formData.latitude);
+    const lng = parseFloat(formData.longitude);
+    
+    if (isNaN(lat) || isNaN(lng)) {
+      setError('Please enter valid numeric coordinates.');
+      setLoading(false);
+      return;
+    }
+
+    if (lat < -90 || lat > 90) {
+      setError('Latitude must be between -90 and 90 degrees.');
+      setLoading(false);
+      return;
+    }
+
+    if (lng < -180 || lng > 180) {
+      setError('Longitude must be between -180 and 180 degrees.');
+      setLoading(false);
+      return;
+    }
+
     try {
       // Import authAPI dynamically to avoid circular imports
       const { authAPI } = await import('../services/api');
@@ -130,7 +202,16 @@ const EMSRegistration: React.FC<EMSRegistrationProps> = ({ onBack, onSuccess }) 
         password: formData.password,
         name: formData.contactName,
         agencyName: formData.agencyName,
-        serviceType: formData.serviceType
+        serviceType: formData.serviceType,
+        address: formData.address,
+        city: formData.city,
+        state: formData.state,
+        zipCode: formData.zipCode,
+        phone: formData.phone,
+        latitude: formData.latitude,
+        longitude: formData.longitude,
+        capabilities: formData.capabilities,
+        operatingHours: formData.operatingHours
       });
       
       setSuccess(true);
@@ -360,20 +441,99 @@ const EMSRegistration: React.FC<EMSRegistrationProps> = ({ onBack, onSuccess }) 
               </div>
             </div>
 
-            {/* Service Area */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Service Area (Cities/Counties) *
-              </label>
-              <input
-                type="text"
-                name="serviceArea"
-                required
-                value={formData.serviceArea}
-                onChange={handleInputChange}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
-                placeholder="e.g., Altoona, Bedford County, PA"
-              />
+
+            {/* Location Coordinates */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-center mb-3">
+                <MapPin className="h-5 w-5 text-blue-600 mr-2" />
+                <h3 className="text-sm font-medium text-blue-800">Location Coordinates</h3>
+              </div>
+              <p className="text-sm text-blue-700 mb-4">
+                Location coordinates are required for distance calculations and agency matching. You can either lookup coordinates automatically or enter them manually.
+              </p>
+              
+              <div className="space-y-4">
+                {/* Geocoding Button */}
+                <div>
+                  <button
+                    type="button"
+                    onClick={geocodeAddress}
+                    disabled={geocoding || !formData.address?.trim() || !formData.city?.trim() || !formData.state?.trim() || !formData.zipCode?.trim()}
+                    className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
+                      geocoding || !formData.address?.trim() || !formData.city?.trim() || !formData.state?.trim() || !formData.zipCode?.trim()
+                        ? 'bg-gray-400 text-gray-700 cursor-not-allowed'
+                        : 'bg-blue-600 text-white hover:bg-blue-700'
+                    }`}
+                  >
+                    {geocoding ? (
+                      <>
+                        <div className="animate-spin -ml-1 mr-3 h-4 w-4 text-white">
+                          <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+                        </div>
+                        Looking up...
+                      </>
+                    ) : (
+                      <>
+                        <MapPin className="h-4 w-4 mr-2" />
+                        Lookup Coordinates
+                      </>
+                    )}
+                  </button>
+                  {(geocoding || !formData.address?.trim() || !formData.city?.trim() || !formData.state?.trim() || !formData.zipCode?.trim()) ? (
+                    <p className="text-xs text-red-500 mt-1">
+                      {geocoding ? 'Looking up coordinates...' : 
+                       `Please fill in: ${[
+                         !formData.address?.trim() && 'Address',
+                         !formData.city?.trim() && 'City',
+                         !formData.state?.trim() && 'State',
+                         !formData.zipCode?.trim() && 'ZIP Code'
+                       ].filter(Boolean).join(', ')}`}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Click to automatically find coordinates from your address
+                    </p>
+                  )}
+                </div>
+
+                {/* Manual Coordinate Entry */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Latitude
+                    </label>
+                    <input
+                      type="number"
+                      step="any"
+                      name="latitude"
+                      value={formData.latitude}
+                      onChange={handleInputChange}
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
+                      placeholder="e.g., 40.1234"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Longitude
+                    </label>
+                    <input
+                      type="number"
+                      step="any"
+                      name="longitude"
+                      value={formData.longitude}
+                      onChange={handleInputChange}
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
+                      placeholder="e.g., -78.5678"
+                    />
+                  </div>
+                </div>
+                
+                {formData.latitude && formData.longitude && (
+                  <div className="text-sm text-green-600 bg-green-50 border border-green-200 rounded p-2">
+                    ✓ Coordinates set: {formData.latitude}, {formData.longitude}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Service Capabilities */}
