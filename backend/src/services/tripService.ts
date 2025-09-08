@@ -121,8 +121,7 @@ export class TripService {
           // Time Tracking
           transferRequestTime: new Date(), // Auto-set when request is sent
           
-          // Legacy fields
-          patientName: patientId, // Using patientId as patientName for backward compatibility
+          // Legacy fields (patientName removed - using patientId instead)
           status: 'PENDING',
           priority: data.priority || priorityMap[data.urgencyLevel] || 'LOW',
           notes: data.notes || null,
@@ -134,7 +133,7 @@ export class TripService {
 
       // Send notifications to selected agencies
       if (data.selectedAgencies && data.selectedAgencies.length > 0) {
-        await this.sendTripNotifications(trip.id, data.selectedAgencies);
+        await this.sendNewTripNotifications(trip);
       }
 
       return {
@@ -158,10 +157,18 @@ export class TripService {
       const trip = await prisma.trip.create({
         data: {
           tripNumber: `TRP-${Date.now()}`,
-          patientName: data.patientId, // Using patientId as patientName for now
+          
+          // Required fields for new schema
+          patientId: data.patientId,
+          transportLevel: data.transportLevel,
+          urgencyLevel: 'Routine', // Default for legacy trips
+          
+          // Trip details
           fromLocation: data.originFacilityId,
           toLocation: data.destinationFacilityId,
           scheduledTime: new Date(data.readyStart),
+          
+          // Legacy fields
           status: 'PENDING',
           priority: data.priority,
           notes: data.specialRequirements,
@@ -297,7 +304,7 @@ export class TripService {
     console.log('TCC_DEBUG: Getting available EMS agencies');
     
     try {
-      const agencies = await prisma.agency.findMany({
+      const agencies = await prisma.eMSAgency.findMany({
         where: {
           isActive: true,
         },
@@ -319,7 +326,7 @@ export class TripService {
       console.log('TCC_DEBUG: Sending new trip notifications for:', trip.id);
       
       // Get all active EMS agencies with email addresses and phone numbers
-      const agencies = await prisma.agency.findMany({
+      const agencies = await prisma.eMSAgency.findMany({
         where: {
           isActive: true,
         },
@@ -389,7 +396,7 @@ export class TripService {
       switch (newStatus) {
         case 'ACCEPTED':
           // Get agency details for accepted notification
-          const agency = await prisma.agency.findUnique({
+          const agency = await prisma.eMSAgency.findUnique({
             where: { id: trip.assignedAgencyId || '' },
             select: { name: true }
           });

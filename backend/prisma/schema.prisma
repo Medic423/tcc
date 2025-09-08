@@ -23,25 +23,30 @@ model CenterUser {
 }
 
 model Hospital {
-  id            String   @id @default(cuid())
-  name          String
-  address       String
-  city          String
-  state         String
-  zipCode       String
-  phone         String?
-  email         String?
-  type          String
-  capabilities  String[]
-  region        String
-  coordinates   Json?
+  id             String   @id @default(cuid())
+  name           String
+  address        String
+  city           String
+  state          String
+  zipCode        String
+  phone          String?
+  email          String?
+  type           String
+  capabilities   String[]
+  region         String
+  coordinates    Json?
+  
+  // Location data for distance calculations
+  latitude       Float?   // For distance calculations
+  longitude      Float?   // For distance calculations
+  
   operatingHours String?
-  isActive      Boolean  @default(true)
-  requiresReview Boolean @default(false)
-  approvedAt    DateTime?
-  approvedBy    String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  isActive       Boolean  @default(true)
+  requiresReview Boolean  @default(false)
+  approvedAt     DateTime?
+  approvedBy     String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   @@map("hospitals")
 }
@@ -60,19 +65,41 @@ model Agency {
 }
 
 model EMSAgency {
-  id          String   @id @default(cuid())
-  name        String
-  contactName String
-  email       String   @unique
-  phone       String?
-  address     String?
-  city        String?
-  state       String?
-  zipCode     String?
-  serviceType String?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             String   @id @default(cuid())
+  name           String
+  contactName    String
+  phone          String
+  email          String
+  address        String
+  city           String
+  state          String
+  zipCode        String
+  serviceArea    String[]
+  operatingHours Json?
+  capabilities   String[]
+  pricingStructure Json?
+  
+  // Location data for distance filtering
+  latitude       Float?   // For distance calculations
+  longitude      Float?   // For distance calculations
+  serviceRadius  Int?     // Service radius in miles
+  
+  // Availability tracking
+  totalUnits     Int      @default(0)  // Total number of units
+  availableUnits Int      @default(0)  // Currently available units
+  lastUpdated    DateTime @default(now()) // Last availability update
+  
+  // Notification preferences
+  acceptsNotifications Boolean @default(true) // Whether agency accepts trip notifications
+  notificationMethods  String[] // Email, SMS, Phone, etc.
+  
+  isActive       Boolean  @default(true)
+  status         String   @default("ACTIVE")
+  requiresReview Boolean  @default(false)
+  approvedAt     DateTime?
+  approvedBy     String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   @@map("ems_agencies")
 }
@@ -96,20 +123,55 @@ model Facility {
 }
 
 model Trip {
-  id              String   @id @default(cuid())
-  tripNumber      String   @unique
-  patientName     String
-  fromLocation    String
-  toLocation      String
-  scheduledTime   DateTime
-  actualStartTime DateTime?
-  actualEndTime   DateTime?
-  status          String
-  priority        String
-  notes           String?
-  assignedTo      String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                String    @id @default(cuid())
+  tripNumber        String    @unique
+  
+  // Patient Information (HIPAA Compliant - NO name/age)
+  patientId         String    // Auto-generated patient ID (e.g., "PMTC1NJKZ")
+  patientWeight     String?   // Optional weight information
+  specialNeeds      String?   // Special medical needs
+  
+  // Trip Details
+  fromLocation      String
+  toLocation        String
+  scheduledTime     DateTime
+  transportLevel    String    // BLS, ALS, CCT, Other
+  urgencyLevel      String    // Routine, Urgent, Emergent
+  
+  // Clinical Details
+  diagnosis         String?   // Optional dropdown: UTI, Dialysis, Cardiac, etc.
+  mobilityLevel     String?   // Ambulatory, Wheelchair, Stretcher, Bed
+  oxygenRequired    Boolean   @default(false)
+  monitoringRequired Boolean  @default(false)
+  
+  // QR Code
+  generateQRCode    Boolean   @default(false)
+  qrCodeData        String?   // QR code content when generated
+  
+  // Agency Notifications
+  selectedAgencies  String[]  // Array of agency IDs for notifications
+  notificationRadius Int?     // Distance radius for agency filtering (miles)
+  
+  // Time Tracking
+  transferRequestTime   DateTime?  // Auto-set when sent to agencies
+  transferAcceptedTime  DateTime?  // Auto-set when agency responds, manually editable
+  emsArrivalTime        DateTime?  // When EMS arrives at unit
+  emsDepartureTime      DateTime?  // When EMS leaves unit
+  
+  // Legacy fields (keeping for backward compatibility)
+  actualStartTime   DateTime?
+  actualEndTime     DateTime?
+  status            String
+  priority          String
+  notes             String?
+  assignedTo        String?
+  assignedAgencyId  String?
+  assignedUnitId    String?
+  acceptedTimestamp DateTime?
+  pickupTimestamp   DateTime?
+  completionTimestamp DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   @@map("trips")
 }

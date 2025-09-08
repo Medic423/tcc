@@ -28,7 +28,7 @@ router.get('/', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
         userId: userId
       },
       orderBy: {
-        createdAt: 'desc'
+        timestamp: 'desc'
       },
       take: 50 // Limit to last 50 notifications
     });
@@ -40,7 +40,7 @@ router.get('/', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
       title: (notif.metricValue as any)?.title || 'Notification',
       message: (notif.metricValue as any)?.message || '',
       read: (notif.metricValue as any)?.read || false,
-      createdAt: notif.createdAt
+      createdAt: notif.timestamp
     }));
 
     res.json({

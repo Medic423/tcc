@@ -1,5 +1,5 @@
 import express from 'express';
-import { tripService, CreateTripRequest, UpdateTripStatusRequest } from '../services/tripService';
+import { tripService, CreateTripRequest, UpdateTripStatusRequest, EnhancedCreateTripRequest } from '../services/tripService';
 import { authenticateAdmin, AuthenticatedRequest } from '../middleware/authenticateAdmin';
 
 const router = express.Router();
@@ -81,6 +81,89 @@ router.post('/', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Internal server error'
+    });
+  }
+});
+
+/**
+ * POST /api/trips/enhanced
+ * Create a new enhanced transport request with comprehensive patient and clinical details
+ */
+router.post('/enhanced', async (req, res) => {
+  try {
+    console.log('TCC_DEBUG: Create enhanced trip request received:', req.body);
+    
+    const {
+      patientId,
+      patientWeight,
+      specialNeeds,
+      fromLocation,
+      toLocation,
+      scheduledTime,
+      transportLevel,
+      urgencyLevel,
+      diagnosis,
+      mobilityLevel,
+      oxygenRequired,
+      monitoringRequired,
+      generateQRCode,
+      selectedAgencies,
+      notificationRadius,
+      notes,
+      priority
+    } = req.body;
+
+    // Validation
+    if (!fromLocation || !toLocation || !scheduledTime || !transportLevel || !urgencyLevel) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields: fromLocation, toLocation, scheduledTime, transportLevel, urgencyLevel'
+      });
+    }
+
+    if (!['BLS', 'ALS', 'CCT', 'Other'].includes(transportLevel)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid transport level. Must be BLS, ALS, CCT, or Other'
+      });
+    }
+
+    if (!['Routine', 'Urgent', 'Emergent'].includes(urgencyLevel)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid urgency level. Must be Routine, Urgent, or Emergent'
+      });
+    }
+
+    const enhancedTripData: EnhancedCreateTripRequest = {
+      patientId,
+      patientWeight,
+      specialNeeds,
+      fromLocation,
+      toLocation,
+      scheduledTime,
+      transportLevel,
+      urgencyLevel,
+      diagnosis,
+      mobilityLevel,
+      oxygenRequired: oxygenRequired || false,
+      monitoringRequired: monitoringRequired || false,
+      generateQRCode: generateQRCode || false,
+      selectedAgencies: selectedAgencies || [],
+      notificationRadius: notificationRadius || 100,
+      notes,
+      priority
+    };
+
+    const result = await tripService.createEnhancedTrip(enhancedTripData);
+    
+    console.log('TCC_DEBUG: Enhanced trip created successfully:', result);
+    res.status(201).json(result);
+  } catch (error) {
+    console.error('TCC_DEBUG: Error creating enhanced trip:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to create enhanced transport request'
     });
   }
 });
@@ -412,6 +495,119 @@ router.post('/test-sms', authenticateAdmin, async (req: AuthenticatedRequest, re
     res.status(500).json({
       success: false,
       error: 'Internal server error: ' + (error?.message || 'Unknown error')
+    });
+  }
+});
+
+/**
+ * GET /api/trips/agencies/:hospitalId
+ * Get agencies within distance for a hospital
+ */
+router.get('/agencies/:hospitalId', async (req, res) => {
+  try {
+    const { hospitalId } = req.params;
+    const { radius = 100 } = req.query;
+    
+    const result = await tripService.getAgenciesForHospital(hospitalId, Number(radius));
+    res.json(result);
+  } catch (error) {
+    console.error('TCC_DEBUG: Get agencies error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get agencies for hospital'
+    });
+  }
+});
+
+/**
+ * PUT /api/trips/:id/times
+ * Update trip time tracking
+ */
+router.put('/:id/times', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { transferAcceptedTime, emsArrivalTime, emsDepartureTime } = req.body;
+    
+    const result = await tripService.updateTripTimes(id, {
+      transferAcceptedTime,
+      emsArrivalTime,
+      emsDepartureTime
+    });
+    
+    res.json(result);
+  } catch (error) {
+    console.error('TCC_DEBUG: Update trip times error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to update trip times'
+    });
+  }
+});
+
+/**
+ * GET /api/trips/options/diagnosis
+ * Get diagnosis options
+ */
+router.get('/options/diagnosis', async (req, res) => {
+  try {
+    const result = tripService.getDiagnosisOptions();
+    res.json(result);
+  } catch (error) {
+    console.error('TCC_DEBUG: Get diagnosis options error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get diagnosis options'
+    });
+  }
+});
+
+/**
+ * GET /api/trips/options/mobility
+ * Get mobility options
+ */
+router.get('/options/mobility', async (req, res) => {
+  try {
+    const result = tripService.getMobilityOptions();
+    res.json(result);
+  } catch (error) {
+    console.error('TCC_DEBUG: Get mobility options error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get mobility options'
+    });
+  }
+});
+
+/**
+ * GET /api/trips/options/transport-level
+ * Get transport level options
+ */
+router.get('/options/transport-level', async (req, res) => {
+  try {
+    const result = tripService.getTransportLevelOptions();
+    res.json(result);
+  } catch (error) {
+    console.error('TCC_DEBUG: Get transport level options error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get transport level options'
+    });
+  }
+});
+
+/**
+ * GET /api/trips/options/urgency
+ * Get urgency options
+ */
+router.get('/options/urgency', async (req, res) => {
+  try {
+    const result = tripService.getUrgencyOptions();
+    res.json(result);
+  } catch (error) {
+    console.error('TCC_DEBUG: Get urgency options error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get urgency options'
     });
   }
 });
