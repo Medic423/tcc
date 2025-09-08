@@ -59,6 +59,24 @@ model Agency {
   @@map("agencies")
 }
 
+model EMSAgency {
+  id          String   @id @default(cuid())
+  name        String
+  contactName String
+  email       String   @unique
+  phone       String?
+  address     String?
+  city        String?
+  state       String?
+  zipCode     String?
+  serviceType String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("ems_agencies")
+}
+
 model Facility {
   id          String   @id @default(cuid())
   name        String

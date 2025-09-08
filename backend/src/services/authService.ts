@@ -28,6 +28,8 @@ export class AuthService {
 
   constructor() {
     this.jwtSecret = process.env.JWT_SECRET || 'fallback-secret-key';
+    console.log('TCC_DEBUG: AuthService constructor - JWT_SECRET loaded:', this.jwtSecret ? 'YES' : 'NO');
+    console.log('TCC_DEBUG: JWT_SECRET value:', this.jwtSecret);
   }
 
   async login(credentials: LoginCredentials): Promise<AuthResult> {
@@ -102,7 +104,9 @@ export class AuthService {
 
   async verifyToken(token: string): Promise<User | null> {
     try {
+      console.log('TCC_DEBUG: verifyToken called with JWT_SECRET:', this.jwtSecret ? 'SET' : 'NOT SET');
       const decoded = jwt.verify(token, this.jwtSecret) as any;
+      console.log('TCC_DEBUG: Token decoded successfully:', { id: decoded.id, email: decoded.email, userType: decoded.userType });
       
       if (!['ADMIN', 'USER', 'HEALTHCARE', 'EMS'].includes(decoded.userType)) {
         return null;

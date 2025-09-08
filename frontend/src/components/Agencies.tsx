@@ -43,6 +43,22 @@ const Agencies: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  
+  // Edit modal state
+  const [editingAgency, setEditingAgency] = useState<Agency | null>(null);
+  const [editFormData, setEditFormData] = useState({
+    name: '',
+    contactName: '',
+    phone: '',
+    email: '',
+    address: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    serviceType: 'BLS/ALS'
+  });
+  const [editLoading, setEditLoading] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
 
 
   useEffect(() => {
@@ -85,13 +101,71 @@ const Agencies: React.FC = () => {
 
 
   const handleEdit = (agency: Agency) => {
-    // For now, redirect to registration page with a note about editing
-    // In the future, this could open a dedicated edit modal
-    alert(`To edit "${agency.name}", you'll be redirected to the registration form. This will be improved in the next update.`);
-    // Clear the current session and redirect to main page for registration
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    window.location.href = '/?register=ems';
+    setEditingAgency(agency);
+    setEditFormData({
+      name: agency.name,
+      contactName: agency.contactName,
+      phone: agency.phone,
+      email: agency.email,
+      address: agency.address,
+      city: agency.city,
+      state: agency.state,
+      zipCode: agency.zipCode,
+      serviceType: 'BLS/ALS' // Default value, could be enhanced to store this
+    });
+    setEditError(null);
+  };
+
+  const handleEditInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setEditFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingAgency) return;
+
+    setEditLoading(true);
+    setEditError(null);
+
+    try {
+      const response = await agenciesAPI.updateAgency(editingAgency.id, editFormData);
+      if (response.data.success) {
+        // Update the agencies list
+        setAgencies(agencies.map(agency => 
+          agency.id === editingAgency.id 
+            ? { ...agency, ...editFormData, updatedAt: new Date().toISOString() }
+            : agency
+        ));
+        setEditingAgency(null);
+      } else {
+        setEditError(response.data.error || 'Failed to update agency');
+      }
+    } catch (error: any) {
+      console.error('Error updating agency:', error);
+      setEditError(error.response?.data?.error || 'Failed to update agency');
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  const handleEditCancel = () => {
+    setEditingAgency(null);
+    setEditFormData({
+      name: '',
+      contactName: '',
+      phone: '',
+      email: '',
+      address: '',
+      city: '',
+      state: '',
+      zipCode: '',
+      serviceType: 'BLS/ALS'
+    });
+    setEditError(null);
   };
 
   const handleDelete = async (id: string) => {
@@ -303,6 +377,164 @@ const Agencies: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Edit Agency Modal */}
+      {editingAgency && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-medium text-gray-900">Edit Agency</h3>
+                <button
+                  onClick={handleEditCancel}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <XCircle className="h-6 w-6" />
+                </button>
+              </div>
+
+              {editError && (
+                <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
+                  <div className="flex">
+                    <XCircle className="h-5 w-5 text-red-400" />
+                    <div className="ml-3">
+                      <p className="text-sm font-medium text-red-800">
+                        {editError}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <form onSubmit={handleEditSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Agency Name</label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={editFormData.name}
+                    onChange={handleEditInputChange}
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Contact Name</label>
+                  <input
+                    type="text"
+                    name="contactName"
+                    value={editFormData.contactName}
+                    onChange={handleEditInputChange}
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Phone</label>
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={editFormData.phone}
+                      onChange={handleEditInputChange}
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Email</label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={editFormData.email}
+                      onChange={handleEditInputChange}
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Address</label>
+                  <input
+                    type="text"
+                    name="address"
+                    value={editFormData.address}
+                    onChange={handleEditInputChange}
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+                  />
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">City</label>
+                    <input
+                      type="text"
+                      name="city"
+                      value={editFormData.city}
+                      onChange={handleEditInputChange}
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">State</label>
+                    <input
+                      type="text"
+                      name="state"
+                      value={editFormData.state}
+                      onChange={handleEditInputChange}
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">ZIP Code</label>
+                    <input
+                      type="text"
+                      name="zipCode"
+                      value={editFormData.zipCode}
+                      onChange={handleEditInputChange}
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Service Type</label>
+                  <select
+                    name="serviceType"
+                    value={editFormData.serviceType}
+                    onChange={handleEditInputChange}
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+                  >
+                    <option value="BLS">BLS Only</option>
+                    <option value="ALS">ALS Only</option>
+                    <option value="BLS/ALS">BLS/ALS</option>
+                    <option value="Critical Care">Critical Care</option>
+                  </select>
+                </div>
+
+                <div className="flex justify-end space-x-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={handleEditCancel}
+                    className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={editLoading}
+                    className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50"
+                  >
+                    {editLoading ? 'Saving...' : 'Save Changes'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

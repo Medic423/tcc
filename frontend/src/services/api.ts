@@ -106,6 +106,9 @@ export const agenciesAPI = {
   update: (id: string, data: any) =>
     api.put(`/api/tcc/agencies/${id}`, data),
   
+  updateAgency: (id: string, data: any) =>
+    api.put(`/api/tcc/agencies/${id}`, data),
+  
   delete: (id: string) =>
     api.delete(`/api/tcc/agencies/${id}`),
   

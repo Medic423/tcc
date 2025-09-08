@@ -237,10 +237,116 @@ router.put('/healthcare/facility/update', authenticateAdmin, async (req: Authent
 
   } catch (error) {
     console.error('TCC_DEBUG: Update healthcare facility error:', error);
-    console.error('TCC_DEBUG: Error stack:', error.stack);
+    console.error('TCC_DEBUG: Error stack:', (error as Error).stack);
     res.status(500).json({
       success: false,
       error: 'Failed to update facility information'
+    });
+  }
+});
+
+/**
+ * PUT /api/auth/ems/agency/update
+ * Update EMS agency information (Authenticated)
+ */
+router.put('/ems/agency/update', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
+  try {
+    console.log('TCC_DEBUG: EMS agency update request received:', {
+      userId: req.user?.id,
+      userType: req.user?.userType,
+      body: req.body
+    });
+
+    const userId = req.user?.id;
+    if (!userId) {
+      console.log('TCC_DEBUG: No user ID found in request');
+      return res.status(401).json({
+        success: false,
+        error: 'User not authenticated'
+      });
+    }
+
+    const updateData = req.body;
+    console.log('TCC_DEBUG: Update data received:', updateData);
+
+    const emsDB = databaseManager.getEMSDB();
+    const centerDB = databaseManager.getCenterDB();
+
+    console.log('TCC_DEBUG: Attempting to update EMS user record...');
+    
+    // Update EMS user record
+    const updatedUser = await emsDB.eMSUser.update({
+      where: { id: userId },
+      data: {
+        agencyName: updateData.agencyName,
+        email: updateData.email,
+        name: updateData.contactName,
+        updatedAt: new Date()
+      }
+    });
+
+    console.log('TCC_DEBUG: EMS user updated successfully:', updatedUser);
+
+    console.log('TCC_DEBUG: Attempting to find existing Agency record in Center database...');
+    
+    // Check if agency record exists
+    const existingAgency = await centerDB.eMSAgency.findFirst({
+      where: { email: updateData.email }
+    });
+
+    let agencyUpdateResult;
+    if (existingAgency) {
+      console.log('TCC_DEBUG: Updating existing Agency record...');
+      agencyUpdateResult = await centerDB.eMSAgency.update({
+        where: { id: existingAgency.id },
+        data: {
+          name: updateData.agencyName,
+          email: updateData.email,
+          contactName: updateData.contactName,
+          phone: updateData.phone,
+          address: updateData.address,
+          city: updateData.city,
+          state: updateData.state,
+          zipCode: updateData.zipCode,
+          serviceArea: updateData.serviceType ? [updateData.serviceType] : [],
+          capabilities: updateData.serviceType ? [updateData.serviceType] : [],
+          updatedAt: new Date()
+        }
+      });
+    } else {
+      console.log('TCC_DEBUG: Creating new Agency record...');
+      agencyUpdateResult = await centerDB.eMSAgency.create({
+        data: {
+          name: updateData.agencyName,
+          email: updateData.email,
+          contactName: updateData.contactName,
+          phone: updateData.phone,
+          address: updateData.address,
+          city: updateData.city,
+          state: updateData.state,
+          zipCode: updateData.zipCode,
+          serviceArea: updateData.serviceType ? [updateData.serviceType] : [],
+          capabilities: updateData.serviceType ? [updateData.serviceType] : [],
+          isActive: true,
+          status: "ACTIVE"
+        }
+      });
+    }
+
+    console.log('TCC_DEBUG: Agency record operation result:', agencyUpdateResult);
+
+    res.json({
+      success: true,
+      message: 'Agency information updated successfully',
+      data: updatedUser
+    });
+
+  } catch (error) {
+    console.error('TCC_DEBUG: Update EMS agency error:', error);
+    console.error('TCC_DEBUG: Error stack:', (error as Error).stack);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to update agency information'
     });
   }
 });
