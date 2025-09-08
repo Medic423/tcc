@@ -105,17 +105,85 @@ const Hospitals: React.FC = () => {
     }
   };
 
+  const [editingHospital, setEditingHospital] = useState<Hospital | null>(null);
+  const [editFormData, setEditFormData] = useState({
+    name: '',
+    address: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    phone: '',
+    email: '',
+    type: '',
+    capabilities: [] as string[],
+    region: ''
+  });
+  const [editLoading, setEditLoading] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+
   const handleEdit = (hospitalId: string) => {
     const hospital = hospitals.find(h => h.id === hospitalId);
     if (hospital) {
-      // For now, redirect to registration page with a note about editing
-      // In the future, this could open a dedicated edit modal
-      alert(`To edit "${hospital.name}", you'll be redirected to the registration form. This will be improved in the next update.`);
-      // Clear the current session and redirect to main page for registration
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/?register=healthcare';
+      setEditingHospital(hospital);
+      setEditFormData({
+        name: hospital.name,
+        address: hospital.address,
+        city: hospital.city,
+        state: hospital.state,
+        zipCode: hospital.zipCode,
+        phone: hospital.phone || '',
+        email: hospital.email || '',
+        type: hospital.type,
+        capabilities: hospital.capabilities,
+        region: hospital.region
+      });
+      setEditError(null);
     }
+  };
+
+  const handleEditInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setEditFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingHospital) return;
+
+    setEditLoading(true);
+    setEditError(null);
+
+    try {
+      const response = await fetch(`/api/tcc/hospitals/${editingHospital.id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(editFormData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update hospital');
+      }
+
+      // Refresh the hospitals list
+      await fetchHospitals();
+      setEditingHospital(null);
+    } catch (err: any) {
+      console.error('Error updating hospital:', err);
+      setEditError(err.message || 'Failed to update hospital');
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  const handleEditCancel = () => {
+    setEditingHospital(null);
+    setEditError(null);
   };
 
   const handleDelete = async (hospitalId: string) => {
@@ -317,6 +385,172 @@ const Hospitals: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Edit Hospital Modal */}
+      {editingHospital && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-medium text-gray-900">Edit Healthcare Facility</h3>
+                <button
+                  onClick={handleEditCancel}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <XCircle className="h-6 w-6" />
+                </button>
+              </div>
+              
+              {editError && (
+                <div className="mb-4 bg-red-50 border border-red-200 rounded-md p-4">
+                  <div className="flex">
+                    <XCircle className="h-5 w-5 text-red-400" />
+                    <div className="ml-3">
+                      <p className="text-sm font-medium text-red-800">{editError}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <form onSubmit={handleEditSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Facility Name *</label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={editFormData.name}
+                    onChange={handleEditInputChange}
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Address *</label>
+                  <input
+                    type="text"
+                    name="address"
+                    value={editFormData.address}
+                    onChange={handleEditInputChange}
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">City *</label>
+                    <input
+                      type="text"
+                      name="city"
+                      value={editFormData.city}
+                      onChange={handleEditInputChange}
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">State *</label>
+                    <input
+                      type="text"
+                      name="state"
+                      value={editFormData.state}
+                      onChange={handleEditInputChange}
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Zip Code *</label>
+                  <input
+                    type="text"
+                    name="zipCode"
+                    value={editFormData.zipCode}
+                    onChange={handleEditInputChange}
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Phone</label>
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={editFormData.phone}
+                    onChange={handleEditInputChange}
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Email</label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={editFormData.email}
+                    onChange={handleEditInputChange}
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Type *</label>
+                  <select
+                    name="type"
+                    value={editFormData.type}
+                    onChange={handleEditInputChange}
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  >
+                    <option value="">Select type</option>
+                    <option value="Hospital">Hospital</option>
+                    <option value="Clinic">Clinic</option>
+                    <option value="Urgent Care">Urgent Care</option>
+                    <option value="Rehabilitation Facility">Rehabilitation Facility</option>
+                    <option value="Doctor's Office">Doctor's Office</option>
+                    <option value="Dialysis Center">Dialysis Center</option>
+                    <option value="Nursing Home">Nursing Home</option>
+                    <option value="Assisted Living">Assisted Living</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Region *</label>
+                  <input
+                    type="text"
+                    name="region"
+                    value={editFormData.region}
+                    onChange={handleEditInputChange}
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
+                </div>
+
+                <div className="flex justify-end space-x-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={handleEditCancel}
+                    className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={editLoading}
+                    className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                  >
+                    {editLoading ? 'Updating...' : 'Update Facility'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

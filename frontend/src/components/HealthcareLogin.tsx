@@ -28,24 +28,23 @@ const HealthcareLogin: React.FC<HealthcareLoginProps> = ({ onBack, onLogin }) =>
     setError('');
 
     try {
-      const response = await fetch('http://localhost:5001/api/auth/healthcare/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(formData),
+      // Import authAPI dynamically to avoid circular imports
+      const { authAPI } = await import('../services/api');
+      
+      const response = await authAPI.healthcareLogin({
+        email: formData.email,
+        password: formData.password
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        onLogin(data.user, data.token);
+      if (response.data.success) {
+        onLogin(response.data.user, response.data.token);
       } else {
-        setError(data.message || 'Login failed');
+        setError(response.data.error || 'Login failed');
       }
-    } catch (err) {
-      setError('Network error. Please try again.');
+    } catch (err: any) {
+      console.error('Healthcare login error:', err);
+      const errorMessage = err.response?.data?.error || err.message || 'Network error. Please try again.';
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }

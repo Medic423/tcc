@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   Truck, 
   MapPin, 
@@ -17,7 +17,7 @@ interface EMSDashboardProps {
     email: string;
     name: string;
     userType: string;
-    agencyName: string;
+    agencyName?: string;
   };
   onLogout: () => void;
 }
@@ -74,7 +74,11 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
     const trip = availableTrips.find(t => t.id === tripId);
     if (trip) {
       setAvailableTrips(availableTrips.filter(t => t.id !== tripId));
-      setAcceptedTrips([...acceptedTrips, { ...trip, status: 'ACCEPTED' }]);
+      setAcceptedTrips([...acceptedTrips, { 
+        ...trip, 
+        status: 'ACCEPTED',
+        pickupTime: new Date().toLocaleString()
+      }]);
     }
   };
 
@@ -113,7 +117,7 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
               </div>
               <div>
                 <h1 className="text-xl font-semibold text-gray-900">
-                  {user.agencyName}
+                  {user.agencyName || 'EMS Agency'}
                 </h1>
                 <p className="text-sm text-gray-500">EMS Agency Dashboard</p>
               </div>

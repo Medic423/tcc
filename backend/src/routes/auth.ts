@@ -5,6 +5,7 @@ import { databaseManager } from '../services/databaseManager';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
+
 const router = express.Router();
 
 /**
@@ -162,6 +163,84 @@ router.post('/healthcare/register', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Registration failed. Please try again.'
+    });
+  }
+});
+
+/**
+ * PUT /api/auth/healthcare/facility/update
+ * Update healthcare facility information (Authenticated)
+ */
+router.put('/healthcare/facility/update', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
+  try {
+    console.log('TCC_DEBUG: Healthcare facility update request received:', {
+      userId: req.user?.id,
+      userType: req.user?.userType,
+      body: req.body
+    });
+
+    const userId = req.user?.id;
+    if (!userId) {
+      console.log('TCC_DEBUG: No user ID found in request');
+      return res.status(401).json({
+        success: false,
+        error: 'User not authenticated'
+      });
+    }
+
+    const updateData = req.body;
+    console.log('TCC_DEBUG: Update data received:', updateData);
+
+    const hospitalDB = databaseManager.getHospitalDB();
+    const centerDB = databaseManager.getCenterDB();
+
+    console.log('TCC_DEBUG: Attempting to update healthcare user record...');
+    
+    // Update healthcare user record
+    const updatedUser = await hospitalDB.healthcareUser.update({
+      where: { id: userId },
+      data: {
+        facilityName: updateData.facilityName,
+        facilityType: updateData.facilityType,
+        email: updateData.email,
+        updatedAt: new Date()
+      }
+    });
+
+    console.log('TCC_DEBUG: Healthcare user updated successfully:', updatedUser);
+
+    console.log('TCC_DEBUG: Attempting to update Hospital record in Center database...');
+    
+    // Also update the corresponding Hospital record in Center database
+    const hospitalUpdateResult = await centerDB.hospital.updateMany({
+      where: { email: updatedUser.email },
+      data: {
+        name: updateData.facilityName,
+        type: updateData.facilityType,
+        email: updateData.email,
+        phone: updateData.phone,
+        address: updateData.address,
+        city: updateData.city,
+        state: updateData.state,
+        zipCode: updateData.zipCode,
+        updatedAt: new Date()
+      }
+    });
+
+    console.log('TCC_DEBUG: Hospital record update result:', hospitalUpdateResult);
+
+    res.json({
+      success: true,
+      message: 'Facility information updated successfully',
+      data: updatedUser
+    });
+
+  } catch (error) {
+    console.error('TCC_DEBUG: Update healthcare facility error:', error);
+    console.error('TCC_DEBUG: Error stack:', error.stack);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to update facility information'
     });
   }
 });

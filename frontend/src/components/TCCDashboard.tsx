@@ -26,7 +26,10 @@ interface User {
   id: string;
   email: string;
   name: string;
-  userType: 'ADMIN' | 'USER';
+  userType: 'ADMIN' | 'USER' | 'HEALTHCARE' | 'EMS';
+  facilityName?: string;
+  facilityType?: string;
+  agencyName?: string;
 }
 
 interface TCCDashboardProps {
@@ -217,7 +220,7 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
                 <Route path="/facilities/*" element={<Facilities />} />
                 <Route path="/analytics/*" element={<Analytics />} />
                 <Route path="/healthcare-portal" element={<HealthcarePortal />} />
-                <Route path="/ems-dashboard" element={<EMSDashboard />} />
+                <Route path="/ems-dashboard" element={<EMSDashboard user={user} onLogout={onLogout} />} />
                 <Route path="/notifications" element={<NotificationSettings />} />
                 <Route path="/settings" element={<UserManagement />} />
                 <Route path="/financial" element={<div className="text-center py-12"><h3 className="text-lg font-medium text-gray-900">Financial</h3><p className="text-gray-500">Financial reports and billing (Admin only)</p></div>} />

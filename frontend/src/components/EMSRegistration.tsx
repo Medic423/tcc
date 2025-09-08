@@ -125,7 +125,7 @@ const EMSRegistration: React.FC<EMSRegistrationProps> = ({ onBack, onSuccess }) 
       
       console.log('Registering EMS agency:', formData);
       
-      const response = await authAPI.emsRegister({
+      await authAPI.emsRegister({
         email: formData.email,
         password: formData.password,
         name: formData.contactName,

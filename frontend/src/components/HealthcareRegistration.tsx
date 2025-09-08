@@ -86,7 +86,7 @@ const HealthcareRegistration: React.FC<HealthcareRegistrationProps> = ({ onBack,
       
       console.log('Registering healthcare facility:', formData);
       
-      const response = await authAPI.healthcareRegister({
+      await authAPI.healthcareRegister({
         email: formData.email,
         password: formData.password,
         name: formData.contactName,

@@ -6,7 +6,9 @@ export interface User {
   id: string;
   email: string;
   name: string;
-  userType: 'ADMIN' | 'USER';
+  userType: 'ADMIN' | 'USER' | 'HEALTHCARE' | 'EMS';
+  facilityName?: string;
+  agencyName?: string;
 }
 
 export interface LoginCredentials {
@@ -102,26 +104,64 @@ export class AuthService {
     try {
       const decoded = jwt.verify(token, this.jwtSecret) as any;
       
-      if (!['ADMIN', 'USER'].includes(decoded.userType)) {
+      if (!['ADMIN', 'USER', 'HEALTHCARE', 'EMS'].includes(decoded.userType)) {
         return null;
       }
 
-      // Verify user still exists and is active
-      const centerDB = databaseManager.getCenterDB();
-      const user = await centerDB.centerUser.findUnique({
-        where: { id: decoded.id }
-      });
+      // Verify user still exists and is active based on user type
+      if (decoded.userType === 'ADMIN' || decoded.userType === 'USER') {
+        const centerDB = databaseManager.getCenterDB();
+        const user = await centerDB.centerUser.findUnique({
+          where: { id: decoded.id }
+        });
 
-      if (!user || !user.isActive) {
-        return null;
+        if (!user || !user.isActive) {
+          return null;
+        }
+
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          userType: user.userType as 'ADMIN' | 'USER'
+        };
+      } else if (decoded.userType === 'HEALTHCARE') {
+        const hospitalDB = databaseManager.getHospitalDB();
+        const user = await hospitalDB.healthcareUser.findUnique({
+          where: { id: decoded.id }
+        });
+
+        if (!user || !user.isActive) {
+          return null;
+        }
+
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          userType: 'HEALTHCARE',
+          facilityName: user.facilityName
+        };
+      } else if (decoded.userType === 'EMS') {
+        const emsDB = databaseManager.getEMSDB();
+        const user = await emsDB.eMSUser.findUnique({
+          where: { id: decoded.id }
+        });
+
+        if (!user || !user.isActive) {
+          return null;
+        }
+
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          userType: 'EMS',
+          agencyName: user.agencyName
+        };
       }
 
-      return {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        userType: user.userType as 'ADMIN' | 'USER'
-      };
+      return null;
 
     } catch (error) {
       console.error('Token verification error:', error);

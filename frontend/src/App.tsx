@@ -16,6 +16,9 @@ interface User {
   email: string;
   name: string;
   userType: 'ADMIN' | 'USER' | 'HEALTHCARE' | 'EMS';
+  facilityName?: string;
+  facilityType?: string;
+  agencyName?: string;
 }
 
 function AppContent() {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   Building2, 
   Plus, 
@@ -16,15 +16,15 @@ interface HealthcareDashboardProps {
     email: string;
     name: string;
     userType: string;
-    facilityName: string;
-    facilityType: string;
+    facilityName?: string;
+    facilityType?: string;
   };
   onLogout: () => void;
 }
 
 const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogout }) => {
   const [activeTab, setActiveTab] = useState('overview');
-  const [trips, setTrips] = useState([
+  const [trips] = useState([
     {
       id: '1',
       patientId: 'P001',
@@ -45,10 +45,89 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
     }
   ]);
 
+  // Settings state
+  const [settingsData, setSettingsData] = useState({
+    facilityName: user.facilityName || '',
+    facilityType: user.facilityType || '',
+    email: user.email || '',
+    phone: '',
+    address: '',
+    city: '',
+    state: '',
+    zipCode: ''
+  });
+  const [settingsLoading, setSettingsLoading] = useState(false);
+  const [settingsError, setSettingsError] = useState<string | null>(null);
+  const [settingsSuccess, setSettingsSuccess] = useState(false);
+
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     onLogout();
+  };
+
+  const handleSettingsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setSettingsData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSettingsSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSettingsLoading(true);
+    setSettingsError(null);
+
+    try {
+      console.log('TCC_DEBUG: Frontend sending facility update:', settingsData);
+      console.log('TCC_DEBUG: Frontend token:', localStorage.getItem('token'));
+      
+      const response = await fetch('/api/auth/healthcare/facility/update', {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(settingsData),
+      });
+
+      console.log('TCC_DEBUG: Frontend response status:', response.status);
+      console.log('TCC_DEBUG: Frontend response ok:', response.ok);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.log('TCC_DEBUG: Frontend error response:', errorData);
+        throw new Error(errorData.error || 'Failed to update facility information');
+      }
+
+      const responseData = await response.json();
+      console.log('TCC_DEBUG: Frontend success response:', responseData);
+
+      setSettingsSuccess(true);
+      // Navigate back to overview tab after successful save
+      setActiveTab('overview');
+      setTimeout(() => setSettingsSuccess(false), 3000);
+    } catch (error: any) {
+      console.error('TCC_DEBUG: Frontend error updating facility:', error);
+      setSettingsError(error.message || 'Failed to update facility information');
+    } finally {
+      setSettingsLoading(false);
+    }
+  };
+
+  const handleSettingsCancel = () => {
+    setSettingsData({
+      facilityName: user.facilityName || '',
+      facilityType: user.facilityType || '',
+      email: user.email || '',
+      phone: '',
+      address: '',
+      city: '',
+      state: '',
+      zipCode: ''
+    });
+    setSettingsError(null);
   };
 
   const getStatusColor = (status: string) => {
@@ -82,10 +161,10 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
               </div>
               <div>
                 <h1 className="text-xl font-semibold text-gray-900">
-                  {user.facilityName}
+                  {user.facilityName || 'Healthcare Facility'}
                 </h1>
                 <p className="text-sm text-gray-500 capitalize">
-                  {user.facilityType.toLowerCase()} • Healthcare Portal
+                  {user.facilityType?.toLowerCase() || 'Healthcare'} • Healthcare Portal
                 </p>
               </div>
             </div>
@@ -275,35 +354,132 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
               <h3 className="text-lg font-medium text-gray-900">Settings</h3>
             </div>
             <div className="p-6">
-              <div className="space-y-6">
+              {settingsSuccess && (
+                <div className="mb-4 bg-green-50 border border-green-200 rounded-md p-4">
+                  <div className="flex">
+                    <CheckCircle className="h-5 w-5 text-green-400" />
+                    <div className="ml-3">
+                      <p className="text-sm font-medium text-green-800">
+                        Facility information updated successfully!
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {settingsError && (
+                <div className="mb-4 bg-red-50 border border-red-200 rounded-md p-4">
+                  <div className="flex">
+                    <AlertCircle className="h-5 w-5 text-red-400" />
+                    <div className="ml-3">
+                      <p className="text-sm font-medium text-red-800">
+                        {settingsError}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <form onSubmit={handleSettingsSubmit} className="space-y-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Facility Name</label>
                   <input
                     type="text"
-                    value={user.facilityName}
-                    disabled
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm bg-gray-50"
+                    value={settingsData.facilityName}
+                    onChange={handleSettingsChange}
+                    name="facilityName"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Facility Type</label>
                   <input
                     type="text"
-                    value={user.facilityType}
-                    disabled
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm bg-gray-50"
+                    value={settingsData.facilityType}
+                    onChange={handleSettingsChange}
+                    name="facilityType"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Contact Email</label>
                   <input
                     type="email"
-                    value={user.email}
-                    disabled
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm bg-gray-50"
+                    value={settingsData.email}
+                    onChange={handleSettingsChange}
+                    name="email"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
                   />
                 </div>
-              </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Phone Number</label>
+                  <input
+                    type="tel"
+                    value={settingsData.phone || ''}
+                    onChange={handleSettingsChange}
+                    name="phone"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Address</label>
+                  <input
+                    type="text"
+                    value={settingsData.address || ''}
+                    onChange={handleSettingsChange}
+                    name="address"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                  />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">City</label>
+                    <input
+                      type="text"
+                      value={settingsData.city || ''}
+                      onChange={handleSettingsChange}
+                      name="city"
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">State</label>
+                    <input
+                      type="text"
+                      value={settingsData.state || ''}
+                      onChange={handleSettingsChange}
+                      name="state"
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Zip Code</label>
+                  <input
+                    type="text"
+                    value={settingsData.zipCode || ''}
+                    onChange={handleSettingsChange}
+                    name="zipCode"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                  />
+                </div>
+                <div className="flex justify-end space-x-3">
+                  <button
+                    type="button"
+                    onClick={handleSettingsCancel}
+                    className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={settingsLoading}
+                    className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
+                  >
+                    {settingsLoading ? 'Saving...' : 'Save Changes'}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         )}

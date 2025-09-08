@@ -61,6 +61,12 @@ export const authAPI = {
   emsRegister: (userData: { email: string; password: string; name: string; agencyName: string; serviceType: string }) =>
     api.post('/api/auth/ems/register', userData),
 
+  healthcareLogin: (credentials: { email: string; password: string }) =>
+    api.post('/api/auth/healthcare/login', credentials),
+
+  emsLogin: (credentials: { email: string; password: string }) =>
+    api.post('/api/auth/ems/login', credentials),
+
   getUsers: () =>
     api.get('/api/auth/users'),
 };
