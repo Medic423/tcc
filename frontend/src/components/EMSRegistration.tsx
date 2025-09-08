@@ -556,10 +556,10 @@ const EMSRegistration: React.FC<EMSRegistrationProps> = ({ onBack, onSuccess }) 
               </div>
             </div>
 
-            {/* Operating Hours */}
+            {/* Transport Availability */}
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Operating Hours *
+                Transport Availability (Optional)
               </label>
               <div className="mt-1 grid grid-cols-2 gap-4">
                 <div>
@@ -571,7 +571,6 @@ const EMSRegistration: React.FC<EMSRegistrationProps> = ({ onBack, onSuccess }) 
                     <input
                       type="time"
                       name="operatingHours.start"
-                      required
                       value={formData.operatingHours.start}
                       onChange={handleInputChange}
                       className="block w-full pl-10 border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
@@ -587,7 +586,6 @@ const EMSRegistration: React.FC<EMSRegistrationProps> = ({ onBack, onSuccess }) 
                     <input
                       type="time"
                       name="operatingHours.end"
-                      required
                       value={formData.operatingHours.end}
                       onChange={handleInputChange}
                       className="block w-full pl-10 border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
@@ -595,6 +593,9 @@ const EMSRegistration: React.FC<EMSRegistrationProps> = ({ onBack, onSuccess }) 
                   </div>
                 </div>
               </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Leave blank for 24/7 availability. Specify hours only if you have restrictions (e.g., "Monday-Friday 6 AM - 6 PM")
+              </p>
             </div>
 
             {/* Password */}
