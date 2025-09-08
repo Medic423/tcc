@@ -11,6 +11,7 @@ import {
   X
 } from 'lucide-react';
 import Notifications from './Notifications';
+import EnhancedTripForm from './EnhancedTripForm';
 
 interface HealthcareDashboardProps {
   user: {
@@ -24,304 +25,6 @@ interface HealthcareDashboardProps {
   onLogout: () => void;
 }
 
-// CreateTripForm Component
-interface CreateTripFormProps {
-  user: {
-    id: string;
-    email: string;
-    name: string;
-    userType: string;
-    facilityName?: string;
-    facilityType?: string;
-  };
-  onTripCreated: () => void;
-}
-
-const CreateTripForm: React.FC<CreateTripFormProps> = ({ user, onTripCreated }) => {
-  const [formData, setFormData] = useState({
-    patientId: '',
-    destination: '',
-    transportLevel: 'BLS' as 'BLS' | 'ALS' | 'CCT',
-    priority: 'MEDIUM' as 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL',
-    specialRequirements: '',
-    readyStart: '',
-    readyEnd: '',
-    isolation: false,
-    bariatric: false
-  });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
-  const [facilities, setFacilities] = useState<any[]>([]);
-
-  useEffect(() => {
-    // Load available facilities for destination selection
-    loadFacilities();
-  }, []);
-
-  const loadFacilities = async () => {
-    try {
-      const response = await fetch('/api/facilities');
-      if (response.ok) {
-        const data = await response.json();
-        setFacilities(data.data || []);
-      }
-    } catch (error) {
-      console.error('Error loading facilities:', error);
-    }
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value, type } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
-    }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-
-    try {
-      // Find the facility ID for the selected destination
-      const destinationFacility = facilities.find(f => f.name === formData.destination);
-      if (!destinationFacility) {
-        throw new Error('Please select a valid destination facility');
-      }
-
-      const tripData = {
-        patientId: formData.patientId,
-        originFacilityId: user.facilityName || 'Unknown Facility', // Using facility name as ID for now
-        destinationFacilityId: destinationFacility.id,
-        transportLevel: formData.transportLevel,
-        priority: formData.priority,
-        specialRequirements: formData.specialRequirements,
-        readyStart: new Date(formData.readyStart).toISOString(),
-        readyEnd: new Date(formData.readyEnd).toISOString(),
-        isolation: formData.isolation,
-        bariatric: formData.bariatric
-      };
-
-      const response = await fetch('/api/trips', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(tripData),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create transport request');
-      }
-
-      setSuccess(true);
-      setFormData({
-        patientId: '',
-        destination: '',
-        transportLevel: 'BLS',
-        priority: 'MEDIUM',
-        specialRequirements: '',
-        readyStart: '',
-        readyEnd: '',
-        isolation: false,
-        bariatric: false
-      });
-      
-      setTimeout(() => {
-        setSuccess(false);
-        onTripCreated();
-      }, 2000);
-
-    } catch (error: any) {
-      setError(error.message || 'Failed to create transport request');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {success && (
-        <div className="bg-green-50 border border-green-200 rounded-md p-4">
-          <div className="flex">
-            <CheckCircle className="h-5 w-5 text-green-400" />
-            <div className="ml-3">
-              <p className="text-sm font-medium text-green-800">
-                Transport request created successfully!
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-md p-4">
-          <div className="flex">
-            <AlertCircle className="h-5 w-5 text-red-400" />
-            <div className="ml-3">
-              <p className="text-sm font-medium text-red-800">
-                {error}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Patient ID</label>
-          <input
-            type="text"
-            name="patientId"
-            value={formData.patientId}
-            onChange={handleChange}
-            required
-            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-            placeholder="Enter patient ID"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Destination Facility</label>
-          <select
-            name="destination"
-            value={formData.destination}
-            onChange={handleChange}
-            required
-            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-          >
-            <option value="">Select destination</option>
-            {facilities.map((facility) => (
-              <option key={facility.id} value={facility.name}>
-                {facility.name} - {facility.type}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Transport Level</label>
-          <select
-            name="transportLevel"
-            value={formData.transportLevel}
-            onChange={handleChange}
-            required
-            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-          >
-            <option value="BLS">BLS (Basic Life Support)</option>
-            <option value="ALS">ALS (Advanced Life Support)</option>
-            <option value="CCT">CCT (Critical Care Transport)</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Priority</label>
-          <select
-            name="priority"
-            value={formData.priority}
-            onChange={handleChange}
-            required
-            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-          >
-            <option value="LOW">Low</option>
-            <option value="MEDIUM">Medium</option>
-            <option value="HIGH">High</option>
-            <option value="CRITICAL">Critical</option>
-          </select>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Ready Start Time</label>
-          <input
-            type="datetime-local"
-            name="readyStart"
-            value={formData.readyStart}
-            onChange={handleChange}
-            required
-            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Ready End Time</label>
-          <input
-            type="datetime-local"
-            name="readyEnd"
-            value={formData.readyEnd}
-            onChange={handleChange}
-            required
-            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-          />
-        </div>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700">Special Requirements</label>
-        <textarea
-          name="specialRequirements"
-          value={formData.specialRequirements}
-          onChange={handleChange}
-          rows={3}
-          className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-          placeholder="Enter any special requirements or notes"
-        />
-      </div>
-
-      <div className="flex items-center space-x-6">
-        <div className="flex items-center">
-          <input
-            type="checkbox"
-            name="isolation"
-            checked={formData.isolation}
-            onChange={handleChange}
-            className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
-          />
-          <label className="ml-2 block text-sm text-gray-900">
-            Isolation Required
-          </label>
-        </div>
-
-        <div className="flex items-center">
-          <input
-            type="checkbox"
-            name="bariatric"
-            checked={formData.bariatric}
-            onChange={handleChange}
-            className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
-          />
-          <label className="ml-2 block text-sm text-gray-900">
-            Bariatric Transport
-          </label>
-        </div>
-      </div>
-
-      <div className="flex justify-end space-x-3">
-        <button
-          type="button"
-          onClick={() => onTripCreated()}
-          className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          disabled={loading}
-          className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
-        >
-          {loading ? 'Creating...' : 'Create Request'}
-        </button>
-      </div>
-    </form>
-  );
-};
 
 const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogout }) => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -707,18 +410,19 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
         )}
 
         {activeTab === 'create' && (
-          <div className="bg-white rounded-lg shadow">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">Create Transport Request</h3>
-              <p className="text-sm text-gray-500">Create new transport requests for your patients</p>
-            </div>
-            <div className="p-6">
-              <CreateTripForm user={user} onTripCreated={() => {
+          <div>
+            <EnhancedTripForm 
+              user={user} 
+              onTripCreated={() => {
                 // Refresh trips list and go to overview to see the new trip
                 loadTrips();
                 setActiveTab('overview');
-              }} />
-            </div>
+              }}
+              onCancel={() => {
+                // Go back to overview tab when cancel is clicked
+                setActiveTab('overview');
+              }}
+            />
           </div>
         )}
 

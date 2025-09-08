@@ -157,6 +157,9 @@ export const tripsAPI = {
   create: (data: any) =>
     api.post('/api/trips', data),
   
+  createEnhanced: (data: any) =>
+    api.post('/api/trips/enhanced', data),
+  
   getAll: (params?: any) =>
     api.get('/api/trips', { params }),
   
@@ -168,6 +171,16 @@ export const tripsAPI = {
   
   getAvailableAgencies: () =>
     api.get('/api/trips/agencies/available'),
+  
+  getAgenciesForHospital: (hospitalId: string, radius?: number) =>
+    api.get(`/api/trips/agencies/${hospitalId}`, { params: { radius } }),
+  
+  getOptions: {
+    diagnosis: () => api.get('/api/trips/options/diagnosis'),
+    mobility: () => api.get('/api/trips/options/mobility'),
+    transportLevel: () => api.get('/api/trips/options/transport-level'),
+    urgency: () => api.get('/api/trips/options/urgency'),
+  },
 };
 
 export default api;

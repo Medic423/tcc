@@ -75,13 +75,41 @@ model Unit {
 
 model TransportRequest {
   id                    String    @id @default(cuid())
+  tripNumber            String?   @unique
   patientId             String
+  patientWeight         String?
+  specialNeeds          String?
   originFacilityId      String?
   destinationFacilityId String?
+  fromLocation          String?
+  toLocation            String?
+  scheduledTime         DateTime?
   transportLevel        String
+  urgencyLevel          String?
   priority              String
   status                String    @default("PENDING")
   specialRequirements   String?
+  
+  // Clinical Details
+  diagnosis             String?
+  mobilityLevel         String?
+  oxygenRequired        Boolean   @default(false)
+  monitoringRequired    Boolean   @default(false)
+  
+  // QR Code
+  generateQRCode        Boolean   @default(false)
+  qrCodeData            String?
+  
+  // Agency Notifications
+  selectedAgencies      String[]
+  notificationRadius    Int?
+  
+  // Time Tracking
+  transferRequestTime   DateTime?
+  transferAcceptedTime  DateTime?
+  emsArrivalTime        DateTime?
+  emsDepartureTime      DateTime?
+  
   requestTimestamp      DateTime  @default(now())
   acceptedTimestamp     DateTime?
   pickupTimestamp       DateTime?
@@ -93,6 +121,7 @@ model TransportRequest {
   readyEnd              DateTime?
   isolation             Boolean   @default(false)
   bariatric             Boolean   @default(false)
+  notes                 String?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 

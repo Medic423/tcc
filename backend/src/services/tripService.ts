@@ -12,7 +12,7 @@ export interface CreateTripRequest {
   destinationFacilityId: string;
   transportLevel: 'BLS' | 'ALS' | 'CCT';
   priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
-  specialRequirements?: string;
+  specialNeeds?: string;
   readyStart: string; // ISO string
   readyEnd: string; // ISO string
   isolation: boolean;
@@ -73,12 +73,12 @@ export class TripService {
     try {
       // Generate patient ID if not provided
       const patientId = data.patientId || PatientIdService.generatePatientId();
+      const tripNumber = `TRP-${Date.now()}`;
       
       // Generate QR code data if requested
       let qrCodeData: string | null = null;
       if (data.generateQRCode) {
-        const tripId = `TRP-${Date.now()}`;
-        qrCodeData = PatientIdService.generateQRCodeData(tripId, patientId);
+        qrCodeData = PatientIdService.generateQRCodeData(tripNumber, patientId);
       }
       
       // Map urgency level to priority for backward compatibility
@@ -88,57 +88,87 @@ export class TripService {
         'Emergent': 'HIGH'
       } as const;
       
-      const trip = await prisma.trip.create({
-        data: {
-          tripNumber: `TRP-${Date.now()}`,
-          
-          // Patient Information (HIPAA Compliant)
-          patientId: patientId,
-          patientWeight: data.patientWeight || null,
-          specialNeeds: data.specialNeeds || null,
-          
-          // Trip Details
-          fromLocation: data.fromLocation,
-          toLocation: data.toLocation,
-          scheduledTime: new Date(data.scheduledTime),
-          transportLevel: data.transportLevel,
-          urgencyLevel: data.urgencyLevel,
-          
-          // Clinical Details
-          diagnosis: data.diagnosis || null,
-          mobilityLevel: data.mobilityLevel || null,
-          oxygenRequired: data.oxygenRequired || false,
-          monitoringRequired: data.monitoringRequired || false,
-          
-          // QR Code
-          generateQRCode: data.generateQRCode || false,
-          qrCodeData: qrCodeData,
-          
-          // Agency Notifications
-          selectedAgencies: data.selectedAgencies || [],
-          notificationRadius: data.notificationRadius || 100,
-          
-          // Time Tracking
-          transferRequestTime: new Date(), // Auto-set when request is sent
-          
-          // Legacy fields (patientName removed - using patientId instead)
-          status: 'PENDING',
-          priority: data.priority || priorityMap[data.urgencyLevel] || 'LOW',
-          notes: data.notes || null,
-          assignedTo: null,
-        },
+      const priority = data.priority || priorityMap[data.urgencyLevel] || 'LOW';
+      const scheduledTime = new Date(data.scheduledTime);
+      const transferRequestTime = new Date();
+      
+      // Create trip data object for all databases
+      const tripData = {
+        tripNumber: tripNumber,
+        patientId: patientId,
+        patientWeight: data.patientWeight || null,
+        specialNeeds: data.specialNeeds || null,
+        fromLocation: data.fromLocation,
+        toLocation: data.toLocation,
+        scheduledTime: scheduledTime,
+        transportLevel: data.transportLevel,
+        urgencyLevel: data.urgencyLevel,
+        diagnosis: data.diagnosis || null,
+        mobilityLevel: data.mobilityLevel || null,
+        oxygenRequired: data.oxygenRequired || false,
+        monitoringRequired: data.monitoringRequired || false,
+        generateQRCode: data.generateQRCode || false,
+        qrCodeData: qrCodeData,
+        selectedAgencies: data.selectedAgencies || [],
+        notificationRadius: data.notificationRadius || 100,
+        transferRequestTime: transferRequestTime,
+        status: 'PENDING',
+        priority: priority,
+        notes: data.notes || null,
+        assignedTo: null,
+      };
+      
+      // Create trip in Center database
+      const centerTrip = await prisma.trip.create({
+        data: tripData,
       });
-
-      console.log('TCC_DEBUG: Enhanced trip created successfully:', trip);
+      
+      console.log('TCC_DEBUG: Enhanced trip created in Center DB:', centerTrip);
+      
+      // Sync to EMS database
+      try {
+        const emsPrisma = databaseManager.getEMSDB();
+        await emsPrisma.transportRequest.create({
+          data: {
+            ...tripData,
+            // EMS-specific fields
+            originFacilityId: null, // Will be populated from facility lookup
+            destinationFacilityId: null, // Will be populated from facility lookup
+            createdById: null, // Will be populated when EMS user accepts
+          },
+        });
+        console.log('TCC_DEBUG: Trip synced to EMS database');
+      } catch (emsError) {
+        console.error('TCC_DEBUG: Error syncing to EMS database:', emsError);
+        // Continue execution - Center DB is primary
+      }
+      
+      // Sync to Hospital database
+      try {
+        const hospitalPrisma = databaseManager.getHospitalDB();
+        await hospitalPrisma.transportRequest.create({
+          data: {
+            ...tripData,
+            // Hospital-specific fields
+            originFacilityId: null, // Will be populated from facility lookup
+            destinationFacilityId: null, // Will be populated from facility lookup
+            healthcareCreatedById: null, // Will be populated from healthcare user
+          },
+        });
+        console.log('TCC_DEBUG: Trip synced to Hospital database');
+      } catch (hospitalError) {
+        console.error('TCC_DEBUG: Error syncing to Hospital database:', hospitalError);
+        // Continue execution - Center DB is primary
+      }
 
       // Send notifications to selected agencies
       if (data.selectedAgencies && data.selectedAgencies.length > 0) {
-        await this.sendNewTripNotifications(trip);
+        await this.sendNewTripNotifications(centerTrip);
       }
 
       return {
         success: true,
-        data: trip,
+        data: centerTrip,
         message: 'Enhanced transport request created successfully'
       };
     } catch (error) {
@@ -171,7 +201,7 @@ export class TripService {
           // Legacy fields
           status: 'PENDING',
           priority: data.priority,
-          notes: data.specialRequirements,
+          notes: data.specialNeeds,
           assignedTo: null,
         },
       });
@@ -544,7 +574,7 @@ export class TripService {
    */
   async getAgenciesForHospital(hospitalId: string, radiusMiles: number = 100) {
     try {
-      // Get hospital location
+      // Get hospital location from Center database
       const hospital = await prisma.hospital.findUnique({
         where: { id: hospitalId },
         select: { latitude: true, longitude: true, name: true }
@@ -554,39 +584,34 @@ export class TripService {
         throw new Error('Hospital location not found');
       }
 
-      // Get all active agencies
-      const agencies = await prisma.eMSAgency.findMany({
+      // Get all active agencies from EMS database
+      const emsPrisma = databaseManager.getEMSDB();
+      const agencies = await emsPrisma.eMSAgency.findMany({
         where: {
           isActive: true,
-          acceptsNotifications: true,
-          availableUnits: { gt: 0 }
+          status: 'ACTIVE'
         },
         select: {
           id: true,
           name: true,
-          latitude: true,
-          longitude: true,
-          availableUnits: true,
-          totalUnits: true,
-          capabilities: true,
+          contactName: true,
           phone: true,
           email: true,
+          address: true,
           city: true,
-          state: true
+          state: true,
+          zipCode: true,
+          capabilities: true,
+          serviceArea: true
         }
       });
 
-      // Filter by distance
-      const agenciesWithDistance = DistanceService.filterAgenciesByDistance(
-        { latitude: hospital.latitude, longitude: hospital.longitude },
-        agencies,
-        radiusMiles
-      );
-
+      // For now, return all agencies since we don't have coordinates in the EMS schema
+      // In a real implementation, you would add latitude/longitude fields to the EMS schema
       return {
         success: true,
-        data: agenciesWithDistance,
-        message: `Found ${agenciesWithDistance.length} agencies within ${radiusMiles} miles`
+        data: agencies,
+        message: `Found ${agencies.length} agencies available for notification`
       };
     } catch (error) {
       console.error('TCC_DEBUG: Error getting agencies for hospital:', error);

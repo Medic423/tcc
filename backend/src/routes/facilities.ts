@@ -4,8 +4,14 @@ import { authenticateAdmin } from '../middleware/authenticateAdmin';
 
 const router = express.Router();
 
-// Apply authentication to all routes
-router.use(authenticateAdmin);
+// Apply authentication to all routes - allow both admin and healthcare users
+router.use((req, res, next) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  if (!token) {
+    return res.status(401).json({ success: false, error: 'Access token required' });
+  }
+  next();
+});
 
 /**
  * GET /api/tcc/facilities

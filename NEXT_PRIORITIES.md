@@ -156,43 +156,48 @@ This completes the core trip management foundation for the TCC platform!
 
 **Overview**: Implement comprehensive trip request form matching MedPort project design with enhanced patient information, clinical details, and EMS agency selection.
 
-**Phase 1: Database Schema Enhancements** (2-3 hours)
-- [ ] Update Trip model in Center database with new fields:
+**Phase 1: Database Schema Enhancements** ✅ **COMPLETED**
+- [x] Update Trip model in Center database with new fields:
   - Patient information (patientId auto-generated, weight, specialNeeds) - NO name/age for HIPAA compliance
   - Clinical details (diagnosis dropdown, mobility, oxygenRequired, monitoringRequired)
   - QR code generation flag and QR code data storage
   - Selected agencies for notifications (array of agency IDs)
   - Time tracking fields (request, accepted, arrival, departure times)
   - Enhanced validation fields
-- [ ] Create Agency Distance Filtering:
+- [x] Create Agency Distance Filtering:
   - Add location data to Agency model for distance calculations
   - Implement 100-mile radius filtering for agency selection
   - Add notification preferences per agency
-- [ ] Create Agency Availability Tracking:
+- [x] Create Agency Availability Tracking:
   - Add agency availability status to Center database
   - Track unit availability (available/total units)
   - Add real-time availability updates
-- [ ] Update Prisma schemas and run migrations
+- [x] Update Prisma schemas and run migrations
 
-**Phase 2: Backend API Enhancements** (3-4 hours)
-- [ ] Enhanced Trip Creation Endpoint:
-  - Update `/api/trips` POST to handle new fields
+**Phase 2: Backend API Enhancements** ✅ **COMPLETED**
+- [x] Enhanced Trip Creation Endpoint:
+  - Create `/api/trips/enhanced` POST endpoint for new fields
   - Add patient information validation
   - Add clinical details processing
   - Add agency selection handling
-- [ ] Agency Management Endpoints:
-  - Create `/api/agencies/available` endpoint
-  - Add agency availability checking
-  - Add preferred agencies management
+- [x] Agency Management Endpoints:
+  - Create `/api/trips/agencies/:hospitalId` endpoint
+  - Add agency availability checking with distance filtering
+  - Add agency options endpoints for form dropdowns
   - Add real-time availability updates
-- [ ] QR Code Generation Service:
+- [x] QR Code Generation Service:
   - Create QR code generation for patient tracking
   - Add QR code storage and retrieval
   - Integrate with trip creation
-- [ ] Enhanced Validation:
+- [x] Enhanced Validation:
   - Add comprehensive form validation
   - Add business logic validation
   - Add error handling improvements
+- [x] Form Options Endpoints:
+  - `/api/trips/options/diagnosis` - Diagnosis dropdown options
+  - `/api/trips/options/mobility` - Mobility level options
+  - `/api/trips/options/transport-level` - Transport level options
+  - `/api/trips/options/urgency` - Urgency level options
 
 **Phase 3: Frontend Component Architecture** (4-5 hours)
 - [ ] Create Enhanced Form Components:
@@ -350,9 +355,9 @@ This completes the core trip management foundation for the TCC platform!
 ## 🎯 **RECOMMENDED DEVELOPMENT ORDER**
 
 ### **Week 1: Enhanced Trip Request Form (Phase 4)**
-1. **Database Schema Enhancements** (2-3 hours)
-2. **Backend API Enhancements** (3-4 hours)
-3. **Frontend Component Architecture** (4-5 hours)
+1. **Database Schema Enhancements** ✅ **COMPLETED** (2-3 hours)
+2. **Backend API Enhancements** ✅ **COMPLETED** (3-4 hours)
+3. **Frontend Component Architecture** 🔥 **IN PROGRESS** (4-5 hours)
 
 ### **Week 2: UI/UX & Integration**
 4. **UI/UX Enhancements** (3-4 hours)

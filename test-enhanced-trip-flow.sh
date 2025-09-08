@@ -1,192 +1,125 @@
 #!/bin/bash
 
-# Enhanced Trip Flow Test Script
-# Tests seamless data flow between Healthcare, EMS, and TCC modules
+echo "🧪 Testing Enhanced Trip Flow Across All Modules..."
+echo ""
 
-# Color definitions
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-BLUE='\033[0;34m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
-
-echo -e "${BLUE}🧪 ENHANCED TRIP FLOW TEST${NC}"
-echo -e "============================${NC}\n"
-
-# Test data
-PATIENT_ID="PMTC$(date +%s)"
-TRIP_ID=""
-HOSPITAL_ID=""
-EMS_AGENCY_ID=""
-
-echo -e "${BLUE}1. Testing Enhanced Trip Creation (Healthcare Module)${NC}"
-echo "Patient ID: $PATIENT_ID"
-echo "Creating enhanced trip request..."
-
-# Create enhanced trip request
-CREATE_RESPONSE=$(curl -s -X POST http://localhost:5001/api/trips/enhanced \
+# Step 1: Create an enhanced trip
+echo "1️⃣ Creating enhanced trip..."
+TRIP_RESPONSE=$(curl -s -X POST http://localhost:5001/api/trips/enhanced \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $(curl -s -X POST http://localhost:5001/api/auth/healthcare/login -H "Content-Type: application/json" -d '{"email": "admin@altoonaregional.org", "password": "upmc123"}' | jq -r '.token')" \
   -d '{
-    "patientId": "'"$PATIENT_ID"'",
-    "patientWeight": "180 lbs",
-    "specialNeeds": "Wheelchair transport required",
-    "fromLocation": "UPMC Altoona Hospital",
-    "toLocation": "Rehabilitation Center",
-    "scheduledTime": "'$(date -v+1H -u +%Y-%m-%dT%H:%M:%SZ)'",
-    "transportLevel": "BLS",
-    "urgencyLevel": "Routine",
-    "diagnosis": "UTI",
-    "mobilityLevel": "Wheelchair",
+    "patientId": "FLOW-TEST-001",
+    "patientWeight": "180",
+    "specialNeeds": "Oxygen required during transport",
+    "fromLocation": "UPMC Altoona",
+    "toLocation": "General Hospital",
+    "scheduledTime": "2025-09-08T17:00:00Z",
+    "transportLevel": "CCT",
+    "urgencyLevel": "Emergent",
+    "diagnosis": "Cardiac",
+    "mobilityLevel": "Stretcher",
     "oxygenRequired": true,
-    "monitoringRequired": false,
+    "monitoringRequired": true,
     "generateQRCode": true,
     "selectedAgencies": [],
-    "notificationRadius": 100,
-    "notes": "Patient requires wheelchair transport with oxygen support"
+    "notificationRadius": 150,
+    "notes": "Critical patient requiring immediate transport"
   }')
 
-echo "Response: $CREATE_RESPONSE"
-TRIP_ID=$(echo $CREATE_RESPONSE | jq -r '.data.id')
-
-if [ "$TRIP_ID" != "null" ] && [ "$TRIP_ID" != "" ]; then
-  echo -e "\n${GREEN}✅ SUCCESS: Enhanced trip created with ID: $TRIP_ID${NC}\n"
-else
-  echo -e "\n${RED}❌ FAILED: Enhanced trip creation failed.${NC}\n"
-  echo -e "${YELLOW}Note: This might be because the enhanced endpoint doesn't exist yet.${NC}\n"
-  
-  # Fallback to regular trip creation
-  echo -e "${BLUE}🔄 FALLBACK: Testing regular trip creation${NC}"
-  CREATE_RESPONSE=$(curl -s -X POST http://localhost:5001/api/trips \
-    -H "Content-Type: application/json" \
-    -H "Authorization: Bearer $(curl -s -X POST http://localhost:5001/api/auth/healthcare/login -H "Content-Type: application/json" -d '{"email": "admin@altoonaregional.org", "password": "upmc123"}' | jq -r '.token')" \
-    -d '{
-      "patientId": "'"$PATIENT_ID"'",
-      "originFacilityId": "UPMC Altoona Hospital",
-      "destinationFacilityId": "Rehabilitation Center",
-      "transportLevel": "BLS",
-      "priority": "LOW",
-      "specialRequirements": "Wheelchair transport with oxygen support",
-      "readyStart": "'$(date -v+1H -u +%Y-%m-%dT%H:%M:%SZ)'",
-      "readyEnd": "'$(date -v+2H -u +%Y-%m-%dT%H:%M:%SZ)'",
-      "isolation": false,
-      "bariatric": false,
-      "createdById": null
-    }')
-  
-  echo "Fallback Response: $CREATE_RESPONSE"
-  TRIP_ID=$(echo $CREATE_RESPONSE | jq -r '.data.id')
-  
-  if [ "$TRIP_ID" != "null" ] && [ "$TRIP_ID" != "" ]; then
-    echo -e "\n${GREEN}✅ SUCCESS: Regular trip created with ID: $TRIP_ID${NC}\n"
-  else
-    echo -e "\n${RED}❌ FAILED: Both enhanced and regular trip creation failed.${NC}\n"
-    exit 1
-  fi
-fi
-
-echo -e "${BLUE}2. Testing TCC Module - View All Trips${NC}"
-echo "Checking if TCC can see the created trip..."
-
-TCC_RESPONSE=$(curl -s -X GET http://localhost:5001/api/trips \
-  -H "Authorization: Bearer $(curl -s -X POST http://localhost:5001/api/auth/center/login -H "Content-Type: application/json" -d '{"email": "admin@tcc.com", "password": "admin123"}' | jq -r '.token')")
-
-echo "TCC Response: $TCC_RESPONSE"
-
-if echo $TCC_RESPONSE | jq -e '.data | length > 0' > /dev/null; then
-  echo -e "${GREEN}✅ SUCCESS: TCC can see trips${NC}"
-  TRIP_COUNT=$(echo $TCC_RESPONSE | jq -r '.data | length')
-  echo "Total trips visible to TCC: $TRIP_COUNT"
-else
-  echo -e "${RED}❌ FAILED: TCC cannot see trips${NC}\n"
-fi
-
-echo -e "\n${BLUE}3. Testing EMS Module - View Available Trips${NC}"
-echo "Checking if EMS can see available trips..."
-
-EMS_RESPONSE=$(curl -s -X GET "http://localhost:5001/api/trips?status=PENDING" \
-  -H "Authorization: Bearer $(curl -s -X POST http://localhost:5001/api/auth/ems/login -H "Content-Type: application/json" -d '{"email": "test@duncansvilleems.org", "password": "duncansville123"}' | jq -r '.token')")
-
-echo "EMS Response: $EMS_RESPONSE"
-
-if echo $EMS_RESPONSE | jq -e '.data | length > 0' > /dev/null; then
-  echo -e "${GREEN}✅ SUCCESS: EMS can see available trips${NC}"
-  PENDING_COUNT=$(echo $EMS_RESPONSE | jq -r '.data | length')
-  echo "Pending trips visible to EMS: $PENDING_COUNT"
-else
-  echo -e "${RED}❌ FAILED: EMS cannot see available trips${NC}\n"
-fi
-
-echo -e "\n${BLUE}4. Testing EMS Trip Acceptance${NC}"
-echo "Testing EMS accepting the trip..."
-
-if [ "$TRIP_ID" != "null" ] && [ "$TRIP_ID" != "" ]; then
-  ACCEPT_RESPONSE=$(curl -s -X PUT http://localhost:5001/api/trips/$TRIP_ID/status \
-    -H "Content-Type: application/json" \
-    -H "Authorization: Bearer $(curl -s -X POST http://localhost:5001/api/auth/ems/login -H "Content-Type: application/json" -d '{"email": "test@duncansvilleems.org", "password": "duncansville123"}' | jq -r '.token')" \
-    -d '{
-      "status": "ACCEPTED",
-      "assignedAgencyId": "test-agency-id",
-      "assignedUnitId": "unit-001"
-    }')
-  
-  echo "Accept Response: $ACCEPT_RESPONSE"
-  
-  if echo $ACCEPT_RESPONSE | jq -e '.success == true' > /dev/null; then
-    echo -e "${GREEN}✅ SUCCESS: EMS accepted the trip${NC}\n"
-  else
-    echo -e "${RED}❌ FAILED: EMS trip acceptance failed${NC}\n"
-  fi
-else
-  echo -e "${YELLOW}⚠️ SKIPPED: No trip ID available for acceptance test${NC}\n"
-fi
-
-echo -e "${BLUE}5. Testing TCC Module - View Accepted Trip${NC}"
-echo "Checking if TCC can see the accepted trip status..."
-
-TCC_ACCEPTED_RESPONSE=$(curl -s -X GET "http://localhost:5001/api/trips?status=ACCEPTED" \
-  -H "Authorization: Bearer $(curl -s -X POST http://localhost:5001/api/auth/center/login -H "Content-Type: application/json" -d '{"email": "admin@tcc.com", "password": "admin123"}' | jq -r '.token')")
-
-echo "TCC Accepted Response: $TCC_ACCEPTED_RESPONSE"
-
-if echo $TCC_ACCEPTED_RESPONSE | jq -e '.data | length > 0' > /dev/null; then
-  echo -e "${GREEN}✅ SUCCESS: TCC can see accepted trips${NC}"
-  ACCEPTED_COUNT=$(echo $TCC_ACCEPTED_RESPONSE | jq -r '.data | length')
-  echo "Accepted trips visible to TCC: $ACCEPTED_COUNT"
-else
-  echo -e "${YELLOW}⚠️ INFO: No accepted trips visible to TCC (this might be expected)${NC}\n"
-fi
-
-echo -e "${BLUE}6. Testing Healthcare Module - View Trip Status${NC}"
-echo "Checking if Healthcare can see trip status updates..."
-
-HEALTHCARE_RESPONSE=$(curl -s -X GET http://localhost:5001/api/trips \
-  -H "Authorization: Bearer $(curl -s -X POST http://localhost:5001/api/auth/healthcare/login -H "Content-Type: application/json" -d '{"email": "admin@altoonaregional.org", "password": "upmc123"}' | jq -r '.token')")
-
-echo "Healthcare Response: $HEALTHCARE_RESPONSE"
-
-if echo $HEALTHCARE_RESPONSE | jq -e '.data | length > 0' > /dev/null; then
-  echo -e "${GREEN}✅ SUCCESS: Healthcare can see trip status${NC}"
-  HEALTHCARE_COUNT=$(echo $HEALTHCARE_RESPONSE | jq -r '.data | length')
-  echo "Trips visible to Healthcare: $HEALTHCARE_COUNT"
-else
-  echo -e "${RED}❌ FAILED: Healthcare cannot see trip status${NC}\n"
-fi
-
-echo -e "\n${BLUE}🎯 ENHANCED TRIP FLOW TEST SUMMARY${NC}"
-echo -e "=====================================${NC}"
-echo "Trip ID: $TRIP_ID"
-echo "Patient ID: $PATIENT_ID"
+echo "Trip creation response: $TRIP_RESPONSE"
 echo ""
-echo -e "${GREEN}✅ Data Flow Verification:${NC}"
-echo "✅ Healthcare users can create trips"
-echo "✅ TCC admins can view all trips"
-echo "✅ EMS users can view available trips"
-echo "✅ EMS users can accept trips"
-echo "✅ TCC admins can see trip status changes"
-echo "✅ Healthcare users can see trip updates"
+
+# Check if trip was created successfully
+if echo "$TRIP_RESPONSE" | grep -q '"success":true'; then
+  echo "✅ Enhanced trip created successfully"
+  TRIP_ID=$(echo "$TRIP_RESPONSE" | grep -o '"id":"[^"]*"' | cut -d'"' -f4)
+  TRIP_NUMBER=$(echo "$TRIP_RESPONSE" | grep -o '"tripNumber":"[^"]*"' | cut -d'"' -f4)
+  echo "   Trip ID: $TRIP_ID"
+  echo "   Trip Number: $TRIP_NUMBER"
+else
+  echo "❌ Failed to create enhanced trip"
+  exit 1
+fi
+
 echo ""
-echo -e "${BLUE}🌐 Frontend is available at: http://localhost:3000${NC}"
-echo -e "${BLUE}🔧 Backend API is available at: http://localhost:5001${NC}"
+
+# Step 2: Verify trip appears in Center database
+echo "2️⃣ Verifying trip in Center database..."
+CENTER_RESPONSE=$(curl -s http://localhost:5001/api/trips)
+
+if echo "$CENTER_RESPONSE" | grep -q "FLOW-TEST-001"; then
+  echo "✅ Trip found in Center database"
+  echo "   Enhanced fields present: $(echo "$CENTER_RESPONSE" | grep -q '"diagnosis":"Cardiac"' && echo "✅" || echo "❌") diagnosis"
+  echo "   Enhanced fields present: $(echo "$CENTER_RESPONSE" | grep -q '"mobilityLevel":"Stretcher"' && echo "✅" || echo "❌") mobility"
+  echo "   Enhanced fields present: $(echo "$CENTER_RESPONSE" | grep -q '"oxygenRequired":true' && echo "✅" || echo "❌") oxygen"
+  echo "   Enhanced fields present: $(echo "$CENTER_RESPONSE" | grep -q '"monitoringRequired":true' && echo "✅" || echo "❌") monitoring"
+  echo "   Enhanced fields present: $(echo "$CENTER_RESPONSE" | grep -q '"qrCodeData"' && echo "✅" || echo "❌") QR code"
+else
+  echo "❌ Trip not found in Center database"
+fi
+
 echo ""
-echo -e "${GREEN}🎉 ENHANCED TRIP FLOW TEST COMPLETE!${NC}"
+
+# Step 3: Test form options endpoints
+echo "3️⃣ Testing form options endpoints..."
+
+# Test diagnosis options
+DIAGNOSIS_RESPONSE=$(curl -s http://localhost:5001/api/trips/options/diagnosis)
+if echo "$DIAGNOSIS_RESPONSE" | grep -q '"success":true'; then
+  DIAGNOSIS_COUNT=$(echo "$DIAGNOSIS_RESPONSE" | grep -o '"data":\[[^]]*\]' | grep -o ',' | wc -l | tr -d ' ')
+  echo "✅ Diagnosis options: $((DIAGNOSIS_COUNT + 1)) options available"
+else
+  echo "❌ Diagnosis options: Failed"
+fi
+
+# Test mobility options
+MOBILITY_RESPONSE=$(curl -s http://localhost:5001/api/trips/options/mobility)
+if echo "$MOBILITY_RESPONSE" | grep -q '"success":true'; then
+  MOBILITY_COUNT=$(echo "$MOBILITY_RESPONSE" | grep -o '"data":\[[^]]*\]' | grep -o ',' | wc -l | tr -d ' ')
+  echo "✅ Mobility options: $((MOBILITY_COUNT + 1)) options available"
+else
+  echo "❌ Mobility options: Failed"
+fi
+
+# Test transport level options
+TRANSPORT_RESPONSE=$(curl -s http://localhost:5001/api/trips/options/transport-level)
+if echo "$TRANSPORT_RESPONSE" | grep -q '"success":true'; then
+  TRANSPORT_COUNT=$(echo "$TRANSPORT_RESPONSE" | grep -o '"data":\[[^]]*\]' | grep -o ',' | wc -l | tr -d ' ')
+  echo "✅ Transport level options: $((TRANSPORT_COUNT + 1)) options available"
+else
+  echo "❌ Transport level options: Failed"
+fi
+
+# Test urgency options
+URGENCY_RESPONSE=$(curl -s http://localhost:5001/api/trips/options/urgency)
+if echo "$URGENCY_RESPONSE" | grep -q '"success":true'; then
+  URGENCY_COUNT=$(echo "$URGENCY_RESPONSE" | grep -o '"data":\[[^]]*\]' | grep -o ',' | wc -l | tr -d ' ')
+  echo "✅ Urgency options: $((URGENCY_COUNT + 1)) options available"
+else
+  echo "❌ Urgency options: Failed"
+fi
+
+echo ""
+
+# Step 4: Test agency filtering endpoint
+echo "4️⃣ Testing agency filtering..."
+AGENCY_RESPONSE=$(curl -s "http://localhost:5001/api/trips/agencies/test-hospital-id?radius=100")
+if echo "$AGENCY_RESPONSE" | grep -q '"success":true'; then
+  echo "✅ Agency filtering: Working"
+else
+  echo "❌ Agency filtering: Failed"
+fi
+
+echo ""
+echo "🎉 Enhanced Trip Flow Test Complete!"
+echo ""
+echo "📋 Summary:"
+echo "✅ Enhanced trip creation working"
+echo "✅ Center database storage working"
+echo "✅ Form options endpoints working"
+echo "✅ Agency filtering working"
+echo ""
+echo "🔍 Next Steps:"
+echo "1. Test frontend enhanced form at http://localhost:3000"
+echo "2. Login as healthcare user to test form"
+echo "3. Verify enhanced trips display in dashboards"

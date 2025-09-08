@@ -32,9 +32,9 @@ export interface FacilityListResult {
 
 export class FacilityService {
   async createFacility(data: FacilityData): Promise<any> {
-    const prisma = databaseManager.getPrismaClient();
+    const prisma = databaseManager.getCenterDB();
     
-    return await prisma.facility.create({
+    return await prisma.hospital.create({
       data: {
         name: data.name,
         type: data.type,
@@ -51,7 +51,7 @@ export class FacilityService {
   }
 
   async getFacilities(filters: FacilitySearchFilters = {}): Promise<FacilityListResult> {
-    const prisma = databaseManager.getPrismaClient();
+    const prisma = databaseManager.getCenterDB();
     const { page = 1, limit = 50, ...whereFilters } = filters;
     const skip = (page - 1) * limit;
 
@@ -73,13 +73,13 @@ export class FacilityService {
     }
 
     const [facilities, total] = await Promise.all([
-      prisma.facility.findMany({
+      prisma.hospital.findMany({
         where,
         orderBy: { name: 'asc' },
         skip,
         take: limit
       }),
-      prisma.facility.count({ where })
+      prisma.hospital.count({ where })
     ]);
 
     return {
@@ -91,15 +91,15 @@ export class FacilityService {
   }
 
   async getFacilityById(id: string): Promise<any | null> {
-    const prisma = databaseManager.getPrismaClient();
-    return await prisma.facility.findUnique({
+    const prisma = databaseManager.getCenterDB();
+    return await prisma.hospital.findUnique({
       where: { id }
     });
   }
 
   async updateFacility(id: string, data: Partial<FacilityData>): Promise<any> {
-    const prisma = databaseManager.getPrismaClient();
-    return await prisma.facility.update({
+    const prisma = databaseManager.getCenterDB();
+    return await prisma.hospital.update({
       where: { id },
       data: {
         ...data,
@@ -109,15 +109,15 @@ export class FacilityService {
   }
 
   async deleteFacility(id: string): Promise<void> {
-    const prisma = databaseManager.getPrismaClient();
-    await prisma.facility.delete({
+    const prisma = databaseManager.getCenterDB();
+    await prisma.hospital.delete({
       where: { id }
     });
   }
 
   async searchFacilities(query: string): Promise<any[]> {
-    const prisma = databaseManager.getPrismaClient();
-    return await prisma.facility.findMany({
+    const prisma = databaseManager.getCenterDB();
+    return await prisma.hospital.findMany({
       where: {
         OR: [
           { name: { contains: query, mode: 'insensitive' } },
