@@ -35,6 +35,11 @@ model Hospital {
   capabilities   String[]
   region         String
   coordinates    Json?
+  
+  // Location data for distance calculations
+  latitude       Float?   // For distance calculations
+  longitude      Float?   // For distance calculations
+  
   operatingHours String?
   isActive       Boolean  @default(true)
   requiresReview Boolean  @default(false)
@@ -60,6 +65,21 @@ model EMSAgency {
   operatingHours Json?
   capabilities   String[]
   pricingStructure Json?
+  
+  // Location data for distance filtering
+  latitude       Float?   // For distance calculations
+  longitude      Float?   // For distance calculations
+  serviceRadius  Int?     // Service radius in miles
+  
+  // Availability tracking
+  totalUnits     Int      @default(0)  // Total number of units
+  availableUnits Int      @default(0)  // Currently available units
+  lastUpdated    DateTime @default(now()) // Last availability update
+  
+  // Notification preferences
+  acceptsNotifications Boolean @default(true) // Whether agency accepts trip notifications
+  notificationMethods  String[] // Email, SMS, Phone, etc.
+  
   isActive       Boolean  @default(true)
   status         String   @default("ACTIVE")
   requiresReview Boolean  @default(false)
@@ -74,10 +94,40 @@ model EMSAgency {
 model Trip {
   id                String    @id @default(cuid())
   tripNumber        String    @unique
-  patientName       String
+  
+  // Patient Information (HIPAA Compliant - NO name/age)
+  patientId         String    // Auto-generated patient ID (e.g., "PMTC1NJKZ")
+  patientWeight     String?   // Optional weight information
+  specialNeeds      String?   // Special medical needs
+  
+  // Trip Details
   fromLocation      String
   toLocation        String
   scheduledTime     DateTime
+  transportLevel    String    // BLS, ALS, CCT, Other
+  urgencyLevel      String    // Routine, Urgent, Emergent
+  
+  // Clinical Details
+  diagnosis         String?   // Optional dropdown: UTI, Dialysis, Cardiac, etc.
+  mobilityLevel     String?   // Ambulatory, Wheelchair, Stretcher, Bed
+  oxygenRequired    Boolean   @default(false)
+  monitoringRequired Boolean  @default(false)
+  
+  // QR Code
+  generateQRCode    Boolean   @default(false)
+  qrCodeData        String?   // QR code content when generated
+  
+  // Agency Notifications
+  selectedAgencies  String[]  // Array of agency IDs for notifications
+  notificationRadius Int?     // Distance radius for agency filtering (miles)
+  
+  // Time Tracking
+  transferRequestTime   DateTime?  // Auto-set when sent to agencies
+  transferAcceptedTime  DateTime?  // Auto-set when agency responds, manually editable
+  emsArrivalTime        DateTime?  // When EMS arrives at unit
+  emsDepartureTime      DateTime?  // When EMS leaves unit
+  
+  // Legacy fields (keeping for backward compatibility)
   actualStartTime   DateTime?
   actualEndTime     DateTime?
   status            String

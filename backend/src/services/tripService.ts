@@ -1,9 +1,12 @@
 import { databaseManager } from './databaseManager';
 import emailService from './emailService';
+import { PatientIdService, DIAGNOSIS_OPTIONS, MOBILITY_OPTIONS, TRANSPORT_LEVEL_OPTIONS, URGENCY_OPTIONS } from './patientIdService';
+import { DistanceService } from './distanceService';
 
 const prisma = databaseManager.getCenterDB();
 
 export interface CreateTripRequest {
+  // Legacy fields (keeping for backward compatibility)
   patientId: string;
   originFacilityId: string;
   destinationFacilityId: string;
@@ -17,6 +20,40 @@ export interface CreateTripRequest {
   createdById: string | null;
 }
 
+export interface EnhancedCreateTripRequest {
+  // Patient Information (HIPAA Compliant)
+  patientId?: string; // Auto-generated if not provided
+  patientWeight?: string;
+  specialNeeds?: string;
+  
+  // Trip Details
+  fromLocation: string;
+  toLocation: string;
+  scheduledTime: string; // ISO string
+  transportLevel: 'BLS' | 'ALS' | 'CCT' | 'Other';
+  urgencyLevel: 'Routine' | 'Urgent' | 'Emergent';
+  
+  // Clinical Details
+  diagnosis?: string; // From DIAGNOSIS_OPTIONS
+  mobilityLevel?: 'Ambulatory' | 'Wheelchair' | 'Stretcher' | 'Bed';
+  oxygenRequired?: boolean;
+  monitoringRequired?: boolean;
+  
+  // QR Code
+  generateQRCode?: boolean;
+  
+  // Agency Notifications
+  selectedAgencies?: string[]; // Array of agency IDs
+  notificationRadius?: number; // Distance radius in miles
+  
+  // Additional Notes
+  notes?: string;
+  
+  // Legacy fields
+  priority?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  createdById?: string | null;
+}
+
 export interface UpdateTripStatusRequest {
   status: 'PENDING' | 'ACCEPTED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
   assignedAgencyId?: string;
@@ -28,7 +65,91 @@ export interface UpdateTripStatusRequest {
 
 export class TripService {
   /**
-   * Create a new transport request
+   * Create a new enhanced transport request
+   */
+  async createEnhancedTrip(data: EnhancedCreateTripRequest) {
+    console.log('TCC_DEBUG: Creating enhanced trip with data:', data);
+    
+    try {
+      // Generate patient ID if not provided
+      const patientId = data.patientId || PatientIdService.generatePatientId();
+      
+      // Generate QR code data if requested
+      let qrCodeData: string | null = null;
+      if (data.generateQRCode) {
+        const tripId = `TRP-${Date.now()}`;
+        qrCodeData = PatientIdService.generateQRCodeData(tripId, patientId);
+      }
+      
+      // Map urgency level to priority for backward compatibility
+      const priorityMap = {
+        'Routine': 'LOW',
+        'Urgent': 'MEDIUM', 
+        'Emergent': 'HIGH'
+      } as const;
+      
+      const trip = await prisma.trip.create({
+        data: {
+          tripNumber: `TRP-${Date.now()}`,
+          
+          // Patient Information (HIPAA Compliant)
+          patientId: patientId,
+          patientWeight: data.patientWeight || null,
+          specialNeeds: data.specialNeeds || null,
+          
+          // Trip Details
+          fromLocation: data.fromLocation,
+          toLocation: data.toLocation,
+          scheduledTime: new Date(data.scheduledTime),
+          transportLevel: data.transportLevel,
+          urgencyLevel: data.urgencyLevel,
+          
+          // Clinical Details
+          diagnosis: data.diagnosis || null,
+          mobilityLevel: data.mobilityLevel || null,
+          oxygenRequired: data.oxygenRequired || false,
+          monitoringRequired: data.monitoringRequired || false,
+          
+          // QR Code
+          generateQRCode: data.generateQRCode || false,
+          qrCodeData: qrCodeData,
+          
+          // Agency Notifications
+          selectedAgencies: data.selectedAgencies || [],
+          notificationRadius: data.notificationRadius || 100,
+          
+          // Time Tracking
+          transferRequestTime: new Date(), // Auto-set when request is sent
+          
+          // Legacy fields
+          patientName: patientId, // Using patientId as patientName for backward compatibility
+          status: 'PENDING',
+          priority: data.priority || priorityMap[data.urgencyLevel] || 'LOW',
+          notes: data.notes || null,
+          assignedTo: null,
+        },
+      });
+
+      console.log('TCC_DEBUG: Enhanced trip created successfully:', trip);
+
+      // Send notifications to selected agencies
+      if (data.selectedAgencies && data.selectedAgencies.length > 0) {
+        await this.sendTripNotifications(trip.id, data.selectedAgencies);
+      }
+
+      return {
+        success: true,
+        data: trip,
+        message: 'Enhanced transport request created successfully'
+      };
+    } catch (error) {
+      console.error('TCC_DEBUG: Error creating enhanced trip:', error);
+      throw new Error('Failed to create enhanced transport request');
+    }
+  }
+
+  /**
+   * Create a new transport request (legacy method)
    */
   async createTrip(data: CreateTripRequest) {
     console.log('TCC_DEBUG: Creating trip with data:', data);
@@ -409,6 +530,142 @@ export class TripService {
       console.error('TCC_DEBUG: Error updating notification settings:', error);
       return { success: false, error: 'Failed to update notification settings' };
     }
+  }
+
+  /**
+   * Get agencies within distance for a hospital
+   */
+  async getAgenciesForHospital(hospitalId: string, radiusMiles: number = 100) {
+    try {
+      // Get hospital location
+      const hospital = await prisma.hospital.findUnique({
+        where: { id: hospitalId },
+        select: { latitude: true, longitude: true, name: true }
+      });
+
+      if (!hospital || !hospital.latitude || !hospital.longitude) {
+        throw new Error('Hospital location not found');
+      }
+
+      // Get all active agencies
+      const agencies = await prisma.eMSAgency.findMany({
+        where: {
+          isActive: true,
+          acceptsNotifications: true,
+          availableUnits: { gt: 0 }
+        },
+        select: {
+          id: true,
+          name: true,
+          latitude: true,
+          longitude: true,
+          availableUnits: true,
+          totalUnits: true,
+          capabilities: true,
+          phone: true,
+          email: true,
+          city: true,
+          state: true
+        }
+      });
+
+      // Filter by distance
+      const agenciesWithDistance = DistanceService.filterAgenciesByDistance(
+        { latitude: hospital.latitude, longitude: hospital.longitude },
+        agencies,
+        radiusMiles
+      );
+
+      return {
+        success: true,
+        data: agenciesWithDistance,
+        message: `Found ${agenciesWithDistance.length} agencies within ${radiusMiles} miles`
+      };
+    } catch (error) {
+      console.error('TCC_DEBUG: Error getting agencies for hospital:', error);
+      throw new Error('Failed to get agencies for hospital');
+    }
+  }
+
+  /**
+   * Update trip time tracking
+   */
+  async updateTripTimes(tripId: string, timeUpdates: {
+    transferAcceptedTime?: string;
+    emsArrivalTime?: string;
+    emsDepartureTime?: string;
+  }) {
+    try {
+      const updateData: any = {};
+      
+      if (timeUpdates.transferAcceptedTime) {
+        updateData.transferAcceptedTime = new Date(timeUpdates.transferAcceptedTime);
+      }
+      if (timeUpdates.emsArrivalTime) {
+        updateData.emsArrivalTime = new Date(timeUpdates.emsArrivalTime);
+      }
+      if (timeUpdates.emsDepartureTime) {
+        updateData.emsDepartureTime = new Date(timeUpdates.emsDepartureTime);
+      }
+
+      const trip = await prisma.trip.update({
+        where: { id: tripId },
+        data: updateData
+      });
+
+      return {
+        success: true,
+        data: trip,
+        message: 'Trip times updated successfully'
+      };
+    } catch (error) {
+      console.error('TCC_DEBUG: Error updating trip times:', error);
+      throw new Error('Failed to update trip times');
+    }
+  }
+
+  /**
+   * Get diagnosis options
+   */
+  getDiagnosisOptions() {
+    return {
+      success: true,
+      data: DIAGNOSIS_OPTIONS,
+      message: 'Diagnosis options retrieved successfully'
+    };
+  }
+
+  /**
+   * Get mobility options
+   */
+  getMobilityOptions() {
+    return {
+      success: true,
+      data: MOBILITY_OPTIONS,
+      message: 'Mobility options retrieved successfully'
+    };
+  }
+
+  /**
+   * Get transport level options
+   */
+  getTransportLevelOptions() {
+    return {
+      success: true,
+      data: TRANSPORT_LEVEL_OPTIONS,
+      message: 'Transport level options retrieved successfully'
+    };
+  }
+
+  /**
+   * Get urgency options
+   */
+  getUrgencyOptions() {
+    return {
+      success: true,
+      data: URGENCY_OPTIONS,
+      message: 'Urgency options retrieved successfully'
+    };
   }
 }
 
