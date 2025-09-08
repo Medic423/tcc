@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Truck, 
   MapPin, 
@@ -10,6 +10,7 @@ import {
   Bell,
   Navigation
 } from 'lucide-react';
+import Notifications from './Notifications';
 
 interface EMSDashboardProps {
   user: {
@@ -40,45 +41,79 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
   const [settingsLoading, setSettingsLoading] = useState(false);
   const [settingsError, setSettingsError] = useState<string | null>(null);
   const [settingsSuccess, setSettingsSuccess] = useState(false);
-  const [availableTrips, setAvailableTrips] = useState([
-    {
-      id: '1',
-      patientId: 'P001',
-      origin: 'General Hospital',
-      destination: 'Rehabilitation Center',
-      transportLevel: 'BLS',
-      priority: 'MEDIUM',
-      distance: '12.5 miles',
-      estimatedTime: '25 minutes',
-      revenue: '$150',
-      requestTime: '2025-09-07 10:30 AM'
-    },
-    {
-      id: '2',
-      patientId: 'P002',
-      origin: 'Urgent Care',
-      destination: 'General Hospital',
-      transportLevel: 'ALS',
-      priority: 'HIGH',
-      distance: '8.2 miles',
-      estimatedTime: '18 minutes',
-      revenue: '$275',
-      requestTime: '2025-09-07 09:15 AM'
-    }
-  ]);
+  
+  // Trip management state
+  const [availableTrips, setAvailableTrips] = useState<any[]>([]);
+  const [acceptedTrips, setAcceptedTrips] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const [acceptedTrips, setAcceptedTrips] = useState([
-    {
-      id: '3',
-      patientId: 'P003',
-      origin: 'Clinic',
-      destination: 'Hospital',
-      transportLevel: 'CCT',
-      priority: 'LOW',
-      status: 'EN_ROUTE',
-      pickupTime: '2025-09-07 11:00 AM'
+  // Load trips from API
+  useEffect(() => {
+    loadTrips();
+  }, []);
+
+  const loadTrips = async () => {
+    setLoading(true);
+    try {
+      // Load available trips (PENDING status)
+      const availableResponse = await fetch('/api/trips?status=PENDING', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      
+      if (availableResponse.ok) {
+        const availableData = await availableResponse.json();
+        if (availableData.success && availableData.data) {
+          const transformedAvailable = availableData.data.map((trip: any) => ({
+            id: trip.id,
+            patientId: trip.patientName,
+            origin: trip.fromLocation,
+            destination: trip.toLocation,
+            transportLevel: 'BLS', // Default since not in current schema
+            priority: trip.priority,
+            distance: '12.5 miles', // Mock data
+            estimatedTime: '25 minutes', // Mock data
+            revenue: '$150', // Mock data
+            requestTime: new Date(trip.createdAt).toLocaleString(),
+            scheduledTime: trip.scheduledTime
+          }));
+          setAvailableTrips(transformedAvailable);
+        }
+      }
+
+      // Load accepted trips (ACCEPTED, IN_PROGRESS, COMPLETED status)
+      const acceptedResponse = await fetch('/api/trips?status=ACCEPTED,IN_PROGRESS,COMPLETED', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      
+      if (acceptedResponse.ok) {
+        const acceptedData = await acceptedResponse.json();
+        if (acceptedData.success && acceptedData.data) {
+          const transformedAccepted = acceptedData.data.map((trip: any) => ({
+            id: trip.id,
+            patientId: trip.patientName,
+            origin: trip.fromLocation,
+            destination: trip.toLocation,
+            transportLevel: 'BLS', // Default since not in current schema
+            priority: trip.priority,
+            status: trip.status,
+            pickupTime: trip.actualStartTime ? new Date(trip.actualStartTime).toLocaleString() : 'Not started',
+            scheduledTime: trip.scheduledTime
+          }));
+          setAcceptedTrips(transformedAccepted);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading trips:', error);
+      setError('Failed to load trips');
+    } finally {
+      setLoading(false);
     }
-  ]);
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -150,22 +185,90 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
     });
     setSettingsError(null);
     setSettingsSuccess(false);
+    // Navigate back to overview tab
+    setActiveTab('overview');
   };
 
-  const handleAcceptTrip = (tripId: string) => {
-    const trip = availableTrips.find(t => t.id === tripId);
-    if (trip) {
-      setAvailableTrips(availableTrips.filter(t => t.id !== tripId));
-      setAcceptedTrips([...acceptedTrips, { 
-        ...trip, 
-        status: 'ACCEPTED',
-        pickupTime: new Date().toLocaleString()
-      }]);
+  const handleAcceptTrip = async (tripId: string) => {
+    try {
+      const response = await fetch(`/api/trips/${tripId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          status: 'ACCEPTED',
+          assignedAgencyId: user.id, // Using user ID as agency ID for now
+          acceptedTimestamp: new Date().toISOString()
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to accept trip');
+      }
+
+      // Reload trips to get updated data
+      await loadTrips();
+    } catch (error: any) {
+      console.error('Error accepting trip:', error);
+      setError(error.message || 'Failed to accept trip');
     }
   };
 
-  const handleDeclineTrip = (tripId: string) => {
-    setAvailableTrips(availableTrips.filter(t => t.id !== tripId));
+  const handleDeclineTrip = async (tripId: string) => {
+    try {
+      const response = await fetch(`/api/trips/${tripId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          status: 'CANCELLED'
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to decline trip');
+      }
+
+      // Reload trips to get updated data
+      await loadTrips();
+    } catch (error: any) {
+      console.error('Error declining trip:', error);
+      setError(error.message || 'Failed to decline trip');
+    }
+  };
+
+  const handleUpdateTripStatus = async (tripId: string, newStatus: string) => {
+    try {
+      const response = await fetch(`/api/trips/${tripId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          status: newStatus,
+          ...(newStatus === 'IN_PROGRESS' && { pickupTimestamp: new Date().toISOString() }),
+          ...(newStatus === 'COMPLETED' && { completionTimestamp: new Date().toISOString() })
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update trip status');
+      }
+
+      // Reload trips to get updated data
+      await loadTrips();
+    } catch (error: any) {
+      console.error('Error updating trip status:', error);
+      setError(error.message || 'Failed to update trip status');
+    }
   };
 
   const getPriorityColor = (priority: string) => {
@@ -206,9 +309,7 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
             </div>
             
             <div className="flex items-center space-x-4">
-              <button className="p-2 text-gray-400 hover:text-gray-600">
-                <Bell className="h-5 w-5" />
-              </button>
+              <Notifications user={user} />
               <div className="flex items-center space-x-2">
                 <User className="h-5 w-5 text-gray-400" />
                 <span className="text-sm text-gray-700">{user.name}</span>
@@ -307,7 +408,73 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
                 <h3 className="text-lg font-medium text-gray-900">Recent Activity</h3>
               </div>
               <div className="p-6">
-                <p className="text-gray-500">Recent trip assignments and completions will appear here.</p>
+                {(availableTrips.length > 0 || acceptedTrips.length > 0) ? (
+                  <div className="space-y-4">
+                    {/* Show recent available trips */}
+                    {availableTrips.slice(0, 3).map((trip) => (
+                      <div key={`available-${trip.id}`} className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
+                        <div className="flex items-center space-x-4">
+                          <div className="w-3 h-3 rounded-full bg-blue-400"></div>
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">
+                              Available: {trip.patientId} - {trip.origin} to {trip.destination}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {trip.transportLevel} • {trip.priority} Priority • {trip.requestTime}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                            AVAILABLE
+                          </span>
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(trip.priority)}`}>
+                            {trip.priority}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                    
+                    {/* Show recent accepted trips */}
+                    {acceptedTrips.slice(0, 3).map((trip) => (
+                      <div key={`accepted-${trip.id}`} className="flex items-center justify-between p-4 bg-green-50 rounded-lg">
+                        <div className="flex items-center space-x-4">
+                          <div className={`w-3 h-3 rounded-full ${
+                            trip.status === 'ACCEPTED' ? 'bg-green-400' :
+                            trip.status === 'IN_PROGRESS' ? 'bg-blue-400' :
+                            trip.status === 'COMPLETED' ? 'bg-gray-400' : 'bg-gray-400'
+                          }`}></div>
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">
+                              {trip.status === 'ACCEPTED' ? 'Accepted' : 
+                               trip.status === 'IN_PROGRESS' ? 'In Progress' : 
+                               trip.status === 'COMPLETED' ? 'Completed' : trip.status}: {trip.patientId} - {trip.origin} to {trip.destination}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {trip.transportLevel} • {trip.priority} Priority • {trip.requestTime}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(trip.status)}`}>
+                            {trip.status}
+                          </span>
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(trip.priority)}`}>
+                            {trip.priority}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                    
+                    {(availableTrips.length > 3 || acceptedTrips.length > 3) && (
+                      <p className="text-sm text-gray-500 text-center">
+                        Showing recent activity - {availableTrips.length + acceptedTrips.length} total trips
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-gray-500">No recent trip activity found.</p>
+                )}
               </div>
             </div>
           </div>
@@ -315,10 +482,32 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
 
         {activeTab === 'available' && (
           <div className="space-y-6">
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-md p-4">
+                <div className="flex">
+                  <AlertCircle className="h-5 w-5 text-red-400" />
+                  <div className="ml-3">
+                    <p className="text-sm font-medium text-red-800">
+                      {error}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            
             <div className="bg-white rounded-lg shadow">
-              <div className="px-6 py-4 border-b border-gray-200">
-                <h3 className="text-lg font-medium text-gray-900">Available Transport Requests</h3>
-                <p className="text-sm text-gray-500">Accept or decline available transport requests</p>
+              <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900">Available Transport Requests</h3>
+                  <p className="text-sm text-gray-500">Accept or decline available transport requests</p>
+                </div>
+                <button
+                  onClick={loadTrips}
+                  disabled={loading}
+                  className="px-3 py-1 text-sm bg-orange-100 text-orange-700 rounded-md hover:bg-orange-200 disabled:opacity-50"
+                >
+                  {loading ? 'Loading...' : 'Refresh'}
+                </button>
               </div>
               <div className="divide-y divide-gray-200">
                 {availableTrips.map((trip) => (
@@ -380,8 +569,15 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
 
         {activeTab === 'accepted' && (
           <div className="bg-white rounded-lg shadow">
-            <div className="px-6 py-4 border-b border-gray-200">
+            <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
               <h3 className="text-lg font-medium text-gray-900">My Accepted Trips</h3>
+              <button
+                onClick={loadTrips}
+                disabled={loading}
+                className="px-3 py-1 text-sm bg-orange-100 text-orange-700 rounded-md hover:bg-orange-200 disabled:opacity-50"
+              >
+                {loading ? 'Loading...' : 'Refresh'}
+              </button>
             </div>
             <div className="divide-y divide-gray-200">
               {acceptedTrips.map((trip) => (
@@ -401,10 +597,26 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
                         <span className="font-medium">Pickup Time:</span> {trip.pickupTime}
                       </div>
                     </div>
-                    <div className="ml-4">
-                      <button className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 text-sm font-medium">
-                        Update Status
-                      </button>
+                    <div className="ml-4 flex space-x-2">
+                      {trip.status === 'ACCEPTED' && (
+                        <button
+                          onClick={() => handleUpdateTripStatus(trip.id, 'IN_PROGRESS')}
+                          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 text-sm font-medium"
+                        >
+                          Start Trip
+                        </button>
+                      )}
+                      {trip.status === 'IN_PROGRESS' && (
+                        <button
+                          onClick={() => handleUpdateTripStatus(trip.id, 'COMPLETED')}
+                          className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 text-sm font-medium"
+                        >
+                          Complete Trip
+                        </button>
+                      )}
+                      {trip.status === 'COMPLETED' && (
+                        <span className="text-sm text-gray-500">Completed</span>
+                      )}
                     </div>
                   </div>
                 </div>

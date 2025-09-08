@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Building2, 
   Plus, 
@@ -7,8 +7,10 @@ import {
   AlertCircle,
   User,
   LogOut,
-  Bell
+  Bell,
+  X
 } from 'lucide-react';
+import Notifications from './Notifications';
 
 interface HealthcareDashboardProps {
   user: {
@@ -22,9 +24,308 @@ interface HealthcareDashboardProps {
   onLogout: () => void;
 }
 
+// CreateTripForm Component
+interface CreateTripFormProps {
+  user: {
+    id: string;
+    email: string;
+    name: string;
+    userType: string;
+    facilityName?: string;
+    facilityType?: string;
+  };
+  onTripCreated: () => void;
+}
+
+const CreateTripForm: React.FC<CreateTripFormProps> = ({ user, onTripCreated }) => {
+  const [formData, setFormData] = useState({
+    patientId: '',
+    destination: '',
+    transportLevel: 'BLS' as 'BLS' | 'ALS' | 'CCT',
+    priority: 'MEDIUM' as 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL',
+    specialRequirements: '',
+    readyStart: '',
+    readyEnd: '',
+    isolation: false,
+    bariatric: false
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+  const [facilities, setFacilities] = useState<any[]>([]);
+
+  useEffect(() => {
+    // Load available facilities for destination selection
+    loadFacilities();
+  }, []);
+
+  const loadFacilities = async () => {
+    try {
+      const response = await fetch('/api/facilities');
+      if (response.ok) {
+        const data = await response.json();
+        setFacilities(data.data || []);
+      }
+    } catch (error) {
+      console.error('Error loading facilities:', error);
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Find the facility ID for the selected destination
+      const destinationFacility = facilities.find(f => f.name === formData.destination);
+      if (!destinationFacility) {
+        throw new Error('Please select a valid destination facility');
+      }
+
+      const tripData = {
+        patientId: formData.patientId,
+        originFacilityId: user.facilityName || 'Unknown Facility', // Using facility name as ID for now
+        destinationFacilityId: destinationFacility.id,
+        transportLevel: formData.transportLevel,
+        priority: formData.priority,
+        specialRequirements: formData.specialRequirements,
+        readyStart: new Date(formData.readyStart).toISOString(),
+        readyEnd: new Date(formData.readyEnd).toISOString(),
+        isolation: formData.isolation,
+        bariatric: formData.bariatric
+      };
+
+      const response = await fetch('/api/trips', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(tripData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create transport request');
+      }
+
+      setSuccess(true);
+      setFormData({
+        patientId: '',
+        destination: '',
+        transportLevel: 'BLS',
+        priority: 'MEDIUM',
+        specialRequirements: '',
+        readyStart: '',
+        readyEnd: '',
+        isolation: false,
+        bariatric: false
+      });
+      
+      setTimeout(() => {
+        setSuccess(false);
+        onTripCreated();
+      }, 2000);
+
+    } catch (error: any) {
+      setError(error.message || 'Failed to create transport request');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {success && (
+        <div className="bg-green-50 border border-green-200 rounded-md p-4">
+          <div className="flex">
+            <CheckCircle className="h-5 w-5 text-green-400" />
+            <div className="ml-3">
+              <p className="text-sm font-medium text-green-800">
+                Transport request created successfully!
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-md p-4">
+          <div className="flex">
+            <AlertCircle className="h-5 w-5 text-red-400" />
+            <div className="ml-3">
+              <p className="text-sm font-medium text-red-800">
+                {error}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Patient ID</label>
+          <input
+            type="text"
+            name="patientId"
+            value={formData.patientId}
+            onChange={handleChange}
+            required
+            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+            placeholder="Enter patient ID"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Destination Facility</label>
+          <select
+            name="destination"
+            value={formData.destination}
+            onChange={handleChange}
+            required
+            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+          >
+            <option value="">Select destination</option>
+            {facilities.map((facility) => (
+              <option key={facility.id} value={facility.name}>
+                {facility.name} - {facility.type}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Transport Level</label>
+          <select
+            name="transportLevel"
+            value={formData.transportLevel}
+            onChange={handleChange}
+            required
+            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+          >
+            <option value="BLS">BLS (Basic Life Support)</option>
+            <option value="ALS">ALS (Advanced Life Support)</option>
+            <option value="CCT">CCT (Critical Care Transport)</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Priority</label>
+          <select
+            name="priority"
+            value={formData.priority}
+            onChange={handleChange}
+            required
+            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+          >
+            <option value="LOW">Low</option>
+            <option value="MEDIUM">Medium</option>
+            <option value="HIGH">High</option>
+            <option value="CRITICAL">Critical</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Ready Start Time</label>
+          <input
+            type="datetime-local"
+            name="readyStart"
+            value={formData.readyStart}
+            onChange={handleChange}
+            required
+            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Ready End Time</label>
+          <input
+            type="datetime-local"
+            name="readyEnd"
+            value={formData.readyEnd}
+            onChange={handleChange}
+            required
+            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+          />
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700">Special Requirements</label>
+        <textarea
+          name="specialRequirements"
+          value={formData.specialRequirements}
+          onChange={handleChange}
+          rows={3}
+          className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+          placeholder="Enter any special requirements or notes"
+        />
+      </div>
+
+      <div className="flex items-center space-x-6">
+        <div className="flex items-center">
+          <input
+            type="checkbox"
+            name="isolation"
+            checked={formData.isolation}
+            onChange={handleChange}
+            className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+          />
+          <label className="ml-2 block text-sm text-gray-900">
+            Isolation Required
+          </label>
+        </div>
+
+        <div className="flex items-center">
+          <input
+            type="checkbox"
+            name="bariatric"
+            checked={formData.bariatric}
+            onChange={handleChange}
+            className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+          />
+          <label className="ml-2 block text-sm text-gray-900">
+            Bariatric Transport
+          </label>
+        </div>
+      </div>
+
+      <div className="flex justify-end space-x-3">
+        <button
+          type="button"
+          onClick={() => onTripCreated()}
+          className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          disabled={loading}
+          className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
+        >
+          {loading ? 'Creating...' : 'Create Request'}
+        </button>
+      </div>
+    </form>
+  );
+};
+
 const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogout }) => {
   const [activeTab, setActiveTab] = useState('overview');
-  const [trips] = useState([
+  const [trips, setTrips] = useState([
     {
       id: '1',
       patientId: 'P001',
@@ -44,6 +345,39 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
       priority: 'HIGH'
     }
   ]);
+
+  // Load trips from API
+  useEffect(() => {
+    loadTrips();
+  }, []);
+
+  const loadTrips = async () => {
+    try {
+      const response = await fetch('/api/trips', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data) {
+          // Transform API data to match component expectations
+          const transformedTrips = data.data.map((trip: any) => ({
+            id: trip.id,
+            patientId: trip.patientName,
+            destination: trip.toLocation,
+            transportLevel: 'BLS', // Default since not in current schema
+            status: trip.status,
+            requestTime: new Date(trip.createdAt).toLocaleString(),
+            priority: trip.priority
+          }));
+          setTrips(transformedTrips);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading trips:', error);
+    }
+  };
 
   // Settings state
   const [settingsData, setSettingsData] = useState({
@@ -128,6 +462,8 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
       zipCode: ''
     });
     setSettingsError(null);
+    // Navigate back to overview tab
+    setActiveTab('overview');
   };
 
   const getStatusColor = (status: string) => {
@@ -170,9 +506,7 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
             </div>
             
             <div className="flex items-center space-x-4">
-              <button className="p-2 text-gray-400 hover:text-gray-600">
-                <Bell className="h-5 w-5" />
-              </button>
+              <Notifications user={user} />
               <div className="flex items-center space-x-2">
                 <User className="h-5 w-5 text-gray-400" />
                 <span className="text-sm text-gray-700">{user.name}</span>
@@ -229,7 +563,9 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                   <Clock className="h-8 w-8 text-yellow-600" />
                   <div className="ml-4">
                     <p className="text-sm font-medium text-gray-500">Pending Requests</p>
-                    <p className="text-2xl font-semibold text-gray-900">3</p>
+                    <p className="text-2xl font-semibold text-gray-900">
+                      {trips.filter(trip => trip.status === 'PENDING').length}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -239,7 +575,9 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                   <CheckCircle className="h-8 w-8 text-green-600" />
                   <div className="ml-4">
                     <p className="text-sm font-medium text-gray-500">Completed Today</p>
-                    <p className="text-2xl font-semibold text-gray-900">12</p>
+                    <p className="text-2xl font-semibold text-gray-900">
+                      {trips.filter(trip => trip.status === 'COMPLETED').length}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -248,8 +586,10 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                 <div className="flex items-center">
                   <AlertCircle className="h-8 w-8 text-red-600" />
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-500">Urgent Requests</p>
-                    <p className="text-2xl font-semibold text-gray-900">1</p>
+                    <p className="text-sm font-medium text-gray-500">High Priority</p>
+                    <p className="text-2xl font-semibold text-gray-900">
+                      {trips.filter(trip => trip.priority === 'HIGH' || trip.priority === 'CRITICAL').length}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -260,7 +600,45 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                 <h3 className="text-lg font-medium text-gray-900">Recent Activity</h3>
               </div>
               <div className="p-6">
-                <p className="text-gray-500">Recent transport requests and updates will appear here.</p>
+                {trips.length > 0 ? (
+                  <div className="space-y-4">
+                    {trips.slice(0, 5).map((trip) => (
+                      <div key={trip.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                        <div className="flex items-center space-x-4">
+                          <div className={`w-3 h-3 rounded-full ${
+                            trip.status === 'PENDING' ? 'bg-yellow-400' :
+                            trip.status === 'ACCEPTED' ? 'bg-green-400' :
+                            trip.status === 'IN_PROGRESS' ? 'bg-blue-400' :
+                            trip.status === 'COMPLETED' ? 'bg-gray-400' : 'bg-gray-400'
+                          }`}></div>
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">
+                              Patient {trip.patientId} - {trip.destination}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {trip.transportLevel} • {trip.priority} Priority • {trip.requestTime}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(trip.status)}`}>
+                            {trip.status}
+                          </span>
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(trip.priority)}`}>
+                            {trip.priority}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                    {trips.length > 5 && (
+                      <p className="text-sm text-gray-500 text-center">
+                        Showing 5 of {trips.length} recent requests
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-gray-500">No recent transport requests found.</p>
+                )}
               </div>
             </div>
           </div>
@@ -332,18 +710,14 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
           <div className="bg-white rounded-lg shadow">
             <div className="px-6 py-4 border-b border-gray-200">
               <h3 className="text-lg font-medium text-gray-900">Create Transport Request</h3>
+              <p className="text-sm text-gray-500">Create new transport requests for your patients</p>
             </div>
             <div className="p-6">
-              <div className="text-center py-12">
-                <Plus className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Transport Request Form</h3>
-                <p className="text-gray-500 mb-6">
-                  Create new transport requests for your patients. This feature will be implemented soon.
-                </p>
-                <button className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700">
-                  Coming Soon
-                </button>
-              </div>
+              <CreateTripForm user={user} onTripCreated={() => {
+                // Refresh trips list and go to overview to see the new trip
+                loadTrips();
+                setActiveTab('overview');
+              }} />
             </div>
           </div>
         )}

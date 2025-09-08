@@ -1,7 +1,7 @@
 import { databaseManager } from './databaseManager';
 import emailService from './emailService';
 
-const prisma = databaseManager.getPrismaClient();
+const prisma = databaseManager.getCenterDB();
 
 export interface CreateTripRequest {
   patientId: string;

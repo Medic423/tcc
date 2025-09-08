@@ -12,6 +12,7 @@ import {
   Bell,
   DollarSign
 } from 'lucide-react';
+import Notifications from './Notifications';
 import Overview from './Overview';
 import Hospitals from './Hospitals';
 import Agencies from './Agencies';
@@ -205,6 +206,9 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
                   </div>
                 </div>
               </div>
+            </div>
+            <div className="flex items-center space-x-4">
+              <Notifications user={user} />
             </div>
           </div>
         </div>
