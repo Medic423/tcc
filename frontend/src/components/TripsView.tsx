@@ -76,7 +76,7 @@ const TripsView: React.FC<TripsViewProps> = ({ user }) => {
   const fetchTrips = async () => {
     try {
       setLoading(true);
-      const response = await tripsAPI.getTrips();
+      const response = await tripsAPI.getAll();
       if (response.data.success) {
         setTrips(response.data.data);
         setFilteredTrips(response.data.data);

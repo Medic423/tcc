@@ -68,10 +68,10 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
         if (availableData.success && availableData.data) {
           const transformedAvailable = availableData.data.map((trip: any) => ({
             id: trip.id,
-            patientId: trip.patientName,
+            patientId: trip.patientId,
             origin: trip.fromLocation,
             destination: trip.toLocation,
-            transportLevel: 'BLS', // Default since not in current schema
+            transportLevel: trip.transportLevel || 'BLS',
             priority: trip.priority,
             distance: '12.5 miles', // Mock data
             estimatedTime: '25 minutes', // Mock data
@@ -95,10 +95,10 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
         if (acceptedData.success && acceptedData.data) {
           const transformedAccepted = acceptedData.data.map((trip: any) => ({
             id: trip.id,
-            patientId: trip.patientName,
+            patientId: trip.patientId,
             origin: trip.fromLocation,
             destination: trip.toLocation,
-            transportLevel: 'BLS', // Default since not in current schema
+            transportLevel: trip.transportLevel || 'BLS',
             priority: trip.priority,
             status: trip.status,
             pickupTime: trip.actualStartTime ? new Date(trip.actualStartTime).toLocaleString() : 'Not started',

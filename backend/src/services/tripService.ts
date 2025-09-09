@@ -233,7 +233,15 @@ export class TripService {
       const where: any = {};
       
       if (filters?.status) {
-        where.status = filters.status;
+        // Handle comma-separated status values (e.g., "ACCEPTED,IN_PROGRESS,COMPLETED")
+        if (filters.status.includes(',')) {
+          const statuses = filters.status.split(',').map(s => s.trim());
+          where.status = {
+            in: statuses
+          };
+        } else {
+          where.status = filters.status;
+        }
       }
       if (filters?.transportLevel) {
         where.transportLevel = filters.transportLevel;
