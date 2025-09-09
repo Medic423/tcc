@@ -78,20 +78,27 @@ model Facility {
 }
 
 model Trip {
-  id              String   @id @default(cuid())
-  tripNumber      String   @unique
-  patientName     String
-  fromLocation    String
-  toLocation      String
-  scheduledTime   DateTime
-  actualStartTime DateTime?
-  actualEndTime   DateTime?
-  status          String
-  priority        String
-  notes           String?
-  assignedTo      String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                    String   @id @default(cuid())
+  tripNumber            String   @unique
+  patientName           String
+  fromLocation          String
+  toLocation            String
+  originLatitude        Float?
+  originLongitude       Float?
+  destinationLatitude   Float?
+  destinationLongitude  Float?
+  tripCost              Float?
+  distanceMiles         Float?
+  responseTimeMinutes   Int?
+  scheduledTime         DateTime
+  actualStartTime       DateTime?
+  actualEndTime         DateTime?
+  status                String
+  priority              String
+  notes                 String?
+  assignedTo            String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 
   @@map("trips")
 }
@@ -101,6 +108,7 @@ model SystemAnalytics {
   metricName  String
   metricValue Json
   timestamp   DateTime @default(now())
+  createdAt   DateTime @default(now())
   userId      String?
 
   @@map("system_analytics")
