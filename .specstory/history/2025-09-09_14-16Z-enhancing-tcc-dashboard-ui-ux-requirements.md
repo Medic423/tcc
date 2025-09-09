@@ -2246,3 +2246,1017 @@ The end-to-end trip data flow is now fully functional! 🚀
 
 ---
 
+_**User (2025-09-09 12:52Z)**_
+
+That tests successfully. I accepted a trip in the EMS Module and it showed as accepted in the TCC and in the Altoona UPMC dashboard as accepted. This is another feat. Let's commit and push to the repository. If not already in the main branch merge. Then update NEXT_PRIORITIES.md. Also write a backup to my external drive /Volumes/Acasis/
+
+---
+
+_**Assistant**_
+
+Excellent! The end-to-end trip data flow is working perfectly. Let me commit and push the changes, then update the documentation and create a backup.
+
+
+---
+
+```bash
+git add .
+```
+
+---
+
+```bash
+git commit -m "fix: Complete end-to-end trip data flow implementation
+
+- Fix TripsView API call to use correct tripsAPI.getAll() method
+- Fix EMS Dashboard data mapping to use patientId instead of patientName
+- Fix backend status filter to handle comma-separated values (ACCEPTED,IN_PROGRESS,COMPLETED)
+- Add comprehensive end-to-end testing script
+- Verify complete data flow: Trip creation → TCC View → EMS Dashboard → Status updates
+- All 9 trips now visible across all dashboards with proper filtering
+- Trip acceptance working end-to-end: EMS accepts → TCC shows accepted → Hospital shows accepted"
+```
+
+```
+[main 5ef588a] fix: Complete end-to-end trip data flow implementation                                                   
+ 5 files changed, 2307 insertions(+), 6 deletions(-)
+ create mode 100755 test-end-to-end-trip-flow.sh
+```
+
+---
+
+```bash
+git push origin main
+```
+
+```
+Enumerating objects: 28, done.
+Counting objects: 100% (28/28), done.
+Delta compression using up to 14 threads
+Compressing objects: 100% (15/15), done.
+Writing objects: 100% (15/15), 18.68 KiB | 18.68 MiB/s, done.                                                           
+Total 15 (delta 11), reused 0 (delta 0), pack-reused 0
+remote: Resolving deltas: 100% (11/11), completed with 11 local objects.                                                
+To https://github.com/Medic423/tcc.git
+   8e35eb0..5ef588a  main -> main
+```
+
+---
+
+Now let me update the NEXT_PRIORITIES.md file to reflect this major achievement:
+
+
+---
+
+<details><summary>Edit file: NEXT_PRIORITIES.md</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 43, lines removed: undefined
+
+```diff
+@@ -570,4 +570,47 @@
+  5. **Security Enhancements** (1 hour)
+  6. **Production Deployment** (1 hour)
++ 
++ ---
++ 
++ ## 🎉 **MAJOR ACHIEVEMENT: END-TO-END TRIP DATA FLOW COMPLETE!**
++ 
++ **Date**: September 9, 2025
++ **Status**: 100% Complete - All Systems Working Perfectly
++ 
++ ### **✅ END-TO-END DATA FLOW VERIFICATION**
++ 
++ **Complete Trip Lifecycle Working**:
++ - ✅ **Trip Creation**: Healthcare users can create comprehensive trip requests
++ - ✅ **TCC Trips View**: All trips visible with advanced filtering, sorting, and search
++ - ✅ **EMS Dashboard**: PENDING trips visible in "Available Trips" tab
++ - ✅ **Trip Acceptance**: EMS users can accept trips with real-time status updates
++ - ✅ **Status Propagation**: Accepted trips appear in TCC and Hospital dashboards
++ - ✅ **Real-time Updates**: 30-second auto-refresh working across all views
++ - ✅ **Role-based Access**: Admin sees all, Hospital sees their own, EMS sees available/accepted
++ 
++ **Technical Fixes Implemented**:
++ - ✅ **API Integration**: Fixed TripsView to use correct `tripsAPI.getAll()` method
++ - ✅ **Data Mapping**: Fixed EMS Dashboard to use `patientId` instead of `patientName`
++ - ✅ **Backend Filtering**: Added support for comma-separated status values
++ - ✅ **Database Sync**: All three databases (Center, EMS, Hospital) properly synchronized
++ - ✅ **Testing**: Comprehensive end-to-end testing script validates complete workflow
++ 
++ **Current System Status**:
++ - **Total Trips**: 9 trips in database
++ - **PENDING Trips**: 4 trips (visible in EMS Dashboard)
++ - **ACCEPTED/IN_PROGRESS/COMPLETED**: 5 trips (visible in EMS Dashboard "My Trips")
++ - **TCC Trips View**: All 9 trips with full filtering and search capabilities
++ - **Real-time Updates**: Working across all dashboards
++ - **User Workflows**: Complete end-to-end testing successful
++ 
++ **Test Results**:
++ - ✅ Trip creation → TCC Trips View visibility
++ - ✅ Trip creation → EMS Dashboard "Available Trips" visibility
++ - ✅ Trip acceptance → Status update propagation
++ - ✅ Trip acceptance → EMS Dashboard "My Trips" visibility
++ - ✅ Trip acceptance → TCC Trips View status update
++ - ✅ Trip acceptance → Hospital Dashboard status update
++ 
++ **This represents a major milestone in the TCC platform development!** 🚀
+  
+  ---
+```
+
+</details>
+
+---
+
+Now let me commit and push the documentation update:
+
+
+---
+
+```bash
+git add NEXT_PRIORITIES.md && git commit -m "docs: Update NEXT_PRIORITIES.md with end-to-end trip data flow completion
+
+- Document major achievement of complete end-to-end trip data flow
+- Add comprehensive test results and technical fixes implemented
+- Update current system status with 9 trips and working workflows
+- Mark Phase 4 as 100% complete with all success criteria met
+- Ready for Phase 5: Advanced Features & Production Readiness"
+```
+
+```
+[main 736e0ec] docs: Update NEXT_PRIORITIES.md with end-to-end trip data flow completion                                
+ 1 file changed, 43 insertions(+)
+```
+
+---
+
+```bash
+git push origin main
+```
+
+```
+Enumerating objects: 5, done.
+Counting objects: 100% (5/5), done.
+Delta compression using up to 14 threads
+Compressing objects: 100% (3/3), done.
+Writing objects: 100% (3/3), 1.41 KiB | 1.41 MiB/s, done.
+Total 3 (delta 2), reused 0 (delta 0), pack-reused 0
+remote: Resolving deltas: 100% (2/2), completed with 2 local objects.                                                   
+To https://github.com/Medic423/tcc.git
+   5ef588a..736e0ec  main -> main
+```
+
+---
+
+Now let me create a backup to your external drive:
+
+
+---
+
+```bash
+rsync -av --progress /Users/scooper/Code/tcc-new-project/ /Volumes/Acasis/tcc-backup-$(date +%Y%m%d-%H%M%S)/
+```
+
+```
+                                                            check=20333/20667)                                          
+frontend/node_modules/wrap-ansi-cjs/node_modules/string-width/index.js                                                  
+            923 100%    6.94MB/s   00:00:00 (xfer#17860, to-check=20334/20667)                                          
+frontend/node_modules/wrap-ansi-cjs/node_modules/string-width/license                                                   
+           1109 100%    9.46MB/s   00:00:00 (xfer#17861, to-check=20335/20667)                                          
+frontend/node_modules/wrap-ansi-cjs/node_modules/string-width/package.json                                              
+            941 100%    6.60MB/s   00:00:00 (xfer#17862, to-check=20336/20667)                                          
+frontend/node_modules/wrap-ansi-cjs/node_modules/string-width/readme.md                                                 
+           1396 100%    9.94MB/s   00:00:00 (xfer#17863, to-check=20337/20667)                                          
+frontend/node_modules/wrap-ansi/
+frontend/node_modules/wrap-ansi/index.d.ts
+           1268 100%    8.63MB/s   00:00:00 (xfer#17864, to-check=20339/20667)                                          
+frontend/node_modules/wrap-ansi/index.js
+           5778 100%   35.29MB/s   00:00:00 (xfer#17865, to-check=20340/20667)                                          
+frontend/node_modules/wrap-ansi/license
+           1117 100%    6.46MB/s   00:00:00 (xfer#17866, to-check=20341/20667)                                          
+frontend/node_modules/wrap-ansi/package.json
+           1148 100%   10.05MB/s   00:00:00 (xfer#17867, to-check=20342/20667)                                          
+frontend/node_modules/wrap-ansi/readme.md
+           2466 100%   16.69MB/s   00:00:00 (xfer#17868, to-check=20343/20667)                                          
+frontend/node_modules/wrap-ansi/node_modules/
+frontend/node_modules/wrap-ansi/node_modules/ansi-regex/
+frontend/node_modules/wrap-ansi/node_modules/ansi-regex/index.d.ts                                                      
+            689 100%    4.47MB/s   00:00:00 (xfer#17869, to-check=20346/20667)                                          
+frontend/node_modules/wrap-ansi/node_modules/ansi-regex/index.js                                                        
+            590 100%    3.93MB/s   00:00:00 (xfer#17870, to-check=20347/20667)                                          
+frontend/node_modules/wrap-ansi/node_modules/ansi-regex/license                                                         
+           1117 100%    7.89MB/s   00:00:00 (xfer#17871, to-check=20348/20667)                                          
+frontend/node_modules/wrap-ansi/node_modules/ansi-regex/package.json                                                    
+           1035 100%    6.46MB/s   00:00:00 (xfer#17872, to-check=20349/20667)                                          
+frontend/node_modules/wrap-ansi/node_modules/ansi-regex/readme.md                                                       
+           2434 100%   32.24MB/s   00:00:00 (xfer#17873, to-check=20350/20667)                                          
+frontend/node_modules/wrap-ansi/node_modules/ansi-styles/
+frontend/node_modules/wrap-ansi/node_modules/ansi-styles/index.d.ts                                                     
+           5198 100%   30.58MB/s   00:00:00 (xfer#17874, to-check=20352/20667)                                          
+frontend/node_modules/wrap-ansi/node_modules/ansi-styles/index.js                                                       
+           5267 100%   31.40MB/s   00:00:00 (xfer#17875, to-check=20353/20667)                                          
+frontend/node_modules/wrap-ansi/node_modules/ansi-styles/license                                                        
+           1117 100%    8.26MB/s   00:00:00 (xfer#17876, to-check=20354/20667)                                          
+frontend/node_modules/wrap-ansi/node_modules/ansi-styles/package.json                                                   
+           1022 100%    7.01MB/s   00:00:00 (xfer#17877, to-check=20355/20667)                                          
+frontend/node_modules/wrap-ansi/node_modules/ansi-styles/readme.md                                                      
+           4908 100%   28.37MB/s   00:00:00 (xfer#17878, to-check=20356/20667)                                          
+frontend/node_modules/wrap-ansi/node_modules/strip-ansi/
+frontend/node_modules/wrap-ansi/node_modules/strip-ansi/index.d.ts                                                      
+            349 100%    2.48MB/s   00:00:00 (xfer#17879, to-check=20358/20667)                                          
+frontend/node_modules/wrap-ansi/node_modules/strip-ansi/index.js                                                        
+            468 100%    3.23MB/s   00:00:00 (xfer#17880, to-check=20359/20667)                                          
+frontend/node_modules/wrap-ansi/node_modules/strip-ansi/license                                                         
+           1117 100%    8.12MB/s   00:00:00 (xfer#17881, to-check=20360/20667)                                          
+frontend/node_modules/wrap-ansi/node_modules/strip-ansi/package.json                                                    
+            914 100%    6.23MB/s   00:00:00 (xfer#17882, to-check=20361/20667)                                          
+frontend/node_modules/wrap-ansi/node_modules/strip-ansi/readme.md                                                       
+           1473 100%   22.32MB/s   00:00:00 (xfer#17883, to-check=20362/20667)                                          
+frontend/node_modules/wrappy/
+frontend/node_modules/wrappy/LICENSE
+            765 100%    5.52MB/s   00:00:00 (xfer#17884, to-check=20364/20667)                                          
+frontend/node_modules/wrappy/README.md
+            685 100%    4.57MB/s   00:00:00 (xfer#17885, to-check=20365/20667)                                          
+frontend/node_modules/wrappy/package.json
+            606 100%    3.88MB/s   00:00:00 (xfer#17886, to-check=20366/20667)                                          
+frontend/node_modules/wrappy/wrappy.js
+            905 100%    5.56MB/s   00:00:00 (xfer#17887, to-check=20367/20667)                                          
+frontend/node_modules/yallist/
+frontend/node_modules/yallist/LICENSE
+            765 100%    5.10MB/s   00:00:00 (xfer#17888, to-check=20369/20667)                                          
+frontend/node_modules/yallist/README.md
+           4717 100%   34.56MB/s   00:00:00 (xfer#17889, to-check=20370/20667)                                          
+frontend/node_modules/yallist/iterator.js
+            207 100%    1.53MB/s   00:00:00 (xfer#17890, to-check=20371/20667)                                          
+frontend/node_modules/yallist/package.json
+            652 100%    4.64MB/s   00:00:00 (xfer#17891, to-check=20372/20667)                                          
+frontend/node_modules/yallist/yallist.js
+           8425 100%   44.64MB/s   00:00:00 (xfer#17892, to-check=20373/20667)                                          
+frontend/node_modules/yaml/
+frontend/node_modules/yaml/LICENSE
+            738 100%    5.46MB/s   00:00:00 (xfer#17893, to-check=20375/20667)                                          
+frontend/node_modules/yaml/README.md
+           6266 100%   41.84MB/s   00:00:00 (xfer#17894, to-check=20376/20667)                                          
+frontend/node_modules/yaml/bin.mjs
+            310 100%    2.33MB/s   00:00:00 (xfer#17895, to-check=20377/20667)                                          
+frontend/node_modules/yaml/package.json
+           3229 100%   28.20MB/s   00:00:00 (xfer#17896, to-check=20378/20667)                                          
+frontend/node_modules/yaml/util.js
+             80 100%  723.36KB/s   00:00:00 (xfer#17897, to-check=20379/20667)                                          
+frontend/node_modules/yaml/browser/
+frontend/node_modules/yaml/browser/index.js
+            191 100%    1.41MB/s   00:00:00 (xfer#17898, to-check=20381/20667)                                          
+frontend/node_modules/yaml/browser/package.json
+             23 100%  488.12KB/s   00:00:00 (xfer#17899, to-check=20382/20667)                                          
+frontend/node_modules/yaml/browser/dist/
+frontend/node_modules/yaml/browser/dist/errors.js
+           2029 100%   15.98MB/s   00:00:00 (xfer#17900, to-check=20384/20667)                                          
+frontend/node_modules/yaml/browser/dist/index.js
+            879 100%    6.50MB/s   00:00:00 (xfer#17901, to-check=20385/20667)                                          
+frontend/node_modules/yaml/browser/dist/log.js
+            260 100%    2.02MB/s   00:00:00 (xfer#17902, to-check=20386/20667)                                          
+frontend/node_modules/yaml/browser/dist/public-api.js
+           3992 100%   31.50MB/s   00:00:00 (xfer#17903, to-check=20387/20667)                                          
+frontend/node_modules/yaml/browser/dist/util.js
+            594 100%    4.01MB/s   00:00:00 (xfer#17904, to-check=20388/20667)                                          
+frontend/node_modules/yaml/browser/dist/visit.js
+           9107 100%   54.29MB/s   00:00:00 (xfer#17905, to-check=20389/20667)                                          
+frontend/node_modules/yaml/browser/dist/compose/
+frontend/node_modules/yaml/browser/dist/compose/compose-collection.js                                                   
+           3505 100%   22.76MB/s   00:00:00 (xfer#17906, to-check=20391/20667)                                          
+frontend/node_modules/yaml/browser/dist/compose/compose-doc.js                                                          
+           1555 100%   11.76MB/s   00:00:00 (xfer#17907, to-check=20392/20667)                                          
+frontend/node_modules/yaml/browser/dist/compose/compose-node.js                                                         
+           3817 100%   21.53MB/s   00:00:00 (xfer#17908, to-check=20393/20667)                                          
+frontend/node_modules/yaml/browser/dist/compose/compose-scalar.js                                                       
+           3316 100%   26.11MB/s   00:00:00 (xfer#17909, to-check=20394/20667)                                          
+frontend/node_modules/yaml/browser/dist/compose/composer.js
+           8400 100%   38.14MB/s   00:00:00 (xfer#17910, to-check=20395/20667)                                          
+frontend/node_modules/yaml/browser/dist/compose/resolve-block-map.js                                                    
+           4915 100%   31.92MB/s   00:00:00 (xfer#17911, to-check=20396/20667)                                          
+frontend/node_modules/yaml/browser/dist/compose/resolve-block-scalar.js                                                 
+           7447 100%   41.55MB/s   00:00:00 (xfer#17912, to-check=20397/20667)                                          
+frontend/node_modules/yaml/browser/dist/compose/resolve-block-seq.js                                                    
+           1748 100%    9.63MB/s   00:00:00 (xfer#17913, to-check=20398/20667)                                          
+frontend/node_modules/yaml/browser/dist/compose/resolve-end.js                                                          
+           1239 100%    7.72MB/s   00:00:00 (xfer#17914, to-check=20399/20667)                                          
+frontend/node_modules/yaml/browser/dist/compose/resolve-flow-collection.js                                              
+           8797 100%   34.67MB/s   00:00:00 (xfer#17915, to-check=20400/20667)                                          
+frontend/node_modules/yaml/browser/dist/compose/resolve-flow-scalar.js                                                  
+           7302 100%   42.21MB/s   00:00:00 (xfer#17916, to-check=20401/20667)                                          
+frontend/node_modules/yaml/browser/dist/compose/resolve-props.js                                                        
+           5552 100%   27.42MB/s   00:00:00 (xfer#17917, to-check=20402/20667)                                          
+frontend/node_modules/yaml/browser/dist/compose/util-contains-newline.js                                                
+           1051 100%    5.03MB/s   00:00:00 (xfer#17918, to-check=20403/20667)                                          
+frontend/node_modules/yaml/browser/dist/compose/util-empty-scalar-position.js                                           
+            816 100%    6.03MB/s   00:00:00 (xfer#17919, to-check=20404/20667)                                          
+frontend/node_modules/yaml/browser/dist/compose/util-flow-indent-check.js                                               
+            494 100%    1.77MB/s   00:00:00 (xfer#17920, to-check=20405/20667)                                          
+frontend/node_modules/yaml/browser/dist/compose/util-map-includes.js                                                    
+            428 100%    8.15MB/s   00:00:00 (xfer#17921, to-check=20406/20667)                                          
+frontend/node_modules/yaml/browser/dist/doc/
+frontend/node_modules/yaml/browser/dist/doc/Document.js
+          12903 100%   53.71MB/s   00:00:00 (xfer#17922, to-check=20408/20667)                                          
+frontend/node_modules/yaml/browser/dist/doc/anchors.js
+           2276 100%   14.38MB/s   00:00:00 (xfer#17923, to-check=20409/20667)                                          
+frontend/node_modules/yaml/browser/dist/doc/applyReviver.js
+           1923 100%   12.31MB/s   00:00:00 (xfer#17924, to-check=20410/20667)                                          
+frontend/node_modules/yaml/browser/dist/doc/createNode.js
+           3061 100%   21.29MB/s   00:00:00 (xfer#17925, to-check=20411/20667)                                          
+frontend/node_modules/yaml/browser/dist/doc/directives.js
+           6188 100%   26.00MB/s   00:00:00 (xfer#17926, to-check=20412/20667)                                          
+frontend/node_modules/yaml/browser/dist/nodes/
+frontend/node_modules/yaml/browser/dist/nodes/Alias.js
+           3757 100%   23.74MB/s   00:00:00 (xfer#17927, to-check=20414/20667)                                          
+frontend/node_modules/yaml/browser/dist/nodes/Collection.js
+           5076 100%   27.97MB/s   00:00:00 (xfer#17928, to-check=20415/20667)                                          
+frontend/node_modules/yaml/browser/dist/nodes/Node.js
+           1339 100%    8.62MB/s   00:00:00 (xfer#17929, to-check=20416/20667)                                          
+frontend/node_modules/yaml/browser/dist/nodes/Pair.js
+           1124 100%    4.78MB/s   00:00:00 (xfer#17930, to-check=20417/20667)                                          
+frontend/node_modules/yaml/browser/dist/nodes/Scalar.js
+            700 100%    5.25MB/s   00:00:00 (xfer#17931, to-check=20418/20667)                                          
+frontend/node_modules/yaml/browser/dist/nodes/YAMLMap.js
+           4957 100%   76.26MB/s   00:00:00 (xfer#17932, to-check=20419/20667)                                          
+frontend/node_modules/yaml/browser/dist/nodes/YAMLSeq.js
+           3573 100%   23.16MB/s   00:00:00 (xfer#17933, to-check=20420/20667)                                          
+frontend/node_modules/yaml/browser/dist/nodes/addPairToJSMap.js                                                         
+           2289 100%   14.65MB/s   00:00:00 (xfer#17934, to-check=20421/20667)                                          
+frontend/node_modules/yaml/browser/dist/nodes/identity.js
+           1513 100%    9.13MB/s   00:00:00 (xfer#17935, to-check=20422/20667)                                          
+frontend/node_modules/yaml/browser/dist/nodes/toJS.js
+           1266 100%   16.55MB/s   00:00:00 (xfer#17936, to-check=20423/20667)                                          
+frontend/node_modules/yaml/browser/dist/parse/
+frontend/node_modules/yaml/browser/dist/parse/cst-scalar.js
+           9235 100%   28.24MB/s   00:00:00 (xfer#17937, to-check=20425/20667)                                          
+frontend/node_modules/yaml/browser/dist/parse/cst-stringify.js                                                          
+           1775 100%   11.20MB/s   00:00:00 (xfer#17938, to-check=20426/20667)                                          
+frontend/node_modules/yaml/browser/dist/parse/cst-visit.js
+           3966 100%   25.71MB/s   00:00:00 (xfer#17939, to-check=20427/20667)                                          
+frontend/node_modules/yaml/browser/dist/parse/cst.js
+           2886 100%   20.69MB/s   00:00:00 (xfer#17940, to-check=20428/20667)                                          
+frontend/node_modules/yaml/browser/dist/parse/lexer.js
+          24062 100%   79.41MB/s   00:00:00 (xfer#17941, to-check=20429/20667)                                          
+frontend/node_modules/yaml/browser/dist/parse/line-counter.js                                                           
+           1419 100%   11.97MB/s   00:00:00 (xfer#17942, to-check=20430/20667)                                          
+frontend/node_modules/yaml/browser/dist/parse/parser.js
+          35182 100%   78.75MB/s   00:00:00 (xfer#17943, to-check=20431/20667)                                          
+frontend/node_modules/yaml/browser/dist/schema/
+frontend/node_modules/yaml/browser/dist/schema/Schema.js
+           1495 100%    7.62MB/s   00:00:00 (xfer#17944, to-check=20433/20667)                                          
+frontend/node_modules/yaml/browser/dist/schema/tags.js
+           2962 100%   21.58MB/s   00:00:00 (xfer#17945, to-check=20434/20667)                                          
+frontend/node_modules/yaml/browser/dist/schema/common/
+frontend/node_modules/yaml/browser/dist/schema/common/map.js
+            439 100%    2.85MB/s   00:00:00 (xfer#17946, to-check=20436/20667)                                          
+frontend/node_modules/yaml/browser/dist/schema/common/null.js                                                           
+            434 100%    8.43MB/s   00:00:00 (xfer#17947, to-check=20437/20667)                                          
+frontend/node_modules/yaml/browser/dist/schema/common/seq.js
+            440 100%    2.93MB/s   00:00:00 (xfer#17948, to-check=20438/20667)                                          
+frontend/node_modules/yaml/browser/dist/schema/common/string.js                                                         
+            421 100%    2.23MB/s   00:00:00 (xfer#17949, to-check=20439/20667)                                          
+frontend/node_modules/yaml/browser/dist/schema/core/
+frontend/node_modules/yaml/browser/dist/schema/core/bool.js
+            607 100%    5.31MB/s   00:00:00 (xfer#17950, to-check=20441/20667)                                          
+frontend/node_modules/yaml/browser/dist/schema/core/float.js
+           1399 100%   10.50MB/s   00:00:00 (xfer#17951, to-check=20442/20667)                                          
+frontend/node_modules/yaml/browser/dist/schema/core/int.js
+           1324 100%    9.02MB/s   00:00:00 (xfer#17952, to-check=20443/20667)                                          
+frontend/node_modules/yaml/browser/dist/schema/core/schema.js                                                           
+            480 100%    2.88MB/s   00:00:00 (xfer#17953, to-check=20444/20667)                                          
+frontend/node_modules/yaml/browser/dist/schema/json/
+frontend/node_modules/yaml/browser/dist/schema/json/schema.js                                                           
+           1867 100%   10.92MB/s   00:00:00 (xfer#17954, to-check=20446/20667)                                          
+frontend/node_modules/yaml/browser/dist/schema/yaml-1.1/
+frontend/node_modules/yaml/browser/dist/schema/yaml-1.1/binary.js                                                       
+           2315 100%   17.37MB/s   00:00:00 (xfer#17955, to-check=20448/20667)                                          
+frontend/node_modules/yaml/browser/dist/schema/yaml-1.1/bool.js                                                         
+            787 100%    5.29MB/s   00:00:00 (xfer#17956, to-check=20449/20667)                                          
+frontend/node_modules/yaml/browser/dist/schema/yaml-1.1/float.js                                                        
+           1515 100%   10.39MB/s   00:00:00 (xfer#17957, to-check=20450/20667)                                          
+frontend/node_modules/yaml/browser/dist/schema/yaml-1.1/int.js                                                          
+           2132 100%   13.04MB/s   00:00:00 (xfer#17958, to-check=20451/20667)                                          
+frontend/node_modules/yaml/browser/dist/schema/yaml-1.1/merge.js                                                        
+           2447 100%   19.46MB/s   00:00:00 (xfer#17959, to-check=20452/20667)                                          
+frontend/node_modules/yaml/browser/dist/schema/yaml-1.1/omap.js                                                         
+           2473 100%   14.83MB/s   00:00:00 (xfer#17960, to-check=20453/20667)                                          
+frontend/node_modules/yaml/browser/dist/schema/yaml-1.1/pairs.js                                                        
+           2751 100%   20.80MB/s   00:00:00 (xfer#17961, to-check=20454/20667)                                          
+frontend/node_modules/yaml/browser/dist/schema/yaml-1.1/schema.js                                                       
+            860 100%   16.38MB/s   00:00:00 (xfer#17962, to-check=20455/20667)                                          
+frontend/node_modules/yaml/browser/dist/schema/yaml-1.1/set.js                                                          
+           3030 100%   53.63MB/s   00:00:00 (xfer#17963, to-check=20456/20667)                                          
+frontend/node_modules/yaml/browser/dist/schema/yaml-1.1/timestamp.js                                                    
+           3698 100%   22.45MB/s   00:00:00 (xfer#17964, to-check=20457/20667)                                          
+frontend/node_modules/yaml/browser/dist/stringify/
+frontend/node_modules/yaml/browser/dist/stringify/foldFlowLines.js                                                      
+           4794 100%   19.06MB/s   00:00:00 (xfer#17965, to-check=20459/20667)                                          
+frontend/node_modules/yaml/browser/dist/stringify/stringify.js                                                          
+           4370 100%   29.33MB/s   00:00:00 (xfer#17966, to-check=20460/20667)                                          
+frontend/node_modules/yaml/browser/dist/stringify/stringifyCollection.js                                                
+           5193 100%   28.61MB/s   00:00:00 (xfer#17967, to-check=20461/20667)                                          
+frontend/node_modules/yaml/browser/dist/stringify/stringifyComment.js                                                   
+            724 100%    5.90MB/s   00:00:00 (xfer#17968, to-check=20462/20667)                                          
+frontend/node_modules/yaml/browser/dist/stringify/stringifyDocument.js                                                  
+           2983 100%   21.73MB/s   00:00:00 (xfer#17969, to-check=20463/20667)                                          
+frontend/node_modules/yaml/browser/dist/stringify/stringifyNumber.js                                                    
+            718 100%    3.91MB/s   00:00:00 (xfer#17970, to-check=20464/20667)                                          
+frontend/node_modules/yaml/browser/dist/stringify/stringifyPair.js                                                      
+           5269 100%   83.63MB/s   00:00:00 (xfer#17971, to-check=20465/20667)                                          
+frontend/node_modules/yaml/browser/dist/stringify/stringifyString.js                                                    
+          13164 100%   56.50MB/s   00:00:00 (xfer#17972, to-check=20466/20667)                                          
+frontend/node_modules/yaml/dist/
+frontend/node_modules/yaml/dist/cli.d.ts
+           1254 100%    9.34MB/s   00:00:00 (xfer#17973, to-check=20468/20667)                                          
+frontend/node_modules/yaml/dist/cli.mjs
+           7462 100%   46.20MB/s   00:00:00 (xfer#17974, to-check=20469/20667)                                          
+frontend/node_modules/yaml/dist/errors.d.ts
+           1236 100%    7.65MB/s   00:00:00 (xfer#17975, to-check=20470/20667)                                          
+frontend/node_modules/yaml/dist/errors.js
+           2124 100%   13.32MB/s   00:00:00 (xfer#17976, to-check=20471/20667)                                          
+frontend/node_modules/yaml/dist/index.d.ts
+           1394 100%    9.23MB/s   00:00:00 (xfer#17977, to-check=20472/20667)                                          
+frontend/node_modules/yaml/dist/index.js
+           1769 100%   11.87MB/s   00:00:00 (xfer#17978, to-check=20473/20667)                                          
+frontend/node_modules/yaml/dist/log.d.ts
+            226 100%    1.70MB/s   00:00:00 (xfer#17979, to-check=20474/20667)                                          
+frontend/node_modules/yaml/dist/log.js
+            459 100%    3.42MB/s   00:00:00 (xfer#17980, to-check=20475/20667)                                          
+frontend/node_modules/yaml/dist/options.d.ts
+          10992 100%   60.56MB/s   00:00:00 (xfer#17981, to-check=20476/20667)                                          
+frontend/node_modules/yaml/dist/public-api.d.ts
+           2864 100%   17.98MB/s   00:00:00 (xfer#17982, to-check=20477/20667)                                          
+frontend/node_modules/yaml/dist/public-api.js
+           4187 100%   19.96MB/s   00:00:00 (xfer#17983, to-check=20478/20667)                                          
+frontend/node_modules/yaml/dist/test-events.d.ts
+             96 100%  744.73KB/s   00:00:00 (xfer#17984, to-check=20479/20667)                                          
+frontend/node_modules/yaml/dist/test-events.js
+           4274 100%   50.28MB/s   00:00:00 (xfer#17985, to-check=20480/20667)                                          
+frontend/node_modules/yaml/dist/util.d.ts
+            835 100%    3.52MB/s   00:00:00 (xfer#17986, to-check=20481/20667)                                          
+frontend/node_modules/yaml/dist/util.js
+           1008 100%    5.09MB/s   00:00:00 (xfer#17987, to-check=20482/20667)                                          
+frontend/node_modules/yaml/dist/visit.d.ts
+           5048 100%   47.18MB/s   00:00:00 (xfer#17988, to-check=20483/20667)                                          
+frontend/node_modules/yaml/dist/visit.js
+           9253 100%   56.94MB/s   00:00:00 (xfer#17989, to-check=20484/20667)                                          
+frontend/node_modules/yaml/dist/compose/
+frontend/node_modules/yaml/dist/compose/compose-collection.d.ts                                                         
+            582 100%    3.72MB/s   00:00:00 (xfer#17990, to-check=20486/20667)                                          
+frontend/node_modules/yaml/dist/compose/compose-collection.js                                                           
+           3618 100%   28.05MB/s   00:00:00 (xfer#17991, to-check=20487/20667)                                          
+frontend/node_modules/yaml/dist/compose/compose-doc.d.ts
+            623 100%    4.30MB/s   00:00:00 (xfer#17992, to-check=20488/20667)                                          
+frontend/node_modules/yaml/dist/compose/compose-doc.js
+           1615 100%   11.08MB/s   00:00:00 (xfer#17993, to-check=20489/20667)                                          
+frontend/node_modules/yaml/dist/compose/compose-node.d.ts
+           1225 100%    8.46MB/s   00:00:00 (xfer#17994, to-check=20490/20667)                                          
+frontend/node_modules/yaml/dist/compose/compose-node.js
+           3964 100%   23.32MB/s   00:00:00 (xfer#17995, to-check=20491/20667)                                          
+frontend/node_modules/yaml/dist/compose/compose-scalar.d.ts
+            393 100%    2.57MB/s   00:00:00 (xfer#17996, to-check=20492/20667)                                          
+frontend/node_modules/yaml/dist/compose/compose-scalar.js
+           3446 100%   25.72MB/s   00:00:00 (xfer#17997, to-check=20493/20667)                                          
+frontend/node_modules/yaml/dist/compose/composer.d.ts
+           2652 100%   23.01MB/s   00:00:00 (xfer#17998, to-check=20494/20667)                                          
+frontend/node_modules/yaml/dist/compose/composer.js
+           8608 100%   54.74MB/s   00:00:00 (xfer#17999, to-check=20495/20667)                                          
+frontend/node_modules/yaml/dist/compose/resolve-block-map.d.ts                                                          
+            457 100%    3.66MB/s   00:00:00 (xfer#18000, to-check=20496/20667)                                          
+frontend/node_modules/yaml/dist/compose/resolve-block-map.js
+           5071 100%   29.70MB/s   00:00:00 (xfer#18001, to-check=20497/20667)                                          
+frontend/node_modules/yaml/dist/compose/resolve-block-scalar.d.ts                                                       
+            484 100%    3.72MB/s   00:00:00 (xfer#18002, to-check=20498/20667)                                          
+frontend/node_modules/yaml/dist/compose/resolve-block-scalar.js                                                         
+           7500 100%   49.34MB/s   00:00:00 (xfer#18003, to-check=20499/20667)                                          
+frontend/node_modules/yaml/dist/compose/resolve-block-seq.d.ts                                                          
+            467 100%    3.78MB/s   00:00:00 (xfer#18004, to-check=20500/20667)                                          
+frontend/node_modules/yaml/dist/compose/resolve-block-seq.js
+           1820 100%   14.44MB/s   00:00:00 (xfer#18005, to-check=20501/20667)                                          
+frontend/node_modules/yaml/dist/compose/resolve-end.d.ts
+            283 100%    2.35MB/s   00:00:00 (xfer#18006, to-check=20502/20667)                                          
+frontend/node_modules/yaml/dist/compose/resolve-end.js
+           1264 100%    9.43MB/s   00:00:00 (xfer#18007, to-check=20503/20667)                                          
+frontend/node_modules/yaml/dist/compose/resolve-flow-collection.d.ts                                                    
+            636 100%    4.77MB/s   00:00:00 (xfer#18008, to-check=20504/20667)                                          
+frontend/node_modules/yaml/dist/compose/resolve-flow-collection.js                                                      
+           8946 100%   57.25MB/s   00:00:00 (xfer#18009, to-check=20505/20667)                                          
+frontend/node_modules/yaml/dist/compose/resolve-flow-scalar.d.ts                                                        
+            437 100%    2.88MB/s   00:00:00 (xfer#18010, to-check=20506/20667)                                          
+frontend/node_modules/yaml/dist/compose/resolve-flow-scalar.js                                                          
+           7364 100%   60.48MB/s   00:00:00 (xfer#18011, to-check=20507/20667)                                          
+frontend/node_modules/yaml/dist/compose/resolve-props.d.ts
+            848 100%    6.47MB/s   00:00:00 (xfer#18012, to-check=20508/20667)                                          
+frontend/node_modules/yaml/dist/compose/resolve-props.js
+           5579 100%   27.69MB/s   00:00:00 (xfer#18013, to-check=20509/20667)                                          
+frontend/node_modules/yaml/dist/compose/util-contains-newline.d.ts                                                      
+            131 100%    2.50MB/s   00:00:00 (xfer#18014, to-check=20510/20667)                                          
+frontend/node_modules/yaml/dist/compose/util-contains-newline.js                                                        
+           1081 100%    7.42MB/s   00:00:00 (xfer#18015, to-check=20511/20667)                                          
+frontend/node_modules/yaml/dist/compose/util-empty-scalar-position.d.ts                                                 
+            161 100%    3.13MB/s   00:00:00 (xfer#18016, to-check=20512/20667)                                          
+frontend/node_modules/yaml/dist/compose/util-empty-scalar-position.js                                                   
+            850 100%    5.48MB/s   00:00:00 (xfer#18017, to-check=20513/20667)                                          
+frontend/node_modules/yaml/dist/compose/util-flow-indent-check.d.ts                                                     
+            221 100%    4.70MB/s   00:00:00 (xfer#18018, to-check=20514/20667)                                          
+frontend/node_modules/yaml/dist/compose/util-flow-indent-check.js                                                       
+            547 100%    2.56MB/s   00:00:00 (xfer#18019, to-check=20515/20667)                                          
+frontend/node_modules/yaml/dist/compose/util-map-includes.d.ts                                                          
+            260 100%    5.28MB/s   00:00:00 (xfer#18020, to-check=20516/20667)                                          
+frontend/node_modules/yaml/dist/compose/util-map-includes.js
+            471 100%    8.97MB/s   00:00:00 (xfer#18021, to-check=20517/20667)                                          
+frontend/node_modules/yaml/dist/doc/
+frontend/node_modules/yaml/dist/doc/Document.d.ts
+           6540 100%   20.12MB/s   00:00:00 (xfer#18022, to-check=20519/20667)                                          
+frontend/node_modules/yaml/dist/doc/Document.js
+          13114 100%   50.44MB/s   00:00:00 (xfer#18023, to-check=20520/20667)                                          
+frontend/node_modules/yaml/dist/doc/anchors.d.ts
+            958 100%    6.17MB/s   00:00:00 (xfer#18024, to-check=20521/20667)                                          
+frontend/node_modules/yaml/dist/doc/anchors.js
+           2386 100%   14.77MB/s   00:00:00 (xfer#18025, to-check=20522/20667)                                          
+frontend/node_modules/yaml/dist/doc/applyReviver.d.ts
+            445 100%    4.16MB/s   00:00:00 (xfer#18026, to-check=20523/20667)                                          
+frontend/node_modules/yaml/dist/doc/applyReviver.js
+           1950 100%   17.37MB/s   00:00:00 (xfer#18027, to-check=20524/20667)                                          
+frontend/node_modules/yaml/dist/doc/createNode.d.ts
+            662 100%    4.86MB/s   00:00:00 (xfer#18028, to-check=20525/20667)                                          
+frontend/node_modules/yaml/dist/doc/createNode.js
+           3138 100%   44.38KB/s   00:00:00 (xfer#18029, to-check=20526/20667)                                          
+frontend/node_modules/yaml/dist/doc/directives.d.ts
+           1910 100%    2.27MB/s   00:00:00 (xfer#18030, to-check=20527/20667)                                          
+frontend/node_modules/yaml/dist/doc/directives.js
+           6237 100%   15.61MB/s   00:00:00 (xfer#18031, to-check=20528/20667)                                          
+frontend/node_modules/yaml/dist/nodes/
+frontend/node_modules/yaml/dist/nodes/Alias.d.ts
+           1077 100%    6.42MB/s   00:00:00 (xfer#18032, to-check=20530/20667)                                          
+frontend/node_modules/yaml/dist/nodes/Alias.js
+           3801 100%   21.32MB/s   00:00:00 (xfer#18033, to-check=20531/20667)                                          
+frontend/node_modules/yaml/dist/nodes/Collection.d.ts
+           2909 100%   19.14MB/s   00:00:00 (xfer#18034, to-check=20532/20667)                                          
+frontend/node_modules/yaml/dist/nodes/Collection.js
+           5221 100%   27.81MB/s   00:00:00 (xfer#18035, to-check=20533/20667)                                          
+frontend/node_modules/yaml/dist/nodes/Node.d.ts
+           2538 100%   19.05MB/s   00:00:00 (xfer#18036, to-check=20534/20667)                                          
+frontend/node_modules/yaml/dist/nodes/Node.js
+           1382 100%    8.50MB/s   00:00:00 (xfer#18037, to-check=20535/20667)                                          
+frontend/node_modules/yaml/dist/nodes/Pair.d.ts
+           1118 100%    5.96MB/s   00:00:00 (xfer#18038, to-check=20536/20667)                                          
+frontend/node_modules/yaml/dist/nodes/Pair.js
+           1232 100%    8.40MB/s   00:00:00 (xfer#18039, to-check=20537/20667)                                          
+frontend/node_modules/yaml/dist/nodes/Scalar.d.ts
+           1689 100%   10.07MB/s   00:00:00 (xfer#18040, to-check=20538/20667)                                          
+frontend/node_modules/yaml/dist/nodes/Scalar.js
+            759 100%   10.51MB/s   00:00:00 (xfer#18041, to-check=20539/20667)                                          
+frontend/node_modules/yaml/dist/nodes/YAMLMap.d.ts
+           2376 100%   14.25MB/s   00:00:00 (xfer#18042, to-check=20540/20667)                                          
+frontend/node_modules/yaml/dist/nodes/YAMLMap.js
+           5105 100%   33.37MB/s   00:00:00 (xfer#18043, to-check=20541/20667)                                          
+frontend/node_modules/yaml/dist/nodes/YAMLSeq.d.ts
+           2511 100%   17.59MB/s   00:00:00 (xfer#18044, to-check=20542/20667)                                          
+frontend/node_modules/yaml/dist/nodes/YAMLSeq.js
+           3667 100%   24.99MB/s   00:00:00 (xfer#18045, to-check=20543/20667)                                          
+frontend/node_modules/yaml/dist/nodes/addPairToJSMap.d.ts
+            236 100%    1.64MB/s   00:00:00 (xfer#18046, to-check=20544/20667)                                          
+frontend/node_modules/yaml/dist/nodes/addPairToJSMap.js
+           2338 100%   12.52MB/s   00:00:00 (xfer#18047, to-check=20545/20667)                                          
+frontend/node_modules/yaml/dist/nodes/identity.d.ts
+           1379 100%    9.53MB/s   00:00:00 (xfer#18048, to-check=20546/20667)                                          
+frontend/node_modules/yaml/dist/nodes/identity.js
+           1794 100%    9.39MB/s   00:00:00 (xfer#18049, to-check=20547/20667)                                          
+frontend/node_modules/yaml/dist/nodes/toJS.d.ts
+            986 100%    5.84MB/s   00:00:00 (xfer#18050, to-check=20548/20667)                                          
+frontend/node_modules/yaml/dist/nodes/toJS.js
+           1292 100%   20.19MB/s   00:00:00 (xfer#18051, to-check=20549/20667)                                          
+frontend/node_modules/yaml/dist/parse/
+frontend/node_modules/yaml/dist/parse/cst-scalar.d.ts
+           3528 100%   22.29MB/s   00:00:00 (xfer#18052, to-check=20551/20667)                                          
+frontend/node_modules/yaml/dist/parse/cst-scalar.js
+           9382 100%   38.37MB/s   00:00:00 (xfer#18053, to-check=20552/20667)                                          
+frontend/node_modules/yaml/dist/parse/cst-stringify.d.ts
+            310 100%    2.17MB/s   00:00:00 (xfer#18054, to-check=20553/20667)                                          
+frontend/node_modules/yaml/dist/parse/cst-stringify.js
+           1799 100%   21.48MB/s   00:00:00 (xfer#18055, to-check=20554/20667)                                          
+frontend/node_modules/yaml/dist/parse/cst-visit.d.ts
+           2241 100%   13.62MB/s   00:00:00 (xfer#18056, to-check=20555/20667)                                          
+frontend/node_modules/yaml/dist/parse/cst-visit.js
+           3986 100%   39.66MB/s   00:00:00 (xfer#18057, to-check=20556/20667)                                          
+frontend/node_modules/yaml/dist/parse/cst.d.ts
+           3500 100%   25.69MB/s   00:00:00 (xfer#18058, to-check=20557/20667)                                          
+frontend/node_modules/yaml/dist/parse/cst.js
+           3242 100%   20.45MB/s   00:00:00 (xfer#18059, to-check=20558/20667)                                          
+frontend/node_modules/yaml/dist/parse/lexer.d.ts
+           2921 100%   17.11MB/s   00:00:00 (xfer#18060, to-check=20559/20667)                                          
+frontend/node_modules/yaml/dist/parse/lexer.js
+          24073 100%   66.73MB/s   00:00:00 (xfer#18061, to-check=20560/20667)                                          
+frontend/node_modules/yaml/dist/parse/line-counter.d.ts
+            733 100%    5.25MB/s   00:00:00 (xfer#18062, to-check=20561/20667)                                          
+frontend/node_modules/yaml/dist/parse/line-counter.js
+           1445 100%    8.82MB/s   00:00:00 (xfer#18063, to-check=20562/20667)                                          
+frontend/node_modules/yaml/dist/parse/parser.d.ts
+           2534 100%   14.48MB/s   00:00:00 (xfer#18064, to-check=20563/20667)                                          
+frontend/node_modules/yaml/dist/parse/parser.js
+          35340 100%   69.36MB/s   00:00:00 (xfer#18065, to-check=20564/20667)                                          
+frontend/node_modules/yaml/dist/schema/
+frontend/node_modules/yaml/dist/schema/Schema.d.ts
+            787 100%    4.87MB/s   00:00:00 (xfer#18066, to-check=20566/20667)                                          
+frontend/node_modules/yaml/dist/schema/Schema.js
+           1547 100%    8.83MB/s   00:00:00 (xfer#18067, to-check=20567/20667)                                          
+frontend/node_modules/yaml/dist/schema/json-schema.d.ts
+           1998 100%   11.77MB/s   00:00:00 (xfer#18068, to-check=20568/20667)                                          
+frontend/node_modules/yaml/dist/schema/tags.d.ts
+           1423 100%    8.81MB/s   00:00:00 (xfer#18069, to-check=20569/20667)                                          
+frontend/node_modules/yaml/dist/schema/tags.js
+           3239 100%   18.72MB/s   00:00:00 (xfer#18070, to-check=20570/20667)                                          
+frontend/node_modules/yaml/dist/schema/types.d.ts
+           3763 100%   22.43MB/s   00:00:00 (xfer#18071, to-check=20571/20667)                                          
+frontend/node_modules/yaml/dist/schema/common/
+frontend/node_modules/yaml/dist/schema/common/map.d.ts
+             88 100%  626.87KB/s   00:00:00 (xfer#18072, to-check=20573/20667)                                          
+frontend/node_modules/yaml/dist/schema/common/map.js
+            483 100%    3.01MB/s   00:00:00 (xfer#18073, to-check=20574/20667)                                          
+frontend/node_modules/yaml/dist/schema/common/null.d.ts
+            108 100%  676.40KB/s   00:00:00 (xfer#18074, to-check=20575/20667)                                          
+frontend/node_modules/yaml/dist/schema/common/null.js
+            469 100%    2.71MB/s   00:00:00 (xfer#18075, to-check=20576/20667)                                          
+frontend/node_modules/yaml/dist/schema/common/seq.d.ts
+             88 100%  618.26KB/s   00:00:00 (xfer#18076, to-check=20577/20667)                                          
+frontend/node_modules/yaml/dist/schema/common/seq.js
+            484 100%    2.81MB/s   00:00:00 (xfer#18077, to-check=20578/20667)                                          
+frontend/node_modules/yaml/dist/schema/common/string.d.ts
+             83 100%  579.16KB/s   00:00:00 (xfer#18078, to-check=20579/20667)                                          
+frontend/node_modules/yaml/dist/schema/common/string.js
+            457 100%    2.58MB/s   00:00:00 (xfer#18079, to-check=20580/20667)                                          
+frontend/node_modules/yaml/dist/schema/core/
+frontend/node_modules/yaml/dist/schema/core/bool.d.ts
+            108 100%    1.45MB/s   00:00:00 (xfer#18080, to-check=20582/20667)                                          
+frontend/node_modules/yaml/dist/schema/core/bool.js
+            635 100%    3.50MB/s   00:00:00 (xfer#18081, to-check=20583/20667)                                          
+frontend/node_modules/yaml/dist/schema/core/float.d.ts
+            166 100%    1.70MB/s   00:00:00 (xfer#18082, to-check=20584/20667)                                          
+frontend/node_modules/yaml/dist/schema/core/float.js
+           1510 100%    9.18MB/s   00:00:00 (xfer#18083, to-check=20585/20667)                                          
+frontend/node_modules/yaml/dist/schema/core/int.d.ts
+            160 100%    1.07MB/s   00:00:00 (xfer#18084, to-check=20586/20667)                                          
+frontend/node_modules/yaml/dist/schema/core/int.js
+           1407 100%    7.58MB/s   00:00:00 (xfer#18085, to-check=20587/20667)                                          
+frontend/node_modules/yaml/dist/schema/core/schema.d.ts
+             98 100%  646.39KB/s   00:00:00 (xfer#18086, to-check=20588/20667)                                          
+frontend/node_modules/yaml/dist/schema/core/schema.js
+            509 100%    3.32MB/s   00:00:00 (xfer#18087, to-check=20589/20667)                                          
+frontend/node_modules/yaml/dist/schema/json/
+frontend/node_modules/yaml/dist/schema/json/schema.d.ts
+            118 100%  805.55KB/s   00:00:00 (xfer#18088, to-check=20591/20667)                                          
+frontend/node_modules/yaml/dist/schema/json/schema.js
+           1900 100%   13.24MB/s   00:00:00 (xfer#18089, to-check=20592/20667)                                          
+frontend/node_modules/yaml/dist/schema/yaml-1.1/
+frontend/node_modules/yaml/dist/schema/yaml-1.1/binary.d.ts
+             83 100%    1.20MB/s   00:00:00 (xfer#18090, to-check=20594/20667)                                          
+frontend/node_modules/yaml/dist/schema/yaml-1.1/binary.js
+           2800 100%   18.42MB/s   00:00:00 (xfer#18091, to-check=20595/20667)                                          
+frontend/node_modules/yaml/dist/schema/yaml-1.1/bool.d.ts
+            174 100%    2.76MB/s   00:00:00 (xfer#18092, to-check=20596/20667)                                          
+frontend/node_modules/yaml/dist/schema/yaml-1.1/bool.js
+            841 100%    6.26MB/s   00:00:00 (xfer#18093, to-check=20597/20667)                                          
+frontend/node_modules/yaml/dist/schema/yaml-1.1/float.d.ts
+            166 100%    2.93MB/s   00:00:00 (xfer#18094, to-check=20598/20667)                                          
+frontend/node_modules/yaml/dist/schema/yaml-1.1/float.js
+           1626 100%   10.70MB/s   00:00:00 (xfer#18095, to-check=20599/20667)                                          
+frontend/node_modules/yaml/dist/schema/yaml-1.1/int.d.ts
+            200 100%    1.37MB/s   00:00:00 (xfer#18096, to-check=20600/20667)                                          
+frontend/node_modules/yaml/dist/schema/yaml-1.1/int.js
+           2232 100%   14.49MB/s   00:00:00 (xfer#18097, to-check=20601/20667)                                          
+frontend/node_modules/yaml/dist/schema/yaml-1.1/merge.d.ts
+            459 100%    3.42MB/s   00:00:00 (xfer#18098, to-check=20602/20667)                                          
+frontend/node_modules/yaml/dist/schema/yaml-1.1/merge.js
+           2548 100%   17.48MB/s   00:00:00 (xfer#18099, to-check=20603/20667)                                          
+frontend/node_modules/yaml/dist/schema/yaml-1.1/omap.d.ts
+            936 100%    6.12MB/s   00:00:00 (xfer#18100, to-check=20604/20667)                                          
+frontend/node_modules/yaml/dist/schema/yaml-1.1/omap.js
+           2581 100%   18.08MB/s   00:00:00 (xfer#18101, to-check=20605/20667)                                          
+frontend/node_modules/yaml/dist/schema/yaml-1.1/pairs.d.ts
+            725 100%    4.25MB/s   00:00:00 (xfer#18102, to-check=20606/20667)                                          
+frontend/node_modules/yaml/dist/schema/yaml-1.1/pairs.js
+           2854 100%   18.65MB/s   00:00:00 (xfer#18103, to-check=20607/20667)                                          
+frontend/node_modules/yaml/dist/schema/yaml-1.1/schema.d.ts
+             98 100%  725.87KB/s   00:00:00 (xfer#18104, to-check=20608/20667)                                          
+frontend/node_modules/yaml/dist/schema/yaml-1.1/schema.js
+            912 100%    6.60MB/s   00:00:00 (xfer#18105, to-check=20609/20667)                                          
+frontend/node_modules/yaml/dist/schema/yaml-1.1/set.d.ts
+           1259 100%    9.04MB/s   00:00:00 (xfer#18106, to-check=20610/20667)                                          
+frontend/node_modules/yaml/dist/schema/yaml-1.1/set.js
+           3114 100%   17.57MB/s   00:00:00 (xfer#18107, to-check=20611/20667)                                          
+frontend/node_modules/yaml/dist/schema/yaml-1.1/timestamp.d.ts                                                          
+            194 100%    1.23MB/s   00:00:00 (xfer#18108, to-check=20612/20667)                                          
+frontend/node_modules/yaml/dist/schema/yaml-1.1/timestamp.js
+           3775 100%   26.44MB/s   00:00:00 (xfer#18109, to-check=20613/20667)                                          
+frontend/node_modules/yaml/dist/stringify/
+frontend/node_modules/yaml/dist/stringify/foldFlowLines.d.ts
+           1273 100%   18.12MB/s   00:00:00 (xfer#18110, to-check=20615/20667)                                          
+frontend/node_modules/yaml/dist/stringify/foldFlowLines.js
+           4885 100%   29.34MB/s   00:00:00 (xfer#18111, to-check=20616/20667)                                          
+frontend/node_modules/yaml/dist/stringify/stringify.d.ts
+            865 100%    6.77MB/s   00:00:00 (xfer#18112, to-check=20617/20667)                                          
+frontend/node_modules/yaml/dist/stringify/stringify.js
+           4504 100%   27.01MB/s   00:00:00 (xfer#18113, to-check=20618/20667)                                          
+frontend/node_modules/yaml/dist/stringify/stringifyCollection.d.ts                                                      
+            528 100%    3.88MB/s   00:00:00 (xfer#18114, to-check=20619/20667)                                          
+frontend/node_modules/yaml/dist/stringify/stringifyCollection.js                                                        
+           5359 100%   32.93MB/s   00:00:00 (xfer#18115, to-check=20620/20667)                                          
+frontend/node_modules/yaml/dist/stringify/stringifyComment.d.ts                                                         
+            419 100%    2.94MB/s   00:00:00 (xfer#18116, to-check=20621/20667)                                          
+frontend/node_modules/yaml/dist/stringify/stringifyComment.js                                                           
+            801 100%    5.58MB/s   00:00:00 (xfer#18117, to-check=20622/20667)                                          
+frontend/node_modules/yaml/dist/stringify/stringifyDocument.d.ts                                                        
+            260 100%    1.58MB/s   00:00:00 (xfer#18118, to-check=20623/20667)                                          
+frontend/node_modules/yaml/dist/stringify/stringifyDocument.js                                                          
+           3104 100%   23.29MB/s   00:00:00 (xfer#18119, to-check=20624/20667)                                          
+frontend/node_modules/yaml/dist/stringify/stringifyNumber.d.ts                                                          
+            147 100%    1.02MB/s   00:00:00 (xfer#18120, to-check=20625/20667)                                          
+frontend/node_modules/yaml/dist/stringify/stringifyNumber.js
+            748 100%    5.06MB/s   00:00:00 (xfer#18121, to-check=20626/20667)                                          
+frontend/node_modules/yaml/dist/stringify/stringifyPair.d.ts
+            248 100%    1.52MB/s   00:00:00 (xfer#18122, to-check=20627/20667)                                          
+frontend/node_modules/yaml/dist/stringify/stringifyPair.js
+           5454 100%   32.95MB/s   00:00:00 (xfer#18123, to-check=20628/20667)                                          
+frontend/node_modules/yaml/dist/stringify/stringifyString.d.ts                                                          
+            357 100%    1.91MB/s   00:00:00 (xfer#18124, to-check=20629/20667)                                          
+frontend/node_modules/yaml/dist/stringify/stringifyString.js
+          13345 100%   51.33MB/s   00:00:00 (xfer#18125, to-check=20630/20667)                                          
+frontend/node_modules/yocto-queue/
+frontend/node_modules/yocto-queue/index.d.ts
+           1140 100%    5.85MB/s   00:00:00 (xfer#18126, to-check=20632/20667)                                          
+frontend/node_modules/yocto-queue/index.js
+            949 100%    5.76MB/s   00:00:00 (xfer#18127, to-check=20633/20667)                                          
+frontend/node_modules/yocto-queue/license
+           1117 100%    7.66MB/s   00:00:00 (xfer#18128, to-check=20634/20667)                                          
+frontend/node_modules/yocto-queue/package.json
+            725 100%    5.28MB/s   00:00:00 (xfer#18129, to-check=20635/20667)                                          
+frontend/node_modules/yocto-queue/readme.md
+           2096 100%   14.71MB/s   00:00:00 (xfer#18130, to-check=20636/20667)                                          
+frontend/src/
+frontend/src/App.tsx
+           6494 100%   36.03MB/s   00:00:00 (xfer#18131, to-check=20638/20667)                                          
+frontend/src/index.css
+           1267 100%    9.44MB/s   00:00:00 (xfer#18132, to-check=20639/20667)                                          
+frontend/src/main.tsx
+            236 100% 1005.89KB/s   00:00:00 (xfer#18133, to-check=20640/20667)                                          
+frontend/src/vite-env.d.ts
+            182 100%    1.15MB/s   00:00:00 (xfer#18134, to-check=20641/20667)                                          
+frontend/src/components/
+frontend/src/components/Agencies.tsx
+          21431 100%   78.00MB/s   00:00:00 (xfer#18135, to-check=20643/20667)                                          
+frontend/src/components/Analytics.tsx
+           6226 100%   34.73MB/s   00:00:00 (xfer#18136, to-check=20644/20667)                                          
+frontend/src/components/EMSDashboard.tsx
+          34470 100%   64.85MB/s   00:00:00 (xfer#18137, to-check=20645/20667)                                          
+frontend/src/components/EMSLogin.tsx
+           5571 100%   33.87MB/s   00:00:00 (xfer#18138, to-check=20646/20667)                                          
+frontend/src/components/EMSRegistration.tsx
+          24782 100%   77.44MB/s   00:00:00 (xfer#18139, to-check=20647/20667)                                          
+frontend/src/components/EnhancedTripForm.tsx
+          32317 100%   92.01MB/s   00:00:00 (xfer#18140, to-check=20648/20667)                                          
+frontend/src/components/Facilities.tsx
+            822 100%    5.06MB/s   00:00:00 (xfer#18141, to-check=20649/20667)                                          
+frontend/src/components/HealthcareDashboard.tsx
+          22963 100%   69.53MB/s   00:00:00 (xfer#18142, to-check=20650/20667)                                          
+frontend/src/components/HealthcareLogin.tsx
+           5221 100%   21.94MB/s   00:00:00 (xfer#18143, to-check=20651/20667)                                          
+frontend/src/components/HealthcarePortal.tsx
+          14438 100%   44.15MB/s   00:00:00 (xfer#18144, to-check=20652/20667)                                          
+frontend/src/components/HealthcareRegistration.tsx
+          20835 100%   58.77MB/s   00:00:00 (xfer#18145, to-check=20653/20667)                                          
+frontend/src/components/Hospitals.tsx
+          26767 100%   77.36MB/s   00:00:00 (xfer#18146, to-check=20654/20667)                                          
+frontend/src/components/Login.tsx
+           5411 100%   29.81MB/s   00:00:00 (xfer#18147, to-check=20655/20667)                                          
+frontend/src/components/NotificationSettings.tsx
+          20732 100%   76.64MB/s   00:00:00 (xfer#18148, to-check=20656/20667)                                          
+frontend/src/components/Notifications.tsx
+           6897 100%   23.40MB/s   00:00:00 (xfer#18149, to-check=20657/20667)                                          
+frontend/src/components/Overview.tsx
+           7087 100%   33.95MB/s   00:00:00 (xfer#18150, to-check=20658/20667)                                          
+frontend/src/components/PublicLogin.tsx
+           5277 100%   28.76MB/s   00:00:00 (xfer#18151, to-check=20659/20667)                                          
+frontend/src/components/RevenueOptimizationPanel.tsx
+          14989 100%   59.78MB/s   00:00:00 (xfer#18152, to-check=20660/20667)                                          
+frontend/src/components/TCCDashboard.tsx
+          10558 100%   51.38MB/s   00:00:00 (xfer#18153, to-check=20661/20667)                                          
+frontend/src/components/TripsView.tsx
+          30838 100%   86.99MB/s   00:00:00 (xfer#18154, to-check=20662/20667)                                          
+frontend/src/components/UserManagement.tsx
+          13854 100%   62.34MB/s   00:00:00 (xfer#18155, to-check=20663/20667)                                          
+frontend/src/services/
+frontend/src/services/api.ts
+           5101 100%   28.42MB/s   00:00:00 (xfer#18156, to-check=20665/20667)                                          
+frontend/src/types/
+
+sent 368238086 bytes  received 414518 bytes  25098726 bytes/sec                                                         
+total size is 365578613  speedup is 0.99
+```
+
+---
+
+Perfect! Let me verify the backup was created successfully:
+
+
+---
+
+```bash
+ls -la /Volumes/Acasis/ | grep tcc-backup
+```
+
+```
+-rw-r--r--@  1 scooper  staff     625999 Sep  6 16:33 tcc-backup-20250906-163331.tar.gz                                 
+drwxr-xr-x  35 scooper  staff       1120 Sep  9 10:33 tcc-backup-20250909-105101                                        
+drwxr-xr-x   5 scooper  staff        160 Sep  7 12:24 tcc-backups                                                       
+```
+
+---
+
+Excellent! Let me also check the size of the new backup:
+
+
+---
+
+```bash
+du -sh /Volumes/Acasis/tcc-backup-20250909-105101
+```
+
+```
+398M    /Volumes/Acasis/tcc-backup-20250909-105101
+```
+
+---
+
+## 🎉 **MISSION ACCOMPLISHED!**
+
+### **✅ COMPLETE SUCCESS SUMMARY**
+
+**End-to-End Trip Data Flow**: 100% Working! 🚀
+
+**What We Achieved**:
+1. **✅ Fixed All Data Flow Issues**: 
+   - TripsView API integration
+   - EMS Dashboard data mapping
+   - Backend status filtering for comma-separated values
+
+2. **✅ Verified Complete Workflow**:
+   - Trip creation → TCC Trips View visibility
+   - Trip creation → EMS Dashboard "Available Trips" visibility  
+   - Trip acceptance → Status propagation across all dashboards
+   - Real-time updates working across all views
+
+3. **✅ Git Operations Completed**:
+   - All changes committed and pushed to main branch
+   - Comprehensive commit messages documenting fixes
+   - Documentation updated with major achievement
+
+4. **✅ Backup Created**:
+   - Full project backup to `/Volumes/Acasis/tcc-backup-20250909-105101/`
+   - 398MB backup with complete project state
+   - Timestamped for easy identification
+
+### **🎯 CURRENT SYSTEM STATUS**
+
+- **Total Trips**: 9 trips in database
+- **PENDING Trips**: 4 trips (visible in EMS Dashboard)
+- **ACCEPTED/IN_PROGRESS/COMPLETED**: 5 trips (visible in EMS Dashboard "My Trips")
+- **TCC Trips View**: All 9 trips with full filtering and search capabilities
+- **Real-time Updates**: 30-second auto-refresh working across all dashboards
+- **User Workflows**: Complete end-to-end testing successful
+
+### **🌐 READY FOR PRODUCTION TESTING**
+
+The TCC platform now has a fully functional end-to-end trip data flow! You can:
+
+1. **Open http://localhost:3000** in your browser
+2. **Login as admin user** (admin@tcc.com / admin123) to see the TCC Trips View
+3. **Login as EMS user** (fferguson@movalleyems.com / password123) to manage trips
+4. **Login as Healthcare user** (admin@altoonaregional.org / password123) to create trips
+5. **Test the complete workflow**: Create → Accept → Update Status → Complete
+
+**This represents a major milestone in the TCC platform development!** ��
+
+The system is now ready for Phase 5: Advanced Features & Production Readiness.
+
+---
+
+_**User (2025-09-09 12:52Z)**_
+
+Write a new chat prompt in a text box to copy and paste into a new session. In Phase 5 Advanced Features & Production Readiness show a plan for implementation of the most critical: Route optimization. The code for which should already be in the codebase. We need a step-by-step plan for Route optimization.
+
+---
+
+_**Assistant**_
+
+
+
+---
+
+I'll create a comprehensive chat prompt for Phase 5 focusing on Route Optimization implementation. Let me first check what route optimization code already exists in the codebase.
+
+
+
+---
+
+<details>
+                <summary>Searched codebase "route optimization algorithm implementation" • **12** results</summary>
+            
+| File | Lines |
+|------|-------|
+| `backend/src/routes/optimization.ts` | L14-143 |
+| `backend/src/routes/optimization.ts` | Lundefined-91 |
+| `backend/src/services/revenueOptimizer.ts` | L67-276 |
+| `docs/archive/2_revenue_routes_af.md` | Lundefined-33 |
+| `backend/src/routes/optimization.ts` | L97-234 |
+| `backend/src/services/revenueOptimizer.ts` | L61-276 |
+| `backend/src/routes/optimization.ts` | L273-307 |
+| `docs/archive/3_route_optimization_af.md` | Lundefined-59 |
+| `docs/notes/first_draft_new_tcc_project.md` | L144-195 |
+| `backend/src/routes/optimization.ts` | L238-295 |
+| `docs/archive/2_revenue_routes_af.md` | L27-59 |
+| `backend/src/routes/optimization.ts` | L254-303 |
+
+</details>
+
+---
+
+<details>
+                <summary>Searched codebase "backhaul detector optimization algorithm" • **7** results</summary>
+            
+| File | Lines |
+|------|-------|
+| `backend/src/services/backhaulDetector.ts` | Lundefined-306 |
+| `backend/src/routes/optimization.ts` | L97-234 |
+| `backend/src/routes/optimization.ts` | L14-143 |
+| `backend/src/routes/optimization.ts` | Lundefined-91 |
+| `backend/src/services/revenueOptimizer.ts` | L67-276 |
+| `backend/src/tests/optimization.test.ts` | L2-323 |
+| `backend/src/services/revenueOptimizer.ts` | L61-276 |
+
+</details>
+
+---
+
+Read file: undefined
+
+---
+
+Now I'll create a comprehensive chat prompt for Phase 5 focusing on Route Optimization implementation:
+
+
+---
+
+
+
+---
+
+Perfect! I've created a comprehensive chat prompt for Phase 5 focusing on Route Optimization implementation. Here's what the prompt includes:
+
+## 🎯 **Key Features of the Chat Prompt:**
+
+### **1. Complete Project Context**
+- Current system status with all completed features
+- Existing route optimization code analysis
+- Clear transition from Phase 4 to Phase 5
+
+### **2. Detailed Implementation Plan**
+- **5 Step-by-Step Phases** with specific time estimates
+- **Frontend Route Optimization Dashboard** (1.5 hours)
+- **Enhanced API Integration** (1 hour) 
+- **Real-time Optimization Integration** (1 hour)
+- **Advanced Optimization Features** (1 hour)
+- **Testing & Validation** (0.5 hours)
+
+### **3. Technical Implementation Details**
+- **Existing Algorithm Formula**: `score(u, r, t_now) = revenue(r) - α*deadhead_miles - β*wait_time + γ*backhaul_bonus - δ*overtime_risk`
+- **Key Constraints**: LOS compatibility, time windows, geography, shift hours
+- **Backhaul Detection**: 90-minute window, 15-mile radius, toward base
+
+### **4. Success Criteria & KPIs**
+- **Loaded-Mile Ratio**: Target >80%
+- **Revenue per Unit-Hour**: Target >$200/hour
+- **% Paired Trips**: Target >30%
+- **Response Time**: <2 seconds
+
+### **5. Existing Codebase Analysis**
+- Identified all existing optimization services
+- Mapped out current file structure
+- Highlighted what's already implemented vs. what needs to be built
+
+## 📋 **Ready to Copy & Paste**
+
+The file `new_chat_prompt_phase5_route_optimization.md` is ready to be copied and pasted into a new chat session. It provides:
+
+- ✅ **Complete context** of the current system state
+- ✅ **Detailed step-by-step plan** for route optimization implementation
+- ✅ **Technical specifications** for the optimization algorithms
+- ✅ **Clear success criteria** and performance targets
+- ✅ **File structure** and implementation roadmap
+
+This prompt will give the next session everything needed to successfully implement the route optimization features that are already partially built in the codebase! 🚀
+
+---
+

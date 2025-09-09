@@ -1,6 +1,7 @@
 import express from 'express';
 import { RevenueOptimizer } from '../services/revenueOptimizer';
 import { BackhaulDetector } from '../services/backhaulDetector';
+import { MultiUnitOptimizer } from '../services/multiUnitOptimizer';
 import { databaseManager } from '../services/databaseManager';
 
 const router = express.Router();
@@ -8,6 +9,7 @@ const router = express.Router();
 // Initialize optimization services
 const revenueOptimizer = new RevenueOptimizer(databaseManager);
 const backhaulDetector = new BackhaulDetector();
+const multiUnitOptimizer = new MultiUnitOptimizer(revenueOptimizer, backhaulDetector);
 
 /**
  * POST /api/optimize/routes
@@ -196,6 +198,65 @@ router.post('/backhaul', async (req, res) => {
 });
 
 /**
+ * POST /api/optimize/multi-unit
+ * Optimize assignments across multiple units
+ */
+router.post('/multi-unit', async (req, res) => {
+  try {
+    const { unitIds, requestIds, constraints } = req.body;
+
+    if (!unitIds || !Array.isArray(unitIds) || !requestIds || !Array.isArray(requestIds)) {
+      return res.status(400).json({
+        success: false,
+        error: 'unitIds and requestIds arrays are required'
+      });
+    }
+
+    // Get units information
+    const units = await getUnitsByIds(unitIds);
+    if (units.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'No valid units found'
+      });
+    }
+
+    // Get requests information
+    const requests = await getRequestsByIds(requestIds);
+    if (requests.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'No valid requests found'
+      });
+    }
+
+    // Update constraints if provided
+    if (constraints) {
+      multiUnitOptimizer.updateConstraints(constraints);
+    }
+
+    // Run multi-unit optimization
+    const currentTime = new Date();
+    const optimizationResult = await multiUnitOptimizer.optimizeMultiUnit(
+      units,
+      requests,
+      currentTime
+    );
+
+    res.json({
+      success: true,
+      data: optimizationResult
+    });
+  } catch (error) {
+    console.error('Multi-unit optimization error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error during multi-unit optimization'
+    });
+  }
+});
+
+/**
  * GET /api/optimize/performance
  * Get performance metrics for units
  */
@@ -250,6 +311,25 @@ async function getUnitById(unitId: string): Promise<any> {
     shiftEnd: new Date(Date.now() + 8 * 60 * 60 * 1000),
     isActive: true
   };
+}
+
+async function getUnitsByIds(unitIds: string[]): Promise<any[]> {
+  // Mock implementation - replace with actual database query
+  return unitIds.map((id, index) => ({
+    id,
+    agencyId: 'agency-001',
+    unitNumber: `A-${101 + index}`,
+    type: 'AMBULANCE',
+    capabilities: ['BLS', 'ALS'],
+    currentStatus: 'AVAILABLE',
+    currentLocation: { 
+      lat: 40.7128 + (index * 0.01), 
+      lng: -74.0060 + (index * 0.01) 
+    },
+    shiftStart: new Date(),
+    shiftEnd: new Date(Date.now() + 8 * 60 * 60 * 1000),
+    isActive: true
+  }));
 }
 
 async function getRequestsByIds(requestIds: string[]): Promise<any[]> {
