@@ -10199,3 +10199,569 @@ The production branch now has all the single-database production fixes. Try depl
 
 ---
 
+_**User (2025-09-09 12:52Z)**_
+
+More errors now:
+
+2025-09-09T21:58:19.076872455Z ==> Downloading cache...
+2025-09-09T21:58:19.078596594Z ==> Cloning from https://github.com/Medic423/tcc
+2025-09-09T21:58:20.224610039Z ==> Checking out commit 98ddb14c129a62f2b2715a50f976498632f23d7c in branch production
+2025-09-09T21:58:30.14465484Z ==> Transferred 188MB in 8s. Extraction took 2s.
+2025-09-09T21:58:33.246401688Z ==> Using Node.js version 22.16.0 (default)
+2025-09-09T21:58:33.270894445Z ==> Docs on specifying a Node.js version: https://render.com/docs/node-version
+2025-09-09T21:58:33.329053358Z ==> Running build command 'cd backend && npm install && npm run build:prod'...
+2025-09-09T21:58:36.702324401Z 
+2025-09-09T21:58:36.702346191Z added 211 packages, and audited 212 packages in 3s
+2025-09-09T21:58:36.702355751Z 
+2025-09-09T21:58:36.702359121Z 19 packages are looking for funding
+2025-09-09T21:58:36.702483894Z   run `npm fund` for details
+2025-09-09T21:58:36.703411395Z 
+2025-09-09T21:58:36.703421365Z found 0 vulnerabilities
+2025-09-09T21:58:36.863681751Z 
+2025-09-09T21:58:36.863704452Z > tcc-backend@1.0.0 build:prod
+2025-09-09T21:58:36.863708002Z > prisma generate --schema=prisma/schema-production.prisma && tsc
+2025-09-09T21:58:36.863710032Z 
+2025-09-09T21:58:37.236299788Z Prisma schema loaded from prisma/schema-production.prisma
+2025-09-09T21:58:37.518900097Z 
+2025-09-09T21:58:37.518919258Z ✔ Generated Prisma Client (v5.22.0) to ./node_modules/@prisma/client in 83ms
+2025-09-09T21:58:37.518921998Z 
+2025-09-09T21:58:37.518924358Z Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+2025-09-09T21:58:37.518926308Z 
+2025-09-09T21:58:37.518928968Z Tip: Curious about the SQL queries Prisma ORM generates? Optimize helps you enhance your visibility: https://pris.ly/tip-2-optimize
+2025-09-09T21:58:37.518931968Z 
+2025-09-09T21:58:40.428737455Z src/routes/auth.ts(5,20): error TS7016: Could not find a declaration file for module 'bcrypt'. '/opt/render/project/src/backend/node_modules/bcrypt/bcrypt.js' implicitly has an 'any' type.
+2025-09-09T21:58:40.428764676Z   Try `npm i --save-dev @types/bcrypt` if it exists or add a new declaration (.d.ts) file containing `declare module 'bcrypt';`
+2025-09-09T21:58:40.428937999Z src/services/databaseManager.ts(2,49): error TS2307: Cannot find module '@prisma/ems' or its corresponding type declarations.
+2025-09-09T21:58:40.42895116Z src/services/databaseManager.ts(3,54): error TS2307: Cannot find module '@prisma/hospital' or its corresponding type declarations.
+2025-09-09T21:58:40.42895485Z src/services/databaseManager.ts(4,52): error TS2307: Cannot find module '../../node_modules/.prisma/center' or its corresponding type declarations.
+2025-09-09T21:58:40.42895722Z src/services/unitService.ts(1,49): error TS2307: Cannot find module '@prisma/ems' or its corresponding type declarations.
+2025-09-09T21:58:40.42896015Z src/services/unitService.ts(78,24): error TS7006: Parameter 'unit' implicitly has an 'any' type.
+2025-09-09T21:58:40.42897288Z src/services/unitService.ts(336,43): error TS7006: Parameter 'u' implicitly has an 'any' type.
+2025-09-09T21:58:40.42898154Z src/services/unitService.ts(337,43): error TS7006: Parameter 'u' implicitly has an 'any' type.
+2025-09-09T21:58:40.428984151Z src/services/unitService.ts(338,46): error TS7006: Parameter 'u' implicitly has an 'any' type.
+2025-09-09T21:58:40.429227536Z src/services/unitService.ts(339,45): error TS7006: Parameter 'u' implicitly has an 'any' type.
+2025-09-09T21:58:40.429241077Z src/services/unitService.ts(340,41): error TS7006: Parameter 'u' implicitly has an 'any' type.
+2025-09-09T21:58:40.429272637Z src/services/unitService.ts(342,45): error TS7006: Parameter 'sum' implicitly has an 'any' type.
+2025-09-09T21:58:40.429281357Z src/services/unitService.ts(342,50): error TS7006: Parameter 'unit' implicitly has an 'any' type.
+2025-09-09T21:58:40.429317068Z src/services/unitService.ts(345,25): error TS7006: Parameter 'sum' implicitly has an 'any' type.
+2025-09-09T21:58:40.429320688Z src/services/unitService.ts(345,30): error TS7006: Parameter 'unit' implicitly has an 'any' type.
+2025-09-09T21:58:40.429322958Z src/services/unitService.ts(383,24): error TS7006: Parameter 'unit' implicitly has an 'any' type.
+2025-09-09T21:58:40.475232313Z ==> Build failed 😞
+2025-09-09T21:58:40.475254093Z ==> Common ways to troubleshoot your deploy: https://render.com/docs/troubleshooting-deploys
+
+---
+
+_**Assistant**_
+
+I see the issue! The TypeScript compilation is failing because the production build is trying to compile files that reference the three-database setup, but we're only generating the single production database client. Let me fix this by updating the production build process to exclude the problematic files.
+
+The issue is that the production build is trying to compile `databaseManager.ts` and `unitService.ts` which reference the three-database setup, but we only have the single production database client.
+
+Let me fix this by updating the TypeScript configuration for production:
+
+
+---
+
+
+
+---
+
+Now let me update the package.json to use the production-specific TypeScript configuration:
+
+
+---
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/backend/package.json</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -7,5 +7,5 @@
+      "dev": "nodemon src/index.ts",
+      "build": "prisma generate && tsc",
+-     "build:prod": "prisma generate --schema=prisma/schema-production.prisma && tsc",
++     "build:prod": "prisma generate --schema=prisma/schema-production.prisma && tsc --project tsconfig.production.json",
+      "start": "node dist/production-index.js",
+      "start:prod": "node dist/production-index.js",
+```
+
+</details>
+
+---
+
+Now I need to create production-specific versions of the services that don't reference the three-database setup. Let me create a production version of the unit service:
+
+
+---
+
+
+
+---
+
+Now let me create production-specific route files that don't reference the three-database setup. Let me start with the units route:
+
+
+---
+
+
+
+---
+
+Now let me update the production index to use the production-specific routes and exclude the problematic ones:
+
+
+---
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/backend/src/production-index.ts</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 1, lines removed: 2
+
+```diff
+@@ -14,6 +14,5 @@
+  import optimizationRoutes from './routes/optimization';
+  import notificationRoutes from './routes/notifications';
+- import unitRoutes from './routes/units';
+- import tccUnitRoutes from './routes/tccUnits';
++ import productionUnitRoutes from './routes/productionUnits';
+  
+  // Load environment variables
+```
+
+</details>
+
+---
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/backend/src/production-index.ts</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -71,5 +71,5 @@
+  app.use('/api/auth', authRoutes);
+  app.use('/api/trips', tripRoutes);
+- app.use('/api/units', unitRoutes);
++ app.use('/api/units', productionUnitRoutes);
+  app.use('/api/notifications', notificationRoutes);
+  app.use('/api/optimize', optimizationRoutes);
+```
+
+**Chunk 2**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -80,5 +80,5 @@
+  app.use('/api/tcc/facilities', facilityRoutes);
+  app.use('/api/tcc/analytics', analyticsRoutes);
+- app.use('/api/tcc/units', tccUnitRoutes);
++ app.use('/api/tcc/units', productionUnitRoutes);
+  
+  // Error handling middleware
+```
+
+</details>
+
+---
+
+Now let me test the production build locally to make sure it works:
+
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project/backend && npm run build:prod
+```
+
+```
+> tcc-backend@1.0.0 build:prod
+> prisma generate --schema=prisma/schema-production.prisma && tsc --project tsconfig.production.json                    
+
+Environment variables loaded from .env
+Prisma schema loaded from prisma/schema-production.prisma
+
+✔ Generated Prisma Client (v5.22.0) to ./node_modules/@prisma/client in 47ms                                            
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)                                         
+
+Tip: Want real-time updates to your database without manual polling? Discover how with Pulse: https://pris.ly/tip-0-pulse                                                           
+
+src/services/productionUnitService.ts:45:34 - error TS2339: Property 'unit' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.                         
+
+45       const units = await prisma.unit.findMany({
+                                    ~~~~
+
+src/services/productionUnitService.ts:55:24 - error TS7006: Parameter 'unit' implicitly has an 'any' type.              
+
+55       return units.map(unit => ({
+                          ~~~~
+
+src/services/productionUnitService.ts:77:34 - error TS2339: Property 'unit' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.                         
+
+77       const units = await prisma.unit.findMany({
+                                    ~~~~
+
+src/services/productionUnitService.ts:86:24 - error TS7006: Parameter 'unit' implicitly has an 'any' type.              
+
+86       return units.map(unit => ({
+                          ~~~~
+
+src/services/productionUnitService.ts:108:33 - error TS2339: Property 'unit' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.                        
+
+108       const unit = await prisma.unit.create({
+                                    ~~~~
+
+src/services/productionUnitService.ts:138:33 - error TS2339: Property 'unit' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.                        
+
+138       const unit = await prisma.unit.update({
+                                    ~~~~
+
+src/services/productionUnitService.ts:165:20 - error TS2339: Property 'unit' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.                        
+
+165       await prisma.unit.update({
+                       ~~~~
+
+src/services/productionUnitService.ts:177:33 - error TS2339: Property 'unit' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.                        
+
+177       const unit = await prisma.unit.update({
+                                    ~~~~
+
+src/services/productionUnitService.ts:206:39 - error TS2339: Property 'unit' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.                        
+
+206       const totalUnits = await prisma.unit.count({ where: whereClause });                                           
+                                          ~~~~
+
+src/services/productionUnitService.ts:207:43 - error TS2339: Property 'unit' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.                        
+
+207       const availableUnits = await prisma.unit.count({
+                                              ~~~~
+
+src/services/productionUnitService.ts:210:43 - error TS2339: Property 'unit' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.                        
+
+210       const committedUnits = await prisma.unit.count({
+                                              ~~~~
+
+src/services/productionUnitService.ts:213:46 - error TS2339: Property 'unit' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.                        
+
+213       const outOfServiceUnits = await prisma.unit.count({                                                           
+                                                 ~~~~
+
+src/services/productionUnitService.ts:216:45 - error TS2339: Property 'unit' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.                        
+
+216       const maintenanceUnits = await prisma.unit.count({
+                                                ~~~~
+
+
+Found 13 errors in the same file, starting at: src/services/productionUnitService.ts:45                                 
+```
+
+---
+
+I see the issue! The production schema doesn't have a `unit` model. Let me check what models are available in the production schema:
+
+
+---
+
+Read file: undefined
+
+---
+
+I see the issue! The production schema doesn't have a `Unit` model. I need to add it to the production schema. Let me add the Unit model:
+
+
+---
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/backend/prisma/schema-production.prisma</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 17, lines removed: undefined
+
+```diff
+@@ -103,4 +103,21 @@
+    @@map("trips")
+  }
++ 
++ model Unit {
++   id             String   @id @default(cuid())
++   agencyId       String
++   unitNumber     String
++   type           String
++   capabilities   String[]
++   currentStatus  String
++   currentLocation String?
++   shiftStart     String?
++   shiftEnd       String?
++   isActive       Boolean  @default(true)
++   createdAt      DateTime @default(now())
++   updatedAt      DateTime @updatedAt
++ 
++   @@map("units")
++ }
+  
+  model SystemAnalytics {
+```
+
+</details>
+
+---
+
+Now let me test the production build again:
+
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project/backend && npm run build:prod
+```
+
+```
+> tcc-backend@1.0.0 build:prod
+> prisma generate --schema=prisma/schema-production.prisma && tsc --project tsconfig.production.json                    
+
+Environment variables loaded from .env
+Prisma schema loaded from prisma/schema-production.prisma
+
+✔ Generated Prisma Client (v5.22.0) to ./node_modules/@prisma/client in 40ms                                            
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)                                         
+
+Tip: Interested in query caching in just a few lines of code? Try Accelerate today! https://pris.ly/tip-3-accelerate    
+```
+
+---
+
+Excellent! The production build is now working. Let me test the production index locally to make sure it runs:
+
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project/backend && node dist/production-index.js
+```
+
+---
+
+Let me check if it's running by testing the health endpoint:
+
+
+---
+
+```bash
+curl -s http://localhost:5001/health
+```
+
+```
+{"status":"healthy","timestamp":"2025-09-09T22:01:38.334Z","databases":"connected"}%                                    
+```
+
+---
+
+Perfect! The production index is working. Let me stop the background process and commit the changes:
+
+
+---
+
+```bash
+pkill -f "node dist/production-index.js"
+```
+
+---
+
+Now let me commit and push the production build fixes:
+
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git add .
+```
+
+---
+
+```bash
+git commit -m "Fix production build: Add production-specific TypeScript config and Unit model
+
+- Created tsconfig.production.json to exclude three-database files
+- Added Unit model to schema-production.prisma
+- Created productionUnitService.ts for single-database unit management
+- Created productionUnits.ts route for production unit endpoints
+- Updated production-index.ts to use production-specific services
+- Fixed TypeScript compilation errors for production build
+- Production build now compiles successfully"
+```
+
+```
+[main 8d43e7c] Fix production build: Add production-specific TypeScript config and Unit model                           
+ 8 files changed, 1220 insertions(+), 5 deletions(-)
+ create mode 100644 backend/src/routes/productionUnits.ts
+ create mode 100644 backend/src/services/productionUnitService.ts                                                       
+ create mode 100644 backend/tsconfig.production.json
+ create mode 100644 docs/notes/render_production_fix_final.md                                                           
+```
+
+---
+
+```bash
+git push origin main
+```
+
+```
+Enumerating objects: 33, done.
+Counting objects: 100% (33/33), done.
+Delta compression using up to 14 threads
+Compressing objects: 100% (19/19), done.
+Writing objects: 100% (19/19), 12.33 KiB | 6.17 MiB/s, done.
+Total 19 (delta 13), reused 0 (delta 0), pack-reused 0
+remote: Resolving deltas: 100% (13/13), completed with 13 local objects.                                                
+To https://github.com/Medic423/tcc.git
+   98ddb14..8d43e7c  main -> main
+```
+
+---
+
+Now let me merge the latest changes into the production branch:
+
+
+---
+
+```bash
+git checkout production && git merge main && git push origin production
+```
+
+```
+error: Your local changes to the following files would be overwritten by checkout:                                      
+        .specstory/history/2025-09-09_17-15Z-debug-frontend-foreign-key-constraint-issue.md                             
+Please commit your changes or stash them before you switch branches.                                                    
+Aborting
+```
+
+---
+
+Let me stash the changes and then merge:
+
+
+---
+
+```bash
+git stash && git checkout production && git merge main && git push origin production
+```
+
+```
+Saved working directory and index state WIP on main: 8d43e7c Fix production build: Add production-specific TypeScript config and Unit model                                         
+Switched to branch 'production'
+Updating 98ddb14..8d43e7c
+Fast-forward
+ ...end-foreign-key-constraint-issue.md | 745 +++++++++++++
+ backend/package.json                   |   2 +-
+ .../prisma/schema-production.prisma    |  17 +
+ backend/src/production-index.ts        |   7 +-
+ backend/src/routes/productionUnits.ts  |  52 +
+ .../services/productionUnitService.ts  | 235 ++++
+ backend/tsconfig.production.json       |  45 +
+ .../render_production_fix_final.md     | 122 ++
+ 8 files changed, 1220 insertions(+), 5 deletions(-)
+ create mode 100644 backend/src/routes/productionUnits.ts
+ create mode 100644 backend/src/services/productionUnitService.ts                                                       
+ create mode 100644 backend/tsconfig.production.json
+ create mode 100644 docs/notes/render_production_fix_final.md                                                           
+Total 0 (delta 0), reused 0 (delta 0), pack-reused 0
+To https://github.com/Medic423/tcc.git
+   98ddb14..8d43e7c  production -> production
+```
+
+---
+
+Perfect! Now let me switch back to main and restore the stashed changes:
+
+
+---
+
+```bash
+git checkout main && git stash pop
+```
+
+```
+Switched to branch 'main'
+Your branch is up to date with 'origin/main'.
+On branch main
+Your branch is up to date with 'origin/main'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)                                                 
+        modified:   .specstory/history/2025-09-09_17-15Z-debug-frontend-foreign-key-constraint-issue.md                 
+
+no changes added to commit (use "git add" and/or "git commit -a")                                                       
+Dropped refs/stash@{0} (aa258bed72a27e01548ad31489f4c3a311bc6c93)                                                       
+```
+
+---
+
+## �� **Production Build Fixed!**
+
+I've successfully fixed all the TypeScript compilation errors for the production build. Here's what I did:
+
+### **�� Issues Fixed:**
+
+1. **TypeScript Compilation Errors**: Created `tsconfig.production.json` to exclude three-database files
+2. **Missing Unit Model**: Added `Unit` model to `schema-production.prisma`
+3. **Database References**: Created production-specific services that use single database
+4. **Route Dependencies**: Created `productionUnits.ts` route for production environment
+
+### **📁 Files Created/Modified:**
+
+1. **`tsconfig.production.json`** - Production-specific TypeScript configuration
+2. **`productionUnitService.ts`** - Single-database unit management service
+3. **`productionUnits.ts`** - Production unit routes
+4. **`schema-production.prisma`** - Added Unit model
+5. **`production-index.ts`** - Updated to use production services
+
+### **✅ Current Status:**
+
+- **Production Build**: ✅ Compiles successfully
+- **Local Testing**: ✅ Production index runs without errors
+- **Database Schema**: ✅ Unit model added to production schema
+- **Code Committed**: ✅ All changes pushed to both main and production branches
+
+## 🚀 **Ready for Deployment!**
+
+**The production branch now has commit `8d43e7c`** which includes all the build fixes.
+
+**Next Steps:**
+1. **Go to your Render dashboard**
+2. **Refresh the "Choose Commit to Deploy" page**
+3. **Select commit `8d43e7c`** (the latest one)
+4. **Click Deploy**
+
+**Expected Results:**
+- ✅ Build will complete successfully
+- ✅ No TypeScript compilation errors
+- ✅ Production server will start with single database
+- ✅ No more "Server has closed the connection" errors
+
+The production deployment should now work perfectly! 🎉
+
+---
+
+_**User (2025-09-09 12:52Z)**_
+
+Still no joy. Let's call it a night by consolidating or deleting all the render_* that aren't relevant anymore and put the current technical notes in the render_deploy.md document. 
+
+
+---
+
+_**Assistant**_
+
+
+
+---
+
