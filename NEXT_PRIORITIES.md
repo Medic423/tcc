@@ -96,9 +96,138 @@ This completes the core trip management foundation for the TCC platform!
 
 ---
 
-## 🚀 **IMMEDIATE NEXT PRIORITIES (Phase 4)**
+## 🚀 **IMMEDIATE NEXT PRIORITIES (Phase 6)**
 
-### **1. Complete Healthcare Facilities Forms** ✅ **COMPLETED**
+### **1. EMS Units Management System** 🔥 **CRITICAL PRIORITY**
+**Status**: Not Started
+**Estimated Time**: 4-5 hours
+**Priority**: CRITICAL - Required for Route Optimization Integration
+
+**Overview**: Implement comprehensive EMS Units management system to allow EMS agencies to configure, manage, and track their units. This is essential for the Route Optimization system to function properly with real unit data.
+
+**Current Gap Analysis**:
+- ✅ Unit model exists in EMS database schema (`backend/prisma/schema-ems.prisma`)
+- ✅ Unit fields: `id`, `agencyId`, `unitNumber`, `type`, `capabilities`, `currentStatus`, `currentLocation`, `shiftStart`, `shiftEnd`, `isActive`
+- ❌ No frontend interface for EMS agencies to manage units
+- ❌ No unit status tracking or trip assignment integration
+- ❌ Route Optimization system uses mock unit data instead of real units
+- ❌ Unit numbers not displayed in trip status displays
+
+**Phase 1: Database Schema Enhancements** (30 minutes)
+- [ ] Add unit status tracking fields:
+  - `assignedTripId` (String?) - Currently assigned trip
+  - `lastStatusUpdate` (DateTime) - Last status change
+  - `statusHistory` (Json?) - Status change log
+  - `currentTripDetails` (Json?) - Current trip information
+- [ ] Add unit location tracking:
+  - `lastKnownLocation` (Json) - Last GPS coordinates
+  - `locationUpdatedAt` (DateTime) - Last location update
+- [ ] Add unit performance metrics:
+  - `totalTripsCompleted` (Int) - Lifetime trip count
+  - `averageResponseTime` (Float) - Average response time in minutes
+  - `lastMaintenanceDate` (DateTime?) - Last maintenance check
+- [ ] Update Prisma schemas and run migrations
+
+**Phase 2: Backend API Development** (1.5 hours)
+- [ ] Unit Management Endpoints:
+  - `GET /api/units` - Get all units for agency
+  - `POST /api/units` - Create new unit
+  - `PUT /api/units/:id` - Update unit details
+  - `DELETE /api/units/:id` - Deactivate unit
+  - `PUT /api/units/:id/status` - Update unit status
+  - `PUT /api/units/:id/location` - Update unit location
+- [ ] Unit Status Management:
+  - `GET /api/units/status` - Get unit status summary
+  - `POST /api/units/:id/assign-trip` - Assign trip to unit
+  - `POST /api/units/:id/complete-trip` - Complete trip assignment
+- [ ] Unit Analytics:
+  - `GET /api/units/analytics` - Unit performance metrics
+  - `GET /api/units/availability` - Current availability status
+
+**Phase 3: Frontend Units Management Interface** (2 hours)
+- [ ] Create Units Management Tab in EMS Dashboard:
+  - Units list with status indicators
+  - Add/Edit/Delete unit functionality
+  - Unit status management (Available, Committed, Out of Service, Maintenance)
+  - Unit location tracking and updates
+  - Current trip assignment display
+- [ ] Unit Status Display Components:
+  - Unit status badges with color coding
+  - Trip assignment details modal
+  - Location tracking display
+  - Performance metrics dashboard
+- [ ] Unit Configuration Forms:
+  - Unit details form (number, type, capabilities)
+  - Shift schedule management
+  - Location and service area configuration
+  - Maintenance scheduling
+
+**Phase 4: Integration with Existing Systems** (1 hour)
+- [ ] Route Optimization Integration:
+  - Update RouteOptimizer to use real unit data from API
+  - Replace mock unit data with actual agency units
+  - Add unit selection based on availability and capabilities
+- [ ] Trip Management Integration:
+  - Display unit numbers in trip status displays
+  - Show assigned unit in trip details
+  - Update trip status when unit status changes
+- [ ] Dashboard Integration:
+  - Add unit status to EMS Dashboard overview
+  - Include unit metrics in analytics
+  - Real-time unit status updates
+
+**Phase 5: Advanced Features** (30 minutes)
+- [ ] Real-time Unit Tracking:
+  - GPS location updates
+  - Status change notifications
+  - Trip assignment notifications
+- [ ] Unit Performance Analytics:
+  - Response time tracking
+  - Trip completion rates
+  - Efficiency metrics
+- [ ] Maintenance Management:
+  - Maintenance scheduling
+  - Service reminders
+  - Equipment tracking
+
+**Files to Create/Modify**:
+- `backend/prisma/schema-ems.prisma` (enhance Unit model)
+- `backend/src/routes/units.ts` (new unit management routes)
+- `backend/src/services/unitService.ts` (new unit business logic)
+- `frontend/src/components/UnitsManagement.tsx` (new units tab)
+- `frontend/src/components/UnitCard.tsx` (new unit display component)
+- `frontend/src/components/UnitStatusModal.tsx` (new status management)
+- `frontend/src/components/EMSDashboard.tsx` (add units tab)
+- `frontend/src/services/unitsApi.ts` (new units API service)
+- `frontend/src/types/units.ts` (new unit type definitions)
+
+**Success Criteria**:
+- [ ] EMS agencies can create, edit, and manage their units
+- [ ] Unit status tracking (Available, Committed, Out of Service, Maintenance)
+- [ ] Trip assignment integration with unit management
+- [ ] Unit numbers displayed in all trip status displays
+- [ ] Route Optimization uses real unit data instead of mock data
+- [ ] Real-time unit status updates
+- [ ] Unit performance analytics and reporting
+
+**Current System Analysis**:
+- ✅ **Database Schema**: Unit model exists with basic fields (id, agencyId, unitNumber, type, capabilities, currentStatus, currentLocation, shiftStart, shiftEnd, isActive)
+- ✅ **Route Optimization**: Advanced optimization system implemented but uses mock unit data
+- ❌ **Frontend Interface**: No EMS units management interface exists
+- ❌ **Trip Integration**: Unit numbers not displayed in trip status displays
+- ❌ **Status Tracking**: No real-time unit status management
+- ❌ **API Endpoints**: No unit management API endpoints exist
+
+**Questions for Implementation**:
+1. **Unit Status Values**: What status values should we support? (Available, Committed, Out of Service, Maintenance, etc.)
+2. **Location Tracking**: Should we implement real-time GPS tracking or manual location updates?
+3. **Trip Assignment**: Should units be automatically assigned to trips or manually assigned by EMS users?
+4. **Unit Types**: What unit types should we support? (Ambulance, Wheelchair Van, Critical Care, etc.)
+5. **Capabilities**: Should capabilities be predefined or customizable per agency?
+6. **Shift Management**: Should we implement shift scheduling or just basic shift start/end times?
+7. **Performance Metrics**: What metrics are most important for EMS agencies to track?
+
+### **2. Complete Healthcare Facilities Forms** ✅ **COMPLETED**
 **Status**: Fully Functional
 **Completed**: September 8, 2025
 

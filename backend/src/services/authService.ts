@@ -25,9 +25,11 @@ export interface AuthResult {
 
 export class AuthService {
   private jwtSecret: string;
+  private emsPrisma: any;
 
   constructor() {
     this.jwtSecret = process.env.JWT_SECRET || 'fallback-secret-key';
+    this.emsPrisma = databaseManager.getEMSDB();
     console.log('TCC_DEBUG: AuthService constructor - JWT_SECRET loaded:', this.jwtSecret ? 'YES' : 'NO');
     console.log('TCC_DEBUG: JWT_SECRET value:', this.jwtSecret);
   }
@@ -37,13 +39,34 @@ export class AuthService {
       console.log('TCC_DEBUG: AuthService.login called with:', { email: credentials.email, password: credentials.password ? '***' : 'missing' });
       const { email, password } = credentials;
 
-      // Get user from Center database
+      // First try Center database (Admin users)
       const centerDB = databaseManager.getCenterDB();
-      const user = await centerDB.centerUser.findUnique({
+      let user = await centerDB.centerUser.findUnique({
         where: { email }
       });
 
-      console.log('TCC_DEBUG: User found in database:', user ? { id: user.id, email: user.email, name: user.name, isActive: user.isActive } : 'null');
+      let userType: 'ADMIN' | 'HEALTHCARE' | 'EMS' = 'ADMIN';
+      let userData: User;
+
+      if (!user) {
+        // Try Hospital database (Healthcare users)
+        const hospitalDB = databaseManager.getHospitalDB();
+        user = await hospitalDB.healthcareUser.findUnique({
+          where: { email }
+        });
+        userType = 'HEALTHCARE';
+      }
+
+      if (!user) {
+        // Try EMS database (EMS users)
+        const emsDB = databaseManager.getEMSDB();
+        user = await emsDB.eMSUser.findUnique({
+          where: { email }
+        });
+        userType = 'EMS';
+      }
+
+      console.log('TCC_DEBUG: User found in database:', user ? { id: user.id, email: user.email, name: user.name, isActive: user.isActive, userType } : 'null');
 
       if (!user) {
         console.log('TCC_DEBUG: No user found for email:', email);
@@ -69,23 +92,58 @@ export class AuthService {
         };
       }
 
+      // For EMS users, use the agency ID from the relationship
+      let agencyId = user.id; // Default to user ID for non-EMS users
+      if (userType === 'EMS') {
+        // Use the agencyId from the user record - this is required for EMS users
+        const emsUser = user as any;
+        if (!emsUser.agencyId) {
+          console.error('TCC_DEBUG: EMS user missing agencyId:', { userId: user.id, email: user.email });
+          return {
+            success: false,
+            error: 'User not properly associated with an agency'
+          };
+        }
+        agencyId = emsUser.agencyId;
+        console.log('TCC_DEBUG: Using agencyId for EMS user:', { userId: user.id, agencyId });
+      }
+
       // Generate JWT token
       const token = jwt.sign(
         {
-          id: user.id,
+          id: userType === 'EMS' ? agencyId : user.id,
           email: user.email,
-          userType: user.userType
+          userType: userType
         },
         this.jwtSecret,
         { expiresIn: '24h' }
       );
 
-      const userData: User = {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        userType: user.userType as 'ADMIN' | 'USER'
-      };
+      // Create user data based on type
+      if (userType === 'ADMIN') {
+        userData = {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          userType: 'ADMIN'
+        };
+      } else if (userType === 'HEALTHCARE') {
+        userData = {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          userType: 'HEALTHCARE',
+          facilityName: (user as any).facilityName
+        };
+      } else {
+        userData = {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          userType: 'EMS',
+          agencyName: (user as any).agencyName
+        };
+      }
 
       return {
         success: true,
@@ -148,8 +206,10 @@ export class AuthService {
         };
       } else if (decoded.userType === 'EMS') {
         const emsDB = databaseManager.getEMSDB();
+        // For EMS users, decoded.id contains the agency ID, not the user ID
+        // We need to find the user by email since that's what we have in the token
         const user = await emsDB.eMSUser.findUnique({
-          where: { id: decoded.id }
+          where: { email: decoded.email }
         });
 
         if (!user || !user.isActive) {
@@ -157,7 +217,7 @@ export class AuthService {
         }
 
         return {
-          id: user.id,
+          id: decoded.id, // Use agency ID from token
           email: user.email,
           name: user.name,
           userType: 'EMS',

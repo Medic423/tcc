@@ -15,12 +15,14 @@ model EMSUser {
   password     String
   name         String
   agencyName   String
+  agencyId     String?  // Reference to EMSAgency
   isActive     Boolean  @default(true)
   userType     String   @default("EMS") // EMS, ADMIN
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   // Relations
+  agency           EMSAgency? @relation(fields: [agencyId], references: [id])
   transportRequests TransportRequest[]
 
   @@map("ems_users")
@@ -48,6 +50,7 @@ model EMSAgency {
   updatedAt        DateTime @updatedAt
 
   // Relations
+  users            EMSUser[]
   units            Unit[]
 
   @@map("ems_agencies")
@@ -61,9 +64,23 @@ model Unit {
   capabilities   String[]
   currentStatus  String   @default("AVAILABLE")
   currentLocation Json?
-  shiftStart     DateTime?
-  shiftEnd       DateTime?
   isActive       Boolean  @default(true)
+  
+  // Trip assignment tracking
+  assignedTripId String?
+  lastStatusUpdate DateTime @default(now())
+  statusHistory  Json?     // Array of status changes with timestamps
+  currentTripDetails Json? // Current trip information if assigned
+  
+  // Location tracking
+  lastKnownLocation Json?  // Last GPS coordinates
+  locationUpdatedAt DateTime?
+  
+  // Performance metrics
+  totalTripsCompleted Int @default(0)
+  averageResponseTime Float? // Average response time in minutes
+  lastMaintenanceDate DateTime?
+  
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 

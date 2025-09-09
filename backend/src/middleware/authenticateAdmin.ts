@@ -42,3 +42,6 @@ export const authenticateAdmin = async (
     });
   }
 };
+
+// Alias for EMS users
+export const authenticateToken = authenticateAdmin;

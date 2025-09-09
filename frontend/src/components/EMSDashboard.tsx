@@ -8,10 +8,12 @@ import {
   User,
   LogOut,
   Bell,
-  Navigation
+  Navigation,
+  Settings
 } from 'lucide-react';
 import Notifications from './Notifications';
 import RouteOptimizer from './RouteOptimizer';
+import UnitsManagement from './UnitsManagement';
 
 interface EMSDashboardProps {
   user: {
@@ -335,6 +337,7 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
               { id: 'overview', name: 'Overview', icon: Truck },
               { id: 'available', name: 'Available Trips', icon: MapPin },
               { id: 'accepted', name: 'My Trips', icon: CheckCircle },
+              { id: 'units', name: 'Units', icon: Settings },
               { id: 'optimization', name: 'Route Optimization', icon: Navigation },
               { id: 'settings', name: 'Settings', icon: User }
             ].map((tab) => {
@@ -342,7 +345,10 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
               return (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => {
+                    console.log('🔍 EMSDashboard: Tab clicked:', tab.id);
+                    setActiveTab(tab.id);
+                  }}
                   className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm ${
                     activeTab === tab.id
                       ? 'border-orange-500 text-orange-600'
@@ -633,6 +639,13 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
 
         {activeTab === 'optimization' && (
           <RouteOptimizer user={user} />
+        )}
+
+        {activeTab === 'units' && (
+          <>
+            {console.log('🔍 EMSDashboard: Rendering UnitsManagement component, activeTab:', activeTab)}
+            <UnitsManagement user={user} />
+          </>
         )}
 
         {activeTab === 'settings' && (

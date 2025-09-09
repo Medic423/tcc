@@ -32,12 +32,14 @@ router.post('/login', async (req, res) => {
     const result = await authService.login({ email, password });
 
     if (!result.success) {
+      console.log('TCC_DEBUG: Login failed:', result.error);
       return res.status(401).json({
         success: false,
         error: result.error
       });
     }
 
+    console.log('TCC_DEBUG: Login successful, user ID in token:', result.user?.id);
     res.json({
       success: true,
       message: 'Login successful',
@@ -656,9 +658,10 @@ router.post('/ems/login', async (req, res) => {
       });
     }
 
+    // For EMS users, use agencyId in the token instead of user.id
     const token = jwt.sign(
       { 
-        id: user.id, 
+        id: user.agencyId, // Use agencyId for EMS users
         email: user.email, 
         userType: 'EMS' 
       },
