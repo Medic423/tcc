@@ -103,6 +103,23 @@ model Trip {
   @@map("trips")
 }
 
+model Unit {
+  id             String   @id @default(cuid())
+  agencyId       String
+  unitNumber     String
+  type           String
+  capabilities   String[]
+  currentStatus  String
+  currentLocation String?
+  shiftStart     String?
+  shiftEnd       String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("units")
+}
+
 model SystemAnalytics {
   id          String   @id @default(cuid())
   metricName  String

@@ -13,8 +13,7 @@ import analyticsRoutes from './routes/analytics';
 import tripRoutes from './routes/trips';
 import optimizationRoutes from './routes/optimization';
 import notificationRoutes from './routes/notifications';
-import unitRoutes from './routes/units';
-import tccUnitRoutes from './routes/tccUnits';
+import productionUnitRoutes from './routes/productionUnits';
 
 // Load environment variables
 dotenv.config();
@@ -71,7 +70,7 @@ app.get('/health', async (req, res) => {
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/trips', tripRoutes);
-app.use('/api/units', unitRoutes);
+app.use('/api/units', productionUnitRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/optimize', optimizationRoutes);
 
@@ -80,7 +79,7 @@ app.use('/api/tcc/hospitals', hospitalRoutes);
 app.use('/api/tcc/agencies', agencyRoutes);
 app.use('/api/tcc/facilities', facilityRoutes);
 app.use('/api/tcc/analytics', analyticsRoutes);
-app.use('/api/tcc/units', tccUnitRoutes);
+app.use('/api/tcc/units', productionUnitRoutes);
 
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
