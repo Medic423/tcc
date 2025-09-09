@@ -28,6 +28,10 @@ const HealthcareLogin: React.FC<HealthcareLoginProps> = ({ onBack, onLogin }) =>
     setError('');
 
     try {
+      // Clear any existing session before attempting login
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      
       // Import authAPI dynamically to avoid circular imports
       const { authAPI } = await import('../services/api');
       

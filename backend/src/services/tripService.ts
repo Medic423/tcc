@@ -96,7 +96,7 @@ export class TripService {
       const tripData = {
         tripNumber: tripNumber,
         patientId: patientId,
-        patientWeight: data.patientWeight || null,
+        patientWeight: data.patientWeight ? String(data.patientWeight) : null,
         specialNeeds: data.specialNeeds || null,
         fromLocation: data.fromLocation,
         toLocation: data.toLocation,
@@ -334,7 +334,8 @@ export class TripService {
     console.log('TCC_DEBUG: Getting available EMS agencies');
     
     try {
-      const agencies = await prisma.eMSAgency.findMany({
+      const emsPrisma = databaseManager.getEMSDB();
+      const agencies = await emsPrisma.eMSAgency.findMany({
         where: {
           isActive: true,
         },
@@ -574,6 +575,8 @@ export class TripService {
    */
   async getAgenciesForHospital(hospitalId: string, radiusMiles: number = 100) {
     try {
+      console.log('TCC_DEBUG: getAgenciesForHospital called with hospitalId:', hospitalId);
+      
       // Get hospital location from Center database
       const hospital = await prisma.hospital.findUnique({
         where: { id: hospitalId },
@@ -584,8 +587,12 @@ export class TripService {
         throw new Error('Hospital not found');
       }
 
+      console.log('TCC_DEBUG: Hospital found:', hospital.name);
+
       // Get all active agencies from EMS database
       const emsPrisma = databaseManager.getEMSDB();
+      console.log('TCC_DEBUG: EMS Prisma client:', !!emsPrisma);
+      
       const agencies = await emsPrisma.eMSAgency.findMany({
         where: {
           isActive: true,
@@ -605,6 +612,8 @@ export class TripService {
           serviceArea: true
         }
       });
+
+      console.log('TCC_DEBUG: Found agencies in EMS database:', agencies.length);
 
       // Check if hospital has location data
       if (!hospital.latitude || !hospital.longitude) {

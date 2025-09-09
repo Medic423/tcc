@@ -28,21 +28,31 @@ const EMSLogin: React.FC<EMSLoginProps> = ({ onBack, onLogin }) => {
     setError('');
 
     try {
+      // Clear any existing session before attempting login
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      
       // Import authAPI dynamically to avoid circular imports
       const { authAPI } = await import('../services/api');
       
+      console.log('TCC_DEBUG: EMS Login attempt with:', formData.email);
       const response = await authAPI.emsLogin({
         email: formData.email,
         password: formData.password
       });
 
+      console.log('TCC_DEBUG: EMS Login response:', response.data);
+
       if (response.data.success) {
+        console.log('TCC_DEBUG: EMS Login successful, calling onLogin with user:', response.data.user);
         onLogin(response.data.user, response.data.token);
       } else {
+        console.log('TCC_DEBUG: EMS Login failed:', response.data.error);
         setError(response.data.error || 'Login failed');
       }
     } catch (err: any) {
-      console.error('EMS login error:', err);
+      console.error('TCC_DEBUG: EMS login error:', err);
+      console.error('TCC_DEBUG: Error response:', err.response?.data);
       const errorMessage = err.response?.data?.error || err.message || 'Network error. Please try again.';
       setError(errorMessage);
     } finally {

@@ -543,3 +543,5 @@ This completes the core trip management foundation for the TCC platform!
 **🎉 Phase 4 is 90% complete! Just need to fix agencies display issue.**
 
 **Next Action**: ✅ COMPLETED - Fixed agencies not displaying in enhanced trip form by implementing comprehensive location data solution with geocoding for both healthcare facilities and EMS agencies.
+
+**Discovery**: New EMS agencies require admin approval before appearing in trip form. Agencies are created with `isActive: false` and `requiresReview: true` status. Need to implement admin approval workflow or auto-approve new registrations.

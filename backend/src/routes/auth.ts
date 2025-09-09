@@ -445,7 +445,7 @@ router.post('/ems/register', async (req, res) => {
         name,
         agencyName,
         userType: 'EMS',
-        isActive: false // Requires admin approval
+        isActive: true // Auto-approve new EMS registrations
       }
     });
 
@@ -464,14 +464,14 @@ router.post('/ems/register', async (req, res) => {
         capabilities: capabilities || [],
         latitude: latitude ? parseFloat(latitude) : null,
         longitude: longitude ? parseFloat(longitude) : null,
-        isActive: false, // Requires admin approval
-        requiresReview: true // Flag for admin review
+        isActive: true, // Auto-approve new EMS registrations
+        requiresReview: false // No review needed for auto-approved agencies
       }
     });
 
     res.status(201).json({
       success: true,
-      message: 'EMS agency registration submitted for approval',
+      message: 'EMS agency registration successful - agency is now active and available for trip requests',
       user: {
         id: user.id,
         email: user.email,

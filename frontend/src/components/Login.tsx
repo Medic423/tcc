@@ -26,6 +26,10 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     setError('');
 
     try {
+      // Clear any existing session before attempting login
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      
       console.log('TCC_DEBUG: Attempting login with:', formData);
       const response = await authAPI.login(formData);
       console.log('TCC_DEBUG: Login response:', response.data);

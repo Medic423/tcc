@@ -54,13 +54,21 @@ function AppContent() {
   }, []);
 
   const handleLogin = (userData: User, token: string) => {
+    console.log('TCC_DEBUG: handleLogin called with userData:', userData);
+    console.log('TCC_DEBUG: handleLogin called with token:', token ? 'present' : 'missing');
+    
     setUser(userData);
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(userData));
     
+    console.log('TCC_DEBUG: User state set, localStorage updated');
+    
     // Only redirect for ADMIN/USER types, healthcare/EMS show their dashboards directly
     if (userData.userType === 'ADMIN' || userData.userType === 'USER') {
+      console.log('TCC_DEBUG: Redirecting to dashboard for admin/user');
       window.location.href = '/dashboard';
+    } else {
+      console.log('TCC_DEBUG: No redirect needed for healthcare/EMS - component should re-render');
     }
     // No redirect needed for healthcare/EMS - component re-renders with new user state
   };
