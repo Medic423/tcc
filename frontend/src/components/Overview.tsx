@@ -126,11 +126,30 @@ const Overview: React.FC = () => {
         <h2 className="text-lg font-medium text-gray-900 mb-4">Quick Actions</h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <a
-            href="/dashboard/hospitals"
+            href="/dashboard/trips"
             className="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-primary-500 rounded-lg shadow hover:shadow-md transition-shadow"
           >
             <div>
               <span className="rounded-lg inline-flex p-3 bg-blue-50 text-blue-700 ring-4 ring-white">
+                <Truck className="h-6 w-6" />
+              </span>
+            </div>
+            <div className="mt-4">
+              <h3 className="text-lg font-medium text-gray-900">
+                Manage Trips
+              </h3>
+              <p className="mt-2 text-sm text-gray-500">
+                View, manage, and monitor all transport requests.
+              </p>
+            </div>
+          </a>
+
+          <a
+            href="/dashboard/hospitals"
+            className="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-primary-500 rounded-lg shadow hover:shadow-md transition-shadow"
+          >
+            <div>
+              <span className="rounded-lg inline-flex p-3 bg-green-50 text-green-700 ring-4 ring-white">
                 <Building2 className="h-6 w-6" />
               </span>
             </div>
@@ -149,7 +168,7 @@ const Overview: React.FC = () => {
             className="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-primary-500 rounded-lg shadow hover:shadow-md transition-shadow"
           >
             <div>
-              <span className="rounded-lg inline-flex p-3 bg-green-50 text-green-700 ring-4 ring-white">
+              <span className="rounded-lg inline-flex p-3 bg-purple-50 text-purple-700 ring-4 ring-white">
                 <Truck className="h-6 w-6" />
               </span>
             </div>
@@ -159,25 +178,6 @@ const Overview: React.FC = () => {
               </h3>
               <p className="mt-2 text-sm text-gray-500">
                 Add, edit, or remove EMS agencies and their units.
-              </p>
-            </div>
-          </a>
-
-          <a
-            href="/dashboard/facilities"
-            className="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-primary-500 rounded-lg shadow hover:shadow-md transition-shadow"
-          >
-            <div>
-              <span className="rounded-lg inline-flex p-3 bg-purple-50 text-purple-700 ring-4 ring-white">
-                <MapPin className="h-6 w-6" />
-              </span>
-            </div>
-            <div className="mt-4">
-              <h3 className="text-lg font-medium text-gray-900">
-                Manage Facilities
-              </h3>
-              <p className="mt-2 text-sm text-gray-500">
-                Add, edit, or remove healthcare facilities.
               </p>
             </div>
           </a>
