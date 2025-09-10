@@ -805,29 +805,6 @@ export class TripService {
         data: INSURANCE_OPTIONS,
         message: 'Insurance options retrieved successfully'
       };
-    } catch (error) {
-      console.error('TCC_DEBUG: Error fetching insurance options from database:', error);
-      // Fallback to static list
-      const INSURANCE_OPTIONS = [
-        'Aetna',
-        'Anthem Blue Cross Blue Shield',
-        'Cigna',
-        'Humana',
-        'Kaiser Permanente',
-        'Medicare',
-        'Medicaid',
-        'UnitedHealthcare',
-        'Blue Cross Blue Shield',
-        'AARP',
-        'Tricare',
-        'Other'
-      ];
-
-      return {
-        success: true,
-        data: INSURANCE_OPTIONS,
-        message: 'Insurance options retrieved successfully'
-      };
     }
   }
 
