@@ -591,3 +591,592 @@ The system is now fully functional for both trip creation and dropdown options m
 
 ---
 
+_**User (2025-09-10 14:36Z)**_
+
+A quick test and everything seems to be working. Let commit this to the main branch and push to the repository and then we'll move on to some other tweaks.
+
+---
+
+_**Assistant**_
+
+Perfect! I can see from the terminal output that both the backend and frontend are running successfully, and the dropdown options route is working. Let me commit these changes and push them to the repository.
+
+
+---
+
+```bash
+git add .
+```
+
+---
+
+```bash
+git status
+```
+
+```
+On branch main
+Your branch is ahead of 'origin/main' by 1 commit.                                            
+  (use "git push" to publish your local commits)                                              
+
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)                                           
+        modified:   .specstory/history/2025-09-10_16-10Z-troubleshoot-ems-module-unit-display-issues.md                                      
+        new file:   .specstory/history/2025-09-10_18-30Z-fix-dropdown-options-route-issue.md  
+        modified:   backend/src/index.ts
+```
+
+---
+
+```bash
+git commit -m "Fix dropdown options route issue
+
+- Uncommented dropdown options route import and registration in backend/src/index.ts
+- Dropdown options API now fully functional for hospital settings management
+- All CRUD operations working (Create, Read, Update, Delete)
+- Both trips options endpoints and dropdown options endpoints are operational
+- Frontend can now load dropdown options for trip creation and management"
+```
+
+```
+[main 28898ee] Fix dropdown options route issue
+ 3 files changed, 740 insertions(+), 2 deletions(-)                                           
+ create mode 100644 .specstory/history/2025-09-10_18-30Z-fix-dropdown-options-route-issue.md  
+```
+
+---
+
+```bash
+git push origin main
+```
+
+```
+Enumerating objects: 75, done.
+Counting objects: 100% (75/75), done.
+Delta compression using up to 14 threads
+Compressing objects: 100% (45/45), done.
+Writing objects: 100% (47/47), 95.07 KiB | 9.51 MiB/s, done.                                  
+Total 47 (delta 30), reused 0 (delta 0), pack-reused 0                                        
+remote: Resolving deltas: 100% (30/30), completed with 22 local objects.                      
+To https://github.com/Medic423/tcc.git
+   2509429..28898ee  main -> main
+```
+
+---
+
+Perfect! ✅ **Successfully committed and pushed the dropdown options route fix to the main branch.**
+
+## 📋 **Commit Summary:**
+- **Commit Hash:** `28898ee`
+- **Files Changed:** 3 files, 740 insertions, 2 deletions
+- **Key Fix:** Uncommented dropdown options route registration in `backend/src/index.ts`
+- **Status:** Successfully pushed to `origin/main`
+
+## 🎯 **What's Now Working:**
+- ✅ Dropdown options route `/api/dropdown-options` is fully functional
+- ✅ Hospital settings can manage dropdown options (CRUD operations)
+- ✅ Trip creation dropdowns are working via trips API endpoints
+- ✅ Both frontend and backend are running smoothly
+- ✅ All changes are now saved and versioned in the repository
+
+The dropdown options issue has been completely resolved and the fix is now part of the main codebase. Ready for the next set of tweaks! What would you like to work on next?
+
+---
+
+_**User (2025-09-10 14:36Z)**_
+
+Review the plan_for_091025.md and route_opt_analytics.md. I think we need to do it in a seperate branch since it's going to have a lot of database work. The one thing I noticed before we start is that it looks the Analytics tab in the "TCC" module needs to be added to the EMS module and the route optimization in the EMS module needs to be copied to the "TCC" module and hidden from EMS. It will be exposed to EMS in a later version. The Analytics Module in the TCC will look at the overall financial picture from all the trips in the system where "Analytics" in the EMS module will just look at trips showing for that service. Does that make sense? Do you have any questions? Update the  route_opt_analytics.md plan with these changes. Don't write any code just show me the updated plan.   
+
+---
+
+_**Assistant**_
+
+I understand perfectly! You want to reorganize the analytics and route optimization modules to better separate concerns between TCC (system-wide) and EMS (agency-specific) views. Let me update the `route_opt_analytics.md` plan with these architectural changes.
+
+
+---
+
+Read file: undefined
+
+---
+
+Now let me update the plan with the architectural changes you've outlined:
+
+
+---
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/docs/notes/route_opt_analytics.md</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 3, lines removed: 2
+
+```diff
+@@ -2,7 +2,8 @@
+  # Route Optimization & Analytics Database Analysis
+  
+- **Date**: September 9, 2025  
++ **Date**: September 10, 2025  
+  **Status**: Analysis Complete - Implementation Pending  
+- **Priority**: Medium - After Core Development
++ **Priority**: HIGH - Complete Route Optimization System  
++ **Branch**: `feature/route-optimization-analytics` (separate branch for database work)
+  
+  ## **Analytics Tab Current Status**
+```
+
+</details>
+
+---
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/docs/notes/route_opt_analytics.md</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 42, lines removed: undefined
+
+```diff
+@@ -6,4 +6,46 @@
+  **Priority**: HIGH - Complete Route Optimization System  
+  **Branch**: `feature/route-optimization-analytics` (separate branch for database work)
++ 
++ ## **ARCHITECTURAL CHANGES REQUIRED**
++ 
++ ### **🔄 Module Reorganization Strategy:**
++ 
++ **Current State:**
++ - Analytics tab exists in TCC module (system-wide view)
++ - Route optimization exists in EMS module (agency-specific view)
++ 
++ **Target State:**
++ - **TCC Module**: System-wide analytics + Route optimization (hidden from EMS)
++ - **EMS Module**: Agency-specific analytics only
++ 
++ ### **📋 Module Migration Plan:**
++ 
++ #### **1. Analytics Module Migration:**
++ - **FROM**: TCC module (system-wide analytics)
++ - **TO**: EMS module (agency-specific analytics)
++ - **Scope**: Only trips assigned to the logged-in EMS agency
++ - **API Changes**: Add agency filtering to all analytics endpoints
++ 
++ #### **2. Route Optimization Module Migration:**
++ - **FROM**: EMS module (agency-specific optimization)
++ - **TO**: TCC module (system-wide optimization, hidden from EMS)
++ - **Scope**: All agencies and units in the system
++ - **Visibility**: TCC admins only, not exposed to EMS users
++ 
++ #### **3. New API Structure:**
++ ```
++ TCC Module APIs:
++ - /api/tcc/analytics/overview (system-wide)
++ - /api/tcc/analytics/trips (all trips)
++ - /api/tcc/analytics/agencies (all agencies)
++ - /api/tcc/analytics/hospitals (all hospitals)
++ - /api/optimize/* (system-wide optimization)
++ 
++ EMS Module APIs:
++ - /api/ems/analytics/overview (agency-specific)
++ - /api/ems/analytics/trips (agency trips only)
++ - /api/ems/analytics/units (agency units only)
++ - /api/ems/analytics/performance (agency performance only)
++ ```
+  
+  ## **Analytics Tab Current Status**
+```
+
+</details>
+
+---
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/docs/notes/route_opt_analytics.md</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 8, lines removed: 1
+
+```diff
+@@ -203,5 +203,12 @@
+  4. **Distance Tracking Missing**: Cannot optimize routes without distance data
+  
+- ### **🔧 Implementation Priority for Route Optimization:**
++ ### **🔧 Implementation Priority for Route Optimization & Analytics:**
++ 
++ **Phase 0: Branch Setup & Module Migration (1-2 hours)**
++ 1. Create `feature/route-optimization-analytics` branch
++ 2. Move Analytics components from TCC to EMS module
++ 3. Move Route Optimization components from EMS to TCC module
++ 4. Update API endpoints and routing
++ 5. Update frontend navigation and permissions
+  
+  **Phase 1: Database Schema Updates (2-3 hours)**
+```
+
+**Chunk 2**
+Lines added: 6, lines removed: undefined
+
+```diff
+@@ -232,4 +239,10 @@
+  2. Update analytics to use real performance data
+  3. Test performance optimization
++ 
++ **Phase 6: Module-Specific Analytics Implementation (2-3 hours)**
++ 1. **TCC Analytics**: System-wide financial picture from all trips
++ 2. **EMS Analytics**: Agency-specific trip performance and metrics
++ 3. Update frontend components for appropriate data scoping
++ 4. Test both analytics views with proper data filtering
+  
+  ### **📈 Expected Results After Implementation:**
+```
+
+</details>
+
+---
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/docs/notes/route_opt_analytics.md</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 2, lines removed: undefined
+
+```diff
+@@ -248,4 +248,6 @@
+  ### **📈 Expected Results After Implementation:**
+  
++ - **TCC Module**: System-wide route optimization and financial analytics
++ - **EMS Module**: Agency-specific performance analytics and trip management
+  - **Route Optimization**: Fully functional with real unit and trip data
+  - **Revenue Analytics**: Real revenue calculations and optimization
+```
+
+**Chunk 2**
+Lines added: 13, lines removed: 4
+
+```diff
+@@ -261,14 +263,23 @@
+  - Performance metrics reflect actual unit performance
+  - Backhaul detection finds real optimization opportunities
++ - **TCC Analytics**: Shows system-wide financial picture from all trips
++ - **EMS Analytics**: Shows agency-specific trip performance and metrics
++ - Proper data scoping and filtering between modules
+  
+  ---
+  
+  ## **Summary**
+  
++ **Module Migration**: 0% complete - needs component and API reorganization
+  **Analytics**: 60% complete - needs database field additions and frontend wiring
+  **Route Optimization**: 30% complete - needs critical location data and database integration
+  
+- **Total Estimated Time**: 8-12 hours for complete implementation
+- **Dependencies**: Database migrations, cross-database query optimization, location data population
+- 
+- **Recommendation**: Implement Route Optimization first as it's more critical for core functionality, then complete Analytics implementation.
++ **Total Estimated Time**: 10-14 hours for complete implementation
++ **Dependencies**: Database migrations, cross-database query optimization, location data population, module migration
++ 
++ **Recommendation**: 
++ 1. Create separate branch for database work
++ 2. Complete module migration first (Phase 0)
++ 3. Implement database schema updates (Phase 1)
++ 4. Complete route optimization implementation (Phases 2-5)
++ 5. Implement module-specific analytics (Phase 6)
+```
+
+</details>
+
+---
+
+Perfect! I've updated the `route_opt_analytics.md` plan with your architectural changes. Here's a summary of the key updates:
+
+## **🔄 Updated Plan Summary:**
+
+### **Architectural Changes:**
+- **TCC Module**: System-wide analytics + Route optimization (hidden from EMS)
+- **EMS Module**: Agency-specific analytics only
+- **Separate Branch**: `feature/route-optimization-analytics` for database work
+
+### **Module Migration Strategy:**
+1. **Analytics**: Move from TCC → EMS (with agency filtering)
+2. **Route Optimization**: Move from EMS → TCC (system-wide, TCC admin only)
+
+### **New API Structure:**
+- **TCC APIs**: System-wide analytics and optimization
+- **EMS APIs**: Agency-specific analytics only
+
+### **Updated Implementation Phases:**
+- **Phase 0**: Branch setup & module migration (1-2 hours)
+- **Phase 1-5**: Database and optimization work (8-10 hours)
+- **Phase 6**: Module-specific analytics implementation (2-3 hours)
+
+### **Key Benefits:**
+- **TCC Analytics**: Overall financial picture from all trips
+- **EMS Analytics**: Agency-specific trip performance and metrics
+- **Route Optimization**: System-wide optimization capabilities (TCC only)
+- **Proper Data Scoping**: Each module sees only relevant data
+
+The plan now reflects your vision of separating concerns between TCC (system-wide management) and EMS (agency-specific operations). This makes perfect sense from both a security and functionality perspective.
+
+**Questions for clarification:**
+1. Should the route optimization be completely hidden from EMS users, or just the advanced features?
+2. Do you want to maintain any read-only analytics in the EMS module for their own performance tracking?
+3. Should we create the new branch now and start with Phase 0, or would you like to review anything else first?
+
+---
+
+_**User (2025-09-10 14:36Z)**_
+
+1. Hide completely
+2. My first thought is no. What "read only" analytics would you suggest keeping? 
+3. Yes create the new branch now and start with Phase 0.
+
+---
+
+_**Assistant**_
+
+Perfect! Let me address your questions and then create the new branch to start Phase 0.
+
+## **Answers to your questions:**
+
+1. **Route optimization completely hidden from EMS** ✅ - Got it, no route optimization features visible to EMS users.
+
+2. **Read-only analytics for EMS** - You're right to question this. Looking at the current system, EMS users would benefit from:
+   - **Trip Performance**: Response times, completion rates for their agency's trips
+   - **Unit Utilization**: How efficiently their units are being used
+   - **Revenue Tracking**: What their agency is earning from completed trips
+   - **Service Quality**: Customer satisfaction, on-time performance
+
+   But if you prefer to keep it simple and focused, we can skip the read-only analytics for now and just have the full analytics in TCC.
+
+3. **Create branch and start Phase 0** ✅ - Let's do it!
+
+Let me create the new branch and start with Phase 0:
+
+
+---
+
+```bash
+git checkout -b feature/route-optimization-analytics
+```
+
+```
+Switched to a new branch 'feature/route-optimization-analytics'                               
+```
+
+---
+
+## Todo List
+
+- [-] Analyze current Analytics and Route Optimization components
+- [ ] Move Analytics components from TCC to EMS module
+- [ ] Move Route Optimization components from EMS to TCC module
+- [ ] Update API endpoints and routing
+- [ ] Update frontend navigation and permissions
+
+---
+
+Now let me analyze the current components to understand what needs to be moved:
+
+
+---
+
+<details>
+                <summary>Searched codebase "Where are the Analytics components currently located in the frontend?" • **14** results</summary>
+            
+| File | Lines |
+|------|-------|
+| `frontend/src/components/Analytics.tsx` | Lundefined-158 |
+| `frontend/src/components/Analytics.tsx` | L2-160 |
+| `frontend/src/components/TCCDashboard.tsx` | L38-243 |
+| `frontend/src/components/TCCDashboard.tsx` | Lundefined-38 |
+| `frontend/src/components/RouteOptimizer.tsx` | L35-731 |
+| `frontend/src/components/Analytics.tsx` | L4-160 |
+| `frontend/src/components/TCCDashboard.tsx` | L33-241 |
+| `frontend/src/components/Analytics.tsx` | L2-158 |
+| `frontend/src/components/Overview.tsx` | L13-208 |
+| `frontend/src/components/RouteOptimizer.tsx` | L27-731 |
+| `frontend/src/components/RouteOptimizer.tsx` | Lundefined-731 |
+| `frontend/src/components/UnitsManagement.tsx` | L39-670 |
+| `frontend/src/components/Overview.tsx` | L4-206 |
+| `frontend/src/components/EMSDashboard.tsx` | Lundefined-815 |
+
+</details>
+
+---
+
+<details>
+                <summary>Searched codebase "Where are the Route Optimization components currently located in the frontend?" • **11** results</summary>
+            
+| File | Lines |
+|------|-------|
+| `frontend/src/components/RouteOptimizer.tsx` | L27-731 |
+| `frontend/src/components/RouteOptimizer.tsx` | Lundefined-731 |
+| `frontend/src/components/TCCDashboard.tsx` | L38-243 |
+| `frontend/src/components/EMSDashboard.tsx` | L26-815 |
+| `frontend/src/components/EMSDashboard.tsx` | Lundefined-815 |
+| `frontend/src/components/RouteOptimizer.tsx` | L35-731 |
+| `frontend/src/components/Analytics.tsx` | Lundefined-158 |
+| `frontend/src/components/TCCDashboard.tsx` | Lundefined-38 |
+| `frontend/src/components/RevenueOptimizationPanel.tsx` | L42-322 |
+| `frontend/src/components/Analytics.tsx` | L2-160 |
+| `frontend/src/components/EnhancedTripForm.tsx` | L58-867 |
+
+</details>
+
+---
+
+Perfect! Now I can see the current structure. Let me also check the backend API structure:
+
+
+---
+
+<details>
+                <summary>Searched codebase "What analytics and optimization API endpoints currently exist in the backend?" • **15** results</summary>
+            
+| File | Lines |
+|------|-------|
+| `backend/src/routes/optimization.ts` | Lundefined-93 |
+| `backend/src/routes/optimization.ts` | L17-150 |
+| `backend/src/routes/optimization.ts` | L203-313 |
+| `backend/src/routes/analytics.ts` | L4-51 |
+| `backend/src/routes/analytics.ts` | Lundefined-29 |
+| `backend/src/routes/productionUnits.ts` | L23-51 |
+| `backend/src/routes/optimization.ts` | L99-202 |
+| `backend/src/routes/analytics.ts` | L13-73 |
+| `backend/src/routes/analytics.ts` | L35-95 |
+| `backend/src/routes/units.ts` | L44-127 |
+| `backend/src/routes/analytics.ts` | L57-97 |
+| `backend/src/routes/optimization.ts` | L11-145 |
+| `backend/src/routes/optimization.ts` | L151-295 |
+| `backend/src/routes/notifications.ts` | Lundefined-118 |
+| `backend/src/routes/dropdownOptions.ts` | Lundefined-86 |
+
+</details>
+
+---
+
+Now I have a clear picture. Let me start Phase 0 by creating the module migration plan and implementing it:
+
+
+---
+
+## Todo List
+
+- [x] Analyze current Analytics and Route Optimization components
+- [ ] Move Analytics components from TCC to EMS module
+- [ ] Move Route Optimization components from EMS to TCC module
+- [ ] Update API endpoints and routing
+- [ ] Update frontend navigation and permissions
+
+---
+
+## **Phase 0 Analysis Complete! Here's what I found:**
+
+### **Current Structure:**
+- **Analytics**: Currently in TCC module (`/analytics` route in TCCDashboard)
+- **Route Optimization**: Currently in EMS module (`/optimization` tab in EMSDashboard)
+- **Backend APIs**: 
+  - `/api/tcc/analytics/*` (system-wide)
+  - `/api/optimize/*` (optimization endpoints)
+
+### **Migration Plan:**
+
+**1. Analytics Migration (TCC → EMS):**
+- Move `Analytics.tsx` component to EMS module
+- Create agency-filtered analytics APIs (`/api/ems/analytics/*`)
+- Update EMS dashboard to include analytics tab
+
+**2. Route Optimization Migration (EMS → TCC):**
+- Move `RouteOptimizer.tsx` component to TCC module
+- Keep optimization APIs as system-wide (`/api/optimize/*`)
+- Add route optimization tab to TCC dashboard
+- Hide from EMS users completely
+
+Let me start implementing this migration:
+
+
+---
+
+## Todo List
+
+- [x] Analyze current Analytics and Route Optimization components
+- [-] Move Analytics components from TCC to EMS module
+- [ ] Move Route Optimization components from EMS to TCC module
+- [ ] Update API endpoints and routing
+- [ ] Update frontend navigation and permissions
+
+---
+
+First, let me create an agency-specific Analytics component for the EMS module:
+
+
+---
+
+
+
+---
+
+Now let me create a system-wide Analytics component for the TCC module (keeping the original but updating it):
+
+
+---
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/Analytics.tsx</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -7,5 +7,5 @@
+  
+    const tabs = [
+-     { id: 'overview', name: 'Overview', icon: BarChart3 },
++     { id: 'overview', name: 'System Overview', icon: BarChart3 },
+      { id: 'revenue', name: 'Revenue Optimization', icon: DollarSign },
+      { id: 'performance', name: 'Performance', icon: TrendingUp },
+```
+
+</details>
+
+---
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/Analytics.tsx</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -18,5 +18,5 @@
+          <h1 className="text-2xl font-bold text-gray-900">Analytics</h1>
+          <p className="mt-1 text-sm text-gray-500">
+-           View system analytics, performance metrics, and revenue optimization.
++           View system-wide analytics, performance metrics, and revenue optimization across all agencies.
+          </p>
+        </div>
+```
+
+</details>
+
+---
+
+Now let me create a system-wide Route Optimization component for the TCC module:
+
+
+---
+
+
+
+---
+
+
+
+---
+

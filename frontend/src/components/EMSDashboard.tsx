@@ -9,11 +9,12 @@ import {
   LogOut,
   Bell,
   Navigation,
-  Settings
+  Settings,
+  BarChart3
 } from 'lucide-react';
 import Notifications from './Notifications';
-import RouteOptimizer from './RouteOptimizer';
 import UnitsManagement from './UnitsManagement';
+import EMSAnalytics from './EMSAnalytics';
 
 interface EMSDashboardProps {
   user: {
@@ -338,7 +339,7 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
               { id: 'available', name: 'Available Trips', icon: MapPin },
               { id: 'accepted', name: 'My Trips', icon: CheckCircle },
               { id: 'units', name: 'Units', icon: Settings },
-              { id: 'optimization', name: 'Route Optimization', icon: Navigation },
+              { id: 'analytics', name: 'Analytics', icon: BarChart3 },
               { id: 'settings', name: 'Settings', icon: User }
             ].map((tab) => {
               const Icon = tab.icon;
@@ -637,8 +638,8 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
           </div>
         )}
 
-        {activeTab === 'optimization' && (
-          <RouteOptimizer user={user} />
+        {activeTab === 'analytics' && (
+          <EMSAnalytics user={user} />
         )}
 
         {activeTab === 'units' && (

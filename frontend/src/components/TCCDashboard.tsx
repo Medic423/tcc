@@ -9,7 +9,8 @@ import {
   Menu,
   X,
   Bell,
-  DollarSign
+  DollarSign,
+  Navigation
 } from 'lucide-react';
 import Notifications from './Notifications';
 import Overview from './Overview';
@@ -22,6 +23,7 @@ import EMSDashboard from './EMSDashboard';
 import NotificationSettings from './NotificationSettings';
 import UserManagement from './UserManagement';
 import TCCUnitsManagement from './TCCUnitsManagement';
+import TCCRouteOptimizer from './TCCRouteOptimizer';
 
 interface User {
   id: string;
@@ -50,6 +52,7 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
       { name: 'Healthcare Facilities', href: '/dashboard/hospitals', icon: Building2 },
       { name: 'EMS Agencies', href: '/dashboard/agencies', icon: Truck },
       { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
+      { name: 'Route Optimization', href: '/dashboard/route-optimization', icon: Navigation },
       { name: 'Notifications', href: '/dashboard/notifications', icon: Bell },
     ];
 
@@ -225,6 +228,7 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
                 <Route path="/hospitals/*" element={<Hospitals />} />
                 <Route path="/agencies/*" element={<Agencies />} />
                 <Route path="/analytics/*" element={<Analytics />} />
+                <Route path="/route-optimization" element={<TCCRouteOptimizer />} />
                 <Route path="/healthcare-portal" element={<HealthcarePortal />} />
                 <Route path="/ems-dashboard" element={<EMSDashboard user={user} onLogout={onLogout} />} />
                 <Route path="/notifications" element={<NotificationSettings />} />

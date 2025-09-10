@@ -202,4 +202,19 @@ export const dropdownOptionsAPI = {
     api.delete(`/api/dropdown-options/${id}`),
 };
 
+// EMS Analytics API (Agency-specific)
+export const emsAnalyticsAPI = {
+  getOverview: () =>
+    api.get('/api/ems/analytics/overview'),
+  
+  getTrips: () =>
+    api.get('/api/ems/analytics/trips'),
+  
+  getUnits: () =>
+    api.get('/api/ems/analytics/units'),
+  
+  getPerformance: () =>
+    api.get('/api/ems/analytics/performance'),
+};
+
 export default api;

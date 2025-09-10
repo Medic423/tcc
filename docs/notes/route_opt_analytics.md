@@ -1,9 +1,52 @@
 Console log is in the image.
 # Route Optimization & Analytics Database Analysis
 
-**Date**: September 9, 2025  
+**Date**: September 10, 2025  
 **Status**: Analysis Complete - Implementation Pending  
-**Priority**: Medium - After Core Development
+**Priority**: HIGH - Complete Route Optimization System  
+**Branch**: `feature/route-optimization-analytics` (separate branch for database work)
+
+## **ARCHITECTURAL CHANGES REQUIRED**
+
+### **🔄 Module Reorganization Strategy:**
+
+**Current State:**
+- Analytics tab exists in TCC module (system-wide view)
+- Route optimization exists in EMS module (agency-specific view)
+
+**Target State:**
+- **TCC Module**: System-wide analytics + Route optimization (hidden from EMS)
+- **EMS Module**: Agency-specific analytics only
+
+### **📋 Module Migration Plan:**
+
+#### **1. Analytics Module Migration:**
+- **FROM**: TCC module (system-wide analytics)
+- **TO**: EMS module (agency-specific analytics)
+- **Scope**: Only trips assigned to the logged-in EMS agency
+- **API Changes**: Add agency filtering to all analytics endpoints
+
+#### **2. Route Optimization Module Migration:**
+- **FROM**: EMS module (agency-specific optimization)
+- **TO**: TCC module (system-wide optimization, hidden from EMS)
+- **Scope**: All agencies and units in the system
+- **Visibility**: TCC admins only, not exposed to EMS users
+
+#### **3. New API Structure:**
+```
+TCC Module APIs:
+- /api/tcc/analytics/overview (system-wide)
+- /api/tcc/analytics/trips (all trips)
+- /api/tcc/analytics/agencies (all agencies)
+- /api/tcc/analytics/hospitals (all hospitals)
+- /api/optimize/* (system-wide optimization)
+
+EMS Module APIs:
+- /api/ems/analytics/overview (agency-specific)
+- /api/ems/analytics/trips (agency trips only)
+- /api/ems/analytics/units (agency units only)
+- /api/ems/analytics/performance (agency performance only)
+```
 
 ## **Analytics Tab Current Status**
 
@@ -159,7 +202,14 @@ Console log is in the image.
 3. **Revenue Fields Missing**: Cannot calculate actual revenue without cost fields
 4. **Distance Tracking Missing**: Cannot optimize routes without distance data
 
-### **🔧 Implementation Priority for Route Optimization:**
+### **🔧 Implementation Priority for Route Optimization & Analytics:**
+
+**Phase 0: Branch Setup & Module Migration (1-2 hours)**
+1. Create `feature/route-optimization-analytics` branch
+2. Move Analytics components from TCC to EMS module
+3. Move Route Optimization components from EMS to TCC module
+4. Update API endpoints and routing
+5. Update frontend navigation and permissions
 
 **Phase 1: Database Schema Updates (2-3 hours)**
 1. Add location fields to Trip model
@@ -189,8 +239,16 @@ Console log is in the image.
 2. Update analytics to use real performance data
 3. Test performance optimization
 
+**Phase 6: Module-Specific Analytics Implementation (2-3 hours)**
+1. **TCC Analytics**: System-wide financial picture from all trips
+2. **EMS Analytics**: Agency-specific trip performance and metrics
+3. Update frontend components for appropriate data scoping
+4. Test both analytics views with proper data filtering
+
 ### **📈 Expected Results After Implementation:**
 
+- **TCC Module**: System-wide route optimization and financial analytics
+- **EMS Module**: Agency-specific performance analytics and trip management
 - **Route Optimization**: Fully functional with real unit and trip data
 - **Revenue Analytics**: Real revenue calculations and optimization
 - **Performance Metrics**: Actual unit performance tracking
@@ -204,15 +262,24 @@ Console log is in the image.
 - Revenue calculations use real trip data
 - Performance metrics reflect actual unit performance
 - Backhaul detection finds real optimization opportunities
+- **TCC Analytics**: Shows system-wide financial picture from all trips
+- **EMS Analytics**: Shows agency-specific trip performance and metrics
+- Proper data scoping and filtering between modules
 
 ---
 
 ## **Summary**
 
+**Module Migration**: 0% complete - needs component and API reorganization
 **Analytics**: 60% complete - needs database field additions and frontend wiring
 **Route Optimization**: 30% complete - needs critical location data and database integration
 
-**Total Estimated Time**: 8-12 hours for complete implementation
-**Dependencies**: Database migrations, cross-database query optimization, location data population
+**Total Estimated Time**: 10-14 hours for complete implementation
+**Dependencies**: Database migrations, cross-database query optimization, location data population, module migration
 
-**Recommendation**: Implement Route Optimization first as it's more critical for core functionality, then complete Analytics implementation.
+**Recommendation**: 
+1. Create separate branch for database work
+2. Complete module migration first (Phase 0)
+3. Implement database schema updates (Phase 1)
+4. Complete route optimization implementation (Phases 2-5)
+5. Implement module-specific analytics (Phase 6)
