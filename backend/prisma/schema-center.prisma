@@ -108,6 +108,12 @@ model Trip {
   transportLevel    String    // BLS, ALS, CCT, Other
   urgencyLevel      String    // Routine, Urgent, Emergent
   
+  // Location Data for Route Optimization
+  originLatitude       Float?   // Origin coordinates for distance calculations
+  originLongitude      Float?   // Origin coordinates for distance calculations
+  destinationLatitude  Float?   // Destination coordinates for distance calculations
+  destinationLongitude Float?   // Destination coordinates for distance calculations
+  
   // Clinical Details
   diagnosis         String?   // Optional dropdown: UTI, Dialysis, Cardiac, etc.
   mobilityLevel     String?   // Ambulatory, Wheelchair, Stretcher, Bed
@@ -127,6 +133,18 @@ model Trip {
   transferAcceptedTime  DateTime?  // Auto-set when agency responds, manually editable
   emsArrivalTime        DateTime?  // When EMS arrives at unit
   emsDepartureTime      DateTime?  // When EMS leaves unit
+  
+  // Revenue and Distance Tracking
+  tripCost              Decimal?   @db.Decimal(10,2)  // Calculated trip cost
+  distanceMiles         Float?     // Total trip distance in miles
+  responseTimeMinutes   Int?       // Response time in minutes
+  deadheadMiles         Float?     // Deadhead miles (empty return)
+  
+  // Performance Tracking
+  requestTimestamp      DateTime?  @default(now())  // When request was made
+  estimatedTripTimeMinutes Int?    // Expected trip duration
+  actualTripTimeMinutes   Int?     // Actual trip duration
+  completionTimeMinutes   Int?     // Total completion time
   
   // Legacy fields (keeping for backward compatibility)
   actualStartTime   DateTime?
