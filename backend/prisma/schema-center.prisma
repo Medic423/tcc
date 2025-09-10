@@ -97,8 +97,9 @@ model Trip {
   
   // Patient Information (HIPAA Compliant - NO name/age)
   patientId         String    // Auto-generated patient ID (e.g., "PMTC1NJKZ")
-  patientWeight     String?   // Optional weight information
+  patientWeight     String?   // Optional weight information (in kgs)
   specialNeeds      String?   // Special medical needs
+  insuranceCompany  String?   // Patient's insurance company
   
   // Trip Details
   fromLocation      String

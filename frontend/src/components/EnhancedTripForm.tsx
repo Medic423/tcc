@@ -32,6 +32,7 @@ interface FormData {
   patientId: string;
   patientWeight: string;
   specialNeeds: string;
+  insuranceCompany: string;
   generateQRCode: boolean;
   
   // Trip Details
@@ -60,6 +61,7 @@ interface FormOptions {
   mobility: string[];
   transportLevel: string[];
   urgency: string[];
+  insurance: string[];
   facilities: any[];
   agencies: any[];
 }
@@ -74,6 +76,7 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
     mobility: [],
     transportLevel: [],
     urgency: [],
+    insurance: [],
     facilities: [],
     agencies: []
   });
@@ -82,6 +85,7 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
     patientId: '',
     patientWeight: '',
     specialNeeds: '',
+    insuranceCompany: '',
     generateQRCode: false,
     fromLocation: user.facilityName || '',
     toLocation: '',
@@ -113,11 +117,12 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
 
   const loadFormOptions = async () => {
     try {
-      const [diagnosisRes, mobilityRes, transportRes, urgencyRes, facilitiesRes] = await Promise.all([
+      const [diagnosisRes, mobilityRes, transportRes, urgencyRes, insuranceRes, facilitiesRes] = await Promise.all([
         tripsAPI.getOptions.diagnosis(),
         tripsAPI.getOptions.mobility(),
         tripsAPI.getOptions.transportLevel(),
         tripsAPI.getOptions.urgency(),
+        tripsAPI.getOptions.insurance(),
         fetch('/api/tcc/facilities', {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -130,6 +135,7 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
         mobility: mobilityRes.data.data || [],
         transportLevel: transportRes.data.data || [],
         urgency: urgencyRes.data.data || [],
+        insurance: insuranceRes.data.data || [],
         facilities: facilitiesRes.data || [],
         agencies: []
       });
@@ -290,34 +296,56 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Patient Weight (lbs)
+                  Patient Weight (kgs)
                 </label>
                 <input
                   type="number"
                   name="patientWeight"
                   value={formData.patientWeight}
                   onChange={handleChange}
+                  min="0"
+                  step="0.1"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Enter weight in pounds"
+                  placeholder="Enter weight in kilograms"
                 />
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Special Needs
-              </label>
-              <textarea
-                name="specialNeeds"
-                value={formData.specialNeeds}
-                onChange={handleChange}
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Describe any special needs or requirements"
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Insurance Company
+                </label>
+                <select
+                  name="insuranceCompany"
+                  value={formData.insuranceCompany}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">Select insurance company</option>
+                  {formOptions.insurance.map((insurance) => (
+                    <option key={insurance} value={insurance}>{insurance}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Special Needs
+                </label>
+                <input
+                  type="text"
+                  name="specialNeeds"
+                  value={formData.specialNeeds}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Enter special needs"
+                />
+              </div>
             </div>
 
-            <div className="flex items-center">
+            {/* QR Code generation temporarily disabled for first version */}
+            {/* <div className="flex items-center">
               <input
                 type="checkbox"
                 name="generateQRCode"
@@ -328,7 +356,7 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
               <label className="ml-2 block text-sm text-gray-900">
                 Generate QR Code for patient tracking
               </label>
-            </div>
+            </div> */}
           </div>
         );
 
@@ -671,9 +699,10 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
                 <div className="bg-white border rounded-lg p-4">
                   <h4 className="font-medium text-gray-900 mb-2">Patient Information</h4>
                   <p className="text-sm text-gray-600">ID: {formData.patientId}</p>
-                  {formData.patientWeight && <p className="text-sm text-gray-600">Weight: {formData.patientWeight} lbs</p>}
+                  {formData.patientWeight && <p className="text-sm text-gray-600">Weight: {formData.patientWeight} kgs</p>}
+                  {formData.insuranceCompany && <p className="text-sm text-gray-600">Insurance: {formData.insuranceCompany}</p>}
                   {formData.specialNeeds && <p className="text-sm text-gray-600">Special Needs: {formData.specialNeeds}</p>}
-                  {formData.generateQRCode && <p className="text-sm text-blue-600">QR Code: Generated</p>}
+                  {/* {formData.generateQRCode && <p className="text-sm text-blue-600">QR Code: Generated</p>} */}
                 </div>
 
                 <div className="bg-white border rounded-lg p-4">

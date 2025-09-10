@@ -97,6 +97,7 @@ router.post('/enhanced', async (req, res) => {
       patientId,
       patientWeight,
       specialNeeds,
+      insuranceCompany,
       fromLocation,
       toLocation,
       scheduledTime,
@@ -139,6 +140,7 @@ router.post('/enhanced', async (req, res) => {
       patientId,
       patientWeight,
       specialNeeds,
+      insuranceCompany,
       fromLocation,
       toLocation,
       scheduledTime,
@@ -608,6 +610,23 @@ router.get('/options/urgency', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to get urgency options'
+    });
+  }
+});
+
+/**
+ * GET /api/trips/options/insurance
+ * Get insurance company options
+ */
+router.get('/options/insurance', async (req, res) => {
+  try {
+    const result = await tripService.getInsuranceOptions();
+    res.json(result);
+  } catch (error) {
+    console.error('TCC_DEBUG: Get insurance options error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get insurance options'
     });
   }
 });

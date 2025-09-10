@@ -15,6 +15,7 @@ import optimizationRoutes from './routes/optimization';
 import notificationRoutes from './routes/notifications';
 import unitRoutes from './routes/units';
 import tccUnitRoutes from './routes/tccUnits';
+// import dropdownOptionsRoutes from './routes/dropdownOptions';
 
 // Load environment variables
 dotenv.config();
@@ -78,6 +79,7 @@ app.use('/api/tcc/agencies', agencyRoutes);
 app.use('/api/tcc/facilities', facilityRoutes);
 app.use('/api/tcc/analytics', analyticsRoutes);
 app.use('/api/tcc/units', tccUnitRoutes);
+// app.use('/api/dropdown-options', dropdownOptionsRoutes);
 app.use('/api/optimize', optimizationRoutes);
 
 // Test endpoints

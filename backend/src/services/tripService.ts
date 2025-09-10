@@ -25,6 +25,7 @@ export interface EnhancedCreateTripRequest {
   patientId?: string; // Auto-generated if not provided
   patientWeight?: string;
   specialNeeds?: string;
+  insuranceCompany?: string;
   
   // Trip Details
   fromLocation: string;
@@ -98,6 +99,7 @@ export class TripService {
         patientId: patientId,
         patientWeight: data.patientWeight ? String(data.patientWeight) : null,
         specialNeeds: data.specialNeeds || null,
+        insuranceCompany: data.insuranceCompany || null,
         fromLocation: data.fromLocation,
         toLocation: data.toLocation,
         scheduledTime: scheduledTime,
@@ -727,6 +729,77 @@ export class TripService {
       data: URGENCY_OPTIONS,
       message: 'Urgency options retrieved successfully'
     };
+  }
+
+  /**
+   * Get insurance company options
+   */
+  async getInsuranceOptions() {
+    try {
+      const hospitalPrisma = databaseManager.getHospitalDB();
+      const options = await hospitalPrisma.dropdownOption.findMany({
+        where: {
+          category: 'insurance',
+          isActive: true
+        },
+        orderBy: {
+          value: 'asc'
+        }
+      });
+      
+      // If no options in database, return default list
+      if (options.length === 0) {
+        const INSURANCE_OPTIONS = [
+          'Aetna',
+          'Anthem Blue Cross Blue Shield',
+          'Cigna',
+          'Humana',
+          'Kaiser Permanente',
+          'Medicare',
+          'Medicaid',
+          'UnitedHealthcare',
+          'Blue Cross Blue Shield',
+          'AARP',
+          'Tricare',
+          'Other'
+        ];
+
+        return {
+          success: true,
+          data: INSURANCE_OPTIONS,
+          message: 'Insurance options retrieved successfully'
+        };
+      }
+      
+      return {
+        success: true,
+        data: options.map(option => option.value),
+        message: 'Insurance options retrieved successfully'
+      };
+    } catch (error) {
+      console.error('TCC_DEBUG: Error fetching insurance options from database:', error);
+      // Fallback to static list
+      const INSURANCE_OPTIONS = [
+        'Aetna',
+        'Anthem Blue Cross Blue Shield',
+        'Cigna',
+        'Humana',
+        'Kaiser Permanente',
+        'Medicare',
+        'Medicaid',
+        'UnitedHealthcare',
+        'Blue Cross Blue Shield',
+        'AARP',
+        'Tricare',
+        'Other'
+      ];
+
+      return {
+        success: true,
+        data: INSURANCE_OPTIONS,
+        message: 'Insurance options retrieved successfully'
+      };
+    }
   }
 }
 

@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import Notifications from './Notifications';
 import EnhancedTripForm from './EnhancedTripForm';
+import HospitalSettings from './HospitalSettings';
 
 interface HealthcareDashboardProps {
   user: {
@@ -234,7 +235,8 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
               { id: 'overview', name: 'Overview', icon: Building2 },
               { id: 'trips', name: 'Transport Requests', icon: Clock },
               { id: 'create', name: 'Create Request', icon: Plus },
-              { id: 'settings', name: 'Settings', icon: User }
+              { id: 'settings', name: 'Settings', icon: User },
+              { id: 'hospital-settings', name: 'Hospital Settings', icon: Building2 }
             ].map((tab) => {
               const Icon = tab.icon;
               return (
@@ -560,6 +562,10 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
               </form>
             </div>
           </div>
+        )}
+
+        {activeTab === 'hospital-settings' && (
+          <HospitalSettings />
         )}
       </main>
     </div>

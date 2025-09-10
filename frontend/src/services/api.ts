@@ -180,7 +180,26 @@ export const tripsAPI = {
     mobility: () => api.get('/api/trips/options/mobility'),
     transportLevel: () => api.get('/api/trips/options/transport-level'),
     urgency: () => api.get('/api/trips/options/urgency'),
+    insurance: () => api.get('/api/trips/options/insurance'),
   },
+};
+
+// Dropdown Options API
+export const dropdownOptionsAPI = {
+  getCategories: () =>
+    api.get('/api/dropdown-options'),
+  
+  getByCategory: (category: string) =>
+    api.get(`/api/dropdown-options/${category}`),
+  
+  create: (data: { category: string; value: string }) =>
+    api.post('/api/dropdown-options', data),
+  
+  update: (id: string, data: { value: string; isActive?: boolean }) =>
+    api.put(`/api/dropdown-options/${id}`, data),
+  
+  delete: (id: string) =>
+    api.delete(`/api/dropdown-options/${id}`),
 };
 
 export default api;

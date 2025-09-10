@@ -126,3 +126,15 @@ model TransportRequest {
 
   @@map("transport_requests")
 }
+
+model DropdownOption {
+  id          String   @id @default(cuid())
+  category    String   // 'insurance', 'diagnosis', 'mobility', etc.
+  value       String   // The actual option value
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([category, value])
+  @@map("dropdown_options")
+}
