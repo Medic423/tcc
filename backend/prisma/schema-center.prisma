@@ -140,6 +140,10 @@ model Trip {
   responseTimeMinutes   Int?       // Response time in minutes
   deadheadMiles         Float?     // Deadhead miles (empty return)
   
+  // Insurance-Specific Pricing
+  insurancePayRate      Decimal?   @db.Decimal(10,2)  // Negotiated rate for this insurance company
+  perMileRate           Decimal?   @db.Decimal(8,2)   // Per-mile rate for loaded miles
+  
   // Performance Tracking
   requestTimestamp      DateTime?  @default(now())  // When request was made
   estimatedTripTimeMinutes Int?    // Expected trip duration

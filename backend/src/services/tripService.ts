@@ -93,6 +93,9 @@ export class TripService {
       const scheduledTime = new Date(data.scheduledTime);
       const transferRequestTime = new Date();
       
+      // Calculate insurance-specific pricing
+      const insurancePricing = this.calculateInsurancePricing(data.insuranceCompany, data.transportLevel);
+      
       // Create trip data object for all databases
       const tripData = {
         tripNumber: tripNumber,
@@ -118,6 +121,9 @@ export class TripService {
         priority: priority,
         notes: data.notes || null,
         assignedTo: null,
+        // Insurance-specific pricing
+        insurancePayRate: insurancePricing.payRate,
+        perMileRate: insurancePricing.perMileRate,
       };
       
       // Create trip in Center database
@@ -800,6 +806,64 @@ export class TripService {
         message: 'Insurance options retrieved successfully'
       };
     }
+  }
+
+  /**
+   * Calculate insurance-specific pricing rates
+   */
+  private calculateInsurancePricing(insuranceCompany?: string, transportLevel?: string) {
+    // Default rates if no insurance company specified
+    const defaultRates = {
+      'BLS': { payRate: 150.0, perMileRate: 2.50 },
+      'ALS': { payRate: 250.0, perMileRate: 3.00 },
+      'CCT': { payRate: 400.0, perMileRate: 3.50 },
+      'Other': { payRate: 150.0, perMileRate: 2.50 }
+    };
+
+    // Insurance-specific rate tables (in a real system, this would be in a database)
+    const insuranceRates: { [key: string]: { [key: string]: { payRate: number; perMileRate: number } } } = {
+      'Medicare': {
+        'BLS': { payRate: 120.0, perMileRate: 2.00 },
+        'ALS': { payRate: 200.0, perMileRate: 2.50 },
+        'CCT': { payRate: 350.0, perMileRate: 3.00 }
+      },
+      'Medicaid': {
+        'BLS': { payRate: 100.0, perMileRate: 1.75 },
+        'ALS': { payRate: 180.0, perMileRate: 2.25 },
+        'CCT': { payRate: 300.0, perMileRate: 2.75 }
+      },
+      'Blue Cross Blue Shield': {
+        'BLS': { payRate: 160.0, perMileRate: 2.75 },
+        'ALS': { payRate: 280.0, perMileRate: 3.25 },
+        'CCT': { payRate: 450.0, perMileRate: 3.75 }
+      },
+      'Aetna': {
+        'BLS': { payRate: 155.0, perMileRate: 2.60 },
+        'ALS': { payRate: 270.0, perMileRate: 3.10 },
+        'CCT': { payRate: 430.0, perMileRate: 3.60 }
+      },
+      'Cigna': {
+        'BLS': { payRate: 145.0, perMileRate: 2.40 },
+        'ALS': { payRate: 260.0, perMileRate: 2.90 },
+        'CCT': { payRate: 420.0, perMileRate: 3.40 }
+      },
+      'UnitedHealthcare': {
+        'BLS': { payRate: 150.0, perMileRate: 2.50 },
+        'ALS': { payRate: 265.0, perMileRate: 3.00 },
+        'CCT': { payRate: 440.0, perMileRate: 3.50 }
+      }
+    };
+
+    // Get rates for the specific insurance company and transport level
+    if (insuranceCompany && insuranceRates[insuranceCompany] && transportLevel) {
+      const rates = insuranceRates[insuranceCompany][transportLevel];
+      if (rates) {
+        return rates;
+      }
+    }
+
+    // Fallback to default rates
+    return defaultRates[transportLevel as keyof typeof defaultRates] || defaultRates['BLS'];
   }
 }
 
