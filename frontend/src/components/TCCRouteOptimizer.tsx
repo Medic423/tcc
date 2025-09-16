@@ -66,10 +66,24 @@ const TCCRouteOptimizer: React.FC = () => {
     refreshInterval: 30
   });
 
-  // Load initial data
+  // Load initial data and settings
   useEffect(() => {
     loadInitialData();
+    loadSavedSettings();
   }, []);
+
+  const loadSavedSettings = () => {
+    try {
+      const savedSettings = localStorage.getItem('tcc_optimization_settings');
+      if (savedSettings) {
+        const parsed = JSON.parse(savedSettings);
+        setOptimizationSettings(prev => ({ ...prev, ...parsed }));
+        console.log('TCC_DEBUG: Loaded saved optimization settings');
+      }
+    } catch (error) {
+      console.error('TCC_DEBUG: Error loading saved settings:', error);
+    }
+  };
 
   // Auto-refresh when enabled
   useEffect(() => {
@@ -95,13 +109,39 @@ const TCCRouteOptimizer: React.FC = () => {
   const loadUnits = async () => {
     setLoadingUnits(true);
     try {
-      // TODO: Implement system-wide units API call
-      // This will be implemented in Phase 2
-      console.log('Loading system-wide units for TCC optimization');
-      setAvailableUnits([]);
+      console.log('TCC_DEBUG: Loading system-wide units for TCC optimization');
+      const token = localStorage.getItem('token');
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001';
+      
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/tcc/units`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch units: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('TCC_DEBUG: Units API response:', data);
+      
+      if (data.success) {
+        console.log('TCC_DEBUG: Units loaded:', data.data?.length || 0);
+        setAvailableUnits(data.data || []);
+      } else {
+        throw new Error(data.error || 'Failed to load units');
+      }
     } catch (err) {
       setError('Failed to load units');
-      console.error('Units loading error:', err);
+      console.error('TCC_DEBUG: Units loading error:', err);
     } finally {
       setLoadingUnits(false);
     }
@@ -110,13 +150,52 @@ const TCCRouteOptimizer: React.FC = () => {
   const loadPendingRequests = async () => {
     setLoadingRequests(true);
     try {
-      // TODO: Implement system-wide pending requests API call
-      // This will be implemented in Phase 2
-      console.log('Loading system-wide pending requests for TCC optimization');
-      setPendingRequests([]);
+      console.log('TCC_DEBUG: Loading system-wide pending requests for TCC optimization');
+      const token = localStorage.getItem('token');
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001';
+      
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      // For now, we'll load trips that are pending as transport requests
+      const response = await fetch(`${API_BASE_URL}/api/trips?status=PENDING`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch pending requests: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('TCC_DEBUG: Pending requests API response:', data);
+      
+      if (data.success) {
+        // Convert trips to transport requests format
+        const transportRequests = (data.data || []).map((trip: any) => ({
+          id: trip.id,
+          patientId: trip.patientId,
+          origin: trip.fromLocation,
+          destination: trip.toLocation,
+          transportLevel: trip.transportLevel,
+          priority: trip.priority,
+          scheduledTime: trip.scheduledTime,
+          specialNeeds: trip.specialNeeds
+        }));
+        
+        console.log('TCC_DEBUG: Pending requests loaded:', transportRequests.length);
+        setPendingRequests(transportRequests);
+      } else {
+        throw new Error(data.error || 'Failed to load pending requests');
+      }
     } catch (err) {
       setError('Failed to load pending requests');
-      console.error('Requests loading error:', err);
+      console.error('TCC_DEBUG: Requests loading error:', err);
     } finally {
       setLoadingRequests(false);
     }
@@ -228,37 +307,203 @@ const TCCRouteOptimizer: React.FC = () => {
       {showSettings && (
         <div className="bg-white shadow rounded-lg p-6">
           <h3 className="text-lg font-medium text-gray-900 mb-4">Optimization Settings</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Auto-optimize every {optimizationSettings.refreshInterval} seconds
-              </label>
-              <input
-                type="checkbox"
-                checked={optimizationSettings.autoOptimize}
-                onChange={(e) => setOptimizationSettings(prev => ({
-                  ...prev,
-                  autoOptimize: e.target.checked
-                }))}
-                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-              />
+          
+          {/* Auto-optimization Settings */}
+          <div className="mb-6">
+            <h4 className="text-md font-medium text-gray-700 mb-3">Auto-Optimization</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Auto-optimize every {optimizationSettings.refreshInterval} seconds
+                </label>
+                <input
+                  type="checkbox"
+                  checked={optimizationSettings.autoOptimize}
+                  onChange={(e) => setOptimizationSettings(prev => ({
+                    ...prev,
+                    autoOptimize: e.target.checked
+                  }))}
+                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Refresh Interval (seconds)
+                </label>
+                <input
+                  type="number"
+                  value={optimizationSettings.refreshInterval}
+                  onChange={(e) => setOptimizationSettings(prev => ({
+                    ...prev,
+                    refreshInterval: parseInt(e.target.value) || 30
+                  }))}
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                  min="10"
+                  max="300"
+                />
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Refresh Interval (seconds)
-              </label>
-              <input
-                type="number"
-                value={optimizationSettings.refreshInterval}
-                onChange={(e) => setOptimizationSettings(prev => ({
-                  ...prev,
-                  refreshInterval: parseInt(e.target.value) || 30
-                }))}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                min="10"
-                max="300"
-              />
+          </div>
+
+          {/* Optimization Weights */}
+          <div className="mb-6">
+            <h4 className="text-md font-medium text-gray-700 mb-3">Optimization Weights</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Deadhead Miles Weight
+                </label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={optimizationSettings.weights.deadheadMiles}
+                  onChange={(e) => setOptimizationSettings(prev => ({
+                    ...prev,
+                    weights: { ...prev.weights, deadheadMiles: parseFloat(e.target.value) || 0.5 }
+                  }))}
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                  min="0"
+                  max="2"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Wait Time Weight
+                </label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={optimizationSettings.weights.waitTime}
+                  onChange={(e) => setOptimizationSettings(prev => ({
+                    ...prev,
+                    weights: { ...prev.weights, waitTime: parseFloat(e.target.value) || 0.1 }
+                  }))}
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                  min="0"
+                  max="1"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Backhaul Bonus ($)
+                </label>
+                <input
+                  type="number"
+                  step="5"
+                  value={optimizationSettings.weights.backhaulBonus}
+                  onChange={(e) => setOptimizationSettings(prev => ({
+                    ...prev,
+                    weights: { ...prev.weights, backhaulBonus: parseFloat(e.target.value) || 25.0 }
+                  }))}
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                  min="0"
+                  max="100"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Overtime Risk Weight
+                </label>
+                <input
+                  type="number"
+                  step="0.5"
+                  value={optimizationSettings.weights.overtimeRisk}
+                  onChange={(e) => setOptimizationSettings(prev => ({
+                    ...prev,
+                    weights: { ...prev.weights, overtimeRisk: parseFloat(e.target.value) || 2.0 }
+                  }))}
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                  min="0"
+                  max="5"
+                />
+              </div>
             </div>
+          </div>
+
+          {/* Constraints */}
+          <div className="mb-6">
+            <h4 className="text-md font-medium text-gray-700 mb-3">Constraints</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Max Deadhead Miles
+                </label>
+                <input
+                  type="number"
+                  value={optimizationSettings.constraints.maxDeadheadMiles}
+                  onChange={(e) => setOptimizationSettings(prev => ({
+                    ...prev,
+                    constraints: { ...prev.constraints, maxDeadheadMiles: parseInt(e.target.value) || 50 }
+                  }))}
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                  min="10"
+                  max="200"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Max Wait Time (minutes)
+                </label>
+                <input
+                  type="number"
+                  value={optimizationSettings.constraints.maxWaitTime}
+                  onChange={(e) => setOptimizationSettings(prev => ({
+                    ...prev,
+                    constraints: { ...prev.constraints, maxWaitTime: parseInt(e.target.value) || 120 }
+                  }))}
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                  min="30"
+                  max="300"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Max Overtime Hours
+                </label>
+                <input
+                  type="number"
+                  value={optimizationSettings.constraints.maxOvertimeHours}
+                  onChange={(e) => setOptimizationSettings(prev => ({
+                    ...prev,
+                    constraints: { ...prev.constraints, maxOvertimeHours: parseInt(e.target.value) || 2 }
+                  }))}
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                  min="0"
+                  max="8"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Max Backhaul Distance (miles)
+                </label>
+                <input
+                  type="number"
+                  value={optimizationSettings.constraints.maxBackhaulDistance}
+                  onChange={(e) => setOptimizationSettings(prev => ({
+                    ...prev,
+                    constraints: { ...prev.constraints, maxBackhaulDistance: parseInt(e.target.value) || 15 }
+                  }))}
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                  min="5"
+                  max="50"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Save Settings Button */}
+          <div className="flex justify-end">
+            <button
+              onClick={() => {
+                // Save settings to localStorage
+                localStorage.setItem('tcc_optimization_settings', JSON.stringify(optimizationSettings));
+                setShowSettings(false);
+              }}
+              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700"
+            >
+              <Settings className="h-4 w-4 mr-2" />
+              Save Settings
+            </button>
           </div>
         </div>
       )}

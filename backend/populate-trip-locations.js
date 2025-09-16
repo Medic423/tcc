@@ -30,40 +30,68 @@ const facilityLocations = {
   'UPMC Cole': { lat: 40.4418, lng: -79.9631 },
   'UPMC Kane': { lat: 40.4418, lng: -79.9631 },
   'UPMC Muncy': { lat: 40.4418, lng: -79.9631 },
-  'UPMC Wellsboro': { lat: 40.4418, lng: -79.9631 }
+  'UPMC Wellsboro': { lat: 40.4418, lng: -79.9631 },
+  'Test Hospital': { lat: 40.4418, lng: -79.9631 } // Default Pittsburgh location for test data
 };
+
+// Calculate distance between two coordinates using Haversine formula
+function calculateDistance(lat1, lng1, lat2, lng2) {
+  const R = 3959; // Earth's radius in miles
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLng/2) * Math.sin(dLng/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}
+
+// Calculate trip cost based on distance and transport level
+function calculateTripCost(distance, transportLevel) {
+  const baseRate = {
+    'BLS': 2.50,    // Basic Life Support
+    'ALS': 3.75,    // Advanced Life Support  
+    'CCT': 5.00     // Critical Care Transport
+  };
+  
+  const rate = baseRate[transportLevel] || baseRate['BLS'];
+  return Math.round((distance * rate + 50) * 100) / 100; // $50 base fee + distance rate
+}
 
 async function populateTripLocations() {
   console.log('🔄 Starting trip location population...');
   
   try {
-    // Get all trips that don't have location data
-    const tripsWithoutLocations = await prisma.trip.findMany({
+    // Get all trips that need location data or cost calculation
+    const tripsToUpdate = await prisma.trip.findMany({
       where: {
         OR: [
           { originLatitude: null },
           { originLongitude: null },
           { destinationLatitude: null },
-          { destinationLongitude: null }
+          { destinationLongitude: null },
+          { tripCost: null }
         ]
       },
       select: {
         id: true,
         fromLocation: true,
         toLocation: true,
+        transportLevel: true,
         originLatitude: true,
         originLongitude: true,
         destinationLatitude: true,
-        destinationLongitude: true
+        destinationLongitude: true,
+        tripCost: true
       }
     });
 
-    console.log(`📊 Found ${tripsWithoutLocations.length} trips without location data`);
+    console.log(`📊 Found ${tripsToUpdate.length} trips needing updates`);
 
     let updatedCount = 0;
     let skippedCount = 0;
 
-    for (const trip of tripsWithoutLocations) {
+    for (const trip of tripsToUpdate) {
       let needsUpdate = false;
       const updateData = {};
 
@@ -91,6 +119,19 @@ async function populateTripLocations() {
         }
       }
 
+      // Calculate trip cost if we have both coordinates and no existing cost
+      if (!trip.tripCost && trip.originLatitude && trip.originLongitude && 
+          trip.destinationLatitude && trip.destinationLongitude) {
+        const distance = calculateDistance(
+          trip.originLatitude, trip.originLongitude,
+          trip.destinationLatitude, trip.destinationLongitude
+        );
+        const cost = calculateTripCost(distance, trip.transportLevel);
+        updateData.tripCost = cost;
+        needsUpdate = true;
+        console.log(`💰 Calculated cost for trip ${trip.id}: $${cost} (${distance.toFixed(1)} miles, ${trip.transportLevel})`);
+      }
+
       if (needsUpdate) {
         await prisma.trip.update({
           where: { id: trip.id },
@@ -106,7 +147,7 @@ async function populateTripLocations() {
     console.log(`\n📈 Population Summary:`);
     console.log(`   ✅ Updated: ${updatedCount} trips`);
     console.log(`   ⏭️  Skipped: ${skippedCount} trips`);
-    console.log(`   📊 Total processed: ${tripsWithoutLocations.length} trips`);
+    console.log(`   📊 Total processed: ${tripsToUpdate.length} trips`);
 
   } catch (error) {
     console.error('❌ Error populating trip locations:', error);

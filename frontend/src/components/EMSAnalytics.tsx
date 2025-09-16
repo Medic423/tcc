@@ -15,8 +15,13 @@ interface EMSAnalyticsProps {
 
 const EMSAnalytics: React.FC<EMSAnalyticsProps> = ({ user }) => {
   const [activeTab, setActiveTab] = useState('overview');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [overview, setOverview] = useState<any>(null);
+  const [trips, setTrips] = useState<any>(null);
+  const [units, setUnits] = useState<any>(null);
+  const [performance, setPerformance] = useState<any>(null);
 
   const tabs = [
     { id: 'overview', name: 'Overview', icon: BarChart3 },
@@ -24,23 +29,21 @@ const EMSAnalytics: React.FC<EMSAnalyticsProps> = ({ user }) => {
     { id: 'units', name: 'Unit Management', icon: Activity },
   ];
 
-  // Load agency-specific analytics data
-  useEffect(() => {
-    loadAgencyAnalytics();
-  }, []);
-
   const loadAgencyAnalytics = async () => {
     setLoading(true);
+    setError(null);
     try {
-      // TODO: Implement agency-specific analytics API calls
-      // This will be implemented in Phase 6
-      console.log('Loading analytics for agency:', user.agencyName);
-      
-      // Placeholder API calls - will be implemented in Phase 6
-      // const overview = await emsAnalyticsAPI.getOverview();
-      // const trips = await emsAnalyticsAPI.getTrips();
-      // const units = await emsAnalyticsAPI.getUnits();
-      // const performance = await emsAnalyticsAPI.getPerformance();
+      const [ovr, trs, unt, perf] = await Promise.all([
+        emsAnalyticsAPI.getOverview(),
+        emsAnalyticsAPI.getTrips(),
+        emsAnalyticsAPI.getUnits(),
+        emsAnalyticsAPI.getPerformance(),
+      ]);
+
+      setOverview(ovr.data?.data || null);
+      setTrips(trs.data?.data || null);
+      setUnits(unt.data?.data || null);
+      setPerformance(perf.data?.data || null);
     } catch (err) {
       setError('Failed to load analytics data');
       console.error('Analytics loading error:', err);
@@ -48,6 +51,11 @@ const EMSAnalytics: React.FC<EMSAnalyticsProps> = ({ user }) => {
       setLoading(false);
     }
   };
+
+  // Load agency-specific analytics data
+  useEffect(() => {
+    loadAgencyAnalytics();
+  }, []);
 
   return (
     <div>
@@ -84,122 +92,379 @@ const EMSAnalytics: React.FC<EMSAnalyticsProps> = ({ user }) => {
       {/* Tab Content */}
       {activeTab === 'overview' && (
         <div className="space-y-6">
-          {/* Agency Overview Metrics */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <DollarSign className="h-6 w-6 text-gray-400" />
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">
-                        Agency Revenue (24h)
-                      </dt>
-                      <dd className="text-lg font-medium text-gray-900">
-                        {loading ? '...' : '$0.00'}
-                      </dd>
-                    </dl>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <Activity className="h-6 w-6 text-gray-400" />
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">
-                        Active Trips
-                      </dt>
-                      <dd className="text-lg font-medium text-gray-900">
-                        {loading ? '...' : '0'}
-                      </dd>
-                    </dl>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <TrendingUp className="h-6 w-6 text-gray-400" />
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">
-                        Efficiency
-                      </dt>
-                      <dd className="text-lg font-medium text-gray-900">
-                        {loading ? '...' : '0%'}
-                      </dd>
-                    </dl>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <BarChart3 className="h-6 w-6 text-gray-400" />
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">
-                        Completed Trips
-                      </dt>
-                      <dd className="text-lg font-medium text-gray-900">
-                        {loading ? '...' : '0'}
-                      </dd>
-                    </dl>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Agency Performance Chart Placeholder */}
-          <div className="bg-white shadow rounded-lg p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Agency Performance</h3>
+          {loading && (
             <div className="text-center py-8">
-              <BarChart3 className="mx-auto h-12 w-12 text-gray-400" />
-              <h4 className="mt-2 text-sm font-medium text-gray-900">Performance Dashboard</h4>
-              <p className="mt-1 text-sm text-gray-500">
-                Agency-specific performance metrics will be displayed here.
-              </p>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+              <p className="mt-4 text-sm text-gray-500">Loading analytics data...</p>
             </div>
-          </div>
+          )}
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-md p-4">
+              <div className="flex">
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-red-800">Error</h3>
+                  <div className="mt-2 text-sm text-red-700">
+                    <p>{error}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {!loading && !error && overview && trips && (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="bg-white overflow-hidden shadow rounded-lg">
+                  <div className="p-5">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        <BarChart3 className="h-6 w-6 text-blue-600" />
+                      </div>
+                      <div className="ml-5 w-0 flex-1">
+                        <dl>
+                          <dt className="text-sm font-medium text-gray-500 truncate">Total Trips</dt>
+                          <dd className="text-lg font-medium text-gray-900">{overview.totalTrips}</dd>
+                        </dl>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white overflow-hidden shadow rounded-lg">
+                  <div className="p-5">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        <Activity className="h-6 w-6 text-green-600" />
+                      </div>
+                      <div className="ml-5 w-0 flex-1">
+                        <dl>
+                          <dt className="text-sm font-medium text-gray-500 truncate">Completed Trips</dt>
+                          <dd className="text-lg font-medium text-gray-900">{overview.completedTrips}</dd>
+                        </dl>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white overflow-hidden shadow rounded-lg">
+                  <div className="p-5">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        <TrendingUp className="h-6 w-6 text-purple-600" />
+                      </div>
+                      <div className="ml-5 w-0 flex-1">
+                        <dl>
+                          <dt className="text-sm font-medium text-gray-500 truncate">Efficiency</dt>
+                          <dd className="text-lg font-medium text-gray-900">{`${(overview.efficiency * 100).toFixed(1)}%`}</dd>
+                        </dl>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white overflow-hidden shadow rounded-lg">
+                  <div className="p-5">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        <DollarSign className="h-6 w-6 text-orange-600" />
+                      </div>
+                      <div className="ml-5 w-0 flex-1">
+                        <dl>
+                          <dt className="text-sm font-medium text-gray-500 truncate">Avg Response Time</dt>
+                          <dd className="text-lg font-medium text-gray-900">{overview.averageResponseTime ? `${overview.averageResponseTime.toFixed(1)} min` : '0 min'}</dd>
+                        </dl>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="bg-white shadow rounded-lg p-6">
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">Trip Status Breakdown</h3>
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-500">Completed</span>
+                      <span className="text-sm font-medium text-gray-900">{trips.completedTrips}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-500">Pending</span>
+                      <span className="text-sm font-medium text-gray-900">{trips.pendingTrips}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-500">Cancelled</span>
+                      <span className="text-sm font-medium text-gray-900">{trips.cancelledTrips}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white shadow rounded-lg p-6">
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">Transport Level Distribution</h3>
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-500">BLS</span>
+                      <span className="text-sm font-medium text-gray-900">{trips.tripsByLevel?.BLS || 0}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-500">ALS</span>
+                      <span className="text-sm font-medium text-gray-900">{trips.tripsByLevel?.ALS || 0}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-500">CCT</span>
+                      <span className="text-sm font-medium text-gray-900">{trips.tripsByLevel?.CCT || 0}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       )}
 
       {activeTab === 'performance' && (
-        <div className="bg-white shadow rounded-lg p-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Performance Metrics</h3>
-          <div className="text-center py-8">
-            <TrendingUp className="mx-auto h-12 w-12 text-gray-400" />
-            <h4 className="mt-2 text-sm font-medium text-gray-900">Performance Dashboard</h4>
-            <p className="mt-1 text-sm text-gray-500">
-              Agency performance metrics and historical data will be displayed here.
-            </p>
-          </div>
+        <div className="space-y-6">
+          {loading && (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+              <p className="mt-4 text-sm text-gray-500">Loading performance data...</p>
+            </div>
+          )}
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-md p-4">
+              <div className="flex">
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-red-800">Error</h3>
+                  <div className="mt-2 text-sm text-red-700">
+                    <p>{error}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {!loading && !error && performance && (
+            <div className="bg-white shadow rounded-lg p-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Performance Metrics</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="bg-white overflow-hidden shadow rounded-lg">
+                  <div className="p-5">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        <TrendingUp className="h-6 w-6 text-blue-600" />
+                      </div>
+                      <div className="ml-5 w-0 flex-1">
+                        <dl>
+                          <dt className="text-sm font-medium text-gray-500 truncate">Avg Response Time</dt>
+                          <dd className="text-lg font-medium text-gray-900">{performance.averageResponseTime ? `${performance.averageResponseTime.toFixed(1)} min` : '0 min'}</dd>
+                        </dl>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white overflow-hidden shadow rounded-lg">
+                  <div className="p-5">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        <Activity className="h-6 w-6 text-green-600" />
+                      </div>
+                      <div className="ml-5 w-0 flex-1">
+                        <dl>
+                          <dt className="text-sm font-medium text-gray-500 truncate">Avg Trip Time</dt>
+                          <dd className="text-lg font-medium text-gray-900">{performance.averageTripTime ? `${performance.averageTripTime.toFixed(1)} min` : '0 min'}</dd>
+                        </dl>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white overflow-hidden shadow rounded-lg">
+                  <div className="p-5">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        <BarChart3 className="h-6 w-6 text-purple-600" />
+                      </div>
+                      <div className="ml-5 w-0 flex-1">
+                        <dl>
+                          <dt className="text-sm font-medium text-gray-500 truncate">Completion Rate</dt>
+                          <dd className="text-lg font-medium text-gray-900">{`${(performance.completionRate * 100).toFixed(1)}%`}</dd>
+                        </dl>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white overflow-hidden shadow rounded-lg">
+                  <div className="p-5">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        <DollarSign className="h-6 w-6 text-orange-600" />
+                      </div>
+                      <div className="ml-5 w-0 flex-1">
+                        <dl>
+                          <dt className="text-sm font-medium text-gray-500 truncate">Total Revenue</dt>
+                          <dd className="text-lg font-medium text-gray-900">${performance.totalRevenue ? performance.totalRevenue.toFixed(2) : '0.00'}</dd>
+                        </dl>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {!loading && !error && !performance && (
+            <div className="bg-white shadow rounded-lg p-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Performance Metrics</h3>
+              <div className="text-center py-8">
+                <TrendingUp className="mx-auto h-12 w-12 text-gray-400" />
+                <h4 className="mt-2 text-sm font-medium text-gray-900">No Performance Data</h4>
+                <p className="mt-1 text-sm text-gray-500">
+                  Performance metrics will be displayed here when data is available.
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
       {activeTab === 'units' && (
-        <RevenueOptimizationPanel 
-          showBackhaulPairs={false}
-          showUnitManagement={true}
-          title="Unit Management Analytics"
-        />
+        <div className="space-y-6">
+          {loading && (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+              <p className="mt-4 text-sm text-gray-500">Loading unit data...</p>
+            </div>
+          )}
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-md p-4">
+              <div className="flex">
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-red-800">Error</h3>
+                  <div className="mt-2 text-sm text-red-700">
+                    <p>{error}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {!loading && !error && units && (
+            <div className="bg-white shadow rounded-lg p-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Unit Management Analytics</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                <div className="bg-white overflow-hidden shadow rounded-lg">
+                  <div className="p-5">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        <Activity className="h-6 w-6 text-blue-600" />
+                      </div>
+                      <div className="ml-5 w-0 flex-1">
+                        <dl>
+                          <dt className="text-sm font-medium text-gray-500 truncate">Total Units</dt>
+                          <dd className="text-lg font-medium text-gray-900">{units.totalUnits}</dd>
+                        </dl>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white overflow-hidden shadow rounded-lg">
+                  <div className="p-5">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        <TrendingUp className="h-6 w-6 text-green-600" />
+                      </div>
+                      <div className="ml-5 w-0 flex-1">
+                        <dl>
+                          <dt className="text-sm font-medium text-gray-500 truncate">Active Units</dt>
+                          <dd className="text-lg font-medium text-gray-900">{units.activeUnits}</dd>
+                        </dl>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white overflow-hidden shadow rounded-lg">
+                  <div className="p-5">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        <BarChart3 className="h-6 w-6 text-purple-600" />
+                      </div>
+                      <div className="ml-5 w-0 flex-1">
+                        <dl>
+                          <dt className="text-sm font-medium text-gray-500 truncate">Available Units</dt>
+                          <dd className="text-lg font-medium text-gray-900">{units.availableUnits}</dd>
+                        </dl>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white overflow-hidden shadow rounded-lg">
+                  <div className="p-5">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        <DollarSign className="h-6 w-6 text-orange-600" />
+                      </div>
+                      <div className="ml-5 w-0 flex-1">
+                        <dl>
+                          <dt className="text-sm font-medium text-gray-500 truncate">Utilization</dt>
+                          <dd className="text-lg font-medium text-gray-900">{`${(units.averageUtilization * 100).toFixed(1)}%`}</dd>
+                        </dl>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {units.topPerformingUnits && units.topPerformingUnits.length > 0 && (
+                <div className="mt-6">
+                  <h4 className="text-lg font-medium text-gray-900 mb-4">Top Performing Units</h4>
+                  <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+                    <table className="min-w-full divide-y divide-gray-300">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit Number</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trips Completed</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Avg Response Time</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {units.topPerformingUnits.map((unit: any) => (
+                          <tr key={unit.id}>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{unit.unitNumber}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{unit.totalTripsCompleted}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              {unit.averageResponseTime ? `${unit.averageResponseTime.toFixed(1)} min` : 'N/A'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {!loading && !error && !units && (
+            <div className="bg-white shadow rounded-lg p-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Unit Management Analytics</h3>
+              <div className="text-center py-8">
+                <Activity className="mx-auto h-12 w-12 text-gray-400" />
+                <h4 className="mt-2 text-sm font-medium text-gray-900">No Unit Data</h4>
+                <p className="mt-1 text-sm text-gray-500">
+                  Unit management data will be displayed here when available.
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
       )}
 
       {error && (

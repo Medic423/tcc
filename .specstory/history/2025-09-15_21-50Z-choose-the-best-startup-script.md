@@ -9364,3 +9364,447 @@ _**Assistant**_
 
 ---
 
+Absolutely! That's an excellent idea. We've made significant progress on Phase 2 of the Analytics integration, and it's crucial to secure our work. Let me commit the changes and create a backup with the database changes.
+
+
+---
+
+## Todo List
+
+- [x] Create feature branch for analytics completion
+- [x] Analyze current analytics and route optimization implementation
+- [x] Create comprehensive completion plan with phases and tasks
+- [-] Review completion plan with user before implementation
+- [x] Phase 1: Replace mock helper functions with real database queries
+- [x] Phase 1: Create location data population script
+- [x] Phase 1: Integrate revenue calculation into trip creation
+- [x] Phase 1: Test optimization endpoints with real data
+- [x] Fix TypeScript compilation errors in optimization.ts
+- [x] Phase 2: Connect TCC Analytics Overview Tab to real backend APIs
+- [x] Phase 2: Implement Performance Tab with real data
+- [x] Phase 2: Connect Unit Management to Real Units API
+- [x] Phase 2: Analytics Data Integration Complete
+- [-] Commit and push Phase 2 Analytics integration work to git
+- [ ] Create external backup including database changes
+
+---
+
+First, let me check the current git status and commit our Phase 2 work:
+
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git status
+```
+
+```
+On branch feature/analytics-route-optimization-completion
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+        modified:   .specstory/history/2025-09-15_21-50Z-choose-the-best-startup-script.md                                                                      
+        modified:   backend/src/routes/optimization.ts
+        modified:   backend/src/services/analyticsService.ts
+        modified:   frontend/src/components/Analytics.tsx
+        modified:   frontend/src/components/RevenueOptimizationPanel.tsx
+
+no changes added to commit (use "git add" and/or "git commit -a")
+```
+
+---
+
+Perfect! Let me add and commit all the Phase 2 changes:
+
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git add .
+```
+
+---
+
+```bash
+git commit -m "feat: Complete Phase 2 - Analytics Data Integration
+
+✅ Phase 2: Analytics Data Integration Complete
+
+Backend Changes:
+- Fixed analyticsService.ts to use correct database clients (Center DB for trips, EMS DB for agencies/units)
+- Updated trip statistics to properly group by transport level and priority
+- Implemented real agency performance data with trip counts and response times
+- Added hospital activity tracking with trip counts by level
+- Fixed TypeScript compilation errors in optimization.ts
+
+Frontend Changes:
+- Connected TCC Analytics Overview Tab to real /api/tcc/analytics/overview endpoint
+- Added real system metrics: total trips, active units, active agencies, active hospitals
+- Added trip status breakdown (completed, pending, accepted, cancelled)
+- Added transport level distribution (BLS, ALS, CCT)
+- Implemented Performance Tab with real data from /api/optimize/performance
+- Connected Unit Management to real /api/units and /api/units/analytics endpoints
+- Added proper loading states and error handling throughout
+
+Real Data Now Displayed:
+- System Overview: 5 hospitals, 15 agencies, 18 units, 2 trips
+- Trip Statistics: 2 total trips (1 BLS, 1 ALS), 2 completed, 0 pending
+- Performance Metrics: Real efficiency, response times, revenue data
+- Unit Management: Real unit counts and status from database
+
+API Endpoints Working:
+- /api/tcc/analytics/overview - System overview data
+- /api/tcc/analytics/trips - Trip statistics  
+- /api/tcc/analytics/agencies - Agency performance
+- /api/tcc/analytics/hospitals - Hospital activity
+- /api/optimize/performance - Performance metrics
+- /api/units - Units data
+- /api/units/analytics - Units analytics
+
+The Analytics tab is now fully integrated with real backend data and provides meaningful insights into the TCC system's performance!"
+```
+
+---
+
+Let me try a shorter commit message:
+
+
+---
+
+```bash
+git commit -m "feat: Complete Phase 2 - Analytics Data Integration
+
+- Fixed analyticsService.ts to use correct database clients
+- Connected TCC Analytics Overview Tab to real backend APIs
+- Implemented Performance Tab with real data
+- Connected Unit Management to Real Units API
+- Added proper loading states and error handling
+- All analytics now display real data from database"
+```
+
+```
+[feature/analytics-route-optimization-completion ee711e1] feat: Complete Phase 2 - Analytics Data Integration                                                   
+ 5 files changed, 3503 insertions(+), 129 deletions(-)
+```
+
+---
+
+Great! Now let me push the changes to the remote repository:
+
+
+---
+
+```bash
+git push origin feature/analytics-route-optimization-completion
+```
+
+```
+Enumerating objects: 61, done.
+Counting objects: 100% (61/61), done.
+Delta compression using up to 14 threads
+Compressing objects: 100% (42/42), done.
+Writing objects: 100% (42/42), 44.45 KiB | 7.41 MiB/s, done.
+Total 42 (delta 30), reused 0 (delta 0), pack-reused 0 (from 0)
+remote: Resolving deltas: 100% (30/30), completed with 16 local objects.
+remote: 
+remote: Create a pull request for 'feature/analytics-route-optimization-completion' on GitHub by visiting:                                                      
+remote:      https://github.com/Medic423/tcc/pull/new/feature/analytics-route-optimization-completion                                                           
+remote: 
+To https://github.com/Medic423/tcc
+ * [new branch]      feature/analytics-route-optimization-completion -> feature/analytics-route-optimization-completion                                         
+```
+
+---
+
+Perfect! Now let me create a tag for this milestone and run the backup script with database changes:
+
+
+---
+
+```bash
+git tag -a "phase2-analytics-integration-complete" -m "Phase 2: Analytics Data Integration Complete
+
+- All analytics components now use real backend data
+- System overview, performance metrics, and unit management working
+- Database integration complete with proper error handling
+- Ready for Phase 3: EMS Analytics Implementation"
+```
+
+---
+
+```bash
+git push origin phase2-analytics-integration-complete
+```
+
+```
+Enumerating objects: 1, done.
+Counting objects: 100% (1/1), done.
+Writing objects: 100% (1/1), 324 bytes | 324.00 KiB/s, done.
+Total 1 (delta 0), reused 0 (delta 0), pack-reused 0 (from 0)
+To https://github.com/Medic423/tcc
+ * [new tag]         phase2-analytics-integration-complete -> phase2-analytics-integration-complete                                                             
+```
+
+---
+
+Now let me run the enhanced backup script to create a comprehensive backup including the database changes:
+
+
+---
+
+```bash
+./backend/backup-enhanced.sh /Volumes/Acasis
+```
+
+```
+zsh: no such file or directory: ./backend/backup-enhanced.sh
+```
+
+---
+
+Let me check the correct path for the backup script:
+
+
+---
+
+```bash
+find . -name "backup-enhanced.sh" -type f
+```
+
+```
+./backup-enhanced.sh
+```
+
+---
+
+```bash
+./backup-enhanced.sh /Volumes/Acasis
+```
+
+```
+🔄 Starting TCC project enhanced backup...
+Project: /Users/scooper/Code/tcc-new-project
+Backup to: /Volumes/Acasis/tcc-backups/tcc-backup-20250916_134442
+📦 Creating project backup...
+🧹 Cleaning up node_modules...
+🗄️ Backing up PostgreSQL databases...
+📊 Backing up medport_center database...
+📊 Backing up medport_hospital database...
+📊 Backing up medport_ems database...
+📝 Creating database restore script...
+📝 Creating comprehensive restore script...
+📝 Creating backup info...
+✅ Enhanced backup completed: /Volumes/Acasis/tcc-backups/tcc-backup-20250916_134442                                                                            
+📊 Project size:  22M
+📊 Database size:  60K
+📊 Total size:  22M
+📁 Backup location: /Volumes/Acasis/tcc-backups/tcc-backup-20250916_134442
+
+🔧 To restore: cd /Volumes/Acasis/tcc-backups/tcc-backup-20250916_134442 && ./restore-complete.sh                                                               
+```
+
+---
+
+Perfect! Let me verify the backup was created successfully and update the todos:
+
+
+---
+
+```bash
+ls -la /Volumes/Acasis/tcc-backups/tcc-backup-20250916_134442/
+```
+
+```
+total 24
+drwxr-xr-x   7 scooper  staff   224 Sep 16 13:45 .
+drwxr-xr-x  13 scooper  staff   416 Sep 16 13:44 ..
+-rw-r--r--   1 scooper  staff  1178 Sep 16 13:45 backup-info.txt
+drwxr-xr-x   5 scooper  staff   160 Sep 16 13:45 databases
+drwxr-xr-x@ 41 scooper  staff  1312 Sep 16 13:45 project
+-rwxr-xr-x   1 scooper  staff   844 Sep 16 13:45 restore-complete.sh
+-rwxr-xr-x   1 scooper  staff  1026 Sep 16 13:45 restore-databases.sh
+```
+
+---
+
+```bash
+ls -la /Volumes/Acasis/tcc-backups/tcc-backup-20250916_134442/databases/
+```
+
+```
+total 120
+drwxr-xr-x  5 scooper  staff    160 Sep 16 13:45 .
+drwxr-xr-x  7 scooper  staff    224 Sep 16 13:45 ..
+-rw-r--r--  1 scooper  staff  15662 Sep 16 13:45 medport_center.sql
+-rw-r--r--  1 scooper  staff  21099 Sep 16 13:45 medport_ems.sql
+-rw-r--r--  1 scooper  staff  19429 Sep 16 13:45 medport_hospital.sql
+```
+
+---
+
+Excellent! Now let me update the todos to reflect our completed work:
+
+
+---
+
+## Todo List
+
+- [x] Create feature branch for analytics completion
+- [x] Analyze current analytics and route optimization implementation
+- [x] Create comprehensive completion plan with phases and tasks
+- [-] Review completion plan with user before implementation
+- [x] Phase 1: Replace mock helper functions with real database queries
+- [x] Phase 1: Create location data population script
+- [x] Phase 1: Integrate revenue calculation into trip creation
+- [x] Phase 1: Test optimization endpoints with real data
+- [x] Fix TypeScript compilation errors in optimization.ts
+- [x] Phase 2: Connect TCC Analytics Overview Tab to real backend APIs
+- [x] Phase 2: Implement Performance Tab with real data
+- [x] Phase 2: Connect Unit Management to Real Units API
+- [x] Phase 2: Analytics Data Integration Complete
+- [x] Commit and push Phase 2 Analytics integration work to git
+- [x] Create external backup including database changes
+
+---
+
+## ✅ **Work Secured Successfully!**
+
+### **Git Commit & Push Completed:**
+- **Branch**: `feature/analytics-route-optimization-completion`
+- **Commit**: `ee711e1` - "feat: Complete Phase 2 - Analytics Data Integration"
+- **Files Changed**: 5 files, 3,503 insertions, 129 deletions
+- **Tag Created**: `phase2-analytics-integration-complete`
+- **Remote Push**: ✅ Successfully pushed to GitHub
+
+### **External Backup Created:**
+- **Location**: `/Volumes/Acasis/tcc-backups/tcc-backup-20250916_134442/`
+- **Project Size**: 22M
+- **Database Size**: 60K (all 3 databases included)
+- **Total Size**: 22M
+
+### **Database Backup Verified:**
+- ✅ `medport_center.sql` (15,662 bytes) - Contains all trip data and analytics
+- ✅ `medport_ems.sql` (21,099 bytes) - Contains all EMS agencies and units
+- ✅ `medport_hospital.sql` (19,429 bytes) - Contains all hospital data
+
+### **Backup Includes:**
+- Complete project source code with all Phase 2 changes
+- All three PostgreSQL database schemas and data
+- Restore scripts for easy recovery
+- Backup information and timestamps
+
+### **Recovery Instructions:**
+```bash
+cd /Volumes/Acasis/tcc-backups/tcc-backup-20250916_134442
+./restore-complete.sh
+```
+
+**Your work is now completely secure!** �� 
+
+The Phase 2 Analytics integration is committed to git with a proper tag, and a comprehensive backup including all database changes has been created on your external drive. You can safely proceed with Phase 3 or any other development work knowing that this milestone is fully preserved.
+
+---
+
+_**User (2025-09-16 13:18Z)**_
+
+OK let's implement phase three if you have enough headroom in this thread. If not write a prompt and I'll start a new chat.
+
+---
+
+_**Assistant**_
+
+<think><details><summary>Thought Process</summary>**Planning EMS Analytics Implementation**
+
+I need to move on to Phase 3 of the EMS Analytics Implementation. The first step is to create a list of tasks to implement. We should provide a status update before jumping into the tools, while also keeping in mind to follow the user’s rules for committing changes and backups, although the latter isn't necessary at this moment. I’ll focus on implementing backend EMS analytics routes and frontend components, while keeping things concise. I’ll create todos for backend endpoints and frontend wiring, then search for existing files related to eMSAnalytics.</details></think>
+
+---
+
+I'll start Phase 3 now. I'll add a short todo list and begin by checking if EMS analytics routes/services already exist, then implement missing pieces and wire up the frontend.
+
+---
+
+## Todo List
+
+- [-] Implement EMS analytics backend routes and service with agency filtering
+- [ ] Wire EMSAnalytics.tsx to new EMS analytics APIs
+- [ ] Test EMS analytics endpoints with an EMS user token
+- [ ] Update plan and punch list to mark Phase 3 progress
+
+---
+
+<think><details><summary>Thought Process</summary>**Planning Phase 3 implementation**
+
+I need to get started on Phase 3. Following instructions, I’ll implement autonomously and provide a status update before calling any tools. I want to ensure I don’t touch HPI and Chart info services since they're not relevant. It's time to search for EMS analytics routes and service files. I'll look into using codebase_search or grep to find the EMSAnalytics component on the frontend, like in emsAnalytics.ts. Then I'll consider implementing backend routes too. Let's go ahead and search!</details></think>
+
+---
+
+Let me find existing EMS analytics routes/services and the EMS analytics frontend component so I can implement missing pieces and wire them up next.
+
+---
+
+
+
+---
+
+
+
+---
+
+Read file: undefined
+
+---
+
+<think><details><summary>Thought Process</summary>**Proceeding with Phase 3**
+
+I need to move forward with implementing Phase 3 if there's enough headroom. The user mentioned starting a new chat if necessary, so I should check that. According to the developer instructions, I should focus on todos and code edits, but since time is tight, I’ll work on backend routes to real data. I also need to keep in mind the user rule against modifying HPI and Chart information services. So I’ll focus on emsAnalytics.ts and use the appropriate authentication middleware.
+**Evaluating EMS Authentication**
+
+I noticed that EMS logs are using EMS tokens to call other endpoints, and while the units routes use authenticateAdmin, this restricts access for EMS users. To move quickly, I should consider using a middleware that accommodates EMS users as well. Is there an authenticateEMS? I’ll check. It looks like I need to implement this in emsAnalytics.ts using centerDB and emsDB, but I'm uncertain about where to retrieve the agencyId in the token since logs show only the EMS user ID.
+**Preparing New Chat Prompt**
+
+Time is running short, so I realize the best approach is to mention that we're at the token limit and propose starting a new chat. While the instructions say to keep going until I solve the task, the user specifically asked for a prompt if there's not enough headroom. I’ll create a concise prompt for them to kick off a new thread and ensure it covers the implementation of Phase 3. I should keep the status update brief, noting that a commit and backup have been completed.</details></think>
+
+---
+
+- Headroom is tight. I recommend starting a new chat for Phase 3 to avoid truncation.
+
+Here’s a ready-to-use prompt for the new chat:
+"Context: We completed Phase 2 (Analytics Data Integration). Backend and frontend changes are committed on branch feature/analytics-route-optimization-completion and tagged as phase2-analytics-integration-complete. The app is running; analytics endpoints return real data. Now implement Phase 3: EMS Analytics Implementation.
+
+Goals:
+1) Backend EMS analytics (agency-scoped)
+- Implement in backend/src/routes/emsAnalytics.ts:
+  - GET /api/ems/analytics/overview
+  - GET /api/ems/analytics/trips
+  - GET /api/ems/analytics/units
+  - GET /api/ems/analytics/performance
+- Use databaseManager.getCenterDB() for trips; databaseManager.getEMSDB() for units/agencies.
+- Filter by the authenticated EMS user’s agencyId. If not in token, resolve agencyId via EMS user → agency relation (fall back to units agency if needed).
+- Return:
+  - overview: totalTrips, completedTrips, pendingTrips, efficiency, averageResponseTime, agencyName
+  - trips: totalTrips, completedTrips, pendingTrips, cancelledTrips, tripsByLevel, tripsByPriority, averageTripDuration
+  - units: totalUnits, activeUnits, availableUnits, committedUnits, outOfServiceUnits, averageUtilization, topPerformingUnits (by completed trips)
+  - performance: averageResponseTime, averageTripTime, completionRate, totalRevenue (sum tripCost), efficiency
+- Middleware: allow EMS users. If only authenticateAdmin exists, add or reuse a middleware that validates EMS tokens.
+
+2) Frontend wiring
+- Update frontend/src/components/EMSAnalytics.tsx to fetch from the above EMS endpoints with the EMS token in localStorage.
+- Show cards/charts mirroring System Analytics but scoped to the agency (overview, trips, units, performance).
+- Add loading/error states consistent with Analytics.tsx.
+
+3) Testing
+- Log in as EMS user (fferguson@movalleyems.com / password) to get token.
+- curl test all 4 endpoints, verify numbers > 0 where data exists.
+- Verify UI renders and values match API.
+
+Constraints:
+- Don’t modify HPI or Chart information services.
+- Preserve indentation and code style; fix lints if introduced.
+- After changes, commit on the same branch with a clear message and push. Tag as phase3-ems-analytics-complete. Run ./backup-enhanced.sh /Volumes/Acasis to back up project and databases.
+
+Please proceed to implement all the above end-to-end."
+
+- Quick note: Git commit and external backup with databases are already done and verified.
+
+---
+
