@@ -1,12 +1,42 @@
 import express from 'express';
-import { analyticsService } from '../services/analyticsService';
 import { authenticateAdmin } from '../middleware/authenticateAdmin';
 import { AuthenticatedRequest } from '../middleware/authenticateAdmin';
+import { databaseManager } from '../services/databaseManager';
 
 const router = express.Router();
 
 // Apply authentication to all routes
 router.use(authenticateAdmin);
+
+// Restrict to EMS users only
+router.use(async (req: AuthenticatedRequest, res, next) => {
+  if (!req.user || req.user.userType !== 'EMS') {
+    return res.status(403).json({ success: false, error: 'EMS access required' });
+  }
+  next();
+});
+
+async function resolveAgencyContext(req: AuthenticatedRequest) {
+  const emsPrisma = databaseManager.getEMSDB();
+  let agencyId = req.user?.id || null; // For EMS tokens, this should already be agencyId
+  let agencyName: string | null = null;
+
+  try {
+    if (!agencyId && req.user?.email) {
+      const emsUser = await emsPrisma.eMSUser.findUnique({ where: { email: req.user.email } });
+      agencyId = emsUser?.agencyId || null;
+    }
+
+    if (agencyId) {
+      const agency = await emsPrisma.eMSAgency.findUnique({ where: { id: agencyId } });
+      agencyName = agency?.name || null;
+    }
+  } catch (error) {
+    console.error('TCC_DEBUG: EMS agency resolution error:', error);
+  }
+
+  return { agencyId, agencyName };
+}
 
 /**
  * GET /api/ems/analytics/overview
@@ -14,19 +44,44 @@ router.use(authenticateAdmin);
  */
 router.get('/overview', async (req: AuthenticatedRequest, res) => {
   try {
-    // TODO: Implement agency-specific overview
-    // This will be implemented in Phase 6
-    const overview = {
-      totalRevenue: 0,
-      activeTrips: 0,
-      efficiency: 0,
-      completedTrips: 0,
-      agencyName: 'Agency Analytics'
-    };
+    const { agencyId, agencyName } = await resolveAgencyContext(req);
+    if (!agencyId) {
+      return res.status(400).json({ success: false, error: 'Unable to resolve EMS agency' });
+    }
+
+    const centerPrisma = databaseManager.getCenterDB();
+
+    const [
+      totalTrips,
+      completedTrips,
+      pendingTrips,
+      responseTimes
+    ] = await Promise.all([
+      centerPrisma.trip.count({ where: { assignedAgencyId: agencyId } }),
+      centerPrisma.trip.count({ where: { assignedAgencyId: agencyId, status: 'COMPLETED' } }),
+      centerPrisma.trip.count({ where: { assignedAgencyId: agencyId, status: 'PENDING' } }),
+      centerPrisma.trip.findMany({
+        where: { assignedAgencyId: agencyId, responseTimeMinutes: { not: null } },
+        select: { responseTimeMinutes: true }
+      })
+    ]);
+
+    const avgResponse = responseTimes.length > 0
+      ? responseTimes.reduce((sum, t) => sum + (t.responseTimeMinutes || 0), 0) / responseTimes.length
+      : 0;
+
+    const efficiency = totalTrips > 0 ? completedTrips / totalTrips : 0;
 
     res.json({
       success: true,
-      data: overview
+      data: {
+        totalTrips,
+        completedTrips,
+        pendingTrips,
+        efficiency,
+        averageResponseTime: avgResponse,
+        agencyName: agencyName || 'Agency'
+      }
     });
 
   } catch (error) {
@@ -44,19 +99,57 @@ router.get('/overview', async (req: AuthenticatedRequest, res) => {
  */
 router.get('/trips', async (req: AuthenticatedRequest, res) => {
   try {
-    // TODO: Implement agency-specific trip analytics
-    // This will be implemented in Phase 6
-    const tripStats = {
-      totalTrips: 0,
-      completedTrips: 0,
-      pendingTrips: 0,
-      averageResponseTime: 0,
-      averageTripDuration: 0
-    };
+    const { agencyId } = await resolveAgencyContext(req);
+    if (!agencyId) {
+      return res.status(400).json({ success: false, error: 'Unable to resolve EMS agency' });
+    }
+
+    const prisma = databaseManager.getCenterDB();
+
+    const [
+      totalTrips,
+      completedTrips,
+      pendingTrips,
+      cancelledTrips,
+      responseTimes,
+      tripDurations,
+      byLevel,
+      byPriority
+    ] = await Promise.all([
+      prisma.trip.count({ where: { assignedAgencyId: agencyId } }),
+      prisma.trip.count({ where: { assignedAgencyId: agencyId, status: 'COMPLETED' } }),
+      prisma.trip.count({ where: { assignedAgencyId: agencyId, status: 'PENDING' } }),
+      prisma.trip.count({ where: { assignedAgencyId: agencyId, status: 'CANCELLED' } }),
+      prisma.trip.findMany({ where: { assignedAgencyId: agencyId, responseTimeMinutes: { not: null } }, select: { responseTimeMinutes: true } }),
+      prisma.trip.findMany({ where: { assignedAgencyId: agencyId, actualTripTimeMinutes: { not: null } }, select: { actualTripTimeMinutes: true } }),
+      prisma.trip.groupBy({ by: ['transportLevel'], where: { assignedAgencyId: agencyId }, _count: { transportLevel: true } }),
+      prisma.trip.groupBy({ by: ['priority'], where: { assignedAgencyId: agencyId }, _count: { priority: true } })
+    ]);
+
+    const tripsByLevel: Record<string, number> = { BLS: 0, ALS: 0, CCT: 0 };
+    byLevel.forEach((g: any) => { tripsByLevel[g.transportLevel] = g._count.transportLevel; });
+
+    const tripsByPriority: Record<string, number> = { LOW: 0, MEDIUM: 0, HIGH: 0, URGENT: 0, CRITICAL: 0 } as any;
+    byPriority.forEach((g: any) => { tripsByPriority[g.priority] = g._count.priority; });
+
+    const averageResponseTime = responseTimes.length > 0
+      ? responseTimes.reduce((s, t) => s + (t.responseTimeMinutes || 0), 0) / responseTimes.length
+      : 0;
+    const averageTripDuration = tripDurations.length > 0
+      ? tripDurations.reduce((s, t) => s + (t.actualTripTimeMinutes || 0), 0) / tripDurations.length
+      : 0;
 
     res.json({
       success: true,
-      data: tripStats
+      data: {
+        totalTrips,
+        completedTrips,
+        pendingTrips,
+        cancelledTrips,
+        tripsByLevel,
+        tripsByPriority,
+        averageTripDuration
+      }
     });
 
   } catch (error) {
@@ -74,18 +167,47 @@ router.get('/trips', async (req: AuthenticatedRequest, res) => {
  */
 router.get('/units', async (req: AuthenticatedRequest, res) => {
   try {
-    // TODO: Implement agency-specific unit analytics
-    // This will be implemented in Phase 6
-    const unitStats = {
-      totalUnits: 0,
-      activeUnits: 0,
-      averageUtilization: 0,
-      topPerformingUnits: []
-    };
+    const { agencyId } = await resolveAgencyContext(req);
+    if (!agencyId) {
+      return res.status(400).json({ success: false, error: 'Unable to resolve EMS agency' });
+    }
+
+    const emsPrisma = databaseManager.getEMSDB();
+
+    const [
+      totalUnits,
+      activeUnits,
+      availableUnits,
+      committedUnits,
+      outOfServiceUnits,
+      topPerformingUnits
+    ] = await Promise.all([
+      emsPrisma.unit.count({ where: { agencyId } }),
+      emsPrisma.unit.count({ where: { agencyId, isActive: true } }),
+      emsPrisma.unit.count({ where: { agencyId, currentStatus: 'AVAILABLE' } }),
+      emsPrisma.unit.count({ where: { agencyId, currentStatus: { in: ['ASSIGNED', 'IN_PROGRESS'] } } }),
+      emsPrisma.unit.count({ where: { agencyId, currentStatus: 'OUT_OF_SERVICE' } }),
+      emsPrisma.unit.findMany({
+        where: { agencyId },
+        orderBy: { totalTripsCompleted: 'desc' },
+        take: 5,
+        select: { id: true, unitNumber: true, totalTripsCompleted: true, averageResponseTime: true }
+      })
+    ]);
+
+    const averageUtilization = totalUnits > 0 ? committedUnits / totalUnits : 0;
 
     res.json({
       success: true,
-      data: unitStats
+      data: {
+        totalUnits,
+        activeUnits,
+        availableUnits,
+        committedUnits,
+        outOfServiceUnits,
+        averageUtilization,
+        topPerformingUnits
+      }
     });
 
   } catch (error) {
@@ -103,18 +225,46 @@ router.get('/units', async (req: AuthenticatedRequest, res) => {
  */
 router.get('/performance', async (req: AuthenticatedRequest, res) => {
   try {
-    // TODO: Implement agency-specific performance analytics
-    // This will be implemented in Phase 6
-    const performanceStats = {
-      responseTime: 0,
-      completionRate: 0,
-      customerSatisfaction: 0,
-      efficiency: 0
-    };
+    const { agencyId } = await resolveAgencyContext(req);
+    if (!agencyId) {
+      return res.status(400).json({ success: false, error: 'Unable to resolve EMS agency' });
+    }
+
+    const prisma = databaseManager.getCenterDB();
+
+    const [
+      totalTrips,
+      completedTrips,
+      responseTimes,
+      tripTimes,
+      revenueAgg
+    ] = await Promise.all([
+      prisma.trip.count({ where: { assignedAgencyId: agencyId } }),
+      prisma.trip.count({ where: { assignedAgencyId: agencyId, status: 'COMPLETED' } }),
+      prisma.trip.findMany({ where: { assignedAgencyId: agencyId, responseTimeMinutes: { not: null } }, select: { responseTimeMinutes: true } }),
+      prisma.trip.findMany({ where: { assignedAgencyId: agencyId, actualTripTimeMinutes: { not: null } }, select: { actualTripTimeMinutes: true } }),
+      prisma.trip.aggregate({ where: { assignedAgencyId: agencyId, tripCost: { not: null } }, _sum: { tripCost: true } })
+    ]);
+
+    const averageResponseTime = responseTimes.length > 0
+      ? responseTimes.reduce((s, t) => s + (t.responseTimeMinutes || 0), 0) / responseTimes.length
+      : 0;
+    const averageTripTime = tripTimes.length > 0
+      ? tripTimes.reduce((s, t) => s + (t.actualTripTimeMinutes || 0), 0) / tripTimes.length
+      : 0;
+    const completionRate = totalTrips > 0 ? completedTrips / totalTrips : 0;
+    const totalRevenue = Number((revenueAgg._sum as any)?.tripCost || 0);
+    const efficiency = completionRate; // Alias per spec
 
     res.json({
       success: true,
-      data: performanceStats
+      data: {
+        averageResponseTime,
+        averageTripTime,
+        completionRate,
+        totalRevenue,
+        efficiency
+      }
     });
 
   } catch (error) {
