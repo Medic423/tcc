@@ -96,6 +96,9 @@ export class TripService {
       // Calculate insurance-specific pricing
       const insurancePricing = this.calculateInsurancePricing(data.insuranceCompany, data.transportLevel);
       
+      // Calculate trip revenue
+      const revenueData = this.calculateTripRevenue(data.transportLevel, priority, data.specialNeeds);
+      
       // Create trip data object for all databases
       const tripData = {
         tripNumber: tripNumber,
@@ -124,6 +127,10 @@ export class TripService {
         // Insurance-specific pricing
         insurancePayRate: insurancePricing.payRate,
         perMileRate: insurancePricing.perMileRate,
+        
+        // Revenue and distance tracking
+        tripCost: revenueData.tripCost,
+        distanceMiles: revenueData.estimatedDistance,
       };
       
       // Create trip in Center database
@@ -192,6 +199,9 @@ export class TripService {
     console.log('TCC_DEBUG: Creating trip with data:', data);
     
     try {
+      // Calculate revenue for the trip
+      const revenueData = this.calculateTripRevenue(data.transportLevel, data.priority, data.specialNeeds);
+      
       const trip = await prisma.trip.create({
         data: {
           tripNumber: `TRP-${Date.now()}`,
@@ -205,6 +215,11 @@ export class TripService {
           fromLocation: data.originFacilityId,
           toLocation: data.destinationFacilityId,
           scheduledTime: new Date(data.readyStart),
+          
+          // Revenue and distance tracking
+          tripCost: revenueData.tripCost,
+          distanceMiles: revenueData.estimatedDistance,
+          perMileRate: revenueData.perMileRate,
           
           // Legacy fields
           status: 'PENDING',
@@ -806,6 +821,43 @@ export class TripService {
         message: 'Insurance options retrieved successfully'
       };
     }
+  }
+
+  /**
+   * Calculate trip revenue based on transport level, priority, and special needs
+   */
+  private calculateTripRevenue(transportLevel: string, priority: string, specialNeeds?: string) {
+    // Base rates by transport level
+    const baseRates = {
+      'BLS': 150.0,
+      'ALS': 250.0,
+      'CCT': 400.0,
+      'Other': 150.0
+    };
+
+    // Priority multipliers
+    const priorityMultipliers = {
+      'LOW': 1.0,
+      'MEDIUM': 1.1,
+      'HIGH': 1.25,
+      'CRITICAL': 1.5
+    };
+
+    // Special requirements surcharge
+    const specialSurcharge = specialNeeds ? 50.0 : 0.0;
+
+    const baseRate = baseRates[transportLevel as keyof typeof baseRates] || 150.0;
+    const priorityMultiplier = priorityMultipliers[priority as keyof typeof priorityMultipliers] || 1.0;
+    
+    const tripCost = (baseRate * priorityMultiplier + specialSurcharge);
+    const estimatedDistance = 5.0; // Default estimated distance in miles
+    const perMileRate = 2.50; // Default per-mile rate
+
+    return {
+      tripCost: Math.round(tripCost * 100) / 100, // Round to 2 decimal places
+      estimatedDistance,
+      perMileRate
+    };
   }
 
   /**
