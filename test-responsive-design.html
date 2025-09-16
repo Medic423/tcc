@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TCC Responsive Design Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+        }
+        .test-section h3 {
+            color: #333;
+            margin-top: 0;
+        }
+        .size-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .size-button:hover {
+            background: #0056b3;
+        }
+        .size-button.active {
+            background: #28a745;
+        }
+        .iframe-container {
+            width: 100%;
+            height: 600px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .iframe-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        .test-checklist {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 15px;
+        }
+        .test-checklist h4 {
+            margin-top: 0;
+            color: #495057;
+        }
+        .test-checklist ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .test-checklist li {
+            margin: 5px 0;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-pending { background: #ffc107; }
+        .status-pass { background: #28a745; }
+        .status-fail { background: #dc3545; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🏥 TCC Responsive Design Test Suite</h1>
+        <p>Test the TCC application across different screen sizes and devices.</p>
+        
+        <div class="test-section">
+            <h3>📱 Screen Size Testing</h3>
+            <p>Click buttons to resize the test window to different device sizes:</p>
+            
+            <button class="size-button active" onclick="resizeWindow(375, 667)">📱 Mobile (375x667)</button>
+            <button class="size-button" onclick="resizeWindow(768, 1024)">📱 Tablet (768x1024)</button>
+            <button class="size-button" onclick="resizeWindow(1024, 768)">💻 Desktop (1024x768)</button>
+            <button class="size-button" onclick="resizeWindow(1440, 900)">🖥️ Large Desktop (1440x900)</button>
+            <button class="size-button" onclick="resizeWindow(1920, 1080)">🖥️ Full HD (1920x1080)</button>
+            
+            <div class="iframe-container">
+                <iframe id="testFrame" src="http://localhost:3000"></iframe>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>✅ Responsive Design Checklist</h3>
+            <div class="test-checklist">
+                <h4>Mobile (375px) Tests:</h4>
+                <ul>
+                    <li><span class="status-indicator status-pending"></span>Navigation menu collapses to hamburger menu</li>
+                    <li><span class="status-indicator status-pending"></span>Tables scroll horizontally instead of breaking layout</li>
+                    <li><span class="status-indicator status-pending"></span>Forms stack vertically with proper spacing</li>
+                    <li><span class="status-indicator status-pending"></span>Buttons are large enough to tap easily (44px+ min)</li>
+                    <li><span class="status-indicator status-pending"></span>Text remains readable without horizontal scrolling</li>
+                    <li><span class="status-indicator status-pending"></span>Modal dialogs fit within screen bounds</li>
+                </ul>
+                
+                <h4>Tablet (768px) Tests:</h4>
+                <ul>
+                    <li><span class="status-indicator status-pending"></span>Navigation shows as horizontal menu</li>
+                    <li><span class="status-indicator status-pending"></span>Tables display with appropriate column widths</li>
+                    <li><span class="status-indicator status-pending"></span>Forms use two-column layout where appropriate</li>
+                    <li><span class="status-indicator status-pending"></span>Cards and components have proper spacing</li>
+                </ul>
+                
+                <h4>Desktop (1024px+) Tests:</h4>
+                <ul>
+                    <li><span class="status-indicator status-pending"></span>Full navigation menu is visible</li>
+                    <li><span class="status-indicator status-pending"></span>Tables display all columns without horizontal scroll</li>
+                    <li><span class="status-indicator status-pending"></span>Forms use optimal multi-column layouts</li>
+                    <li><span class="status-indicator status-pending"></span>Content utilizes available screen space efficiently</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔍 Component-Specific Tests</h3>
+            <div class="test-checklist">
+                <h4>Test these components at each screen size:</h4>
+                <ul>
+                    <li><span class="status-indicator status-pending"></span><strong>Dashboard Overview:</strong> Statistics cards layout</li>
+                    <li><span class="status-indicator status-pending"></span><strong>Hospitals Table:</strong> Column visibility and scrolling</li>
+                    <li><span class="status-indicator status-pending"></span><strong>Agencies Table:</strong> Data display and actions</li>
+                    <li><span class="status-indicator status-pending"></span><strong>Trips View:</strong> Trip cards and filtering</li>
+                    <li><span class="status-indicator status-pending"></span><strong>Add/Edit Modals:</strong> Form layout and validation</li>
+                    <li><span class="status-indicator status-pending"></span><strong>Route Optimizer:</strong> Map and controls display</li>
+                    <li><span class="status-indicator status-pending"></span><strong>Analytics Dashboard:</strong> Charts and graphs</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>📊 Test Results</h3>
+            <div id="testResults">
+                <p>Complete the tests above and record results here:</p>
+                <textarea id="resultsText" style="width: 100%; height: 200px; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" placeholder="Record your test results here..."></textarea>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function resizeWindow(width, height) {
+            // Remove active class from all buttons
+            document.querySelectorAll('.size-button').forEach(btn => btn.classList.remove('active'));
+            // Add active class to clicked button
+            event.target.classList.add('active');
+            
+            // Resize the iframe container
+            const container = document.querySelector('.iframe-container');
+            container.style.width = width + 'px';
+            container.style.height = height + 'px';
+            
+            console.log(`Resized to ${width}x${height}`);
+        }
+
+        // Auto-save test results
+        document.getElementById('resultsText').addEventListener('input', function() {
+            localStorage.setItem('tccResponsiveTestResults', this.value);
+        });
+
+        // Load saved results
+        const savedResults = localStorage.getItem('tccResponsiveTestResults');
+        if (savedResults) {
+            document.getElementById('resultsText').value = savedResults;
+        }
+    </script>
+</body>
+</html>
