@@ -300,7 +300,7 @@ router.get('/performance', async (req, res) => {
 async function getUnitById(unitId: string): Promise<any> {
   try {
     const prisma = databaseManager.getEMSDB();
-    const unit = await prisma.eMSUnit.findUnique({
+    const unit = await prisma.unit.findUnique({
       where: { id: unitId },
       include: {
         agency: true
@@ -318,12 +318,12 @@ async function getUnitById(unitId: string): Promise<any> {
       type: unit.type,
       capabilities: unit.capabilities || [],
       currentStatus: unit.currentStatus,
-      currentLocation: unit.currentLocation ? {
-        lat: unit.currentLocation.lat,
-        lng: unit.currentLocation.lng
+      currentLocation: unit.currentLocation && typeof unit.currentLocation === 'object' && 'lat' in unit.currentLocation ? {
+        lat: (unit.currentLocation as any).lat,
+        lng: (unit.currentLocation as any).lng
       } : { lat: 0, lng: 0 },
-      shiftStart: unit.shiftStart,
-      shiftEnd: unit.shiftEnd,
+      shiftStart: (unit as any).shiftStart || null,
+      shiftEnd: (unit as any).shiftEnd || null,
       isActive: unit.isActive
     };
   } catch (error) {
@@ -335,7 +335,7 @@ async function getUnitById(unitId: string): Promise<any> {
 async function getUnitsByIds(unitIds: string[]): Promise<any[]> {
   try {
     const prisma = databaseManager.getEMSDB();
-    const units = await prisma.eMSUnit.findMany({
+    const units = await prisma.unit.findMany({
       where: { 
         id: { in: unitIds },
         isActive: true
@@ -345,19 +345,19 @@ async function getUnitsByIds(unitIds: string[]): Promise<any[]> {
       }
     });
 
-    return units.map(unit => ({
+    return units.map((unit: any) => ({
       id: unit.id,
       agencyId: unit.agencyId,
       unitNumber: unit.unitNumber,
       type: unit.type,
       capabilities: unit.capabilities || [],
       currentStatus: unit.currentStatus,
-      currentLocation: unit.currentLocation ? {
-        lat: unit.currentLocation.lat,
-        lng: unit.currentLocation.lng
+      currentLocation: unit.currentLocation && typeof unit.currentLocation === 'object' && 'lat' in unit.currentLocation ? {
+        lat: (unit.currentLocation as any).lat,
+        lng: (unit.currentLocation as any).lng
       } : { lat: 0, lng: 0 },
-      shiftStart: unit.shiftStart,
-      shiftEnd: unit.shiftEnd,
+      shiftStart: (unit as any).shiftStart || null,
+      shiftEnd: (unit as any).shiftEnd || null,
       isActive: unit.isActive
     }));
   } catch (error) {
@@ -512,7 +512,7 @@ async function getPerformanceMetrics(startTime: Date, endTime: Date, unitId?: st
     const totalTrips = trips.length;
     const completedTrips = trips.filter(trip => trip.completionTimestamp).length;
     
-    const totalRevenue = trips.reduce((sum, trip) => sum + (trip.tripCost || 0), 0);
+    const totalRevenue = trips.reduce((sum, trip) => sum + (Number(trip.tripCost) || 0), 0);
     
     const responseTimes = trips
       .filter(trip => trip.responseTimeMinutes)
