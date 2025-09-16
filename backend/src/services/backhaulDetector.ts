@@ -45,24 +45,36 @@ export class BackhaulDetector {
    * Create a backhaul pair from two requests
    */
   private createPair(request1: TransportRequest, request2: TransportRequest): BackhaulPair | null {
-    // Calculate distance between destinations
-    const distance = this.calculateDistance(
-      request1.destinationLocation,
-      request2.destinationLocation
-    );
+    // Check for return trip scenario (destination of one matches origin of another)
+    const isReturnTrip = this.isReturnTripScenario(request1, request2);
+    
+    let distance: number;
+    if (isReturnTrip) {
+      // For return trips, calculate distance from destination of first to origin of second
+      distance = this.calculateDistance(
+        request1.destinationLocation,
+        request2.originLocation
+      );
+    } else {
+      // For regular backhaul, calculate distance between destinations
+      distance = this.calculateDistance(
+        request1.destinationLocation,
+        request2.destinationLocation
+      );
+    }
 
     // Calculate time window between ready times
     const timeWindow = this.calculateTimeWindow(request1, request2);
 
-    // Calculate efficiency score
-    const efficiency = this.calculateEfficiency(request1, request2, distance, timeWindow);
+    // Calculate efficiency score (return trips get bonus)
+    const efficiency = this.calculateEfficiency(request1, request2, distance, timeWindow, isReturnTrip);
 
     return {
       request1,
       request2,
       distance,
       timeWindow,
-      revenueBonus: this.revenueBonus,
+      revenueBonus: isReturnTrip ? this.revenueBonus * 1.5 : this.revenueBonus, // 50% bonus for return trips
       efficiency
     };
   }
@@ -124,6 +136,25 @@ export class BackhaulDetector {
   }
 
   /**
+   * Check if this is a return trip scenario (destination of one matches origin of another)
+   */
+  private isReturnTripScenario(request1: TransportRequest, request2: TransportRequest): boolean {
+    // Check if destination of request1 matches origin of request2 (or vice versa)
+    const dest1MatchesOrigin2 = this.locationsMatch(request1.destinationLocation, request2.originLocation);
+    const dest2MatchesOrigin1 = this.locationsMatch(request2.destinationLocation, request1.originLocation);
+    
+    return dest1MatchesOrigin2 || dest2MatchesOrigin1;
+  }
+
+  /**
+   * Check if two locations match (within 1 mile tolerance for GPS precision)
+   */
+  private locationsMatch(loc1: { lat: number; lng: number }, loc2: { lat: number; lng: number }): boolean {
+    const distance = this.calculateDistance(loc1, loc2);
+    return distance <= 1.0; // Within 1 mile = same location
+  }
+
+  /**
    * Calculate efficiency score for a backhaul pair
    * Higher efficiency = better pairing
    */
@@ -131,7 +162,8 @@ export class BackhaulDetector {
     request1: TransportRequest, 
     request2: TransportRequest, 
     distance: number, 
-    timeWindow: number
+    timeWindow: number,
+    isReturnTrip: boolean = false
   ): number {
     // Base efficiency from distance (closer = better)
     const distanceScore = Math.max(0, (this.maxDistance - distance) / this.maxDistance);
@@ -145,8 +177,11 @@ export class BackhaulDetector {
     // Revenue potential (higher revenue = better)
     const revenueScore = this.calculateRevenueScore(request1, request2);
     
-    // Weighted combination
-    return (distanceScore * 0.3 + timeScore * 0.2 + priorityScore * 0.3 + revenueScore * 0.2);
+    // Return trip bonus (return trips are highly efficient)
+    const returnTripBonus = isReturnTrip ? 0.3 : 0;
+    
+    // Weighted combination with return trip bonus
+    return (distanceScore * 0.25 + timeScore * 0.15 + priorityScore * 0.25 + revenueScore * 0.15 + returnTripBonus);
   }
 
   /**
@@ -202,6 +237,58 @@ export class BackhaulDetector {
     }
     
     return pairs.sort((a, b) => b.efficiency - a.efficiency);
+  }
+
+  /**
+   * Find return trip opportunities for a specific request
+   * This looks for requests that would bring the unit back to the original area
+   */
+  findReturnTripOpportunities(request: TransportRequest, allRequests: TransportRequest[]): BackhaulPair[] {
+    const otherRequests = allRequests.filter(req => 
+      req.id !== request.id && req.status === 'PENDING'
+    );
+    
+    const returnTrips: BackhaulPair[] = [];
+    
+    for (const otherRequest of otherRequests) {
+      // Check if this would be a return trip
+      const isReturnTrip = this.isReturnTripScenario(request, otherRequest);
+      
+      if (isReturnTrip) {
+        const pair = this.createPair(request, otherRequest);
+        if (pair && this.isValidPair(pair)) {
+          returnTrips.push(pair);
+        }
+      }
+    }
+    
+    return returnTrips.sort((a, b) => b.efficiency - a.efficiency);
+  }
+
+  /**
+   * Find all return trip opportunities in the system
+   * This is specifically for scenarios like Altoona → Pittsburgh → Altoona
+   */
+  findAllReturnTripOpportunities(allRequests: TransportRequest[]): BackhaulPair[] {
+    const pendingRequests = allRequests.filter(req => req.status === 'PENDING');
+    const returnTrips: BackhaulPair[] = [];
+    
+    for (let i = 0; i < pendingRequests.length; i++) {
+      for (let j = i + 1; j < pendingRequests.length; j++) {
+        const request1 = pendingRequests[i];
+        const request2 = pendingRequests[j];
+        
+        const isReturnTrip = this.isReturnTripScenario(request1, request2);
+        if (isReturnTrip) {
+          const pair = this.createPair(request1, request2);
+          if (pair && this.isValidPair(pair)) {
+            returnTrips.push(pair);
+          }
+        }
+      }
+    }
+    
+    return returnTrips.sort((a, b) => b.efficiency - a.efficiency);
   }
 
   /**
