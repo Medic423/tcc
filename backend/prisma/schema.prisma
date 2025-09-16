@@ -1,0 +1,161 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model CenterUser {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  userType  String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("center_users")
+}
+
+model Hospital {
+  id             String    @id @default(cuid())
+  name           String
+  address        String
+  city           String
+  state          String
+  zipCode        String
+  phone          String?
+  email          String?
+  type           String
+  capabilities   String[]
+  region         String
+  coordinates    Json?
+  latitude       Float?
+  longitude      Float?
+  operatingHours String?
+  isActive       Boolean   @default(true)
+  requiresReview Boolean   @default(false)
+  approvedAt     DateTime?
+  approvedBy     String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@map("hospitals")
+}
+
+model Agency {
+  id          String   @id @default(cuid())
+  name        String
+  type        String
+  region      String
+  contactInfo Json?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("agencies")
+}
+
+model EMSAgency {
+  id                   String    @id @default(cuid())
+  name                 String
+  contactName          String
+  phone                String
+  email                String
+  address              String
+  city                 String
+  state                String
+  zipCode              String
+  serviceArea          String[]
+  operatingHours       Json?
+  capabilities         String[]
+  pricingStructure     Json?
+  isActive             Boolean   @default(true)
+  status               String    @default("ACTIVE")
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  acceptsNotifications Boolean   @default(true)
+  approvedAt           DateTime?
+  approvedBy           String?
+  availableUnits       Int       @default(0)
+  lastUpdated          DateTime  @default(now())
+  latitude             Float?
+  longitude            Float?
+  notificationMethods  String[]
+  requiresReview       Boolean   @default(false)
+  serviceRadius        Int?
+  totalUnits           Int       @default(0)
+
+  @@map("ems_agencies")
+}
+
+model Facility {
+  id        String   @id @default(cuid())
+  name      String
+  type      String
+  address   String
+  city      String
+  state     String
+  zipCode   String
+  phone     String?
+  email     String?
+  region    String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("facilities")
+}
+
+model Trip {
+  id                   String    @id @default(cuid())
+  tripNumber           String    @unique
+  patientId            String
+  patientWeight        String?
+  specialNeeds         String?
+  fromLocation         String
+  toLocation           String
+  scheduledTime        DateTime
+  transportLevel       String
+  urgencyLevel         String
+  diagnosis            String?
+  mobilityLevel        String?
+  oxygenRequired       Boolean   @default(false)
+  monitoringRequired   Boolean   @default(false)
+  generateQRCode       Boolean   @default(false)
+  qrCodeData           String?
+  selectedAgencies     String[]
+  notificationRadius   Int?
+  transferRequestTime  DateTime?
+  transferAcceptedTime DateTime?
+  emsArrivalTime       DateTime?
+  emsDepartureTime     DateTime?
+  actualStartTime      DateTime?
+  actualEndTime        DateTime?
+  status               String
+  priority             String
+  notes                String?
+  assignedTo           String?
+  assignedAgencyId     String?
+  assignedUnitId       String?
+  acceptedTimestamp    DateTime?
+  pickupTimestamp      DateTime?
+  completionTimestamp  DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  @@map("trips")
+}
+
+model SystemAnalytics {
+  id          String   @id @default(cuid())
+  metricName  String
+  metricValue Json
+  timestamp   DateTime @default(now())
+  userId      String?
+
+  @@map("system_analytics")
+}
