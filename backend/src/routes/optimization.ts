@@ -115,6 +115,8 @@ router.get('/revenue', async (req, res) => {
 
     // Get completed trips in time range
     const trips = await getCompletedTripsInRange(startTime, now, agencyId as string);
+    console.log('TCC_DEBUG: Revenue analytics - trips found:', trips.length);
+    console.log('TCC_DEBUG: Revenue analytics - sample trip:', trips[0]);
 
     // Calculate metrics
     const totalRevenue = trips.reduce((sum, trip) => sum + calculateTripRevenue(trip), 0);
@@ -122,6 +124,14 @@ router.get('/revenue', async (req, res) => {
     const loadedMiles = trips.reduce((sum, trip) => sum + calculateLoadedMiles(trip), 0);
     const loadedMileRatio = totalMiles > 0 ? loadedMiles / totalMiles : 0;
     const revenuePerHour = totalRevenue / (timeRange / (1000 * 60 * 60));
+    
+    console.log('TCC_DEBUG: Revenue analytics - calculated values:', {
+      totalRevenue,
+      totalMiles,
+      loadedMiles,
+      loadedMileRatio,
+      revenuePerHour
+    });
 
     res.json({
       success: true,
@@ -193,6 +203,59 @@ router.post('/backhaul', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Internal server error during backhaul analysis'
+    });
+  }
+});
+
+/**
+ * GET /api/optimize/return-trips
+ * Find return trip opportunities in the system (e.g., Altoona → Pittsburgh → Altoona)
+ */
+router.get('/return-trips', async (req, res) => {
+  try {
+    console.log('TCC_DEBUG: Finding return trip opportunities...');
+    
+    // Get all pending requests
+    const allRequests = await getAllPendingRequests();
+    console.log('TCC_DEBUG: Found pending requests:', allRequests.length);
+    
+    // Find return trip opportunities
+    const returnTrips = backhaulDetector.findAllReturnTripOpportunities(allRequests);
+    console.log('TCC_DEBUG: Found return trip opportunities:', returnTrips.length);
+    
+    // Calculate statistics
+    const statistics = {
+      totalRequests: allRequests.length,
+      returnTripOpportunities: returnTrips.length,
+      averageEfficiency: returnTrips.length > 0 
+        ? returnTrips.reduce((sum, pair) => sum + pair.efficiency, 0) / returnTrips.length 
+        : 0,
+      potentialRevenueIncrease: returnTrips.reduce((sum, pair) => 
+        sum + backhaulDetector.calculatePairingRevenue(pair), 0
+      )
+    };
+
+    res.json({
+      success: true,
+      data: {
+        returnTrips: returnTrips.slice(0, 20), // Limit to top 20
+        statistics,
+        recommendations: returnTrips.slice(0, 10).map(pair => ({
+          pairId: `${pair.request1.id}-${pair.request2.id}`,
+          efficiency: pair.efficiency,
+          distance: pair.distance,
+          timeWindow: pair.timeWindow,
+          revenueBonus: pair.revenueBonus,
+          potentialRevenue: backhaulDetector.calculatePairingRevenue(pair),
+          isReturnTrip: true
+        }))
+      }
+    });
+  } catch (error) {
+    console.error('Return trip analysis error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error during return trip analysis'
     });
   }
 });
@@ -278,6 +341,7 @@ router.get('/performance', async (req, res) => {
 
     // Get performance data
     const performanceData = await getPerformanceMetrics(startTime, now, unitId as string);
+    console.log('TCC_DEBUG: Performance metrics - data:', performanceData);
 
     res.json({
       success: true,
@@ -296,6 +360,59 @@ router.get('/performance', async (req, res) => {
 });
 
 // Helper functions - Real database queries
+
+async function getAllPendingRequests(): Promise<any[]> {
+  try {
+    const prisma = databaseManager.getCenterDB();
+    
+    const trips = await prisma.trip.findMany({
+      where: {
+        status: 'PENDING'
+      },
+      select: {
+        id: true,
+        patientId: true,
+        fromLocation: true,
+        toLocation: true,
+        transportLevel: true,
+        priority: true,
+        scheduledTime: true,
+        specialNeeds: true,
+        originLatitude: true,
+        originLongitude: true,
+        destinationLatitude: true,
+        destinationLongitude: true,
+        createdAt: true
+      }
+    });
+
+    // Convert to TransportRequest format
+    return trips.map(trip => ({
+      id: trip.id,
+      patientId: trip.patientId,
+      originFacilityId: trip.fromLocation,
+      destinationFacilityId: trip.toLocation,
+      transportLevel: trip.transportLevel,
+      priority: trip.priority,
+      status: 'PENDING',
+      specialRequirements: trip.specialNeeds || '',
+      requestTimestamp: new Date(trip.createdAt),
+      readyStart: new Date(trip.scheduledTime),
+      readyEnd: new Date(new Date(trip.scheduledTime).getTime() + 60 * 60 * 1000), // 1 hour window
+      originLocation: {
+        lat: trip.originLatitude || 40.7128,
+        lng: trip.originLongitude || -74.0060
+      },
+      destinationLocation: {
+        lat: trip.destinationLatitude || 40.7589,
+        lng: trip.destinationLongitude || -73.9851
+      }
+    }));
+  } catch (error) {
+    console.error('Error getting pending requests:', error);
+    return [];
+  }
+}
 
 async function getUnitById(unitId: string): Promise<any> {
   try {
@@ -322,8 +439,8 @@ async function getUnitById(unitId: string): Promise<any> {
         lat: (unit.currentLocation as any).lat,
         lng: (unit.currentLocation as any).lng
       } : { lat: 0, lng: 0 },
-      shiftStart: (unit as any).shiftStart || null,
-      shiftEnd: (unit as any).shiftEnd || null,
+      shiftStart: (unit as any).shiftStart || new Date(),
+      shiftEnd: (unit as any).shiftEnd || new Date(Date.now() + 8 * 60 * 60 * 1000), // 8 hours from now
       isActive: unit.isActive
     };
   } catch (error) {
@@ -356,8 +473,8 @@ async function getUnitsByIds(unitIds: string[]): Promise<any[]> {
         lat: (unit.currentLocation as any).lat,
         lng: (unit.currentLocation as any).lng
       } : { lat: 0, lng: 0 },
-      shiftStart: (unit as any).shiftStart || null,
-      shiftEnd: (unit as any).shiftEnd || null,
+      shiftStart: (unit as any).shiftStart || new Date(),
+      shiftEnd: (unit as any).shiftEnd || new Date(Date.now() + 8 * 60 * 60 * 1000), // 8 hours from now
       isActive: unit.isActive
     }));
   } catch (error) {

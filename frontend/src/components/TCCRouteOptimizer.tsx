@@ -99,11 +99,16 @@ const TCCRouteOptimizer: React.FC = () => {
   }, [optimizationSettings.autoOptimize, optimizationSettings.refreshInterval, selectedUnit, selectedRequests]);
 
   const loadInitialData = async () => {
-    await Promise.all([
-      loadUnits(),
-      loadPendingRequests(),
-      loadAnalytics()
-    ]);
+    try {
+      await Promise.all([
+        loadUnits(),
+        loadPendingRequests(),
+        loadAnalytics()
+      ]);
+    } catch (error) {
+      console.error('TCC_DEBUG: Error loading initial data:', error);
+      setError('Failed to load initial data');
+    }
   };
 
   const loadUnits = async () => {
@@ -180,12 +185,23 @@ const TCCRouteOptimizer: React.FC = () => {
         const transportRequests = (data.data || []).map((trip: any) => ({
           id: trip.id,
           patientId: trip.patientId,
-          origin: trip.fromLocation,
-          destination: trip.toLocation,
-          transportLevel: trip.transportLevel,
-          priority: trip.priority,
-          scheduledTime: trip.scheduledTime,
-          specialNeeds: trip.specialNeeds
+          originFacilityId: trip.fromFacilityId || trip.fromLocation || 'Unknown',
+          destinationFacilityId: trip.toFacilityId || trip.toLocation || 'Unknown',
+          transportLevel: trip.transportLevel || 'BLS',
+          priority: trip.priority || 'MEDIUM',
+          status: trip.status || 'PENDING',
+          specialRequirements: trip.specialNeeds || trip.specialRequirements || '',
+          requestTimestamp: new Date(trip.requestTimestamp || trip.createdAt),
+          readyStart: new Date(trip.scheduledTime || trip.createdAt),
+          readyEnd: new Date(new Date(trip.scheduledTime || trip.createdAt).getTime() + 60 * 60 * 1000), // 1 hour window
+          originLocation: {
+            lat: trip.originLatitude || 40.7128,
+            lng: trip.originLongitude || -74.0060
+          },
+          destinationLocation: {
+            lat: trip.destinationLatitude || 40.7589,
+            lng: trip.destinationLongitude || -73.9851
+          }
         }));
         
         console.log('TCC_DEBUG: Pending requests loaded:', transportRequests.length);
@@ -204,15 +220,20 @@ const TCCRouteOptimizer: React.FC = () => {
   const loadAnalytics = async () => {
     setLoadingAnalytics(true);
     try {
+      console.log('TCC_DEBUG: Loading analytics data...');
       const [revenueData, performanceData] = await Promise.all([
         optimizationApi.getRevenueAnalytics('24h'),
         optimizationApi.getPerformanceMetrics('24h')
       ]);
 
-      setRevenueAnalytics(revenueData.data);
-      setPerformanceMetrics(performanceData.data);
+      console.log('TCC_DEBUG: Revenue analytics response:', revenueData);
+      console.log('TCC_DEBUG: Performance metrics response:', performanceData);
+
+      setRevenueAnalytics(revenueData);
+      setPerformanceMetrics(performanceData);
     } catch (err) {
-      console.error('Analytics loading error:', err);
+      console.error('TCC_DEBUG: Analytics loading error:', err);
+      setError('Failed to load analytics data');
     } finally {
       setLoadingAnalytics(false);
     }
@@ -234,7 +255,7 @@ const TCCRouteOptimizer: React.FC = () => {
         constraints: optimizationSettings.constraints
       });
 
-      setOptimizationResults(response.data);
+      setOptimizationResults(response);
     } catch (err) {
       setError('Failed to optimize routes');
       console.error('Optimization error:', err);
@@ -253,15 +274,65 @@ const TCCRouteOptimizer: React.FC = () => {
     setError(null);
 
     try {
-      const response = await optimizationApi.analyzeBackhaul({
-        requestIds: selectedRequests,
-        constraints: optimizationSettings.constraints
-      });
+      console.log('TCC_DEBUG: Starting backhaul analysis with selected requests:', selectedRequests);
+      const response = await optimizationApi.analyzeBackhaul(selectedRequests);
+      console.log('TCC_DEBUG: Backhaul analysis response:', response);
 
-      setBackhaulAnalysis(response.data);
+      setBackhaulAnalysis(response);
     } catch (err) {
       setError('Failed to analyze backhaul opportunities');
-      console.error('Backhaul analysis error:', err);
+      console.error('TCC_DEBUG: Backhaul analysis error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleReturnTripAnalysis = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      console.log('TCC_DEBUG: Starting return trip analysis...');
+      const token = localStorage.getItem('token');
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001';
+      
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/optimize/return-trips`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch return trips: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('TCC_DEBUG: Return trips response:', data);
+      
+      if (data.success) {
+        // Convert return trips to backhaul analysis format for display
+        const backhaulResponse = {
+          success: true,
+          data: {
+            pairs: data.data.returnTrips || [],
+            statistics: data.data.statistics || {},
+            recommendations: data.data.recommendations || []
+          }
+        };
+        setBackhaulAnalysis(backhaulResponse);
+      } else {
+        throw new Error(data.error || 'Failed to load return trips');
+      }
+    } catch (err) {
+      setError('Failed to analyze return trip opportunities');
+      console.error('TCC_DEBUG: Return trip analysis error:', err);
     } finally {
       setLoading(false);
     }
@@ -525,11 +596,13 @@ const TCCRouteOptimizer: React.FC = () => {
               className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
             >
               <option value="">Select a unit...</option>
-              {availableUnits.map((unit) => (
+              {availableUnits && availableUnits.length > 0 ? availableUnits.map((unit) => (
                 <option key={unit.id} value={unit.id}>
-                  {unit.name} - {unit.currentStatus}
+                  {unit.unitNumber || 'Unknown'} ({unit.type || 'Unknown'}) - {unit.currentStatus || 'Unknown'}
                 </option>
-              ))}
+              )) : (
+                <option disabled>No units available</option>
+              )}
             </select>
           )}
         </div>
@@ -544,7 +617,7 @@ const TCCRouteOptimizer: React.FC = () => {
             </div>
           ) : (
             <div className="space-y-2 max-h-64 overflow-y-auto">
-              {pendingRequests.map((request) => (
+              {pendingRequests && pendingRequests.length > 0 ? pendingRequests.map((request) => (
                 <label key={request.id} className="flex items-center">
                   <input
                     type="checkbox"
@@ -553,11 +626,10 @@ const TCCRouteOptimizer: React.FC = () => {
                     className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
                   />
                   <span className="ml-2 text-sm text-gray-700">
-                    {request.patientId} - {request.origin} → {request.destination}
+                    {request.patientId || 'Unknown'} - {request.originFacilityId || 'Unknown'} → {request.destinationFacilityId || 'Unknown'}
                   </span>
                 </label>
-              ))}
-              {pendingRequests.length === 0 && (
+              )) : (
                 <p className="text-sm text-gray-500">No pending requests available</p>
               )}
             </div>
@@ -588,6 +660,15 @@ const TCCRouteOptimizer: React.FC = () => {
           <Target className="h-4 w-4 mr-2" />
           Analyze Backhaul
         </button>
+
+        <button
+          onClick={handleReturnTripAnalysis}
+          disabled={loading}
+          className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <Navigation className="h-4 w-4 mr-2" />
+          Find Return Trips
+        </button>
       </div>
 
       {/* Error Display */}
@@ -606,7 +687,7 @@ const TCCRouteOptimizer: React.FC = () => {
       )}
 
       {/* Optimization Results */}
-      {optimizationResults && (
+      {optimizationResults && optimizationResults.success && optimizationResults.data && (
         <div className="bg-white shadow rounded-lg p-6">
           <h3 className="text-lg font-medium text-gray-900 mb-4">Optimization Results</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -616,7 +697,7 @@ const TCCRouteOptimizer: React.FC = () => {
                 <span className="ml-2 text-sm font-medium text-gray-700">Total Revenue</span>
               </div>
               <p className="mt-1 text-2xl font-semibold text-gray-900">
-                ${optimizationResults.totalRevenue.toFixed(2)}
+                ${typeof optimizationResults.data.totalRevenue === 'number' ? optimizationResults.data.totalRevenue.toFixed(2) : '0.00'}
               </p>
             </div>
             <div className="bg-gray-50 rounded-lg p-4">
@@ -625,42 +706,71 @@ const TCCRouteOptimizer: React.FC = () => {
                 <span className="ml-2 text-sm font-medium text-gray-700">Total Distance</span>
               </div>
               <p className="mt-1 text-2xl font-semibold text-gray-900">
-                {optimizationResults.totalDistance.toFixed(1)} mi
+                {typeof optimizationResults.data.totalDeadheadMiles === 'number' ? optimizationResults.data.totalDeadheadMiles.toFixed(1) : '0.0'} mi
               </p>
             </div>
             <div className="bg-gray-50 rounded-lg p-4">
               <div className="flex items-center">
                 <Clock className="h-5 w-5 text-orange-600" />
-                <span className="ml-2 text-sm font-medium text-gray-700">Total Time</span>
+                <span className="ml-2 text-sm font-medium text-gray-700">Total Wait Time</span>
               </div>
               <p className="mt-1 text-2xl font-semibold text-gray-900">
-                {optimizationResults.totalTime.toFixed(0)} min
+                {typeof optimizationResults.data.totalWaitTime === 'number' ? optimizationResults.data.totalWaitTime.toFixed(0) : '0'} min
               </p>
             </div>
           </div>
+          
+          {/* Optimization Details */}
+          {optimizationResults.data.optimizedRequests && optimizationResults.data.optimizedRequests.length > 0 && (
+            <div className="mt-6">
+              <h4 className="text-md font-medium text-gray-700 mb-3">Optimized Requests</h4>
+              <div className="space-y-2">
+                {optimizationResults.data.optimizedRequests.map((request: any, index: number) => (
+                  <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                    <div>
+                      <span className="text-sm font-medium text-gray-900">Request {index + 1}</span>
+                      <span className="text-sm text-gray-500 ml-2">Score: {typeof request.score === 'number' ? request.score.toFixed(2) : '0.00'}</span>
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      Revenue: ${typeof request.revenue === 'number' ? request.revenue.toFixed(2) : '0.00'} | 
+                      Deadhead: {typeof request.deadheadMiles === 'number' ? request.deadheadMiles.toFixed(1) : '0.0'} mi
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
       {/* Backhaul Analysis Results */}
-      {backhaulAnalysis && (
+      {backhaulAnalysis && backhaulAnalysis.success && backhaulAnalysis.data && (
         <div className="bg-white shadow rounded-lg p-6">
           <h3 className="text-lg font-medium text-gray-900 mb-4">Backhaul Analysis</h3>
           <div className="space-y-4">
-            {backhaulAnalysis.pairs.map((pair, index) => (
+            {backhaulAnalysis.data.pairs && backhaulAnalysis.data.pairs.map((pair: any, index: number) => (
               <div key={index} className="border rounded-lg p-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-900">
-                      {pair.request1.patientId} → {pair.request2.patientId}
+                      {pair.request1?.patientId || 'Unknown'} → {pair.request2?.patientId || 'Unknown'}
                     </p>
                     <p className="text-sm text-gray-500">
-                      Potential savings: ${pair.savings.toFixed(2)}
+                      Potential savings: ${typeof pair.revenueBonus === 'number' ? pair.revenueBonus.toFixed(2) : '0.00'}
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      Distance: {typeof pair.distance === 'number' ? pair.distance.toFixed(1) : '0.0'} mi | 
+                      Time Window: {pair.timeWindow || '0'} min | 
+                      Efficiency: {typeof pair.efficiency === 'number' ? (pair.efficiency * 100).toFixed(1) : '0.0'}%
                     </p>
                   </div>
                   <CheckCircle className="h-5 w-5 text-green-500" />
                 </div>
               </div>
             ))}
+            {(!backhaulAnalysis.data.pairs || backhaulAnalysis.data.pairs.length === 0) && (
+              <p className="text-sm text-gray-500 text-center py-4">No backhaul opportunities found</p>
+            )}
           </div>
         </div>
       )}
@@ -677,42 +787,42 @@ const TCCRouteOptimizer: React.FC = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Revenue Analytics */}
-            {revenueAnalytics && revenueAnalytics.success && (
+            {revenueAnalytics && revenueAnalytics.success && revenueAnalytics.data && (
               <div>
                 <h4 className="text-md font-medium text-gray-700 mb-3">System Revenue (24h)</h4>
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-600">Total Revenue:</span>
-                    <span className="text-sm font-medium">${revenueAnalytics.totalRevenue.toFixed(2)}</span>
+                    <span className="text-sm font-medium">${typeof revenueAnalytics.data.totalRevenue === 'number' ? revenueAnalytics.data.totalRevenue.toFixed(2) : '0.00'}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-600">Revenue per Hour:</span>
-                    <span className="text-sm font-medium">${revenueAnalytics.revenuePerHour.toFixed(2)}</span>
+                    <span className="text-sm font-medium">${typeof revenueAnalytics.data.revenuePerHour === 'number' ? revenueAnalytics.data.revenuePerHour.toFixed(2) : '0.00'}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-600">Loaded Mile Ratio:</span>
-                    <span className="text-sm font-medium">{(revenueAnalytics.loadedMileRatio * 100).toFixed(1)}%</span>
+                    <span className="text-sm font-medium">{typeof revenueAnalytics.data.loadedMileRatio === 'number' ? (revenueAnalytics.data.loadedMileRatio * 100).toFixed(1) : '0.0'}%</span>
                   </div>
                 </div>
               </div>
             )}
 
             {/* Performance Metrics */}
-            {performanceMetrics && performanceMetrics.success && (
+            {performanceMetrics && performanceMetrics.success && performanceMetrics.data && (
               <div>
                 <h4 className="text-md font-medium text-gray-700 mb-3">System Performance (24h)</h4>
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-600">Total Trips:</span>
-                    <span className="text-sm font-medium">{performanceMetrics.totalTrips}</span>
+                    <span className="text-sm font-medium">{performanceMetrics.data.totalTrips || 0}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-600">Average Response Time:</span>
-                    <span className="text-sm font-medium">{performanceMetrics.averageResponseTime.toFixed(1)} min</span>
+                    <span className="text-sm font-medium">{typeof performanceMetrics.data.averageResponseTime === 'number' ? performanceMetrics.data.averageResponseTime.toFixed(1) : '0.0'} min</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-600">Efficiency:</span>
-                    <span className="text-sm font-medium">{(performanceMetrics.efficiency * 100).toFixed(1)}%</span>
+                    <span className="text-sm font-medium">{typeof performanceMetrics.data.efficiency === 'number' ? (performanceMetrics.data.efficiency * 100).toFixed(1) : '0.0'}%</span>
                   </div>
                 </div>
               </div>
