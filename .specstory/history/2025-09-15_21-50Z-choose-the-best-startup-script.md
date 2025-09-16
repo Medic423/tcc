@@ -6024,3 +6024,366 @@ I've created a detailed 4-phase completion plan in `docs/notes/ANALYTICS_ROUTE_O
 
 ---
 
+_**User (2025-09-16 13:18Z)**_
+
+Go ahead with phase 1.
+
+---
+
+_**Assistant**_
+
+I can see there are merge conflicts that need to be resolved first before we can proceed with Phase 1. Let me fix these conflicts and then implement Phase 1 of the analytics completion plan.
+
+
+---
+
+```bash
+git status
+```
+
+```
+On branch feature/analytics-route-optimization-completion
+Changes not staged for commit:
+  (use "git add/rm <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+        modified:   .specstory/history/2025-09-15_21-50Z-choose-the-best-startup-script.md                                                                      
+        deleted:    docs/notes/route_opt_analytics.md
+        deleted:    docs/notes/route_optimization_plan_0910.md
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+        docs/archive/route_opt_analytics.md
+        docs/archive/route_optimization_plan_0910.md
+        docs/notes/ANALYTICS_ROUTE_OPTIMIZATION_COMPLETION_PLAN.md
+
+no changes added to commit (use "git add" and/or "git commit -a")
+```
+
+---
+
+Let me check for merge conflict markers in the files that are causing the build errors:
+
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+Let me check the stash to see if there are unresolved conflicts there:
+
+
+---
+
+```bash
+git stash pop
+```
+
+```
+error: Your local changes to the following files would be overwritten by merge:
+        .specstory/history/2025-09-15_21-50Z-choose-the-best-startup-script.md
+Please commit your changes or stash them before you merge.
+Aborting
+On branch feature/analytics-route-optimization-completion
+Changes not staged for commit:
+  (use "git add/rm <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+        modified:   .specstory/history/2025-09-15_21-50Z-choose-the-best-startup-script.md                                                                      
+        deleted:    docs/notes/route_opt_analytics.md
+        deleted:    docs/notes/route_optimization_plan_0910.md
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+        docs/archive/route_opt_analytics.md
+        docs/archive/route_optimization_plan_0910.md
+        docs/notes/ANALYTICS_ROUTE_OPTIMIZATION_COMPLETION_PLAN.md
+
+no changes added to commit (use "git add" and/or "git commit -a")
+The stash entry is kept in case you need it again.
+```
+
+---
+
+Let me commit the current changes and then check for merge conflicts:
+
+
+---
+
+```bash
+git add . && git commit -m "docs: add analytics completion plan and archive route optimization docs"
+```
+
+```
+[feature/analytics-route-optimization-completion 4e74db5] docs: add analytics completion plan and archive route optimization docs                               
+ 4 files changed, 732 insertions(+)
+ rename docs/{notes => archive}/route_opt_analytics.md (100%)
+ rename docs/{notes => archive}/route_optimization_plan_0910.md (100%)
+ create mode 100644 docs/notes/ANALYTICS_ROUTE_OPTIMIZATION_COMPLETION_PLAN.md
+```
+
+---
+
+Now let me check if there are any merge conflicts in the stash:
+
+
+---
+
+```bash
+git stash show -p
+```
+
+```
+diff --git a/.specstory/history/2025-09-15_21-50Z-choose-the-best-startup-script.md b/.specstory/history/2025-09-15_21-50Z-choose-the-best-startup-script.md    
+index 33a34ea..a8bbe06 100644
+--- a/.specstory/history/2025-09-15_21-50Z-choose-the-best-startup-script.md
++++ b/.specstory/history/2025-09-15_21-50Z-choose-the-best-startup-script.md
+@@ -5073,3 +5073,19 @@ The TCC system exceeds expectations and is ready for production use! 🚀                                                                  
+ 
+ ---
+ 
++_**User (2025-09-16 13:18Z)**_
++
++Let's commit our work to the main branch and push to git and use tags making this as a stable restore point. Then run the backup-enhanced.sh script to my external drive /Volumes/Acasis/. Be absolutely certain that the backup contains the database. In some previous back-ups the database was missing causing considerable problems with tying to restore the system.                                     
++
++---
++
++_**Assistant**_
++
++
++
++---
++
++
++
++---
++
+```
+
+---
+
+The stash looks clean. Let me check if there are any merge conflict markers in the current working directory:
+
+
+---
+
+```bash
+find . -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.json" -o -name "*.html" | xargs grep -l "<<<<<<< HEAD" 2>/dev/null || echo "No merge conflicts found"
+```
+
+```
+No merge conflicts found
+```
+
+---
+
+Great! No merge conflicts found. Now let me start Phase 1 implementation. Let me first check the current optimization routes to see what mock functions need to be replaced:
+
+
+---
+
+Read file: undefined
+
+---
+
+Perfect! I can see all the mock helper functions that need to be replaced. Now let me implement Phase 1 by replacing these mock functions with real database queries. Let me start by implementing the real database helper functions:
+
+
+---
+
+<details><summary>Edit file: backend/src/routes/optimization.ts</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 103, lines removed: 46
+
+```diff
+@@ -296,58 +296,115 @@
+  });
+  
+- // Helper functions (these would be implemented based on your database schema)
++ // Helper functions - Real database queries
+  
+  async function getUnitById(unitId: string): Promise<any> {
+-   // Mock implementation - replace with actual database query
+-   return {
+-     id: unitId,
+-     agencyId: 'agency-001',
+-     unitNumber: 'A-101',
+-     type: 'AMBULANCE',
+-     capabilities: ['BLS', 'ALS'],
+-     currentStatus: 'AVAILABLE',
+-     currentLocation: { lat: 40.7128, lng: -74.0060 },
+-     shiftStart: new Date(),
+-     shiftEnd: new Date(Date.now() + 8 * 60 * 60 * 1000),
+-     isActive: true
+-   };
++   try {
++     const prisma = databaseManager.getEMSDB();
++     const unit = await prisma.eMSUnit.findUnique({
++       where: { id: unitId },
++       include: {
++         agency: true
++       }
++     });
++ 
++     if (!unit) {
++       return null;
++     }
++ 
++     return {
++       id: unit.id,
++       agencyId: unit.agencyId,
++       unitNumber: unit.unitNumber,
++       type: unit.type,
++       capabilities: unit.capabilities || [],
++       currentStatus: unit.currentStatus,
++       currentLocation: unit.currentLocation ? {
++         lat: unit.currentLocation.lat,
++         lng: unit.currentLocation.lng
++       } : { lat: 0, lng: 0 },
++       shiftStart: unit.shiftStart,
++       shiftEnd: unit.shiftEnd,
++       isActive: unit.isActive
++     };
++   } catch (error) {
++     console.error('Error fetching unit by ID:', error);
++     return null;
++   }
+  }
+  
+  async function getUnitsByIds(unitIds: string[]): Promise<any[]> {
+-   // Mock implementation - replace with actual database query
+-   return unitIds.map((id, index) => ({
+-     id,
+-     agencyId: 'agency-001',
+-     unitNumber: `A-${101 + index}`,
+-     type: 'AMBULANCE',
+-     capabilities: ['BLS', 'ALS'],
+-     currentStatus: 'AVAILABLE',
+-     currentLocation: { 
+-       lat: 40.7128 + (index * 0.01), 
+-       lng: -74.0060 + (index * 0.01) 
+-     },
+-     shiftStart: new Date(),
+-     shiftEnd: new Date(Date.now() + 8 * 60 * 60 * 1000),
+-     isActive: true
+-   }));
++   try {
++     const prisma = databaseManager.getEMSDB();
++     const units = await prisma.eMSUnit.findMany({
++       where: { 
++         id: { in: unitIds },
++         isActive: true
++       },
++       include: {
++         agency: true
++       }
++     });
++ 
++     return units.map(unit => ({
++       id: unit.id,
++       agencyId: unit.agencyId,
++       unitNumber: unit.unitNumber,
++       type: unit.type,
++       capabilities: unit.capabilities || [],
++       currentStatus: unit.currentStatus,
++       currentLocation: unit.currentLocation ? {
++         lat: unit.currentLocation.lat,
++         lng: unit.currentLocation.lng
++       } : { lat: 0, lng: 0 },
++       shiftStart: unit.shiftStart,
++       shiftEnd: unit.shiftEnd,
++       isActive: unit.isActive
++     }));
++   } catch (error) {
++     console.error('Error fetching units by IDs:', error);
++     return [];
++   }
+  }
+  
+  async function getRequestsByIds(requestIds: string[]): Promise<any[]> {
+-   // Mock implementation - replace with actual database query
+-   return requestIds.map((id, index) => ({
+-     id,
+-     patientId: `patient-${id}`,
+-     originFacilityId: 'facility-001',
+-     destinationFacilityId: 'facility-002',
+-     transportLevel: ['BLS', 'ALS', 'CCT'][index % 3],
+-     priority: ['LOW', 'MEDIUM', 'HIGH', 'URGENT'][index % 4],
+-     status: 'PENDING',
+-     specialRequirements: index % 2 === 0 ? 'Special requirements' : '',
+-     requestTimestamp: new Date(),
+-     readyStart: new Date(Date.now() + 30 * 60 * 1000),
+-     readyEnd: new Date(Date.now() + 60 * 60 * 1000),
+-     originLocation: { lat: 40.7128 + (index * 0.01), lng: -74.0060 + (index * 0.01) },
+-     destinationLocation: { lat: 40.7589 + (index * 0.01), lng: -73.9851 + (index * 0.01) }
+-   }));
++   try {
++     const prisma = databaseManager.getCenterDB();
++     const trips = await prisma.trip.findMany({
++       where: { 
++         id: { in: requestIds },
++         status: 'PENDING'
++       }
++     });
++ 
++     return trips.map(trip => ({
++       id: trip.id,
++       patientId: trip.patientId,
++       originFacilityId: trip.fromLocation,
++       destinationFacilityId: trip.toLocation,
++       transportLevel: trip.transportLevel,
++       priority: trip.priority,
++       status: trip.status,
++       specialRequirements: trip.specialNeeds || '',
++       requestTimestamp: trip.requestTimestamp || trip.createdAt,
++       readyStart: trip.scheduledTime,
++       readyEnd: new Date(trip.scheduledTime.getTime() + 30 * 60 * 1000), // 30 minutes window
++       originLocation: trip.originLatitude && trip.originLongitude ? {
++         lat: trip.originLatitude,
++         lng: trip.originLongitude
++       } : { lat: 0, lng: 0 },
++       destinationLocation: trip.destinationLatitude && trip.destinationLongitude ? {
++         lat: trip.destinationLatitude,
++         lng: trip.destinationLongitude
++       } : { lat: 0, lng: 0 },
++       // Revenue and distance data
++       tripCost: trip.tripCost,
++       distanceMiles: trip.distanceMiles,
++       insurancePayRate: trip.insurancePayRate,
++       perMileRate: trip.perMileRate
++     }));
++   } catch (error) {
++     console.error('Error fetching requests by IDs:', error);
++     return [];
++   }
+  }
+  
+```
+
+</details>
+
+---
+
+Now let me replace the remaining mock functions with real database queries:
+
+
+---
+
+
+
+---
+
+
+
+---
+
