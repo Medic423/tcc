@@ -59,31 +59,20 @@ const Analytics: React.FC = () => {
       setLoading(true);
       setError(null);
       
-      console.log('🔍 Analytics: Loading analytics data...');
-      
       const [overviewResponse, tripsResponse] = await Promise.all([
         analyticsAPI.getOverview(),
         analyticsAPI.getTrips()
       ]);
 
-      console.log('🔍 Analytics: Overview response:', overviewResponse);
-      console.log('🔍 Analytics: Trips response:', tripsResponse);
-
       if (overviewResponse.data?.success) {
-        console.log('🔍 Analytics: Setting overview data:', overviewResponse.data.data);
         setOverview(overviewResponse.data.data);
-      } else {
-        console.warn('🔍 Analytics: Overview response not successful:', overviewResponse.data);
       }
 
       if (tripsResponse.data?.success) {
-        console.log('🔍 Analytics: Setting trip stats data:', tripsResponse.data.data);
         setTripStats(tripsResponse.data.data);
-      } else {
-        console.warn('🔍 Analytics: Trips response not successful:', tripsResponse.data);
       }
     } catch (err: any) {
-      console.error('🔍 Analytics: Error loading analytics data:', err);
+      console.error('Error loading analytics data:', err);
       setError(err.response?.data?.error || 'Failed to load analytics data');
     } finally {
       setLoading(false);
@@ -230,15 +219,15 @@ const Analytics: React.FC = () => {
                     <div className="space-y-3">
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600">BLS</span>
-                        <span className="text-sm font-medium text-gray-900">{tripStats.tripsByLevel?.BLS || 0}</span>
+                        <span className="text-sm font-medium text-gray-900">{tripStats.tripsByLevel.BLS}</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600">ALS</span>
-                        <span className="text-sm font-medium text-gray-900">{tripStats.tripsByLevel?.ALS || 0}</span>
+                        <span className="text-sm font-medium text-gray-900">{tripStats.tripsByLevel.ALS}</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600">CCT</span>
-                        <span className="text-sm font-medium text-gray-900">{tripStats.tripsByLevel?.CCT || 0}</span>
+                        <span className="text-sm font-medium text-gray-900">{tripStats.tripsByLevel.CCT}</span>
                       </div>
                     </div>
                   </div>
@@ -248,19 +237,19 @@ const Analytics: React.FC = () => {
                     <div className="space-y-3">
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600">Low</span>
-                        <span className="text-sm font-medium text-gray-900">{tripStats.tripsByPriority?.LOW || 0}</span>
+                        <span className="text-sm font-medium text-gray-900">{tripStats.tripsByPriority.LOW}</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600">Medium</span>
-                        <span className="text-sm font-medium text-gray-900">{tripStats.tripsByPriority?.MEDIUM || 0}</span>
+                        <span className="text-sm font-medium text-gray-900">{tripStats.tripsByPriority.MEDIUM}</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600">High</span>
-                        <span className="text-sm font-medium text-gray-900">{tripStats.tripsByPriority?.HIGH || 0}</span>
+                        <span className="text-sm font-medium text-gray-900">{tripStats.tripsByPriority.HIGH}</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600">Urgent</span>
-                        <span className="text-sm font-medium text-gray-900">{tripStats.tripsByPriority?.URGENT || 0}</span>
+                        <span className="text-sm font-medium text-gray-900">{tripStats.tripsByPriority.URGENT}</span>
                       </div>
                     </div>
                   </div>
