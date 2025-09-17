@@ -248,3 +248,51 @@ model UnitAnalytics {
 
   @@map("unit_analytics")
 }
+
+// Route Optimization Settings (Phase 3)
+model RouteOptimizationSettings {
+  id                    String   @id @default(cuid())
+  agencyId              String?  // Agency-specific settings (null for global)
+  
+  // Optimization Weights (α, β, γ, δ parameters)
+  deadheadMileWeight    Decimal  @db.Decimal(5,2)  @default(1.0)  // α - penalty for deadhead miles
+  waitTimeWeight        Decimal  @db.Decimal(5,2)  @default(1.0)  // β - penalty for wait time
+  backhaulBonusWeight   Decimal  @db.Decimal(5,2)  @default(1.0)  // γ - bonus for backhaul pairs
+  overtimeRiskWeight    Decimal  @db.Decimal(5,2)  @default(1.0)  // δ - penalty for overtime risk
+  revenueWeight         Decimal  @db.Decimal(5,2)  @default(1.0)  // Revenue optimization weight
+  
+  // Constraint Settings
+  maxDeadheadMiles      Decimal  @db.Decimal(6,2)  @default(50.0)  // Maximum deadhead miles
+  maxWaitTimeMinutes    Int      @default(30)      // Maximum wait time
+  maxOvertimeHours      Decimal  @db.Decimal(4,2)  @default(4.0)   // Maximum overtime allowed
+  maxResponseTimeMinutes Int     @default(15)      // Maximum response time
+  maxServiceDistance    Decimal  @db.Decimal(6,2)  @default(100.0) // Maximum service distance
+  
+  // Backhaul Optimization
+  backhaulTimeWindow    Int      @default(60)      // Time window for backhaul pairing (minutes)
+  backhaulDistanceLimit Decimal  @db.Decimal(6,2)  @default(25.0)  // Maximum distance for backhaul
+  backhaulRevenueBonus  Decimal  @db.Decimal(8,2)  @default(50.0)  // Base bonus for backhaul pairs
+  enableBackhaulOptimization Boolean @default(true) // Enable/disable backhaul optimization
+  
+  // Performance Targets
+  targetLoadedMileRatio Decimal  @db.Decimal(3,2)  @default(0.75)  // Target loaded mile ratio (0.0-1.0)
+  targetRevenuePerHour  Decimal  @db.Decimal(8,2)  @default(200.0) // Target revenue per hour
+  targetResponseTime    Int      @default(12)      // Target response time (minutes)
+  targetEfficiency      Decimal  @db.Decimal(3,2)  @default(0.85)  // Target efficiency score
+  
+  // Algorithm Settings
+  optimizationAlgorithm String   @default("HYBRID") // HYBRID, GREEDY, GENETIC, SIMULATED_ANNEALING
+  maxOptimizationTime  Int      @default(30)      // Maximum optimization time (seconds)
+  enableRealTimeOptimization Boolean @default(true) // Enable real-time optimization
+  
+  // Advanced Settings
+  crewAvailabilityWeight Decimal @db.Decimal(5,2)  @default(1.0)  // Weight for crew availability
+  equipmentCompatibilityWeight Decimal @db.Decimal(5,2) @default(1.0) // Weight for equipment compatibility
+  patientPriorityWeight  Decimal @db.Decimal(5,2)  @default(1.0)  // Weight for patient priority
+  
+  isActive              Boolean  @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  @@map("route_optimization_settings")
+}
