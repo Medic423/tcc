@@ -1,5 +1,12 @@
 # Revenue Settings Enhancement Plan
 
+## 📊 Progress Summary
+- **Phase 1 (Crew Cost Management)**: ✅ **COMPLETED** - All crew cost tracking, vehicle costs, and profitability analysis implemented
+- **Phase 2 (Advanced Pricing Models)**: ✅ **COMPLETED** - Time-based, geographic, and service-specific pricing
+- **Phase 3 (Route Optimization Parameters)**: ⏳ **PENDING** - Optimization weights and constraints
+- **Phase 4 (Cost Analysis & Profitability)**: ⏳ **PENDING** - Detailed cost breakdowns and analysis
+- **Phase 5 (Real-time Optimization)**: ⏳ **PENDING** - Live optimization engine and what-if scenarios
+
 ## Overview
 Based on the revenue routes analysis document (`2_revenue_routes_af.md`) and our current database schema, this plan outlines comprehensive enhancements to the revenue calculation system to support advanced route optimization and cost modeling.
 
@@ -309,15 +316,70 @@ model RevenueOptimizationRun {
 
 ### 7. Implementation Phases
 
-#### Phase 1: Crew Cost Management (Week 1-2)
-- Add crew role model and unit cost fields
-- Implement crew cost calculation in revenue settings
-- Add crew management UI to revenue settings
+#### Phase 1: Crew Cost Management (Week 1-2) ✅ COMPLETED
+**Database Changes:**
+- ✅ Added crew cost fields to Unit model in EMS schema (crewSize, crewComposition, baseHourlyRate, overtimeMultiplier, shiftLengthHours, maxOvertimeHours)
+- ✅ Added operational cost fields (vehicleCostPerMile, fuelCostPerMile, maintenanceCostPerMile)
+- ✅ Added location & staging fields (homeBaseLocation, stagingLocations, maxServiceRadius, interceptCapability)
+- ✅ Created CrewRole model with 5 default roles (EMT, Paramedic, RN, CCT Specialist, Critical Care Paramedic)
+- ✅ Seeded database with default crew roles and hourly rates
 
-#### Phase 2: Advanced Pricing Models (Week 3-4)
-- Create pricing model system
-- Implement time-based and geographic pricing
-- Add advanced pricing controls to UI
+**Frontend Implementation:**
+- ✅ Enhanced RevenueSettings component with comprehensive crew cost management
+- ✅ Added Crew Cost Management section with role-based hourly rates and overtime rules
+- ✅ Added Vehicle & Operational Costs section with per-mile cost tracking
+- ✅ Added Crew Composition display showing roles by transport level (BLS/ALS/CCT)
+- ✅ Enhanced revenue preview with detailed cost breakdown and profitability analysis
+- ✅ Implemented real-time calculations for crew costs, vehicle costs, and profit margins
+
+**Features Delivered:**
+- ✅ Crew role management with hourly rates ($25-$45/hr range)
+- ✅ Overtime multiplier and shift length configuration
+- ✅ Vehicle operational cost tracking (vehicle, fuel, maintenance per mile)
+- ✅ Crew composition by transport level (BLS: 2 EMTs, ALS: EMT+Paramedic, CCT: RN+Critical Care Paramedic)
+- ✅ Real-time profit margin calculations with color-coded cost breakdowns
+- ✅ Settings persistence with localStorage and reset functionality
+- ✅ Synchronized between TCC and EMS Analytics systems
+
+**Test Results:**
+- ✅ Sample ALS trip (15 miles, 2.5 hours): $281.56 revenue, $167.25 total cost, $114.31 net profit (40.60% margin)
+- ✅ All crew cost calculations working correctly
+- ✅ Database schema issues resolved
+- ✅ Both TCC and EMS systems operational
+
+#### Phase 2: Advanced Pricing Models (Week 3-4) ✅ COMPLETED
+**Database Changes:**
+- ✅ Created PricingModel table with comprehensive pricing configuration fields
+- ✅ Added time-based pricing fields (peakHourMultipliers, weekendMultipliers, seasonalMultipliers)
+- ✅ Added geographic pricing fields (zoneMultipliers, distanceTiers)
+- ✅ Added service-specific pricing fields (specialRequirements, isolationPricing, bariatricPricing, oxygenPricing, monitoringPricing)
+- ✅ Added insurance-specific rate configurations
+- ✅ Seeded database with 3 default pricing models (Standard, Peak Hours, Weekend)
+
+**Frontend Implementation:**
+- ✅ Added 4 new Advanced Pricing sections to RevenueSettings component
+- ✅ Implemented time-based pricing controls (peak hours, weekends, seasons)
+- ✅ Added geographic zone pricing configuration with visual controls
+- ✅ Added distance tier pricing controls with volume discounts
+- ✅ Added service-specific surcharge management
+- ✅ Implemented insurance-specific rate controls with discount/surcharge indicators
+
+**Key Features Delivered:**
+- ✅ **Time-based Pricing**: Peak hour multipliers (6-9AM: 1.3x, 5-8PM: 1.4x), weekend surcharges (Saturday: 1.2x, Sunday: 1.3x), seasonal adjustments (Winter: 1.1x)
+- ✅ **Geographic Pricing**: Zone-based multipliers (Urban: 1.0x, Suburban: 1.1x, Rural: 1.3x, Remote: 1.5x)
+- ✅ **Distance Tiers**: Volume discounts (0-10mi: 1.0x, 10-25mi: 0.95x, 25-50mi: 0.9x, 50+mi: 0.85x)
+- ✅ **Service Surcharges**: Configurable surcharges (Oxygen: $25, Monitoring: $50, Isolation: $75, Bariatric: $100)
+- ✅ **Insurance-specific Rates**: Different rate structures (Medicare: 0.85x, Medicaid: 0.80x, Private: 1.0x, SelfPay: 1.2x)
+- ✅ **Real-time Controls**: All pricing adjustments update immediately with visual feedback
+
+**Deliverables Completed:**
+- ✅ Enhanced RevenueSettings with 4 comprehensive pricing sections
+- ✅ Real-time pricing controls with immediate visual feedback
+- ✅ Agency-specific pricing model management through database
+- ✅ Full integration with existing crew cost calculations
+- ✅ Advanced revenue optimization based on time, location, and service type
+- ✅ Synchronized between TCC and EMS Analytics systems
+- ✅ Fixed TCC login credentials issue (admin@tcc.com / admin123)
 
 #### Phase 3: Route Optimization Parameters (Week 5-6)
 - Add route optimization settings model

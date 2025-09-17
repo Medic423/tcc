@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { DollarSign, Save, RefreshCw, Calculator, Users, Truck, Clock } from 'lucide-react';
+import { DollarSign, Save, RefreshCw, Calculator, Users, Truck, Clock, MapPin, CreditCard, Settings } from 'lucide-react';
 
 interface RevenueSettings {
   baseRates: {
@@ -44,6 +44,26 @@ interface RevenueSettings {
     BLS: string[];
     ALS: string[];
     CCT: string[];
+  };
+  // Advanced Pricing Models (Phase 2)
+  timeBasedPricing: {
+    peakHourMultipliers: { [key: string]: number };
+    weekendMultipliers: { [key: string]: number };
+    seasonalMultipliers: { [key: string]: number };
+  };
+  geographicPricing: {
+    zoneMultipliers: { [key: string]: number };
+    distanceTiers: { [key: string]: number };
+  };
+  serviceSpecificPricing: {
+    specialRequirements: { [key: string]: number };
+    isolationPricing: number;
+    bariatricPricing: number;
+    oxygenPricing: number;
+    monitoringPricing: number;
+  };
+  insuranceSpecificRates: {
+    [key: string]: number;
   };
 }
 
@@ -104,6 +124,57 @@ const RevenueSettings: React.FC = () => {
         BLS: ['EMT', 'EMT'],
         ALS: ['EMT', 'Paramedic'],
         CCT: ['RN', 'CriticalCareParamedic']
+      },
+      // Advanced Pricing Models (Phase 2)
+      timeBasedPricing: {
+        peakHourMultipliers: {
+          '6-9AM': 1.3,
+          '5-8PM': 1.4,
+          'Other': 1.0
+        },
+        weekendMultipliers: {
+          'Saturday': 1.2,
+          'Sunday': 1.3,
+          'Weekday': 1.0
+        },
+        seasonalMultipliers: {
+          'Winter': 1.1,
+          'Spring': 1.0,
+          'Summer': 1.0,
+          'Fall': 1.0
+        }
+      },
+      geographicPricing: {
+        zoneMultipliers: {
+          'Urban': 1.0,
+          'Suburban': 1.1,
+          'Rural': 1.3,
+          'Remote': 1.5
+        },
+        distanceTiers: {
+          '0-10mi': 1.0,
+          '10-25mi': 0.95,
+          '25-50mi': 0.9,
+          '50+mi': 0.85
+        }
+      },
+      serviceSpecificPricing: {
+        specialRequirements: {
+          'Oxygen': 25,
+          'Monitoring': 50,
+          'Isolation': 75,
+          'Bariatric': 100
+        },
+        isolationPricing: 75,
+        bariatricPricing: 100,
+        oxygenPricing: 25,
+        monitoringPricing: 50
+      },
+      insuranceSpecificRates: {
+        'Medicare': 0.85,
+        'Medicaid': 0.80,
+        'Private': 1.0,
+        'SelfPay': 1.2
       }
     };
   });
@@ -490,6 +561,309 @@ const RevenueSettings: React.FC = () => {
               ))}
             </div>
           </div>
+
+          {/* Phase 2: Advanced Pricing Models */}
+          
+          {/* Time-based Pricing */}
+          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+            <div className="flex items-center mb-4">
+              <Clock className="h-5 w-5 text-orange-600 mr-2" />
+              <h3 className="text-lg font-semibold text-gray-900">Time-based Pricing</h3>
+            </div>
+            <div className="space-y-6">
+              {/* Peak Hour Multipliers */}
+              <div>
+                <h4 className="text-sm font-semibold text-gray-800 mb-3">Peak Hour Multipliers</h4>
+                <div className="grid grid-cols-3 gap-4">
+                  {Object.entries(settings.timeBasedPricing.peakHourMultipliers).map(([time, multiplier]) => (
+                    <div key={time} className="space-y-1">
+                      <label className="text-xs font-medium text-gray-600">{time}</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={multiplier}
+                        onChange={(e) => setSettings(prev => ({
+                          ...prev,
+                          timeBasedPricing: {
+                            ...prev.timeBasedPricing,
+                            peakHourMultipliers: {
+                              ...prev.timeBasedPricing.peakHourMultipliers,
+                              [time]: parseFloat(e.target.value) || 1.0
+                            }
+                          }
+                        }))}
+                        className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Weekend Multipliers */}
+              <div>
+                <h4 className="text-sm font-semibold text-gray-800 mb-3">Weekend Multipliers</h4>
+                <div className="grid grid-cols-3 gap-4">
+                  {Object.entries(settings.timeBasedPricing.weekendMultipliers).map(([day, multiplier]) => (
+                    <div key={day} className="space-y-1">
+                      <label className="text-xs font-medium text-gray-600">{day}</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={multiplier}
+                        onChange={(e) => setSettings(prev => ({
+                          ...prev,
+                          timeBasedPricing: {
+                            ...prev.timeBasedPricing,
+                            weekendMultipliers: {
+                              ...prev.timeBasedPricing.weekendMultipliers,
+                              [day]: parseFloat(e.target.value) || 1.0
+                            }
+                          }
+                        }))}
+                        className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Seasonal Multipliers */}
+              <div>
+                <h4 className="text-sm font-semibold text-gray-800 mb-3">Seasonal Multipliers</h4>
+                <div className="grid grid-cols-4 gap-4">
+                  {Object.entries(settings.timeBasedPricing.seasonalMultipliers).map(([season, multiplier]) => (
+                    <div key={season} className="space-y-1">
+                      <label className="text-xs font-medium text-gray-600">{season}</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={multiplier}
+                        onChange={(e) => setSettings(prev => ({
+                          ...prev,
+                          timeBasedPricing: {
+                            ...prev.timeBasedPricing,
+                            seasonalMultipliers: {
+                              ...prev.timeBasedPricing.seasonalMultipliers,
+                              [season]: parseFloat(e.target.value) || 1.0
+                            }
+                          }
+                        }))}
+                        className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Geographic Pricing */}
+          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+            <div className="flex items-center mb-4">
+              <MapPin className="h-5 w-5 text-green-600 mr-2" />
+              <h3 className="text-lg font-semibold text-gray-900">Geographic Pricing</h3>
+            </div>
+            <div className="space-y-6">
+              {/* Zone Multipliers */}
+              <div>
+                <h4 className="text-sm font-semibold text-gray-800 mb-3">Zone Multipliers</h4>
+                <div className="grid grid-cols-4 gap-4">
+                  {Object.entries(settings.geographicPricing.zoneMultipliers).map(([zone, multiplier]) => (
+                    <div key={zone} className="space-y-1">
+                      <label className="text-xs font-medium text-gray-600">{zone}</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={multiplier}
+                        onChange={(e) => setSettings(prev => ({
+                          ...prev,
+                          geographicPricing: {
+                            ...prev.geographicPricing,
+                            zoneMultipliers: {
+                              ...prev.geographicPricing.zoneMultipliers,
+                              [zone]: parseFloat(e.target.value) || 1.0
+                            }
+                          }
+                        }))}
+                        className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Distance Tiers */}
+              <div>
+                <h4 className="text-sm font-semibold text-gray-800 mb-3">Distance Tiers</h4>
+                <div className="grid grid-cols-4 gap-4">
+                  {Object.entries(settings.geographicPricing.distanceTiers).map(([distance, multiplier]) => (
+                    <div key={distance} className="space-y-1">
+                      <label className="text-xs font-medium text-gray-600">{distance}</label>
+                      <input
+                        type="number"
+                        step="0.05"
+                        value={multiplier}
+                        onChange={(e) => setSettings(prev => ({
+                          ...prev,
+                          geographicPricing: {
+                            ...prev.geographicPricing,
+                            distanceTiers: {
+                              ...prev.geographicPricing.distanceTiers,
+                              [distance]: parseFloat(e.target.value) || 1.0
+                            }
+                          }
+                        }))}
+                        className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Service-specific Pricing */}
+          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+            <div className="flex items-center mb-4">
+              <Settings className="h-5 w-5 text-purple-600 mr-2" />
+              <h3 className="text-lg font-semibold text-gray-900">Service-specific Pricing</h3>
+            </div>
+            <div className="space-y-6">
+              {/* Special Requirements */}
+              <div>
+                <h4 className="text-sm font-semibold text-gray-800 mb-3">Special Requirements Surcharges</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  {Object.entries(settings.serviceSpecificPricing.specialRequirements).map(([requirement, surcharge]) => (
+                    <div key={requirement} className="space-y-1">
+                      <label className="text-xs font-medium text-gray-600">{requirement}</label>
+                      <input
+                        type="number"
+                        step="5"
+                        value={surcharge}
+                        onChange={(e) => setSettings(prev => ({
+                          ...prev,
+                          serviceSpecificPricing: {
+                            ...prev.serviceSpecificPricing,
+                            specialRequirements: {
+                              ...prev.serviceSpecificPricing.specialRequirements,
+                              [requirement]: parseFloat(e.target.value) || 0
+                            }
+                          }
+                        }))}
+                        className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Individual Service Pricing */}
+              <div>
+                <h4 className="text-sm font-semibold text-gray-800 mb-3">Individual Service Pricing</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-gray-600">Isolation Protocol</label>
+                    <input
+                      type="number"
+                      step="5"
+                      value={settings.serviceSpecificPricing.isolationPricing}
+                      onChange={(e) => setSettings(prev => ({
+                        ...prev,
+                        serviceSpecificPricing: {
+                          ...prev.serviceSpecificPricing,
+                          isolationPricing: parseFloat(e.target.value) || 0
+                        }
+                      }))}
+                      className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-gray-600">Bariatric Transport</label>
+                    <input
+                      type="number"
+                      step="5"
+                      value={settings.serviceSpecificPricing.bariatricPricing}
+                      onChange={(e) => setSettings(prev => ({
+                        ...prev,
+                        serviceSpecificPricing: {
+                          ...prev.serviceSpecificPricing,
+                          bariatricPricing: parseFloat(e.target.value) || 0
+                        }
+                      }))}
+                      className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-gray-600">Oxygen Therapy</label>
+                    <input
+                      type="number"
+                      step="5"
+                      value={settings.serviceSpecificPricing.oxygenPricing}
+                      onChange={(e) => setSettings(prev => ({
+                        ...prev,
+                        serviceSpecificPricing: {
+                          ...prev.serviceSpecificPricing,
+                          oxygenPricing: parseFloat(e.target.value) || 0
+                        }
+                      }))}
+                      className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-gray-600">Continuous Monitoring</label>
+                    <input
+                      type="number"
+                      step="5"
+                      value={settings.serviceSpecificPricing.monitoringPricing}
+                      onChange={(e) => setSettings(prev => ({
+                        ...prev,
+                        serviceSpecificPricing: {
+                          ...prev.serviceSpecificPricing,
+                          monitoringPricing: parseFloat(e.target.value) || 0
+                        }
+                      }))}
+                      className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Insurance-specific Rates */}
+          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+            <div className="flex items-center mb-4">
+              <CreditCard className="h-5 w-5 text-indigo-600 mr-2" />
+              <h3 className="text-lg font-semibold text-gray-900">Insurance-specific Rates</h3>
+            </div>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                {Object.entries(settings.insuranceSpecificRates).map(([insurance, rate]) => (
+                  <div key={insurance} className="space-y-1">
+                    <label className="text-sm font-medium text-gray-700">{insurance} Rate</label>
+                    <input
+                      type="number"
+                      step="0.05"
+                      value={rate}
+                      onChange={(e) => setSettings(prev => ({
+                        ...prev,
+                        insuranceSpecificRates: {
+                          ...prev.insuranceSpecificRates,
+                          [insurance]: parseFloat(e.target.value) || 1.0
+                        }
+                      }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                    <p className="text-xs text-gray-500">
+                      {rate < 1 ? `${((1 - rate) * 100).toFixed(1)}% discount` : 
+                       rate > 1 ? `${((rate - 1) * 100).toFixed(1)}% surcharge` : 
+                       'Standard rate'}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Revenue Preview */}
@@ -595,6 +969,57 @@ const RevenueSettings: React.FC = () => {
                       BLS: ['EMT', 'EMT'],
                       ALS: ['EMT', 'Paramedic'],
                       CCT: ['RN', 'CriticalCareParamedic']
+                    },
+                    // Advanced Pricing Models (Phase 2)
+                    timeBasedPricing: {
+                      peakHourMultipliers: {
+                        '6-9AM': 1.3,
+                        '5-8PM': 1.4,
+                        'Other': 1.0
+                      },
+                      weekendMultipliers: {
+                        'Saturday': 1.2,
+                        'Sunday': 1.3,
+                        'Weekday': 1.0
+                      },
+                      seasonalMultipliers: {
+                        'Winter': 1.1,
+                        'Spring': 1.0,
+                        'Summer': 1.0,
+                        'Fall': 1.0
+                      }
+                    },
+                    geographicPricing: {
+                      zoneMultipliers: {
+                        'Urban': 1.0,
+                        'Suburban': 1.1,
+                        'Rural': 1.3,
+                        'Remote': 1.5
+                      },
+                      distanceTiers: {
+                        '0-10mi': 1.0,
+                        '10-25mi': 0.95,
+                        '25-50mi': 0.9,
+                        '50+mi': 0.85
+                      }
+                    },
+                    serviceSpecificPricing: {
+                      specialRequirements: {
+                        'Oxygen': 25,
+                        'Monitoring': 50,
+                        'Isolation': 75,
+                        'Bariatric': 100
+                      },
+                      isolationPricing: 75,
+                      bariatricPricing: 100,
+                      oxygenPricing: 25,
+                      monitoringPricing: 50
+                    },
+                    insuranceSpecificRates: {
+                      'Medicare': 0.85,
+                      'Medicaid': 0.80,
+                      'Private': 1.0,
+                      'SelfPay': 1.2
                     }
                   });
                 }}
