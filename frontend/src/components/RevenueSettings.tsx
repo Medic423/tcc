@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { DollarSign, Save, RefreshCw, Calculator, Users, Truck, Clock, MapPin, CreditCard, Settings, Route, Target, Zap, BarChart3 } from 'lucide-react';
+import { DollarSign, Save, RefreshCw, Calculator, Users, Truck, Clock, MapPin, CreditCard, Settings, Route, Target, Zap, BarChart3, TrendingUp, TrendingDown, PieChart, Activity, DollarSign as DollarIcon } from 'lucide-react';
 
 interface RevenueSettings {
   baseRates: {
@@ -123,6 +123,98 @@ interface OptimizationPreview {
   loadedMiles: number;
   optimizationResults: any[];
   backhaulOpportunities: any[];
+}
+
+interface TripCostBreakdown {
+  id: string;
+  tripId: string;
+  baseRevenue: number;
+  mileageRevenue: number;
+  priorityRevenue: number;
+  specialRequirementsRevenue: number;
+  insuranceAdjustment: number;
+  totalRevenue: number;
+  crewLaborCost: number;
+  vehicleCost: number;
+  fuelCost: number;
+  maintenanceCost: number;
+  overheadCost: number;
+  totalCost: number;
+  grossProfit: number;
+  profitMargin: number;
+  revenuePerMile: number;
+  costPerMile: number;
+  loadedMileRatio: number;
+  deadheadMileRatio: number;
+  utilizationRate: number;
+  tripDistance: number;
+  loadedMiles: number;
+  deadheadMiles: number;
+  tripDurationHours: number;
+  transportLevel: string;
+  priorityLevel: string;
+  costCenterId?: string;
+  costCenterName?: string;
+  calculatedAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface CostAnalysisSummary {
+  totalRevenue: number;
+  totalCost: number;
+  grossProfit: number;
+  averageProfitMargin: number;
+  totalTrips: number;
+  averageRevenuePerMile: number;
+  averageCostPerMile: number;
+  averageLoadedMileRatio: number;
+  averageDeadheadMileRatio: number;
+  averageUtilizationRate: number;
+  tripsByTransportLevel: {
+    BLS: { count: number; revenue: number; cost: number; profit: number; margin: number };
+    ALS: { count: number; revenue: number; cost: number; profit: number; margin: number };
+    CCT: { count: number; revenue: number; cost: number; profit: number; margin: number };
+  };
+  tripsByPriority: {
+    LOW: { count: number; revenue: number; cost: number; profit: number; margin: number };
+    MEDIUM: { count: number; revenue: number; cost: number; profit: number; margin: number };
+    HIGH: { count: number; revenue: number; cost: number; profit: number; margin: number };
+    URGENT: { count: number; revenue: number; cost: number; profit: number; margin: number };
+  };
+  costCenterBreakdown: {
+    costCenterId: string;
+    costCenterName: string;
+    tripCount: number;
+    totalRevenue: number;
+    totalCost: number;
+    grossProfit: number;
+    profitMargin: number;
+  }[];
+}
+
+interface ProfitabilityAnalysis {
+  period: string;
+  totalRevenue: number;
+  totalCost: number;
+  grossProfit: number;
+  profitMargin: number;
+  revenueGrowth: number;
+  costGrowth: number;
+  profitGrowth: number;
+  efficiencyMetrics: {
+    loadedMileRatio: number;
+    deadheadMileRatio: number;
+    utilizationRate: number;
+    revenuePerHour: number;
+    costPerHour: number;
+  };
+  trends: {
+    revenue: { current: number; previous: number; change: number };
+    costs: { current: number; previous: number; change: number };
+    profit: { current: number; previous: number; change: number };
+    margin: { current: number; previous: number; change: number };
+  };
 }
 
 const RevenueSettings: React.FC = () => {
@@ -288,6 +380,17 @@ const RevenueSettings: React.FC = () => {
   const [saved, setSaved] = useState(false);
   const [optimizationLoading, setOptimizationLoading] = useState(false);
 
+  // Cost Analysis State
+  const [costAnalysisSummary, setCostAnalysisSummary] = useState<CostAnalysisSummary | null>(null);
+  const [profitabilityAnalysis, setProfitabilityAnalysis] = useState<ProfitabilityAnalysis | null>(null);
+  const [tripCostBreakdowns, setTripCostBreakdowns] = useState<TripCostBreakdown[]>([]);
+  const [costAnalysisLoading, setCostAnalysisLoading] = useState(false);
+  const [selectedPeriod, setSelectedPeriod] = useState('month');
+  const [selectedDateRange, setSelectedDateRange] = useState<{ start: string; end: string }>({
+    start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    end: new Date().toISOString().split('T')[0]
+  });
+
   // Load saved settings on mount
   useEffect(() => {
     loadSavedSettings();
@@ -298,6 +401,11 @@ const RevenueSettings: React.FC = () => {
     calculatePreview();
     calculateOptimizationPreview();
   }, [settings]);
+
+  // Load cost analysis data on mount
+  useEffect(() => {
+    loadCostAnalysisData();
+  }, [selectedPeriod, selectedDateRange]);
 
   const loadSavedSettings = () => {
     try {
@@ -437,6 +545,87 @@ const RevenueSettings: React.FC = () => {
         [field]: value
       }
     }));
+  };
+
+  const loadCostAnalysisData = async () => {
+    try {
+      setCostAnalysisLoading(true);
+      
+      // Load cost analysis summary
+      const summaryResponse = await fetch(`http://localhost:5001/api/tcc/analytics/cost-analysis?startDate=${selectedDateRange.start}&endDate=${selectedDateRange.end}`);
+      if (summaryResponse.ok) {
+        const summaryData = await summaryResponse.json();
+        setCostAnalysisSummary(summaryData.data);
+      }
+
+      // Load profitability analysis
+      const profitabilityResponse = await fetch(`http://localhost:5001/api/tcc/analytics/profitability?period=${selectedPeriod}`);
+      if (profitabilityResponse.ok) {
+        const profitabilityData = await profitabilityResponse.json();
+        setProfitabilityAnalysis(profitabilityData.data);
+      }
+
+      // Load trip cost breakdowns
+      const breakdownsResponse = await fetch(`http://localhost:5001/api/tcc/analytics/cost-breakdowns?limit=50`);
+      if (breakdownsResponse.ok) {
+        const breakdownsData = await breakdownsResponse.json();
+        setTripCostBreakdowns(breakdownsData.data);
+      }
+    } catch (error) {
+      console.error('Error loading cost analysis data:', error);
+    } finally {
+      setCostAnalysisLoading(false);
+    }
+  };
+
+  const createSampleCostBreakdown = async () => {
+    try {
+      const sampleBreakdown = {
+        baseRevenue: 250,
+        mileageRevenue: 56.25,
+        priorityRevenue: 27.5,
+        specialRequirementsRevenue: 0,
+        insuranceAdjustment: -50.625,
+        totalRevenue: 283.125,
+        crewLaborCost: 87.5,
+        vehicleCost: 11.25,
+        fuelCost: 3.75,
+        maintenanceCost: 2.25,
+        overheadCost: 15.0,
+        totalCost: 119.75,
+        grossProfit: 163.375,
+        profitMargin: 57.7,
+        revenuePerMile: 18.88,
+        costPerMile: 7.98,
+        loadedMileRatio: 0.8,
+        deadheadMileRatio: 0.2,
+        utilizationRate: 0.85,
+        tripDistance: 15.0,
+        loadedMiles: 12.0,
+        deadheadMiles: 3.0,
+        tripDurationHours: 2.5,
+        transportLevel: 'ALS',
+        priorityLevel: 'MEDIUM'
+      };
+
+      const response = await fetch('http://localhost:5001/api/tcc/analytics/cost-breakdown', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          tripId: `sample-trip-${Date.now()}`,
+          breakdownData: sampleBreakdown
+        })
+      });
+
+      if (response.ok) {
+        // Reload cost analysis data
+        loadCostAnalysisData();
+      }
+    } catch (error) {
+      console.error('Error creating sample cost breakdown:', error);
+    }
   };
 
   return (
@@ -1891,6 +2080,197 @@ const RevenueSettings: React.FC = () => {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Phase 4: Cost Analysis & Profitability Dashboard */}
+      <div className="mt-8">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold text-gray-900">Cost Analysis & Profitability Dashboard</h2>
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <label className="text-sm font-medium text-gray-700">Period:</label>
+              <select
+                value={selectedPeriod}
+                onChange={(e) => setSelectedPeriod(e.target.value)}
+                className="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="week">Week</option>
+                <option value="month">Month</option>
+                <option value="quarter">Quarter</option>
+                <option value="year">Year</option>
+              </select>
+            </div>
+            <button
+              onClick={createSampleCostBreakdown}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+            >
+              <Activity className="h-4 w-4 mr-2" />
+              Add Sample Data
+            </button>
+            <button
+              onClick={loadCostAnalysisData}
+              disabled={costAnalysisLoading}
+              className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${costAnalysisLoading ? 'animate-spin' : ''}`} />
+              Refresh
+            </button>
+          </div>
+        </div>
+
+        {costAnalysisLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <RefreshCw className="h-8 w-8 animate-spin text-blue-600" />
+            <span className="ml-3 text-lg text-gray-600">Loading cost analysis data...</span>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Cost Analysis Summary */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Key Metrics */}
+              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+                <div className="flex items-center mb-4">
+                  <DollarIcon className="h-5 w-5 text-green-600 mr-2" />
+                  <h3 className="text-lg font-semibold text-gray-900">Key Financial Metrics</h3>
+                </div>
+                
+                {costAnalysisSummary ? (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                      <div className="text-sm font-medium text-green-800">Total Revenue</div>
+                      <div className="text-2xl font-bold text-green-900">${costAnalysisSummary.totalRevenue.toFixed(2)}</div>
+                    </div>
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                      <div className="text-sm font-medium text-red-800">Total Cost</div>
+                      <div className="text-2xl font-bold text-red-900">${costAnalysisSummary.totalCost.toFixed(2)}</div>
+                    </div>
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <div className="text-sm font-medium text-blue-800">Gross Profit</div>
+                      <div className="text-2xl font-bold text-blue-900">${costAnalysisSummary.grossProfit.toFixed(2)}</div>
+                    </div>
+                    <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                      <div className="text-sm font-medium text-purple-800">Profit Margin</div>
+                      <div className="text-2xl font-bold text-purple-900">{costAnalysisSummary.averageProfitMargin.toFixed(1)}%</div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    No cost analysis data available. Click "Add Sample Data" to get started.
+                  </div>
+                )}
+              </div>
+
+              {/* Efficiency Metrics */}
+              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+                <div className="flex items-center mb-4">
+                  <Activity className="h-5 w-5 text-blue-600 mr-2" />
+                  <h3 className="text-lg font-semibold text-gray-900">Efficiency Metrics</h3>
+                </div>
+                
+                {costAnalysisSummary ? (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div className="text-center">
+                      <div className="text-sm font-medium text-gray-600">Loaded Mile Ratio</div>
+                      <div className="text-xl font-bold text-gray-900">{(costAnalysisSummary.averageLoadedMileRatio * 100).toFixed(1)}%</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-sm font-medium text-gray-600">Revenue per Mile</div>
+                      <div className="text-xl font-bold text-gray-900">${costAnalysisSummary.averageRevenuePerMile.toFixed(2)}</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-sm font-medium text-gray-600">Cost per Mile</div>
+                      <div className="text-xl font-bold text-gray-900">${costAnalysisSummary.averageCostPerMile.toFixed(2)}</div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    No efficiency data available.
+                  </div>
+                )}
+              </div>
+
+              {/* Profitability Analysis */}
+              {profitabilityAnalysis && (
+                <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+                  <div className="flex items-center mb-4">
+                    <TrendingUp className="h-5 w-5 text-green-600 mr-2" />
+                    <h3 className="text-lg font-semibold text-gray-900">Profitability Trends ({profitabilityAnalysis.period})</h3>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="text-center">
+                      <div className="text-sm font-medium text-gray-600">Revenue Growth</div>
+                      <div className={`text-xl font-bold ${profitabilityAnalysis.revenueGrowth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {profitabilityAnalysis.revenueGrowth >= 0 ? '+' : ''}{profitabilityAnalysis.revenueGrowth.toFixed(1)}%
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-sm font-medium text-gray-600">Cost Growth</div>
+                      <div className={`text-xl font-bold ${profitabilityAnalysis.costGrowth >= 0 ? 'text-red-600' : 'text-green-600'}`}>
+                        {profitabilityAnalysis.costGrowth >= 0 ? '+' : ''}{profitabilityAnalysis.costGrowth.toFixed(1)}%
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-sm font-medium text-gray-600">Profit Growth</div>
+                      <div className={`text-xl font-bold ${profitabilityAnalysis.profitGrowth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {profitabilityAnalysis.profitGrowth >= 0 ? '+' : ''}{profitabilityAnalysis.profitGrowth.toFixed(1)}%
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-sm font-medium text-gray-600">Revenue/Hour</div>
+                      <div className="text-xl font-bold text-gray-900">${profitabilityAnalysis.efficiencyMetrics.revenuePerHour.toFixed(2)}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Trip Cost Breakdowns */}
+            <div className="space-y-6">
+              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+                <div className="flex items-center mb-4">
+                  <PieChart className="h-5 w-5 text-purple-600 mr-2" />
+                  <h3 className="text-lg font-semibold text-gray-900">Recent Trip Breakdowns</h3>
+                </div>
+                
+                {tripCostBreakdowns.length > 0 ? (
+                  <div className="space-y-3 max-h-96 overflow-y-auto">
+                    {tripCostBreakdowns.slice(0, 10).map((breakdown) => (
+                      <div key={breakdown.id} className="border border-gray-200 rounded-lg p-3">
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <div className="font-medium text-sm text-gray-900">{breakdown.transportLevel} - {breakdown.priorityLevel}</div>
+                            <div className="text-xs text-gray-500">{breakdown.tripDistance} miles</div>
+                          </div>
+                          <div className="text-right">
+                            <div className={`text-sm font-semibold ${breakdown.grossProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                              ${breakdown.grossProfit.toFixed(2)}
+                            </div>
+                            <div className="text-xs text-gray-500">{breakdown.profitMargin.toFixed(1)}% margin</div>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Revenue:</span>
+                            <span className="font-medium">${breakdown.totalRevenue.toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Cost:</span>
+                            <span className="font-medium">${breakdown.totalCost.toFixed(2)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    No trip breakdowns available.
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

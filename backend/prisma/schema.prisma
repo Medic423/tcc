@@ -159,3 +159,77 @@ model SystemAnalytics {
 
   @@map("system_analytics")
 }
+
+// Trip Cost Breakdown (Phase 4)
+model TripCostBreakdown {
+  id                    String   @id @default(cuid())
+  tripId                String   // Reference to Trip
+  
+  // Revenue Components
+  baseRevenue           Decimal  @db.Decimal(10,2)  // Base transport rate
+  mileageRevenue        Decimal  @db.Decimal(10,2)  // Per-mile revenue
+  priorityRevenue       Decimal  @db.Decimal(10,2)  // Priority-based revenue
+  specialRequirementsRevenue Decimal @db.Decimal(10,2)  // Special requirements surcharge
+  insuranceAdjustment   Decimal  @db.Decimal(10,2)  // Insurance rate adjustment
+  totalRevenue          Decimal  @db.Decimal(10,2)  // Total revenue
+  
+  // Cost Components
+  crewLaborCost         Decimal  @db.Decimal(10,2)  // Crew labor cost
+  vehicleCost           Decimal  @db.Decimal(10,2)  // Vehicle operational cost
+  fuelCost              Decimal  @db.Decimal(10,2)  // Fuel cost
+  maintenanceCost       Decimal  @db.Decimal(10,2)  // Maintenance cost
+  overheadCost          Decimal  @db.Decimal(10,2)  // Overhead allocation
+  totalCost             Decimal  @db.Decimal(10,2)  // Total cost
+  
+  // Profitability Metrics
+  grossProfit           Decimal  @db.Decimal(10,2)  // Gross profit (revenue - cost)
+  profitMargin          Decimal  @db.Decimal(5,2)   // Profit margin percentage
+  revenuePerMile        Decimal  @db.Decimal(8,2)   // Revenue per mile
+  costPerMile           Decimal  @db.Decimal(8,2)   // Cost per mile
+  
+  // Efficiency Metrics
+  loadedMileRatio       Decimal  @db.Decimal(3,2)   // Loaded miles / total miles
+  deadheadMileRatio     Decimal  @db.Decimal(3,2)   // Deadhead miles / total miles
+  utilizationRate       Decimal  @db.Decimal(3,2)   // Utilization rate
+  
+  // Trip Details (for analysis)
+  tripDistance          Decimal  @db.Decimal(6,2)   // Total trip distance
+  loadedMiles           Decimal  @db.Decimal(6,2)   // Loaded miles
+  deadheadMiles         Decimal  @db.Decimal(6,2)   // Deadhead miles
+  tripDurationHours     Decimal  @db.Decimal(4,2)   // Trip duration in hours
+  transportLevel        String   // BLS, ALS, CCT
+  priorityLevel         String   // LOW, MEDIUM, HIGH, URGENT
+  
+  // Cost Center Allocation
+  costCenterId          String?  // Reference to cost center
+  costCenterName        String?  // Cost center name for reporting
+  
+  // Analysis Timestamps
+  calculatedAt          DateTime @default(now())    // When breakdown was calculated
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  @@map("trip_cost_breakdowns")
+}
+
+// Cost Centers (Phase 4)
+model CostCenter {
+  id                    String   @id @default(cuid())
+  name                  String   // Cost center name
+  description           String?  // Cost center description
+  code                  String   @unique // Cost center code
+  
+  // Overhead Allocation
+  overheadRate          Decimal  @db.Decimal(5,2)  @default(0.0)  // Overhead rate percentage
+  fixedCosts            Decimal  @db.Decimal(10,2) @default(0.0)  // Fixed costs
+  variableCosts         Decimal  @db.Decimal(10,2) @default(0.0)  // Variable costs
+  
+  // Allocation Method
+  allocationMethod      String   @default("TRIP_COUNT") // TRIP_COUNT, REVENUE, MILES, HOURS
+  isActive              Boolean  @default(true)
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  @@map("cost_centers")
+}

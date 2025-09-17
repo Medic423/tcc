@@ -1,14 +1,12 @@
 import { PrismaClient } from '@prisma/client';
 import { PrismaClient as EMSPrismaClient } from '@prisma/ems';
 import { PrismaClient as HospitalPrismaClient } from '@prisma/hospital';
-import { PrismaClient as CenterPrismaClient } from '../../node_modules/.prisma/center';
 
 class DatabaseManager {
   private static instance: DatabaseManager;
   private prisma: PrismaClient;
   private emsPrisma: EMSPrismaClient;
   private hospitalPrisma: HospitalPrismaClient;
-  private centerPrisma: CenterPrismaClient;
   private connectionRetries = 0;
   private maxRetries = 5;
   private retryDelay = 2000; // 2 seconds
@@ -45,15 +43,6 @@ class DatabaseManager {
       errorFormat: 'pretty',
     });
 
-    this.centerPrisma = new CenterPrismaClient({
-      datasources: {
-        db: {
-          url: process.env.DATABASE_URL_CENTER
-        }
-      },
-      log: process.env.NODE_ENV === 'production' ? ['error'] : ['error', 'warn'],
-      errorFormat: 'pretty',
-    });
   }
 
   public static getInstance(): DatabaseManager {
@@ -68,8 +57,8 @@ class DatabaseManager {
   }
 
   // Backward compatibility methods for existing service calls
-  public getCenterDB(): CenterPrismaClient {
-    return this.centerPrisma;
+  public getCenterDB(): PrismaClient {
+    return this.prisma;
   }
 
   public getEMSDB(): EMSPrismaClient {
