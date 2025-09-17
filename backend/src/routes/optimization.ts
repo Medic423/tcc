@@ -118,12 +118,15 @@ router.get('/revenue', async (req, res) => {
     console.log('TCC_DEBUG: Revenue analytics - trips found:', trips.length);
     console.log('TCC_DEBUG: Revenue analytics - sample trip:', trips[0]);
 
-    // Calculate metrics
+    // Calculate metrics using new database fields when available
     const totalRevenue = trips.reduce((sum, trip) => sum + calculateTripRevenue(trip), 0);
     const totalMiles = trips.reduce((sum, trip) => sum + calculateTripMiles(trip), 0);
     const loadedMiles = trips.reduce((sum, trip) => sum + calculateLoadedMiles(trip), 0);
     const loadedMileRatio = totalMiles > 0 ? loadedMiles / totalMiles : 0;
-    const revenuePerHour = totalRevenue / (timeRange / (1000 * 60 * 60));
+    
+    // Use stored revenuePerHour if available, otherwise calculate
+    const storedRevenuePerHour = trips.find(trip => trip.revenuePerHour)?.revenuePerHour;
+    const revenuePerHour = storedRevenuePerHour ? Number(storedRevenuePerHour) : totalRevenue / (timeRange / (1000 * 60 * 60));
     
     console.log('TCC_DEBUG: Revenue analytics - calculated values:', {
       totalRevenue,
@@ -553,7 +556,14 @@ async function getCompletedTripsInRange(startTime: Date, endTime: Date, agencyId
         distanceMiles: true,
         responseTimeMinutes: true,
         actualTripTimeMinutes: true,
-        assignedAgencyId: true
+        assignedAgencyId: true,
+        // New analytics fields
+        loadedMiles: true,
+        customerSatisfaction: true,
+        efficiency: true,
+        performanceScore: true,
+        revenuePerHour: true,
+        backhaulOpportunity: true
       }
     });
 
@@ -564,10 +574,16 @@ async function getCompletedTripsInRange(startTime: Date, endTime: Date, agencyId
       completedAt: trip.completionTimestamp,
       revenue: trip.tripCost || 0,
       miles: trip.distanceMiles || 0,
-      loadedMiles: trip.distanceMiles || 0, // For now, assume all miles are loaded
+      loadedMiles: trip.loadedMiles || trip.distanceMiles || 0, // Use stored loadedMiles if available
       responseTimeMinutes: trip.responseTimeMinutes || 0,
       actualTripTimeMinutes: trip.actualTripTimeMinutes || 0,
-      assignedAgencyId: trip.assignedAgencyId
+      assignedAgencyId: trip.assignedAgencyId,
+      // New analytics fields
+      customerSatisfaction: trip.customerSatisfaction,
+      efficiency: trip.efficiency,
+      performanceScore: trip.performanceScore,
+      revenuePerHour: trip.revenuePerHour,
+      backhaulOpportunity: trip.backhaulOpportunity
     }));
   } catch (error) {
     console.error('Error fetching completed trips in range:', error);
@@ -577,8 +593,13 @@ async function getCompletedTripsInRange(startTime: Date, endTime: Date, agencyId
 
 function calculateTripRevenue(trip: any): number {
   // Use stored trip cost if available
+  if (trip.tripCost && trip.tripCost > 0) {
+    return Number(trip.tripCost);
+  }
+
+  // Use stored revenue if available (new field)
   if (trip.revenue && trip.revenue > 0) {
-    return trip.revenue;
+    return Number(trip.revenue);
   }
 
   // Fallback to calculated revenue
@@ -590,11 +611,17 @@ function calculateTripRevenue(trip: any): number {
 }
 
 function calculateTripMiles(trip: any): number {
-  return trip.miles || 0;
+  return trip.distanceMiles || trip.miles || 0;
 }
 
 function calculateLoadedMiles(trip: any): number {
-  return trip.loadedMiles || trip.miles || 0;
+  // Use stored loadedMiles if available (new field)
+  if (trip.loadedMiles && trip.loadedMiles > 0) {
+    return Number(trip.loadedMiles);
+  }
+  
+  // Fallback to calculated loaded miles (same as total miles for now)
+  return trip.distanceMiles || trip.miles || 0;
 }
 
 async function getPerformanceMetrics(startTime: Date, endTime: Date, unitId?: string): Promise<any> {
