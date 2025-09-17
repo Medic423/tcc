@@ -549,24 +549,43 @@ const RevenueSettings: React.FC = () => {
 
   const loadCostAnalysisData = async () => {
     try {
+      console.log('Loading cost analysis data...');
       setCostAnalysisLoading(true);
       
+      const token = localStorage.getItem('token');
+      console.log('Token available for data loading:', !!token);
+      const headers = {
+        'Content-Type': 'application/json',
+        ...(token && { 'Authorization': `Bearer ${token}` })
+      };
+      
       // Load cost analysis summary
-      const summaryResponse = await fetch(`http://localhost:5001/api/tcc/analytics/cost-analysis?startDate=${selectedDateRange.start}&endDate=${selectedDateRange.end}`);
+      const summaryResponse = await fetch(`http://localhost:5001/api/tcc/analytics/cost-analysis?startDate=${selectedDateRange.start}&endDate=${selectedDateRange.end}`, {
+        headers
+      });
+      console.log('Summary response status:', summaryResponse.status);
       if (summaryResponse.ok) {
         const summaryData = await summaryResponse.json();
+        console.log('Summary data received:', summaryData);
         setCostAnalysisSummary(summaryData.data);
+      } else {
+        const errorData = await summaryResponse.json();
+        console.error('Summary response error:', errorData);
       }
 
       // Load profitability analysis
-      const profitabilityResponse = await fetch(`http://localhost:5001/api/tcc/analytics/profitability?period=${selectedPeriod}`);
+      const profitabilityResponse = await fetch(`http://localhost:5001/api/tcc/analytics/profitability?period=${selectedPeriod}`, {
+        headers
+      });
       if (profitabilityResponse.ok) {
         const profitabilityData = await profitabilityResponse.json();
         setProfitabilityAnalysis(profitabilityData.data);
       }
 
       // Load trip cost breakdowns
-      const breakdownsResponse = await fetch(`http://localhost:5001/api/tcc/analytics/cost-breakdowns?limit=50`);
+      const breakdownsResponse = await fetch(`http://localhost:5001/api/tcc/analytics/cost-breakdowns?limit=50`, {
+        headers
+      });
       if (breakdownsResponse.ok) {
         const breakdownsData = await breakdownsResponse.json();
         setTripCostBreakdowns(breakdownsData.data);
@@ -580,6 +599,10 @@ const RevenueSettings: React.FC = () => {
 
   const createSampleCostBreakdown = async () => {
     try {
+      console.log('Starting sample cost breakdown creation...');
+      const token = localStorage.getItem('token');
+      console.log('Token available:', !!token);
+      
       const sampleBreakdown = {
         baseRevenue: 250,
         mileageRevenue: 56.25,
@@ -608,10 +631,12 @@ const RevenueSettings: React.FC = () => {
         priorityLevel: 'MEDIUM'
       };
 
+      console.log('Creating sample cost breakdown...');
       const response = await fetch('http://localhost:5001/api/tcc/analytics/cost-breakdown', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` })
         },
         body: JSON.stringify({
           tripId: `sample-trip-${Date.now()}`,
@@ -620,11 +645,17 @@ const RevenueSettings: React.FC = () => {
       });
 
       if (response.ok) {
+        console.log('Sample cost breakdown created successfully');
         // Reload cost analysis data
-        loadCostAnalysisData();
+        await loadCostAnalysisData();
+      } else {
+        const errorData = await response.json();
+        console.error('Error creating sample cost breakdown:', errorData);
+        alert(`Error creating sample data: ${errorData.error || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('Error creating sample cost breakdown:', error);
+      alert(`Error creating sample data: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
