@@ -5749,3 +5749,482 @@ The plan is now saved in `/docs/notes/revenue_settings_improvements.md` and prov
 
 ---
 
+_**User (2025-09-17 13:32Z)**_
+
+This looks good. Before we start on implementation let's move all our working code to the main branch and commit / push to the git repository. Then make a new git branch for the revenue enhancement features. Finally run the enhanced backupscript to my /Volumes/Acasis/ drive and make sure it includes the databases. 
+
+---
+
+_**Assistant**_
+
+Perfect! Let's get everything organized and backed up before starting the revenue enhancement implementation. I'll handle the git operations and run the enhanced backup script.
+
+
+---
+
+## Todo List
+
+- [-] Merge current feature branch to main and push to repository
+- [ ] Create new git branch for revenue enhancement features
+- [ ] Run enhanced backup script to /Volumes/Acasis/ including databases
+
+---
+
+First, let's check the current git status and merge to main:
+
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git status
+```
+
+```
+On branch feature/analytics-route-optimization-completion
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   .specstory/history/2025-09-17_12-39Z-start-up-the-development-servers.md
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	docs/notes/revenue_settings_improvements.md
+
+no changes added to commit (use "git add" and/or "git commit -a")
+
+```
+
+---
+
+Let's add and commit the remaining changes:
+
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git add .
+```
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git commit -m "docs: Add comprehensive revenue settings enhancement plan
+
+- Create detailed plan for revenue calculation improvements
+- Include crew cost management, advanced pricing models, route optimization
+- Add cost analysis, profitability tracking, and real-time optimization
+- Plan covers 10-week implementation with expected 15-25% revenue improvements
+- Addresses gaps in current revenue system based on revenue routes analysis
+
+Ready for implementation of enhanced revenue optimization features."
+```
+
+```
+[feature/analytics-route-optimization-completion 2ea18d8] docs: Add comprehensive revenue settings enhancement plan
+ 2 files changed, 976 insertions(+)
+ create mode 100644 docs/notes/revenue_settings_improvements.md
+
+```
+
+---
+
+Now let's push the current branch and then merge to main:
+
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git push origin feature/analytics-route-optimization-completion
+```
+
+```
+To https://github.com/Medic423/tcc
+   a4d930b..2ea18d8  feature/analytics-route-optimization-completion -> feature/analytics-route-optimization-completion
+
+```
+
+---
+
+Now let's switch to main branch and merge our feature branch:
+
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git checkout main
+```
+
+```
+Switched to branch 'main'
+
+```
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git pull origin main
+```
+
+```
+From https://github.com/Medic423/tcc
+ * branch            main       -> FETCH_HEAD
+Already up to date.
+
+```
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git merge feature/analytics-route-optimization-completion
+```
+
+```
+Updating 77e410d..2ea18d8
+error: The following untracked working tree files would be overwritten by merge:
+	.specstory/history/2025-09-16_17-47Z-implement-phase-3-for-ems-analytics.md
+	.specstory/history/2025-09-16_18-39Z-implement-phase-1-and-critical-fixes.md
+	.specstory/history/2025-09-17_12-39Z-start-up-the-development-servers.md
+Please move or remove them before you merge.
+Aborting
+
+```
+
+---
+
+There are some untracked files causing conflicts. Let's handle them:
+
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git add .specstory/ && git commit -m "Add specstory history files"
+```
+
+```
+[main 03bce55] Add specstory history files
+ 3 files changed, 18841 insertions(+)
+ create mode 100644 .specstory/history/2025-09-16_17-47Z-implement-phase-3-for-ems-analytics.md
+ create mode 100644 .specstory/history/2025-09-16_18-39Z-implement-phase-1-and-critical-fixes.md
+ create mode 100644 .specstory/history/2025-09-17_12-39Z-start-up-the-development-servers.md
+
+```
+
+---
+
+Now let's try the merge again:
+
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git merge feature/analytics-route-optimization-completion
+```
+
+```
+Auto-merging .specstory/history/2025-09-17_12-39Z-start-up-the-development-servers.md
+CONFLICT (add/add): Merge conflict in .specstory/history/2025-09-17_12-39Z-start-up-the-development-servers.md
+Automatic merge failed; fix conflicts and then commit the result.
+
+```
+
+---
+
+There's a merge conflict. Let's resolve it by taking the version from our feature branch:
+
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git checkout --theirs .specstory/history/2025-09-17_12-39Z-start-up-the-development-servers.md && git add .specstory/history/2025-09-17_12-39Z-start-up-the-development-servers.md
+```
+
+```
+Updated 1 path from the index
+
+```
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git commit -m "Merge feature/analytics-route-optimization-completion to main
+
+- Resolve merge conflict in specstory history file
+- Complete analytics and revenue settings implementation
+- Add comprehensive revenue enhancement plan
+- All analytics tiles now connected to database
+- EMS analytics scoped to agency-specific data"
+```
+
+```
+[main 7763d84] Merge feature/analytics-route-optimization-completion to main
+
+```
+
+---
+
+Now let's push the merged changes to main:
+
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git push origin main
+```
+
+```
+To https://github.com/Medic423/tcc
+   72e3950..7763d84  main -> main
+
+```
+
+---
+
+## Todo List
+
+- [x] Merge current feature branch to main and push to repository
+- [-] Create new git branch for revenue enhancement features
+- [ ] Run enhanced backup script to /Volumes/Acasis/ including databases
+
+---
+
+Now let's create a new branch for the revenue enhancement features:
+
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git checkout -b feature/revenue-enhancement-phase1
+```
+
+```
+Switched to a new branch 'feature/revenue-enhancement-phase1'
+
+```
+
+---
+
+## Todo List
+
+- [x] Merge current feature branch to main and push to repository
+- [x] Create new git branch for revenue enhancement features
+- [-] Run enhanced backup script to /Volumes/Acasis/ including databases
+
+---
+
+Now let's run the enhanced backup script. First, let me check what backup scripts are available:
+
+
+---
+
+<details>
+            <summary>Listed directory undefined • **0** results</summary>
+        
+No results found
+</details>
+
+---
+
+I can see there are three backup scripts. Let me check the enhanced backup script:
+
+
+---
+
+Read file: undefined
+
+---
+
+Perfect! The enhanced backup script looks comprehensive and includes database backups. Let's run it:
+
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && chmod +x backup-enhanced.sh && ./backup-enhanced.sh
+```
+
+```
+🔄 Starting TCC project enhanced backup...
+Project: /Users/scooper/Code/tcc-new-project
+Backup to: /Volumes/Acasis/tcc-backups/tcc-backup-20250917_124420
+📦 Creating project backup...
+🧹 Cleaning up node_modules...
+🗄️ Backing up PostgreSQL databases...
+📊 Backing up medport_center database...
+📊 Backing up medport_hospital database...
+📊 Backing up medport_ems database...
+📝 Creating database restore script...
+📝 Creating comprehensive restore script...
+📝 Creating backup info...
+✅ Enhanced backup completed: /Volumes/Acasis/tcc-backups/tcc-backup-20250917_124420
+📊 Project size:  24M
+📊 Database size: 128K
+📊 Total size:  24M
+📁 Backup location: /Volumes/Acasis/tcc-backups/tcc-backup-20250917_124420
+
+🔧 To restore: cd /Volumes/Acasis/tcc-backups/tcc-backup-20250917_124420 && ./restore-complete.sh
+
+```
+
+---
+
+Excellent! Let's verify the backup was created successfully:
+
+
+---
+
+```bash
+ls -la /Volumes/Acasis/tcc-backups/tcc-backup-20250917_124420/
+```
+
+```
+total 24
+drwxr-xr-x   7 scooper  staff   224 Sep 17 12:44 .
+drwxr-xr-x  17 scooper  staff   544 Sep 17 12:44 ..
+-rw-r--r--   1 scooper  staff  1178 Sep 17 12:44 backup-info.txt
+drwxr-xr-x   5 scooper  staff   160 Sep 17 12:44 databases
+drwxr-xr-x@ 41 scooper  staff  1312 Sep 17 12:44 project
+-rwxr-xr-x   1 scooper  staff   844 Sep 17 12:44 restore-complete.sh
+-rwxr-xr-x   1 scooper  staff  1026 Sep 17 12:44 restore-databases.sh
+
+```
+
+---
+
+```bash
+ls -la /Volumes/Acasis/tcc-backups/tcc-backup-20250917_124420/databases/
+```
+
+```
+total 256
+drwxr-xr-x  5 scooper  staff    160 Sep 17 12:44 .
+drwxr-xr-x  7 scooper  staff    224 Sep 17 12:44 ..
+-rw-r--r--  1 scooper  staff  89842 Sep 17 12:44 medport_center.sql
+-rw-r--r--  1 scooper  staff  14627 Sep 17 12:44 medport_ems.sql
+-rw-r--r--  1 scooper  staff  22323 Sep 17 12:44 medport_hospital.sql
+
+```
+
+---
+
+Perfect! Let's also check the backup info file to confirm everything is documented:
+
+
+---
+
+```bash
+cat /Volumes/Acasis/tcc-backups/tcc-backup-20250917_124420/backup-info.txt
+```
+
+```
+TCC Project Enhanced Backup
+===========================
+Date: Wed Sep 17 12:44:56 EDT 2025
+Project: tcc-new-project
+Phase: 3 Complete - Revenue Optimization & EMS Management
+Status: Full CRUD functionality with optimization algorithms
+
+Contents:
+- Complete project files (source code, configs, docs)
+- PostgreSQL database dumps (medport_center, medport_hospital, medport_ems)
+- Database restore scripts
+- Complete restoration script
+
+Databases Included:
+✅ medport_center.sql - Main TCC database
+✅ medport_hospital.sql - Hospital management database  
+✅ medport_ems.sql - EMS agencies database
+
+Features Working:
+✅ TCC Admin Dashboard (Hospitals, Agencies, Facilities)
+✅ Healthcare Portal (Trip creation)
+✅ EMS Dashboard (Trip management + Optimization)
+✅ Revenue Optimization Engine
+✅ Backhaul Detection System
+✅ Complete CRUD operations
+✅ Search and filtering
+✅ Authentication system
+
+To restore:
+1. Run: ./restore-complete.sh
+2. Or manually:
+   - Copy project files to /Users/scooper/Code/tcc-new-project/
+   - Run: ./restore-databases.sh
+   - Install dependencies: npm install
+   - Start: npm run dev
+
+Database Backup Size: 128K
+Total Backup Size:  24M
+
+```
+
+---
+
+## Todo List
+
+- [x] Merge current feature branch to main and push to repository
+- [x] Create new git branch for revenue enhancement features
+- [x] Run enhanced backup script to /Volumes/Acasis/ including databases
+
+---
+
+## ✅ **ALL TASKS COMPLETED SUCCESSFULLY!**
+
+### �� **Git Operations Completed:**
+
+**✅ Merged to Main Branch:**
+- Successfully merged `feature/analytics-route-optimization-completion` to `main`
+- Resolved merge conflicts in specstory history files
+- Pushed all changes to remote repository
+- Main branch now contains all analytics and revenue settings work
+
+**✅ Created New Revenue Branch:**
+- Created new branch: `feature/revenue-enhancement-phase1`
+- Ready for implementing the revenue enhancement features
+- Based on the comprehensive plan in `docs/notes/revenue_settings_improvements.md`
+
+### �� **Enhanced Backup Completed:**
+
+**✅ Backup Location:** `/Volumes/Acasis/tcc-backups/tcc-backup-20250917_124420/`
+
+**✅ Backup Contents:**
+- **Project Files:** 24M (complete source code, configs, docs)
+- **Database Files:** 128K (all three PostgreSQL databases)
+  - `medport_center.sql` (89KB) - Main TCC database
+  - `medport_hospital.sql` (22KB) - Hospital management database  
+  - `medport_ems.sql` (14KB) - EMS agencies database
+
+**✅ Restore Scripts Included:**
+- `restore-complete.sh` - Complete restoration script
+- `restore-databases.sh` - Database-only restoration
+- `backup-info.txt` - Comprehensive backup documentation
+
+### �� **Ready for Revenue Enhancement Implementation:**
+
+**Current Status:**
+- All working code is safely backed up and in main branch
+- New feature branch created for revenue enhancements
+- Comprehensive implementation plan ready
+- Database backups include all current data
+
+**Next Steps:**
+- Begin Phase 1: Crew Cost Management (Weeks 1-2)
+- Implement crew role definitions and hourly rates
+- Add vehicle operational cost tracking
+- Enhance revenue settings UI with advanced controls
+
+The project is now properly organized and safely backed up, ready for the revenue enhancement implementation! 🎉
+
+---
+
+_**User (2025-09-17 13:32Z)**_
+
+@revenue_settings_improvements.md OK lets do phase one.
+
+---
+
+_**Assistant**_
+
+
+
+---
+
