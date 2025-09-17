@@ -55,42 +55,39 @@ export interface HospitalActivity {
 
 export class AnalyticsService {
   async getSystemOverview(): Promise<SystemOverview> {
-    const prisma = databaseManager.getCenterDB();
+    const centerPrisma = databaseManager.getCenterDB();
+    const emsPrisma = databaseManager.getEMSDB();
 
     const [
       totalHospitals,
       activeHospitals,
       totalAgencies,
       activeAgencies,
-      totalFacilities,
-      activeFacilities,
       totalUnits,
       activeUnits
     ] = await Promise.all([
-      prisma.hospital.count(),
-      prisma.hospital.count({ where: { isActive: true } }),
-      prisma.eMSAgency.count(),
-      prisma.eMSAgency.count({ where: { isActive: true } }),
-      0, // No facilities in Center database
-      0, // No facilities in Center database
-      0, // Units not available in unified schema
-      0  // Units not available in unified schema
+      centerPrisma.hospital.count(),
+      centerPrisma.hospital.count({ where: { isActive: true } }),
+      emsPrisma.eMSAgency.count(),
+      emsPrisma.eMSAgency.count({ where: { isActive: true } }),
+      emsPrisma.unit.count(),
+      emsPrisma.unit.count({ where: { isActive: true } })
     ]);
 
     return {
       totalHospitals,
       totalAgencies,
-      totalFacilities,
+      totalFacilities: totalHospitals, // Using hospitals as facilities
       activeHospitals,
       activeAgencies,
-      activeFacilities,
+      activeFacilities: activeHospitals, // Using hospitals as facilities
       totalUnits,
       activeUnits
     };
   }
 
   async getTripStatistics(): Promise<TripStatistics> {
-    const prisma = databaseManager.getPrismaClient();
+    const prisma = databaseManager.getCenterDB();
 
     const totalTrips = await prisma.trip.count();
     const pendingTrips = await prisma.trip.count({ where: { status: 'PENDING' } });
@@ -98,9 +95,11 @@ export class AnalyticsService {
     const completedTrips = await prisma.trip.count({ where: { status: 'COMPLETED' } });
     const cancelledTrips = await prisma.trip.count({ where: { status: 'CANCELLED' } });
 
-    // Get trips by level
-    // Transport level grouping not available in unified Trip model
-    const tripsByLevel: any[] = [];
+    // Get trips by transport level
+    const tripsByLevel = await prisma.trip.groupBy({
+      by: ['transportLevel'],
+      _count: { transportLevel: true }
+    });
 
     const tripsByLevelFormatted = {
       BLS: 0,
@@ -145,25 +144,69 @@ export class AnalyticsService {
   }
 
   async getAgencyPerformance(): Promise<AgencyPerformance[]> {
-    const prisma = databaseManager.getCenterDB();
+    const centerPrisma = databaseManager.getCenterDB();
+    const emsPrisma = databaseManager.getEMSDB();
 
-    const agencies = await prisma.eMSAgency.findMany({
+    const agencies = await emsPrisma.eMSAgency.findMany({
       where: { isActive: true },
     });
 
     const performanceData: AgencyPerformance[] = [];
 
     for (const agency of agencies) {
-      // Since Center database doesn't have trip data, return basic agency info
+      // Get trip data for this agency
+      const totalTrips = await centerPrisma.trip.count({
+        where: { assignedAgencyId: agency.id }
+      });
+      
+      const acceptedTrips = await centerPrisma.trip.count({
+        where: { 
+          assignedAgencyId: agency.id,
+          status: 'ACCEPTED'
+        }
+      });
+      
+      const completedTrips = await centerPrisma.trip.count({
+        where: { 
+          assignedAgencyId: agency.id,
+          status: 'COMPLETED'
+        }
+      });
+
+      // Get unit data for this agency
+      const totalUnits = await emsPrisma.unit.count({
+        where: { agencyId: agency.id }
+      });
+      
+      const activeUnits = await emsPrisma.unit.count({
+        where: { 
+          agencyId: agency.id,
+          isActive: true
+        }
+      });
+
+      // Calculate average response time
+      const responseTimeData = await centerPrisma.trip.findMany({
+        where: {
+          assignedAgencyId: agency.id,
+          responseTimeMinutes: { not: null }
+        },
+        select: { responseTimeMinutes: true }
+      });
+
+      const averageResponseTime = responseTimeData.length > 0
+        ? responseTimeData.reduce((sum, trip) => sum + (trip.responseTimeMinutes || 0), 0) / responseTimeData.length
+        : 0;
+
       performanceData.push({
         agencyId: agency.id,
         agencyName: agency.name,
-        totalTrips: 0, // Trip data not available in Center database
-        acceptedTrips: 0,
-        completedTrips: 0,
-        averageResponseTime: 0,
-        totalUnits: 0, // Units not available in Center database
-        activeUnits: 0  // Units not available in Center database
+        totalTrips,
+        acceptedTrips,
+        completedTrips,
+        averageResponseTime,
+        totalUnits,
+        activeUnits
       });
     }
 
@@ -171,7 +214,7 @@ export class AnalyticsService {
   }
 
   async getHospitalActivity(): Promise<HospitalActivity[]> {
-    const prisma = databaseManager.getPrismaClient();
+    const prisma = databaseManager.getCenterDB();
 
     const hospitals = await prisma.hospital.findMany({
       where: { isActive: true }
@@ -180,16 +223,53 @@ export class AnalyticsService {
     const activityData: HospitalActivity[] = [];
 
     for (const hospital of hospitals) {
-      // Get trips for this hospital (simplified - would need proper relationship)
-      const totalTrips = 0; // TODO: Implement proper relationship
+      // Get trips for this hospital by location
+      const totalTrips = await prisma.trip.count({
+        where: {
+          OR: [
+            { fromLocation: hospital.name },
+            { toLocation: hospital.name }
+          ]
+        }
+      });
       
+      // Get trips by level for this hospital
+      const tripsByLevelData = await prisma.trip.groupBy({
+        by: ['transportLevel'],
+        where: {
+          OR: [
+            { fromLocation: hospital.name },
+            { toLocation: hospital.name }
+          ]
+        },
+        _count: { transportLevel: true }
+      });
+
       const tripsByLevel = {
         BLS: 0,
         ALS: 0,
         CCT: 0
       };
 
-      const lastActivity = new Date(); // TODO: Implement actual last activity
+      tripsByLevelData.forEach((group: any) => {
+        if (group.transportLevel in tripsByLevel) {
+          tripsByLevel[group.transportLevel as keyof typeof tripsByLevel] = group._count.transportLevel;
+        }
+      });
+
+      // Get last activity (most recent trip)
+      const lastTrip = await prisma.trip.findFirst({
+        where: {
+          OR: [
+            { fromLocation: hospital.name },
+            { toLocation: hospital.name }
+          ]
+        },
+        orderBy: { createdAt: 'desc' },
+        select: { createdAt: true }
+      });
+
+      const lastActivity = lastTrip?.createdAt || new Date();
 
       activityData.push({
         hospitalId: hospital.id,

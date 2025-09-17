@@ -10,11 +10,13 @@ import {
   Bell,
   Navigation,
   Settings,
-  BarChart3
+  BarChart3,
+  DollarSign
 } from 'lucide-react';
 import Notifications from './Notifications';
 import UnitsManagement from './UnitsManagement';
 import EMSAnalytics from './EMSAnalytics';
+import RevenueSettings from './RevenueSettings';
 
 interface EMSDashboardProps {
   user: {
@@ -340,6 +342,7 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
               { id: 'accepted', name: 'My Trips', icon: CheckCircle },
               { id: 'units', name: 'Units', icon: Settings },
               { id: 'analytics', name: 'Analytics', icon: BarChart3 },
+              { id: 'revenue-settings', name: 'Revenue Settings', icon: DollarSign },
               { id: 'settings', name: 'Settings', icon: User }
             ].map((tab) => {
               const Icon = tab.icon;
@@ -640,6 +643,10 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
 
         {activeTab === 'analytics' && (
           <EMSAnalytics user={user} />
+        )}
+
+        {activeTab === 'revenue-settings' && (
+          <RevenueSettings />
         )}
 
         {activeTab === 'units' && (

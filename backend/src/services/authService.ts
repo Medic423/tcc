@@ -39,22 +39,27 @@ export class AuthService {
       console.log('TCC_DEBUG: AuthService.login called with:', { email: credentials.email, password: credentials.password ? '***' : 'missing' });
       const { email, password } = credentials;
 
-      // First try Center database (Admin users)
+      // First try Center database (Admin and User types)
       const centerDB = databaseManager.getCenterDB();
       let user = await centerDB.centerUser.findUnique({
         where: { email }
       });
 
-      let userType: 'ADMIN' | 'HEALTHCARE' | 'EMS' = 'ADMIN';
+      let userType: 'ADMIN' | 'USER' | 'HEALTHCARE' | 'EMS' = 'ADMIN';
       let userData: User;
 
-      if (!user) {
+      if (user) {
+        // Use the actual userType from the Center database
+        userType = user.userType as 'ADMIN' | 'USER';
+      } else {
         // Try Hospital database (Healthcare users)
         const hospitalDB = databaseManager.getHospitalDB();
         user = await hospitalDB.healthcareUser.findUnique({
           where: { email }
         });
-        userType = 'HEALTHCARE';
+        if (user) {
+          userType = 'HEALTHCARE';
+        }
       }
 
       if (!user) {
@@ -63,7 +68,9 @@ export class AuthService {
         user = await emsDB.eMSUser.findUnique({
           where: { email }
         });
-        userType = 'EMS';
+        if (user) {
+          userType = 'EMS';
+        }
       }
 
       console.log('TCC_DEBUG: User found in database:', user ? { id: user.id, email: user.email, name: user.name, isActive: user.isActive, userType } : 'null');
@@ -126,6 +133,13 @@ export class AuthService {
           email: user.email,
           name: user.name,
           userType: 'ADMIN'
+        };
+      } else if (userType === 'USER') {
+        userData = {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          userType: 'USER'
         };
       } else if (userType === 'HEALTHCARE') {
         userData = {

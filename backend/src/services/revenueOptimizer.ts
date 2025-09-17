@@ -194,6 +194,11 @@ export class RevenueOptimizer {
    * Calculate overtime risk penalty
    */
   calculateOvertimeRisk(unit: Unit, request: TransportRequest, currentTime: Date): number {
+    // If no shift end time is available, assume no overtime risk
+    if (!unit.shiftEnd) {
+      return 0;
+    }
+    
     const estimatedTripTime = this.calculateTripTime(request);
     const estimatedCompletionTime = new Date(currentTime.getTime() + (estimatedTripTime * 60000));
     
