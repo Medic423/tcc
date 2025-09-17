@@ -11,12 +11,12 @@ import agencyRoutes from './routes/agencies';
 import facilityRoutes from './routes/facilities';
 import analyticsRoutes from './routes/analytics';
 import tripRoutes from './routes/trips';
-import optimizationRoutes from './routes/optimization';
+// import optimizationRoutes from './routes/optimization'; // Temporarily disabled due to schema changes
 import notificationRoutes from './routes/notifications';
 import unitRoutes from './routes/units';
 import tccUnitRoutes from './routes/tccUnits';
 import dropdownOptionsRoutes from './routes/dropdownOptions';
-import emsAnalyticsRoutes from './routes/emsAnalytics';
+// import emsAnalyticsRoutes from './routes/emsAnalytics'; // Temporarily disabled due to schema changes
 
 // Load environment variables
 dotenv.config();
@@ -81,8 +81,8 @@ app.use('/api/tcc/facilities', facilityRoutes);
 app.use('/api/tcc/analytics', analyticsRoutes);
 app.use('/api/tcc/units', tccUnitRoutes);
 app.use('/api/dropdown-options', dropdownOptionsRoutes);
-app.use('/api/ems/analytics', emsAnalyticsRoutes);
-app.use('/api/optimize', optimizationRoutes);
+// app.use('/api/ems/analytics', emsAnalyticsRoutes); // Temporarily disabled due to schema changes
+// app.use('/api/optimize', optimizationRoutes); // Temporarily disabled due to schema changes
 
 // Test endpoints
 app.get('/api/test', (req, res) => {

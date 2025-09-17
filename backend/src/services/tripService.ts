@@ -216,10 +216,7 @@ export class TripService {
           toLocation: data.destinationFacilityId,
           scheduledTime: new Date(data.readyStart),
           
-          // Revenue and distance tracking
-          tripCost: revenueData.tripCost,
-          distanceMiles: revenueData.estimatedDistance,
-          perMileRate: revenueData.perMileRate,
+          // Revenue and distance tracking - now handled by TripCostBreakdown model
           
           // Legacy fields
           status: 'PENDING',
