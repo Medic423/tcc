@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { DollarSign, Save, RefreshCw, Calculator, Users, Truck, Clock, MapPin, CreditCard, Settings } from 'lucide-react';
+import { DollarSign, Save, RefreshCw, Calculator, Users, Truck, Clock, MapPin, CreditCard, Settings, Route, Target, Zap, BarChart3 } from 'lucide-react';
 
 interface RevenueSettings {
   baseRates: {
@@ -65,6 +65,38 @@ interface RevenueSettings {
   insuranceSpecificRates: {
     [key: string]: number;
   };
+  // Route Optimization Parameters (Phase 3)
+  routeOptimization: {
+    // Optimization Weights (α, β, γ, δ parameters)
+    deadheadMileWeight: number;
+    waitTimeWeight: number;
+    backhaulBonusWeight: number;
+    overtimeRiskWeight: number;
+    revenueWeight: number;
+    crewAvailabilityWeight: number;
+    equipmentCompatibilityWeight: number;
+    patientPriorityWeight: number;
+    // Constraint Settings
+    maxDeadheadMiles: number;
+    maxWaitTimeMinutes: number;
+    maxOvertimeHours: number;
+    maxResponseTimeMinutes: number;
+    maxServiceDistance: number;
+    // Backhaul Optimization
+    backhaulTimeWindow: number;
+    backhaulDistanceLimit: number;
+    backhaulRevenueBonus: number;
+    enableBackhaulOptimization: boolean;
+    // Performance Targets
+    targetLoadedMileRatio: number;
+    targetRevenuePerHour: number;
+    targetResponseTime: number;
+    targetEfficiency: number;
+    // Algorithm Settings
+    optimizationAlgorithm: string;
+    maxOptimizationTime: number;
+    enableRealTimeOptimization: boolean;
+  };
 }
 
 interface RevenuePreview {
@@ -76,6 +108,21 @@ interface RevenuePreview {
   totalCost: number;
   netProfit: number;
   profitMargin: number;
+}
+
+interface OptimizationPreview {
+  totalRevenue: number;
+  totalDeadheadMiles: number;
+  totalWaitTime: number;
+  totalOvertimeRisk: number;
+  backhaulPairs: number;
+  loadedMileRatio: number;
+  averageEfficiency: number;
+  averageResponseTime: number;
+  totalMiles: number;
+  loadedMiles: number;
+  optimizationResults: any[];
+  backhaulOpportunities: any[];
 }
 
 const RevenueSettings: React.FC = () => {
@@ -175,6 +222,38 @@ const RevenueSettings: React.FC = () => {
         'Medicaid': 0.80,
         'Private': 1.0,
         'SelfPay': 1.2
+      },
+      // Route Optimization Parameters (Phase 3)
+      routeOptimization: {
+        // Optimization Weights (α, β, γ, δ parameters)
+        deadheadMileWeight: 1.0,
+        waitTimeWeight: 1.0,
+        backhaulBonusWeight: 1.0,
+        overtimeRiskWeight: 1.0,
+        revenueWeight: 1.0,
+        crewAvailabilityWeight: 1.0,
+        equipmentCompatibilityWeight: 1.0,
+        patientPriorityWeight: 1.0,
+        // Constraint Settings
+        maxDeadheadMiles: 50.0,
+        maxWaitTimeMinutes: 30,
+        maxOvertimeHours: 4.0,
+        maxResponseTimeMinutes: 15,
+        maxServiceDistance: 100.0,
+        // Backhaul Optimization
+        backhaulTimeWindow: 60,
+        backhaulDistanceLimit: 25.0,
+        backhaulRevenueBonus: 50.0,
+        enableBackhaulOptimization: true,
+        // Performance Targets
+        targetLoadedMileRatio: 0.75,
+        targetRevenuePerHour: 200.0,
+        targetResponseTime: 12,
+        targetEfficiency: 0.85,
+        // Algorithm Settings
+        optimizationAlgorithm: 'HYBRID',
+        maxOptimizationTime: 30,
+        enableRealTimeOptimization: true
       }
     };
   });
@@ -190,8 +269,24 @@ const RevenueSettings: React.FC = () => {
     profitMargin: 0
   });
 
+  const [optimizationPreview, setOptimizationPreview] = useState<OptimizationPreview>({
+    totalRevenue: 0,
+    totalDeadheadMiles: 0,
+    totalWaitTime: 0,
+    totalOvertimeRisk: 0,
+    backhaulPairs: 0,
+    loadedMileRatio: 0,
+    averageEfficiency: 0,
+    averageResponseTime: 0,
+    totalMiles: 0,
+    loadedMiles: 0,
+    optimizationResults: [],
+    backhaulOpportunities: []
+  });
+
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [optimizationLoading, setOptimizationLoading] = useState(false);
 
   // Load saved settings on mount
   useEffect(() => {
@@ -201,6 +296,7 @@ const RevenueSettings: React.FC = () => {
   // Calculate preview when settings change
   useEffect(() => {
     calculatePreview();
+    calculateOptimizationPreview();
   }, [settings]);
 
   const loadSavedSettings = () => {
@@ -267,6 +363,70 @@ const RevenueSettings: React.FC = () => {
       netProfit: Math.round(netProfit * 100) / 100,
       profitMargin: Math.round(profitMargin * 100) / 100
     });
+  };
+
+  const calculateOptimizationPreview = async () => {
+    try {
+      setOptimizationLoading(true);
+      
+      // Mock optimization preview data based on current settings
+      const mockUnits = [
+        { id: 'unit1', currentLocation: { lat: 40.7128, lng: -74.0060 } },
+        { id: 'unit2', currentLocation: { lat: 40.7589, lng: -73.9851 } }
+      ];
+      
+      const mockRequests = [
+        { 
+          id: 'req1', 
+          transportLevel: 'ALS', 
+          priority: 'MEDIUM',
+          originLocation: { lat: 40.7500, lng: -73.9800 },
+          destinationLocation: { lat: 40.7600, lng: -73.9900 },
+          scheduledTime: new Date(Date.now() + 30 * 60 * 1000),
+          tripCost: 275
+        },
+        { 
+          id: 'req2', 
+          transportLevel: 'BLS', 
+          priority: 'LOW',
+          originLocation: { lat: 40.7400, lng: -73.9700 },
+          destinationLocation: { lat: 40.7700, lng: -74.0000 },
+          scheduledTime: new Date(Date.now() + 60 * 60 * 1000),
+          tripCost: 150
+        }
+      ];
+
+      // Calculate mock optimization results
+      const totalRevenue = mockRequests.reduce((sum, req) => sum + (req.tripCost || 0), 0);
+      const totalDeadheadMiles = 25.5; // Mock calculation
+      const totalWaitTime = 45; // Mock calculation
+      const totalOvertimeRisk = 0.5; // Mock calculation
+      const backhaulPairs = 1; // Mock calculation
+      const loadedMileRatio = settings.routeOptimization.targetLoadedMileRatio;
+      const averageEfficiency = settings.routeOptimization.targetEfficiency;
+      const averageResponseTime = settings.routeOptimization.targetResponseTime;
+      const totalMiles = totalDeadheadMiles / (1 - loadedMileRatio);
+      const loadedMiles = totalMiles - totalDeadheadMiles;
+
+      setOptimizationPreview({
+        totalRevenue,
+        totalDeadheadMiles,
+        totalWaitTime,
+        totalOvertimeRisk,
+        backhaulPairs,
+        loadedMileRatio,
+        averageEfficiency,
+        averageResponseTime,
+        totalMiles,
+        loadedMiles,
+        optimizationResults: [],
+        backhaulOpportunities: []
+      });
+    } catch (error) {
+      console.error('Error calculating optimization preview:', error);
+    } finally {
+      setOptimizationLoading(false);
+    }
   };
 
   const updateSetting = (category: keyof RevenueSettings, field: string, value: number) => {
@@ -864,6 +1024,540 @@ const RevenueSettings: React.FC = () => {
               </div>
             </div>
           </div>
+
+          {/* Phase 3: Route Optimization Parameters */}
+          
+          {/* Optimization Weights */}
+          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+            <div className="flex items-center mb-4">
+              <Route className="h-5 w-5 text-blue-600 mr-2" />
+              <h3 className="text-lg font-semibold text-gray-900">Route Optimization Weights</h3>
+            </div>
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-6">
+                {/* Primary Weights */}
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-800 mb-3">Primary Optimization Weights</h4>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700">
+                        Deadhead Miles Weight (α): {settings.routeOptimization.deadheadMileWeight}
+                      </label>
+                      <input
+                        type="range"
+                        min="0"
+                        max="3"
+                        step="0.1"
+                        value={settings.routeOptimization.deadheadMileWeight}
+                        onChange={(e) => setSettings(prev => ({
+                          ...prev,
+                          routeOptimization: {
+                            ...prev.routeOptimization,
+                            deadheadMileWeight: parseFloat(e.target.value)
+                          }
+                        }))}
+                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                      />
+                      <p className="text-xs text-gray-500">Penalty for empty return miles</p>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700">
+                        Wait Time Weight (β): {settings.routeOptimization.waitTimeWeight}
+                      </label>
+                      <input
+                        type="range"
+                        min="0"
+                        max="3"
+                        step="0.1"
+                        value={settings.routeOptimization.waitTimeWeight}
+                        onChange={(e) => setSettings(prev => ({
+                          ...prev,
+                          routeOptimization: {
+                            ...prev.routeOptimization,
+                            waitTimeWeight: parseFloat(e.target.value)
+                          }
+                        }))}
+                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                      />
+                      <p className="text-xs text-gray-500">Penalty for waiting time</p>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700">
+                        Backhaul Bonus Weight (γ): {settings.routeOptimization.backhaulBonusWeight}
+                      </label>
+                      <input
+                        type="range"
+                        min="0"
+                        max="3"
+                        step="0.1"
+                        value={settings.routeOptimization.backhaulBonusWeight}
+                        onChange={(e) => setSettings(prev => ({
+                          ...prev,
+                          routeOptimization: {
+                            ...prev.routeOptimization,
+                            backhaulBonusWeight: parseFloat(e.target.value)
+                          }
+                        }))}
+                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                      />
+                      <p className="text-xs text-gray-500">Bonus for backhaul pairs</p>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700">
+                        Overtime Risk Weight (δ): {settings.routeOptimization.overtimeRiskWeight}
+                      </label>
+                      <input
+                        type="range"
+                        min="0"
+                        max="3"
+                        step="0.1"
+                        value={settings.routeOptimization.overtimeRiskWeight}
+                        onChange={(e) => setSettings(prev => ({
+                          ...prev,
+                          routeOptimization: {
+                            ...prev.routeOptimization,
+                            overtimeRiskWeight: parseFloat(e.target.value)
+                          }
+                        }))}
+                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                      />
+                      <p className="text-xs text-gray-500">Penalty for overtime risk</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Secondary Weights */}
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-800 mb-3">Secondary Weights</h4>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700">
+                        Revenue Weight: {settings.routeOptimization.revenueWeight}
+                      </label>
+                      <input
+                        type="range"
+                        min="0"
+                        max="3"
+                        step="0.1"
+                        value={settings.routeOptimization.revenueWeight}
+                        onChange={(e) => setSettings(prev => ({
+                          ...prev,
+                          routeOptimization: {
+                            ...prev.routeOptimization,
+                            revenueWeight: parseFloat(e.target.value)
+                          }
+                        }))}
+                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700">
+                        Crew Availability Weight: {settings.routeOptimization.crewAvailabilityWeight}
+                      </label>
+                      <input
+                        type="range"
+                        min="0"
+                        max="3"
+                        step="0.1"
+                        value={settings.routeOptimization.crewAvailabilityWeight}
+                        onChange={(e) => setSettings(prev => ({
+                          ...prev,
+                          routeOptimization: {
+                            ...prev.routeOptimization,
+                            crewAvailabilityWeight: parseFloat(e.target.value)
+                          }
+                        }))}
+                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700">
+                        Equipment Compatibility Weight: {settings.routeOptimization.equipmentCompatibilityWeight}
+                      </label>
+                      <input
+                        type="range"
+                        min="0"
+                        max="3"
+                        step="0.1"
+                        value={settings.routeOptimization.equipmentCompatibilityWeight}
+                        onChange={(e) => setSettings(prev => ({
+                          ...prev,
+                          routeOptimization: {
+                            ...prev.routeOptimization,
+                            equipmentCompatibilityWeight: parseFloat(e.target.value)
+                          }
+                        }))}
+                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700">
+                        Patient Priority Weight: {settings.routeOptimization.patientPriorityWeight}
+                      </label>
+                      <input
+                        type="range"
+                        min="0"
+                        max="3"
+                        step="0.1"
+                        value={settings.routeOptimization.patientPriorityWeight}
+                        onChange={(e) => setSettings(prev => ({
+                          ...prev,
+                          routeOptimization: {
+                            ...prev.routeOptimization,
+                            patientPriorityWeight: parseFloat(e.target.value)
+                          }
+                        }))}
+                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Constraint Settings */}
+          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+            <div className="flex items-center mb-4">
+              <Target className="h-5 w-5 text-red-600 mr-2" />
+              <h3 className="text-lg font-semibold text-gray-900">Constraint Settings</h3>
+            </div>
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-gray-700">
+                    Max Deadhead Miles:
+                  </label>
+                  <input
+                    type="number"
+                    step="5"
+                    value={settings.routeOptimization.maxDeadheadMiles}
+                    onChange={(e) => setSettings(prev => ({
+                      ...prev,
+                      routeOptimization: {
+                        ...prev.routeOptimization,
+                        maxDeadheadMiles: parseFloat(e.target.value) || 50
+                      }
+                    }))}
+                    className="w-20 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-gray-700">
+                    Max Wait Time (min):
+                  </label>
+                  <input
+                    type="number"
+                    step="5"
+                    value={settings.routeOptimization.maxWaitTimeMinutes}
+                    onChange={(e) => setSettings(prev => ({
+                      ...prev,
+                      routeOptimization: {
+                        ...prev.routeOptimization,
+                        maxWaitTimeMinutes: parseInt(e.target.value) || 30
+                      }
+                    }))}
+                    className="w-20 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-gray-700">
+                    Max Overtime (hrs):
+                  </label>
+                  <input
+                    type="number"
+                    step="0.5"
+                    value={settings.routeOptimization.maxOvertimeHours}
+                    onChange={(e) => setSettings(prev => ({
+                      ...prev,
+                      routeOptimization: {
+                        ...prev.routeOptimization,
+                        maxOvertimeHours: parseFloat(e.target.value) || 4
+                      }
+                    }))}
+                    className="w-20 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                  />
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-gray-700">
+                    Max Response Time (min):
+                  </label>
+                  <input
+                    type="number"
+                    step="1"
+                    value={settings.routeOptimization.maxResponseTimeMinutes}
+                    onChange={(e) => setSettings(prev => ({
+                      ...prev,
+                      routeOptimization: {
+                        ...prev.routeOptimization,
+                        maxResponseTimeMinutes: parseInt(e.target.value) || 15
+                      }
+                    }))}
+                    className="w-20 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-gray-700">
+                    Max Service Distance (mi):
+                  </label>
+                  <input
+                    type="number"
+                    step="10"
+                    value={settings.routeOptimization.maxServiceDistance}
+                    onChange={(e) => setSettings(prev => ({
+                      ...prev,
+                      routeOptimization: {
+                        ...prev.routeOptimization,
+                        maxServiceDistance: parseFloat(e.target.value) || 100
+                      }
+                    }))}
+                    className="w-20 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Backhaul Optimization */}
+          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+            <div className="flex items-center mb-4">
+              <Zap className="h-5 w-5 text-yellow-600 mr-2" />
+              <h3 className="text-lg font-semibold text-gray-900">Backhaul Optimization</h3>
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-gray-700">
+                  Enable Backhaul Optimization:
+                </label>
+                <input
+                  type="checkbox"
+                  checked={settings.routeOptimization.enableBackhaulOptimization}
+                  onChange={(e) => setSettings(prev => ({
+                    ...prev,
+                    routeOptimization: {
+                      ...prev.routeOptimization,
+                      enableBackhaulOptimization: e.target.checked
+                    }
+                  }))}
+                  className="h-4 w-4 text-yellow-600 focus:ring-yellow-500 border-gray-300 rounded"
+                />
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Time Window (min):
+                  </label>
+                  <input
+                    type="number"
+                    step="5"
+                    value={settings.routeOptimization.backhaulTimeWindow}
+                    onChange={(e) => setSettings(prev => ({
+                      ...prev,
+                      routeOptimization: {
+                        ...prev.routeOptimization,
+                        backhaulTimeWindow: parseInt(e.target.value) || 60
+                      }
+                    }))}
+                    className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Distance Limit (mi):
+                  </label>
+                  <input
+                    type="number"
+                    step="5"
+                    value={settings.routeOptimization.backhaulDistanceLimit}
+                    onChange={(e) => setSettings(prev => ({
+                      ...prev,
+                      routeOptimization: {
+                        ...prev.routeOptimization,
+                        backhaulDistanceLimit: parseFloat(e.target.value) || 25
+                      }
+                    }))}
+                    className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Revenue Bonus ($):
+                  </label>
+                  <input
+                    type="number"
+                    step="5"
+                    value={settings.routeOptimization.backhaulRevenueBonus}
+                    onChange={(e) => setSettings(prev => ({
+                      ...prev,
+                      routeOptimization: {
+                        ...prev.routeOptimization,
+                        backhaulRevenueBonus: parseFloat(e.target.value) || 50
+                      }
+                    }))}
+                    className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Performance Targets */}
+          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+            <div className="flex items-center mb-4">
+              <BarChart3 className="h-5 w-5 text-green-600 mr-2" />
+              <h3 className="text-lg font-semibold text-gray-900">Performance Targets</h3>
+            </div>
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-gray-700">
+                    Target Loaded Mile Ratio:
+                  </label>
+                  <input
+                    type="number"
+                    step="0.05"
+                    min="0"
+                    max="1"
+                    value={settings.routeOptimization.targetLoadedMileRatio}
+                    onChange={(e) => setSettings(prev => ({
+                      ...prev,
+                      routeOptimization: {
+                        ...prev.routeOptimization,
+                        targetLoadedMileRatio: parseFloat(e.target.value) || 0.75
+                      }
+                    }))}
+                    className="w-20 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-gray-700">
+                    Target Revenue/Hour ($):
+                  </label>
+                  <input
+                    type="number"
+                    step="10"
+                    value={settings.routeOptimization.targetRevenuePerHour}
+                    onChange={(e) => setSettings(prev => ({
+                      ...prev,
+                      routeOptimization: {
+                        ...prev.routeOptimization,
+                        targetRevenuePerHour: parseFloat(e.target.value) || 200
+                      }
+                    }))}
+                    className="w-20 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-gray-700">
+                    Target Response Time (min):
+                  </label>
+                  <input
+                    type="number"
+                    step="1"
+                    value={settings.routeOptimization.targetResponseTime}
+                    onChange={(e) => setSettings(prev => ({
+                      ...prev,
+                      routeOptimization: {
+                        ...prev.routeOptimization,
+                        targetResponseTime: parseInt(e.target.value) || 12
+                      }
+                    }))}
+                    className="w-20 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-gray-700">
+                    Target Efficiency:
+                  </label>
+                  <input
+                    type="number"
+                    step="0.05"
+                    min="0"
+                    max="1"
+                    value={settings.routeOptimization.targetEfficiency}
+                    onChange={(e) => setSettings(prev => ({
+                      ...prev,
+                      routeOptimization: {
+                        ...prev.routeOptimization,
+                        targetEfficiency: parseFloat(e.target.value) || 0.85
+                      }
+                    }))}
+                    className="w-20 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Algorithm Settings */}
+          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+            <div className="flex items-center mb-4">
+              <Settings className="h-5 w-5 text-purple-600 mr-2" />
+              <h3 className="text-lg font-semibold text-gray-900">Algorithm Settings</h3>
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-gray-700">
+                  Optimization Algorithm:
+                </label>
+                <select
+                  value={settings.routeOptimization.optimizationAlgorithm}
+                  onChange={(e) => setSettings(prev => ({
+                    ...prev,
+                    routeOptimization: {
+                      ...prev.routeOptimization,
+                      optimizationAlgorithm: e.target.value
+                    }
+                  }))}
+                  className="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                >
+                  <option value="HYBRID">Hybrid</option>
+                  <option value="GREEDY">Greedy</option>
+                  <option value="GENETIC">Genetic</option>
+                  <option value="SIMULATED_ANNEALING">Simulated Annealing</option>
+                </select>
+              </div>
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-gray-700">
+                  Max Optimization Time (sec):
+                </label>
+                <input
+                  type="number"
+                  step="5"
+                  value={settings.routeOptimization.maxOptimizationTime}
+                  onChange={(e) => setSettings(prev => ({
+                    ...prev,
+                    routeOptimization: {
+                      ...prev.routeOptimization,
+                      maxOptimizationTime: parseInt(e.target.value) || 30
+                    }
+                  }))}
+                  className="w-20 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-gray-700">
+                  Enable Real-time Optimization:
+                </label>
+                <input
+                  type="checkbox"
+                  checked={settings.routeOptimization.enableRealTimeOptimization}
+                  onChange={(e) => setSettings(prev => ({
+                    ...prev,
+                    routeOptimization: {
+                      ...prev.routeOptimization,
+                      enableRealTimeOptimization: e.target.checked
+                    }
+                  }))}
+                  className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                />
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Revenue Preview */}
@@ -938,6 +1632,134 @@ const RevenueSettings: React.FC = () => {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Optimization Preview */}
+          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+            <div className="flex items-center mb-4">
+              <Route className="h-5 w-5 text-blue-600 mr-2" />
+              <h3 className="text-lg font-semibold text-gray-900">Optimization Preview</h3>
+            </div>
+            
+            <div className="mb-4 p-3 bg-gray-50 rounded-md">
+              <p className="text-sm text-gray-600">
+                <strong>Sample scenario:</strong> 2 units, 2 requests with current optimization settings
+              </p>
+            </div>
+
+            {optimizationLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <RefreshCw className="h-6 w-6 animate-spin text-blue-600" />
+                <span className="ml-2 text-sm text-gray-600">Calculating optimization...</span>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* Optimization Metrics */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <h4 className="text-sm font-semibold text-blue-900 mb-3">Optimization Metrics</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-gray-700">Total Revenue:</span>
+                        <span className="text-sm font-semibold text-gray-900">${optimizationPreview.totalRevenue.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-gray-700">Loaded Mile Ratio:</span>
+                        <span className="text-sm font-semibold text-gray-900">{(optimizationPreview.loadedMileRatio * 100).toFixed(1)}%</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-gray-700">Backhaul Pairs:</span>
+                        <span className="text-sm font-semibold text-gray-900">{optimizationPreview.backhaulPairs}</span>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-gray-700">Total Miles:</span>
+                        <span className="text-sm font-semibold text-gray-900">{optimizationPreview.totalMiles.toFixed(1)} mi</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-gray-700">Deadhead Miles:</span>
+                        <span className="text-sm font-semibold text-gray-900">{optimizationPreview.totalDeadheadMiles.toFixed(1)} mi</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-gray-700">Avg Response Time:</span>
+                        <span className="text-sm font-semibold text-gray-900">{optimizationPreview.averageResponseTime.toFixed(1)} min</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Performance vs Targets */}
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <h4 className="text-sm font-semibold text-green-900 mb-3">Performance vs Targets</h4>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium text-gray-700">Loaded Mile Ratio:</span>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm font-semibold text-gray-900">{(optimizationPreview.loadedMileRatio * 100).toFixed(1)}%</span>
+                        <span className="text-xs text-gray-500">/ {(settings.routeOptimization.targetLoadedMileRatio * 100).toFixed(1)}%</span>
+                        <span className={`text-xs ${optimizationPreview.loadedMileRatio >= settings.routeOptimization.targetLoadedMileRatio ? 'text-green-600' : 'text-red-600'}`}>
+                          {optimizationPreview.loadedMileRatio >= settings.routeOptimization.targetLoadedMileRatio ? '✓' : '✗'}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium text-gray-700">Revenue/Hour:</span>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm font-semibold text-gray-900">${(optimizationPreview.totalRevenue / 2).toFixed(2)}</span>
+                        <span className="text-xs text-gray-500">/ ${settings.routeOptimization.targetRevenuePerHour}</span>
+                        <span className={`text-xs ${(optimizationPreview.totalRevenue / 2) >= settings.routeOptimization.targetRevenuePerHour ? 'text-green-600' : 'text-red-600'}`}>
+                          {(optimizationPreview.totalRevenue / 2) >= settings.routeOptimization.targetRevenuePerHour ? '✓' : '✗'}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium text-gray-700">Response Time:</span>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm font-semibold text-gray-900">{optimizationPreview.averageResponseTime.toFixed(1)} min</span>
+                        <span className="text-xs text-gray-500">/ {settings.routeOptimization.targetResponseTime} min</span>
+                        <span className={`text-xs ${optimizationPreview.averageResponseTime <= settings.routeOptimization.targetResponseTime ? 'text-green-600' : 'text-red-600'}`}>
+                          {optimizationPreview.averageResponseTime <= settings.routeOptimization.targetResponseTime ? '✓' : '✗'}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium text-gray-700">Efficiency:</span>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm font-semibold text-gray-900">{(optimizationPreview.averageEfficiency * 100).toFixed(1)}%</span>
+                        <span className="text-xs text-gray-500">/ {(settings.routeOptimization.targetEfficiency * 100).toFixed(1)}%</span>
+                        <span className={`text-xs ${optimizationPreview.averageEfficiency >= settings.routeOptimization.targetEfficiency ? 'text-green-600' : 'text-red-600'}`}>
+                          {optimizationPreview.averageEfficiency >= settings.routeOptimization.targetEfficiency ? '✓' : '✗'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Optimization Weights Summary */}
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                  <h4 className="text-sm font-semibold text-gray-900 mb-3">Current Optimization Weights</h4>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Deadhead (α):</span>
+                      <span className="font-medium">{settings.routeOptimization.deadheadMileWeight}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Wait Time (β):</span>
+                      <span className="font-medium">{settings.routeOptimization.waitTimeWeight}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Backhaul (γ):</span>
+                      <span className="font-medium">{settings.routeOptimization.backhaulBonusWeight}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Overtime (δ):</span>
+                      <span className="font-medium">{settings.routeOptimization.overtimeRiskWeight}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Quick Actions */}
@@ -1020,6 +1842,38 @@ const RevenueSettings: React.FC = () => {
                       'Medicaid': 0.80,
                       'Private': 1.0,
                       'SelfPay': 1.2
+                    },
+                    // Route Optimization Parameters (Phase 3)
+                    routeOptimization: {
+                      // Optimization Weights (α, β, γ, δ parameters)
+                      deadheadMileWeight: 1.0,
+                      waitTimeWeight: 1.0,
+                      backhaulBonusWeight: 1.0,
+                      overtimeRiskWeight: 1.0,
+                      revenueWeight: 1.0,
+                      crewAvailabilityWeight: 1.0,
+                      equipmentCompatibilityWeight: 1.0,
+                      patientPriorityWeight: 1.0,
+                      // Constraint Settings
+                      maxDeadheadMiles: 50.0,
+                      maxWaitTimeMinutes: 30,
+                      maxOvertimeHours: 4.0,
+                      maxResponseTimeMinutes: 15,
+                      maxServiceDistance: 100.0,
+                      // Backhaul Optimization
+                      backhaulTimeWindow: 60,
+                      backhaulDistanceLimit: 25.0,
+                      backhaulRevenueBonus: 50.0,
+                      enableBackhaulOptimization: true,
+                      // Performance Targets
+                      targetLoadedMileRatio: 0.75,
+                      targetRevenuePerHour: 200.0,
+                      targetResponseTime: 12,
+                      targetEfficiency: 0.85,
+                      // Algorithm Settings
+                      optimizationAlgorithm: 'HYBRID',
+                      maxOptimizationTime: 30,
+                      enableRealTimeOptimization: true
                     }
                   });
                 }}

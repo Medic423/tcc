@@ -362,6 +362,291 @@ router.get('/performance', async (req, res) => {
   }
 });
 
+// ===== ROUTE OPTIMIZATION SETTINGS ENDPOINTS (Phase 3) =====
+
+/**
+ * GET /api/optimize/settings
+ * Get route optimization settings for an agency or global defaults
+ */
+router.get('/settings', async (req, res) => {
+  try {
+    const { agencyId } = req.query;
+
+    const prisma = databaseManager.getCenterDB();
+    
+    // Get settings for specific agency or global defaults
+    let settings = await prisma.routeOptimizationSettings.findFirst({
+      where: {
+        agencyId: agencyId as string || null,
+        isActive: true
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    // If no agency-specific settings, get global defaults
+    if (!settings && agencyId) {
+      settings = await prisma.routeOptimizationSettings.findFirst({
+        where: {
+          agencyId: null,
+          isActive: true
+        },
+        orderBy: {
+          createdAt: 'desc'
+        }
+      });
+    }
+
+    // If no settings exist at all, create default global settings
+    if (!settings) {
+      settings = await prisma.routeOptimizationSettings.create({
+        data: {
+          agencyId: null,
+          // All fields will use their default values from schema
+        }
+      });
+    }
+
+    res.json({
+      success: true,
+      data: settings
+    });
+  } catch (error) {
+    console.error('Get optimization settings error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error getting optimization settings'
+    });
+  }
+});
+
+/**
+ * POST /api/optimize/settings
+ * Create or update route optimization settings
+ */
+router.post('/settings', async (req, res) => {
+  try {
+    const { agencyId, ...settingsData } = req.body;
+
+    const prisma = databaseManager.getCenterDB();
+
+    // Check if settings already exist for this agency
+    const existingSettings = await prisma.routeOptimizationSettings.findFirst({
+      where: {
+        agencyId: agencyId as string || null,
+        isActive: true
+      }
+    });
+
+    let settings;
+    if (existingSettings) {
+      // Update existing settings
+      settings = await prisma.routeOptimizationSettings.update({
+        where: { id: existingSettings.id },
+        data: {
+          ...settingsData,
+          updatedAt: new Date()
+        }
+      });
+    } else {
+      // Create new settings
+      settings = await prisma.routeOptimizationSettings.create({
+        data: {
+          agencyId: agencyId as string || null,
+          ...settingsData
+        }
+      });
+    }
+
+    res.json({
+      success: true,
+      data: settings
+    });
+  } catch (error) {
+    console.error('Create/update optimization settings error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error creating/updating optimization settings'
+    });
+  }
+});
+
+/**
+ * POST /api/optimize/settings/reset
+ * Reset optimization settings to defaults
+ */
+router.post('/settings/reset', async (req, res) => {
+  try {
+    const { agencyId } = req.body;
+
+    const prisma = databaseManager.getCenterDB();
+
+    // Deactivate existing settings
+    await prisma.routeOptimizationSettings.updateMany({
+      where: {
+        agencyId: agencyId as string || null,
+        isActive: true
+      },
+      data: {
+        isActive: false
+      }
+    });
+
+    // Create new default settings
+    const settings = await prisma.routeOptimizationSettings.create({
+      data: {
+        agencyId: agencyId as string || null,
+        // All fields will use their default values from schema
+      }
+    });
+
+    res.json({
+      success: true,
+      data: settings
+    });
+  } catch (error) {
+    console.error('Reset optimization settings error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error resetting optimization settings'
+    });
+  }
+});
+
+/**
+ * POST /api/optimize/preview
+ * Preview optimization results with current settings
+ */
+router.post('/preview', async (req, res) => {
+  try {
+    const { unitIds, requestIds, settings } = req.body;
+
+    if (!unitIds || !Array.isArray(unitIds) || !requestIds || !Array.isArray(requestIds)) {
+      return res.status(400).json({
+        success: false,
+        error: 'unitIds and requestIds arrays are required'
+      });
+    }
+
+    // Get units and requests
+    const units = await getUnitsByIds(unitIds);
+    const requests = await getRequestsByIds(requestIds);
+
+    if (units.length === 0 || requests.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'No valid units or requests found'
+      });
+    }
+
+    // Use provided settings or get from database
+    let optimizationSettings = settings;
+    if (!optimizationSettings) {
+      const prisma = databaseManager.getCenterDB();
+      const dbSettings = await prisma.routeOptimizationSettings.findFirst({
+        where: { isActive: true },
+        orderBy: { createdAt: 'desc' }
+      });
+      optimizationSettings = dbSettings;
+    }
+
+    // Run optimization preview
+    const currentTime = new Date();
+    const previewResults = await runOptimizationPreview(
+      units, 
+      requests, 
+      optimizationSettings, 
+      currentTime
+    );
+
+    res.json({
+      success: true,
+      data: previewResults
+    });
+  } catch (error) {
+    console.error('Optimization preview error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error during optimization preview'
+    });
+  }
+});
+
+/**
+ * POST /api/optimize/what-if
+ * Run what-if scenario analysis
+ */
+router.post('/what-if', async (req, res) => {
+  try {
+    const { 
+      unitIds, 
+      requestIds, 
+      scenarioSettings, 
+      baseSettings 
+    } = req.body;
+
+    if (!unitIds || !Array.isArray(unitIds) || !requestIds || !Array.isArray(requestIds)) {
+      return res.status(400).json({
+        success: false,
+        error: 'unitIds and requestIds arrays are required'
+      });
+    }
+
+    // Get units and requests
+    const units = await getUnitsByIds(unitIds);
+    const requests = await getRequestsByIds(requestIds);
+
+    if (units.length === 0 || requests.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'No valid units or requests found'
+      });
+    }
+
+    const currentTime = new Date();
+
+    // Run base scenario
+    const baseResults = await runOptimizationPreview(
+      units, 
+      requests, 
+      baseSettings, 
+      currentTime
+    );
+
+    // Run what-if scenario
+    const whatIfResults = await runOptimizationPreview(
+      units, 
+      requests, 
+      scenarioSettings, 
+      currentTime
+    );
+
+    // Calculate differences
+    const comparison = {
+      baseScenario: baseResults,
+      whatIfScenario: whatIfResults,
+      differences: {
+        revenueDifference: whatIfResults.totalRevenue - baseResults.totalRevenue,
+        deadheadMilesDifference: whatIfResults.totalDeadheadMiles - baseResults.totalDeadheadMiles,
+        efficiencyDifference: whatIfResults.averageEfficiency - baseResults.averageEfficiency,
+        responseTimeDifference: whatIfResults.averageResponseTime - baseResults.averageResponseTime
+      }
+    };
+
+    res.json({
+      success: true,
+      data: comparison
+    });
+  } catch (error) {
+    console.error('What-if analysis error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error during what-if analysis'
+    });
+  }
+});
+
 // Helper functions - Real database queries
 
 async function getAllPendingRequests(): Promise<any[]> {
@@ -695,6 +980,291 @@ async function getPerformanceMetrics(startTime: Date, endTime: Date, unitId?: st
       customerSatisfaction: 0
     };
   }
+}
+
+// ===== OPTIMIZATION PREVIEW FUNCTIONS (Phase 3) =====
+
+async function runOptimizationPreview(units: any[], requests: any[], settings: any, currentTime: Date): Promise<any> {
+  try {
+    // Initialize optimization weights from settings
+    const weights = {
+      deadheadMile: Number(settings?.deadheadMileWeight || 1.0),
+      waitTime: Number(settings?.waitTimeWeight || 1.0),
+      backhaulBonus: Number(settings?.backhaulBonusWeight || 1.0),
+      overtimeRisk: Number(settings?.overtimeRiskWeight || 1.0),
+      revenue: Number(settings?.revenueWeight || 1.0),
+      crewAvailability: Number(settings?.crewAvailabilityWeight || 1.0),
+      equipmentCompatibility: Number(settings?.equipmentCompatibilityWeight || 1.0),
+      patientPriority: Number(settings?.patientPriorityWeight || 1.0)
+    };
+
+    // Initialize constraints from settings
+    const constraints = {
+      maxDeadheadMiles: Number(settings?.maxDeadheadMiles || 50.0),
+      maxWaitTimeMinutes: Number(settings?.maxWaitTimeMinutes || 30),
+      maxOvertimeHours: Number(settings?.maxOvertimeHours || 4.0),
+      maxResponseTimeMinutes: Number(settings?.maxResponseTimeMinutes || 15),
+      maxServiceDistance: Number(settings?.maxServiceDistance || 100.0)
+    };
+
+    // Calculate optimization scores for each unit-request combination
+    const optimizationResults = [];
+    let totalRevenue = 0;
+    let totalDeadheadMiles = 0;
+    let totalWaitTime = 0;
+    let totalOvertimeRisk = 0;
+    let backhaulPairs = 0;
+
+    for (const unit of units) {
+      for (const request of requests) {
+        // Calculate individual metrics
+        const deadheadMiles = calculateDeadheadMiles(unit, request);
+        const waitTime = calculateWaitTime(unit, request, currentTime);
+        const overtimeRisk = calculateOvertimeRisk(unit, request, currentTime);
+        const revenue = calculateRequestRevenue(request);
+        const responseTime = calculateResponseTime(unit, request);
+        const distance = calculateDistance(unit, request);
+
+        // Check constraints
+        const constraintViolations = [];
+        if (deadheadMiles > constraints.maxDeadheadMiles) {
+          constraintViolations.push('maxDeadheadMiles');
+        }
+        if (waitTime > constraints.maxWaitTimeMinutes) {
+          constraintViolations.push('maxWaitTimeMinutes');
+        }
+        if (overtimeRisk > constraints.maxOvertimeHours) {
+          constraintViolations.push('maxOvertimeHours');
+        }
+        if (responseTime > constraints.maxResponseTimeMinutes) {
+          constraintViolations.push('maxResponseTimeMinutes');
+        }
+        if (distance > constraints.maxServiceDistance) {
+          constraintViolations.push('maxServiceDistance');
+        }
+
+        // Calculate optimization score
+        const score = calculateOptimizationScore({
+          deadheadMiles,
+          waitTime,
+          overtimeRisk,
+          revenue,
+          responseTime,
+          distance,
+          weights,
+          constraintViolations
+        });
+
+        optimizationResults.push({
+          unitId: unit.id,
+          requestId: request.id,
+          score,
+          deadheadMiles,
+          waitTime,
+          overtimeRisk,
+          revenue,
+          responseTime,
+          distance,
+          constraintViolations,
+          canHandle: constraintViolations.length === 0
+        });
+
+        // Accumulate totals
+        if (constraintViolations.length === 0) {
+          totalRevenue += revenue;
+          totalDeadheadMiles += deadheadMiles;
+          totalWaitTime += waitTime;
+          totalOvertimeRisk += overtimeRisk;
+        }
+      }
+    }
+
+    // Find backhaul opportunities
+    const backhaulOpportunities = findBackhaulOpportunities(requests, settings);
+    backhaulPairs = backhaulOpportunities.length;
+
+    // Calculate efficiency metrics
+    const totalMiles = optimizationResults.reduce((sum, result) => sum + result.distance, 0);
+    const loadedMiles = totalMiles - totalDeadheadMiles;
+    const loadedMileRatio = totalMiles > 0 ? loadedMiles / totalMiles : 0;
+    const averageEfficiency = optimizationResults.length > 0 
+      ? optimizationResults.reduce((sum, result) => sum + result.score, 0) / optimizationResults.length 
+      : 0;
+    const averageResponseTime = optimizationResults.length > 0
+      ? optimizationResults.reduce((sum, result) => sum + result.responseTime, 0) / optimizationResults.length
+      : 0;
+
+    return {
+      totalRevenue,
+      totalDeadheadMiles,
+      totalWaitTime,
+      totalOvertimeRisk,
+      backhaulPairs,
+      loadedMileRatio,
+      averageEfficiency,
+      averageResponseTime,
+      totalMiles,
+      loadedMiles,
+      optimizationResults: optimizationResults.sort((a, b) => b.score - a.score),
+      backhaulOpportunities: backhaulOpportunities.slice(0, 10), // Top 10
+      settings: {
+        weights,
+        constraints
+      }
+    };
+  } catch (error) {
+    console.error('Error running optimization preview:', error);
+    throw error;
+  }
+}
+
+function calculateDeadheadMiles(unit: any, request: any): number {
+  // Calculate distance from unit's current location to request origin
+  const unitLocation = unit.currentLocation || { lat: 0, lng: 0 };
+  const requestOrigin = request.originLocation || { lat: 0, lng: 0 };
+  
+  // Simple distance calculation (in real implementation, use proper geospatial functions)
+  const latDiff = unitLocation.lat - requestOrigin.lat;
+  const lngDiff = unitLocation.lng - requestOrigin.lng;
+  return Math.sqrt(latDiff * latDiff + lngDiff * lngDiff) * 69; // Rough conversion to miles
+}
+
+function calculateWaitTime(unit: any, request: any, currentTime: Date): number {
+  // Calculate time from now until request is ready
+  const requestTime = new Date(request.readyStart || request.scheduledTime);
+  const waitTime = Math.max(0, (requestTime.getTime() - currentTime.getTime()) / (1000 * 60)); // minutes
+  return waitTime;
+}
+
+function calculateOvertimeRisk(unit: any, request: any, currentTime: Date): number {
+  // Calculate if this request would cause overtime
+  const shiftStart = new Date(unit.shiftStart || currentTime);
+  const shiftEnd = new Date(unit.shiftEnd || new Date(currentTime.getTime() + 8 * 60 * 60 * 1000));
+  const estimatedTripTime = 2; // hours - would be calculated based on distance
+  const estimatedEndTime = new Date(currentTime.getTime() + estimatedTripTime * 60 * 60 * 1000);
+  
+  if (estimatedEndTime > shiftEnd) {
+    const overtimeHours = (estimatedEndTime.getTime() - shiftEnd.getTime()) / (1000 * 60 * 60);
+    return overtimeHours;
+  }
+  return 0;
+}
+
+function calculateRequestRevenue(request: any): number {
+  // Use stored revenue if available
+  if (request.tripCost && request.tripCost > 0) {
+    return Number(request.tripCost);
+  }
+  
+  // Fallback to calculated revenue
+  const baseRates = { 'BLS': 150.0, 'ALS': 250.0, 'CCT': 400.0 };
+  const baseRate = baseRates[request.transportLevel as keyof typeof baseRates] || 150.0;
+  const priorityMultipliers = { 'LOW': 1.0, 'MEDIUM': 1.1, 'HIGH': 1.25, 'URGENT': 1.5 };
+  const multiplier = priorityMultipliers[request.priority as keyof typeof priorityMultipliers] || 1.0;
+  return baseRate * multiplier;
+}
+
+function calculateResponseTime(unit: any, request: any): number {
+  // Calculate estimated response time based on distance
+  const distance = calculateDistance(unit, request);
+  const averageSpeed = 30; // mph
+  return (distance / averageSpeed) * 60; // minutes
+}
+
+function calculateDistance(unit: any, request: any): number {
+  const unitLocation = unit.currentLocation || { lat: 0, lng: 0 };
+  const requestOrigin = request.originLocation || { lat: 0, lng: 0 };
+  
+  const latDiff = unitLocation.lat - requestOrigin.lat;
+  const lngDiff = unitLocation.lng - requestOrigin.lng;
+  return Math.sqrt(latDiff * latDiff + lngDiff * lngDiff) * 69; // Rough conversion to miles
+}
+
+function calculateOptimizationScore(params: {
+  deadheadMiles: number;
+  waitTime: number;
+  overtimeRisk: number;
+  revenue: number;
+  responseTime: number;
+  distance: number;
+  weights: any;
+  constraintViolations: string[];
+}): number {
+  const { deadheadMiles, waitTime, overtimeRisk, revenue, responseTime, distance, weights, constraintViolations } = params;
+  
+  // Base score starts with revenue
+  let score = revenue * weights.revenue;
+  
+  // Apply penalties
+  score -= deadheadMiles * weights.deadheadMile;
+  score -= waitTime * weights.waitTime;
+  score -= overtimeRisk * weights.overtimeRisk;
+  score -= responseTime * 0.1; // Small penalty for response time
+  
+  // Apply constraint violations penalty
+  score -= constraintViolations.length * 100; // Heavy penalty for constraint violations
+  
+  return Math.max(0, score); // Ensure non-negative score
+}
+
+function findBackhaulOpportunities(requests: any[], settings: any): any[] {
+  const opportunities = [];
+  const timeWindow = Number(settings?.backhaulTimeWindow || 60); // minutes
+  const distanceLimit = Number(settings?.backhaulDistanceLimit || 25.0); // miles
+  
+  for (let i = 0; i < requests.length; i++) {
+    for (let j = i + 1; j < requests.length; j++) {
+      const request1 = requests[i];
+      const request2 = requests[j];
+      
+      // Check if requests are compatible for backhaul
+      const timeDiff = Math.abs(
+        new Date(request1.readyStart || request1.scheduledTime).getTime() - 
+        new Date(request2.readyStart || request2.scheduledTime).getTime()
+      ) / (1000 * 60); // minutes
+      
+      const distance = calculateDistanceBetweenRequests(request1, request2);
+      
+      if (timeDiff <= timeWindow && distance <= distanceLimit) {
+        const efficiency = calculateBackhaulEfficiency(request1, request2);
+        const revenueBonus = Number(settings?.backhaulRevenueBonus || 50.0);
+        
+        opportunities.push({
+          request1,
+          request2,
+          timeWindow: timeDiff,
+          distance,
+          efficiency,
+          revenueBonus,
+          totalRevenue: calculateRequestRevenue(request1) + calculateRequestRevenue(request2) + revenueBonus
+        });
+      }
+    }
+  }
+  
+  return opportunities.sort((a, b) => b.efficiency - a.efficiency);
+}
+
+function calculateDistanceBetweenRequests(request1: any, request2: any): number {
+  const origin1 = request1.originLocation || { lat: 0, lng: 0 };
+  const destination1 = request1.destinationLocation || { lat: 0, lng: 0 };
+  const origin2 = request2.originLocation || { lat: 0, lng: 0 };
+  const destination2 = request2.destinationLocation || { lat: 0, lng: 0 };
+  
+  // Calculate distance from destination1 to origin2 (backhaul connection)
+  const latDiff = destination1.lat - origin2.lat;
+  const lngDiff = destination1.lng - origin2.lng;
+  return Math.sqrt(latDiff * latDiff + lngDiff * lngDiff) * 69; // Rough conversion to miles
+}
+
+function calculateBackhaulEfficiency(request1: any, request2: any): number {
+  // Calculate efficiency based on distance savings and time compatibility
+  const distance1 = calculateDistanceBetweenRequests(request1, request2);
+  const distance2 = calculateDistanceBetweenRequests(request2, request1);
+  const totalDistance = distance1 + distance2;
+  
+  // Higher efficiency for shorter total distance
+  return totalDistance > 0 ? 100 / totalDistance : 0;
 }
 
 export default router;
