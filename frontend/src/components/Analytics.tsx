@@ -59,31 +59,20 @@ const Analytics: React.FC = () => {
       setLoading(true);
       setError(null);
       
-      console.log('🔍 Analytics: Loading analytics data...');
-      
       const [overviewResponse, tripsResponse] = await Promise.all([
         analyticsAPI.getOverview(),
         analyticsAPI.getTrips()
       ]);
 
-      console.log('🔍 Analytics: Overview response:', overviewResponse);
-      console.log('🔍 Analytics: Trips response:', tripsResponse);
-
       if (overviewResponse.data?.success) {
-        console.log('🔍 Analytics: Setting overview data:', overviewResponse.data.data);
         setOverview(overviewResponse.data.data);
-      } else {
-        console.warn('🔍 Analytics: Overview response not successful:', overviewResponse.data);
       }
 
       if (tripsResponse.data?.success) {
-        console.log('🔍 Analytics: Setting trip stats data:', tripsResponse.data.data);
         setTripStats(tripsResponse.data.data);
-      } else {
-        console.warn('🔍 Analytics: Trips response not successful:', tripsResponse.data);
       }
     } catch (err: any) {
-      console.error('🔍 Analytics: Error loading analytics data:', err);
+      console.error('Error loading analytics data:', err);
       setError(err.response?.data?.error || 'Failed to load analytics data');
     } finally {
       setLoading(false);
