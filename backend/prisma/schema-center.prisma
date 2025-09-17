@@ -150,6 +150,14 @@ model Trip {
   actualTripTimeMinutes   Int?     // Actual trip duration
   completionTimeMinutes   Int?     // Total completion time
   
+  // Revenue and Analytics Fields (Added per audit report)
+  loadedMiles           Decimal?   @db.Decimal(10,2)  // Loaded miles for revenue calculation
+  customerSatisfaction  Int?       // Customer satisfaction rating (1-5)
+  efficiency            Decimal?   @db.Decimal(5,2)   // Trip efficiency score
+  performanceScore      Decimal?   @db.Decimal(5,2)   // Overall performance score
+  revenuePerHour        Decimal?   @db.Decimal(10,2)  // Revenue per hour calculation
+  backhaulOpportunity   Boolean    @default(false)    // Whether trip has backhaul opportunity
+  
   // Legacy fields (keeping for backward compatibility)
   actualStartTime   DateTime?
   actualEndTime     DateTime?
@@ -177,4 +185,30 @@ model SystemAnalytics {
   userId      String?
 
   @@map("system_analytics")
+}
+
+// Backhaul opportunities tracking (Added per audit report)
+model BackhaulOpportunities {
+  id            String    @id @default(cuid())
+  tripId1       String    // First trip ID
+  tripId2       String    // Second trip ID
+  revenueBonus  Decimal?  @db.Decimal(10,2)  // Additional revenue from backhaul
+  efficiency    Decimal?  @db.Decimal(5,2)   // Efficiency improvement
+  createdAt     DateTime  @default(now())
+  isActive      Boolean   @default(true)
+
+  @@map("backhaul_opportunities")
+}
+
+// Unit performance tracking (Added per audit report)
+model UnitAnalytics {
+  id                  String    @id @default(cuid())
+  unitId              String    // Reference to unit ID
+  performanceScore    Decimal?  @db.Decimal(5,2)  // Overall performance score
+  efficiency          Decimal?  @db.Decimal(5,2)  // Unit efficiency
+  totalTrips          Int       @default(0)       // Total trips completed
+  averageResponseTime Decimal?  @db.Decimal(5,2)  // Average response time
+  lastUpdated         DateTime  @default(now())
+
+  @@map("unit_analytics")
 }

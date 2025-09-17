@@ -81,6 +81,11 @@ model Unit {
   averageResponseTime Float? // Average response time in minutes
   lastMaintenanceDate DateTime?
   
+  // Additional fields (Added per audit report)
+  maintenanceStatus       String?   @default("OPERATIONAL")  // Unit maintenance status
+  locationUpdateTimestamp DateTime?  // When location was last updated
+  performanceScore        Decimal?  @db.Decimal(5,2)         // Unit performance score
+  
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 

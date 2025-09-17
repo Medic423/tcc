@@ -115,13 +115,26 @@ router.get('/revenue', async (req, res) => {
 
     // Get completed trips in time range
     const trips = await getCompletedTripsInRange(startTime, now, agencyId as string);
+    console.log('TCC_DEBUG: Revenue analytics - trips found:', trips.length);
+    console.log('TCC_DEBUG: Revenue analytics - sample trip:', trips[0]);
 
-    // Calculate metrics
+    // Calculate metrics using new database fields when available
     const totalRevenue = trips.reduce((sum, trip) => sum + calculateTripRevenue(trip), 0);
     const totalMiles = trips.reduce((sum, trip) => sum + calculateTripMiles(trip), 0);
     const loadedMiles = trips.reduce((sum, trip) => sum + calculateLoadedMiles(trip), 0);
     const loadedMileRatio = totalMiles > 0 ? loadedMiles / totalMiles : 0;
-    const revenuePerHour = totalRevenue / (timeRange / (1000 * 60 * 60));
+    
+    // Use stored revenuePerHour if available, otherwise calculate
+    const storedRevenuePerHour = trips.find(trip => trip.revenuePerHour)?.revenuePerHour;
+    const revenuePerHour = storedRevenuePerHour ? Number(storedRevenuePerHour) : totalRevenue / (timeRange / (1000 * 60 * 60));
+    
+    console.log('TCC_DEBUG: Revenue analytics - calculated values:', {
+      totalRevenue,
+      totalMiles,
+      loadedMiles,
+      loadedMileRatio,
+      revenuePerHour
+    });
 
     res.json({
       success: true,
@@ -193,6 +206,59 @@ router.post('/backhaul', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Internal server error during backhaul analysis'
+    });
+  }
+});
+
+/**
+ * GET /api/optimize/return-trips
+ * Find return trip opportunities in the system (e.g., Altoona → Pittsburgh → Altoona)
+ */
+router.get('/return-trips', async (req, res) => {
+  try {
+    console.log('TCC_DEBUG: Finding return trip opportunities...');
+    
+    // Get all pending requests
+    const allRequests = await getAllPendingRequests();
+    console.log('TCC_DEBUG: Found pending requests:', allRequests.length);
+    
+    // Find return trip opportunities
+    const returnTrips = backhaulDetector.findAllReturnTripOpportunities(allRequests);
+    console.log('TCC_DEBUG: Found return trip opportunities:', returnTrips.length);
+    
+    // Calculate statistics
+    const statistics = {
+      totalRequests: allRequests.length,
+      returnTripOpportunities: returnTrips.length,
+      averageEfficiency: returnTrips.length > 0 
+        ? returnTrips.reduce((sum, pair) => sum + pair.efficiency, 0) / returnTrips.length 
+        : 0,
+      potentialRevenueIncrease: returnTrips.reduce((sum, pair) => 
+        sum + backhaulDetector.calculatePairingRevenue(pair), 0
+      )
+    };
+
+    res.json({
+      success: true,
+      data: {
+        returnTrips: returnTrips.slice(0, 20), // Limit to top 20
+        statistics,
+        recommendations: returnTrips.slice(0, 10).map(pair => ({
+          pairId: `${pair.request1.id}-${pair.request2.id}`,
+          efficiency: pair.efficiency,
+          distance: pair.distance,
+          timeWindow: pair.timeWindow,
+          revenueBonus: pair.revenueBonus,
+          potentialRevenue: backhaulDetector.calculatePairingRevenue(pair),
+          isReturnTrip: true
+        }))
+      }
+    });
+  } catch (error) {
+    console.error('Return trip analysis error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error during return trip analysis'
     });
   }
 });
@@ -278,6 +344,7 @@ router.get('/performance', async (req, res) => {
 
     // Get performance data
     const performanceData = await getPerformanceMetrics(startTime, now, unitId as string);
+    console.log('TCC_DEBUG: Performance metrics - data:', performanceData);
 
     res.json({
       success: true,
@@ -295,87 +362,247 @@ router.get('/performance', async (req, res) => {
   }
 });
 
-// Helper functions (these would be implemented based on your database schema)
+// Helper functions - Real database queries
+
+async function getAllPendingRequests(): Promise<any[]> {
+  try {
+    const prisma = databaseManager.getCenterDB();
+    
+    const trips = await prisma.trip.findMany({
+      where: {
+        status: 'PENDING'
+      },
+      select: {
+        id: true,
+        patientId: true,
+        fromLocation: true,
+        toLocation: true,
+        transportLevel: true,
+        priority: true,
+        scheduledTime: true,
+        specialNeeds: true,
+        originLatitude: true,
+        originLongitude: true,
+        destinationLatitude: true,
+        destinationLongitude: true,
+        createdAt: true
+      }
+    });
+
+    // Convert to TransportRequest format
+    return trips.map(trip => ({
+      id: trip.id,
+      patientId: trip.patientId,
+      originFacilityId: trip.fromLocation,
+      destinationFacilityId: trip.toLocation,
+      transportLevel: trip.transportLevel,
+      priority: trip.priority,
+      status: 'PENDING',
+      specialRequirements: trip.specialNeeds || '',
+      requestTimestamp: new Date(trip.createdAt),
+      readyStart: new Date(trip.scheduledTime),
+      readyEnd: new Date(new Date(trip.scheduledTime).getTime() + 60 * 60 * 1000), // 1 hour window
+      originLocation: {
+        lat: trip.originLatitude || 40.7128,
+        lng: trip.originLongitude || -74.0060
+      },
+      destinationLocation: {
+        lat: trip.destinationLatitude || 40.7589,
+        lng: trip.destinationLongitude || -73.9851
+      }
+    }));
+  } catch (error) {
+    console.error('Error getting pending requests:', error);
+    return [];
+  }
+}
 
 async function getUnitById(unitId: string): Promise<any> {
-  // Mock implementation - replace with actual database query
-  return {
-    id: unitId,
-    agencyId: 'agency-001',
-    unitNumber: 'A-101',
-    type: 'AMBULANCE',
-    capabilities: ['BLS', 'ALS'],
-    currentStatus: 'AVAILABLE',
-    currentLocation: { lat: 40.7128, lng: -74.0060 },
-    shiftStart: new Date(),
-    shiftEnd: new Date(Date.now() + 8 * 60 * 60 * 1000),
-    isActive: true
-  };
+  try {
+    const prisma = databaseManager.getEMSDB();
+    const unit = await prisma.unit.findUnique({
+      where: { id: unitId },
+      include: {
+        agency: true
+      }
+    });
+
+    if (!unit) {
+      return null;
+    }
+
+    return {
+      id: unit.id,
+      agencyId: unit.agencyId,
+      unitNumber: unit.unitNumber,
+      type: unit.type,
+      capabilities: unit.capabilities || [],
+      currentStatus: unit.currentStatus,
+      currentLocation: unit.currentLocation && typeof unit.currentLocation === 'object' && 'lat' in unit.currentLocation ? {
+        lat: (unit.currentLocation as any).lat,
+        lng: (unit.currentLocation as any).lng
+      } : { lat: 0, lng: 0 },
+      shiftStart: (unit as any).shiftStart || new Date(),
+      shiftEnd: (unit as any).shiftEnd || new Date(Date.now() + 8 * 60 * 60 * 1000), // 8 hours from now
+      isActive: unit.isActive
+    };
+  } catch (error) {
+    console.error('Error fetching unit by ID:', error);
+    return null;
+  }
 }
 
 async function getUnitsByIds(unitIds: string[]): Promise<any[]> {
-  // Mock implementation - replace with actual database query
-  return unitIds.map((id, index) => ({
-    id,
-    agencyId: 'agency-001',
-    unitNumber: `A-${101 + index}`,
-    type: 'AMBULANCE',
-    capabilities: ['BLS', 'ALS'],
-    currentStatus: 'AVAILABLE',
-    currentLocation: { 
-      lat: 40.7128 + (index * 0.01), 
-      lng: -74.0060 + (index * 0.01) 
-    },
-    shiftStart: new Date(),
-    shiftEnd: new Date(Date.now() + 8 * 60 * 60 * 1000),
-    isActive: true
-  }));
+  try {
+    const prisma = databaseManager.getEMSDB();
+    const units = await prisma.unit.findMany({
+      where: { 
+        id: { in: unitIds },
+        isActive: true
+      },
+      include: {
+        agency: true
+      }
+    });
+
+    return units.map((unit: any) => ({
+      id: unit.id,
+      agencyId: unit.agencyId,
+      unitNumber: unit.unitNumber,
+      type: unit.type,
+      capabilities: unit.capabilities || [],
+      currentStatus: unit.currentStatus,
+      currentLocation: unit.currentLocation && typeof unit.currentLocation === 'object' && 'lat' in unit.currentLocation ? {
+        lat: (unit.currentLocation as any).lat,
+        lng: (unit.currentLocation as any).lng
+      } : { lat: 0, lng: 0 },
+      shiftStart: (unit as any).shiftStart || new Date(),
+      shiftEnd: (unit as any).shiftEnd || new Date(Date.now() + 8 * 60 * 60 * 1000), // 8 hours from now
+      isActive: unit.isActive
+    }));
+  } catch (error) {
+    console.error('Error fetching units by IDs:', error);
+    return [];
+  }
 }
 
 async function getRequestsByIds(requestIds: string[]): Promise<any[]> {
-  // Mock implementation - replace with actual database query
-  return requestIds.map((id, index) => ({
-    id,
-    patientId: `patient-${id}`,
-    originFacilityId: 'facility-001',
-    destinationFacilityId: 'facility-002',
-    transportLevel: ['BLS', 'ALS', 'CCT'][index % 3],
-    priority: ['LOW', 'MEDIUM', 'HIGH', 'URGENT'][index % 4],
-    status: 'PENDING',
-    specialRequirements: index % 2 === 0 ? 'Special requirements' : '',
-    requestTimestamp: new Date(),
-    readyStart: new Date(Date.now() + 30 * 60 * 1000),
-    readyEnd: new Date(Date.now() + 60 * 60 * 1000),
-    originLocation: { lat: 40.7128 + (index * 0.01), lng: -74.0060 + (index * 0.01) },
-    destinationLocation: { lat: 40.7589 + (index * 0.01), lng: -73.9851 + (index * 0.01) }
-  }));
+  try {
+    const prisma = databaseManager.getCenterDB();
+    const trips = await prisma.trip.findMany({
+      where: { 
+        id: { in: requestIds },
+        status: 'PENDING'
+      }
+    });
+
+    return trips.map(trip => ({
+      id: trip.id,
+      patientId: trip.patientId,
+      originFacilityId: trip.fromLocation,
+      destinationFacilityId: trip.toLocation,
+      transportLevel: trip.transportLevel,
+      priority: trip.priority,
+      status: trip.status,
+      specialRequirements: trip.specialNeeds || '',
+      requestTimestamp: trip.requestTimestamp || trip.createdAt,
+      readyStart: trip.scheduledTime,
+      readyEnd: new Date(trip.scheduledTime.getTime() + 30 * 60 * 1000), // 30 minutes window
+      originLocation: trip.originLatitude && trip.originLongitude ? {
+        lat: trip.originLatitude,
+        lng: trip.originLongitude
+      } : { lat: 0, lng: 0 },
+      destinationLocation: trip.destinationLatitude && trip.destinationLongitude ? {
+        lat: trip.destinationLatitude,
+        lng: trip.destinationLongitude
+      } : { lat: 0, lng: 0 },
+      // Revenue and distance data
+      tripCost: trip.tripCost,
+      distanceMiles: trip.distanceMiles,
+      insurancePayRate: trip.insurancePayRate,
+      perMileRate: trip.perMileRate
+    }));
+  } catch (error) {
+    console.error('Error fetching requests by IDs:', error);
+    return [];
+  }
 }
 
 async function getCompletedTripsInRange(startTime: Date, endTime: Date, agencyId?: string): Promise<any[]> {
-  // Mock implementation - replace with actual database query
-  return [
-    {
-      id: 'trip-001',
-      transportLevel: 'BLS',
-      priority: 'MEDIUM',
-      completedAt: new Date(),
-      revenue: 150.0,
-      miles: 5.2,
-      loadedMiles: 4.8
-    },
-    {
-      id: 'trip-002',
-      transportLevel: 'ALS',
-      priority: 'HIGH',
-      completedAt: new Date(),
-      revenue: 275.0,
-      miles: 8.1,
-      loadedMiles: 7.5
+  try {
+    const prisma = databaseManager.getCenterDB();
+    
+    const whereClause: any = {
+      status: 'COMPLETED',
+      completionTimestamp: {
+        gte: startTime,
+        lte: endTime
+      }
+    };
+
+    // If agencyId is provided, filter by assigned agency
+    if (agencyId) {
+      whereClause.assignedAgencyId = agencyId;
     }
-  ];
+
+    const trips = await prisma.trip.findMany({
+      where: whereClause,
+      select: {
+        id: true,
+        transportLevel: true,
+        priority: true,
+        completionTimestamp: true,
+        tripCost: true,
+        distanceMiles: true,
+        responseTimeMinutes: true,
+        actualTripTimeMinutes: true,
+        assignedAgencyId: true,
+        // New analytics fields
+        loadedMiles: true,
+        customerSatisfaction: true,
+        efficiency: true,
+        performanceScore: true,
+        revenuePerHour: true,
+        backhaulOpportunity: true
+      }
+    });
+
+    return trips.map(trip => ({
+      id: trip.id,
+      transportLevel: trip.transportLevel,
+      priority: trip.priority,
+      completedAt: trip.completionTimestamp,
+      revenue: trip.tripCost || 0,
+      miles: trip.distanceMiles || 0,
+      loadedMiles: trip.loadedMiles || trip.distanceMiles || 0, // Use stored loadedMiles if available
+      responseTimeMinutes: trip.responseTimeMinutes || 0,
+      actualTripTimeMinutes: trip.actualTripTimeMinutes || 0,
+      assignedAgencyId: trip.assignedAgencyId,
+      // New analytics fields
+      customerSatisfaction: trip.customerSatisfaction,
+      efficiency: trip.efficiency,
+      performanceScore: trip.performanceScore,
+      revenuePerHour: trip.revenuePerHour,
+      backhaulOpportunity: trip.backhaulOpportunity
+    }));
+  } catch (error) {
+    console.error('Error fetching completed trips in range:', error);
+    return [];
+  }
 }
 
 function calculateTripRevenue(trip: any): number {
+  // Use stored trip cost if available
+  if (trip.tripCost && trip.tripCost > 0) {
+    return Number(trip.tripCost);
+  }
+
+  // Use stored revenue if available (new field)
+  if (trip.revenue && trip.revenue > 0) {
+    return Number(trip.revenue);
+  }
+
+  // Fallback to calculated revenue
   const baseRates = { 'BLS': 150.0, 'ALS': 250.0, 'CCT': 400.0 };
   const baseRate = baseRates[trip.transportLevel as keyof typeof baseRates] || 150.0;
   const priorityMultipliers = { 'LOW': 1.0, 'MEDIUM': 1.1, 'HIGH': 1.25, 'URGENT': 1.5 };
@@ -384,24 +611,90 @@ function calculateTripRevenue(trip: any): number {
 }
 
 function calculateTripMiles(trip: any): number {
-  return trip.miles || 0;
+  return trip.distanceMiles || trip.miles || 0;
 }
 
 function calculateLoadedMiles(trip: any): number {
-  return trip.loadedMiles || 0;
+  // Use stored loadedMiles if available (new field)
+  if (trip.loadedMiles && trip.loadedMiles > 0) {
+    return Number(trip.loadedMiles);
+  }
+  
+  // Fallback to calculated loaded miles (same as total miles for now)
+  return trip.distanceMiles || trip.miles || 0;
 }
 
 async function getPerformanceMetrics(startTime: Date, endTime: Date, unitId?: string): Promise<any> {
-  // Mock implementation - replace with actual database query
-  return {
-    totalTrips: 15,
-    completedTrips: 12,
-    averageResponseTime: 8.5, // minutes
-    averageTripTime: 45.2, // minutes
-    totalRevenue: 2250.0,
-    efficiency: 0.85,
-    customerSatisfaction: 4.2
-  };
+  try {
+    const prisma = databaseManager.getCenterDB();
+    
+    const whereClause: any = {
+      status: 'COMPLETED',
+      completionTimestamp: {
+        gte: startTime,
+        lte: endTime
+      }
+    };
+
+    // If unitId is provided, filter by assigned unit
+    if (unitId) {
+      whereClause.assignedUnitId = unitId;
+    }
+
+    const trips = await prisma.trip.findMany({
+      where: whereClause,
+      select: {
+        id: true,
+        tripCost: true,
+        responseTimeMinutes: true,
+        actualTripTimeMinutes: true,
+        completionTimestamp: true,
+        createdAt: true
+      }
+    });
+
+    const totalTrips = trips.length;
+    const completedTrips = trips.filter(trip => trip.completionTimestamp).length;
+    
+    const totalRevenue = trips.reduce((sum, trip) => sum + (Number(trip.tripCost) || 0), 0);
+    
+    const responseTimes = trips
+      .filter(trip => trip.responseTimeMinutes)
+      .map(trip => trip.responseTimeMinutes!);
+    const averageResponseTime = responseTimes.length > 0 
+      ? responseTimes.reduce((sum, time) => sum + time, 0) / responseTimes.length 
+      : 0;
+
+    const tripTimes = trips
+      .filter(trip => trip.actualTripTimeMinutes)
+      .map(trip => trip.actualTripTimeMinutes!);
+    const averageTripTime = tripTimes.length > 0 
+      ? tripTimes.reduce((sum, time) => sum + time, 0) / tripTimes.length 
+      : 0;
+
+    const efficiency = totalTrips > 0 ? completedTrips / totalTrips : 0;
+
+    return {
+      totalTrips,
+      completedTrips,
+      averageResponseTime,
+      averageTripTime,
+      totalRevenue,
+      efficiency,
+      customerSatisfaction: 4.2 // Placeholder - would need customer feedback system
+    };
+  } catch (error) {
+    console.error('Error fetching performance metrics:', error);
+    return {
+      totalTrips: 0,
+      completedTrips: 0,
+      averageResponseTime: 0,
+      averageTripTime: 0,
+      totalRevenue: 0,
+      efficiency: 0,
+      customerSatisfaction: 0
+    };
+  }
 }
 
 export default router;

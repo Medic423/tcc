@@ -1,16 +1,83 @@
-import React, { useState } from 'react';
-import { BarChart3, TrendingUp, Activity, DollarSign } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { BarChart3, TrendingUp, Activity, DollarSign, Settings } from 'lucide-react';
 import RevenueOptimizationPanel from './RevenueOptimizationPanel';
+import RevenueSettings from './RevenueSettings';
+import { analyticsAPI } from '../services/api';
+
+interface SystemOverview {
+  totalHospitals: number;
+  totalAgencies: number;
+  totalFacilities: number;
+  activeHospitals: number;
+  activeAgencies: number;
+  activeFacilities: number;
+  totalUnits: number;
+  activeUnits: number;
+}
+
+interface TripStatistics {
+  totalTrips: number;
+  pendingTrips: number;
+  acceptedTrips: number;
+  completedTrips: number;
+  cancelledTrips: number;
+  tripsByLevel: {
+    BLS: number;
+    ALS: number;
+    CCT: number;
+  };
+  tripsByPriority: {
+    LOW: number;
+    MEDIUM: number;
+    HIGH: number;
+    URGENT: number;
+  };
+}
 
 const Analytics: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
+  const [overview, setOverview] = useState<SystemOverview | null>(null);
+  const [tripStats, setTripStats] = useState<TripStatistics | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const tabs = [
     { id: 'overview', name: 'System Overview', icon: BarChart3 },
     { id: 'revenue', name: 'Revenue Optimization', icon: DollarSign },
+    { id: 'revenue-settings', name: 'Revenue Settings', icon: Settings },
     { id: 'performance', name: 'Performance', icon: TrendingUp },
     { id: 'units', name: 'Unit Management', icon: Activity },
   ];
+
+  // Load analytics data
+  useEffect(() => {
+    loadAnalyticsData();
+  }, []);
+
+  const loadAnalyticsData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const [overviewResponse, tripsResponse] = await Promise.all([
+        analyticsAPI.getOverview(),
+        analyticsAPI.getTrips()
+      ]);
+
+      if (overviewResponse.data?.success) {
+        setOverview(overviewResponse.data.data);
+      }
+
+      if (tripsResponse.data?.success) {
+        setTripStats(tripsResponse.data.data);
+      }
+    } catch (err: any) {
+      console.error('Error loading analytics data:', err);
+      setError(err.response?.data?.error || 'Failed to load analytics data');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div>
@@ -47,82 +114,149 @@ const Analytics: React.FC = () => {
       {/* Tab Content */}
       {activeTab === 'overview' && (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <DollarSign className="h-6 w-6 text-green-600" />
+          {loading ? (
+            <div className="flex items-center justify-center h-64">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+            </div>
+          ) : error ? (
+            <div className="bg-red-50 border border-red-200 rounded-md p-4">
+              <div className="text-red-800">{error}</div>
+            </div>
+          ) : (
+            <>
+              {/* System Overview Stats */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="bg-white overflow-hidden shadow rounded-lg">
+                  <div className="p-5">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        <BarChart3 className="h-6 w-6 text-blue-600" />
+                      </div>
+                      <div className="ml-5 w-0 flex-1">
+                        <dl>
+                          <dt className="text-sm font-medium text-gray-500 truncate">Healthcare Facilities</dt>
+                          <dd className="text-lg font-medium text-gray-900">
+                            {overview?.totalHospitals || 0}
+                            <span className="text-sm text-green-600 ml-2">
+                              ({overview?.activeHospitals || 0} active)
+                            </span>
+                          </dd>
+                        </dl>
+                      </div>
+                    </div>
                   </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">Total Revenue</dt>
-                      <dd className="text-lg font-medium text-gray-900">$12,450</dd>
-                    </dl>
+                </div>
+
+                <div className="bg-white overflow-hidden shadow rounded-lg">
+                  <div className="p-5">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        <Activity className="h-6 w-6 text-green-600" />
+                      </div>
+                      <div className="ml-5 w-0 flex-1">
+                        <dl>
+                          <dt className="text-sm font-medium text-gray-500 truncate">EMS Agencies</dt>
+                          <dd className="text-lg font-medium text-gray-900">
+                            {overview?.totalAgencies || 0}
+                            <span className="text-sm text-green-600 ml-2">
+                              ({overview?.activeAgencies || 0} active)
+                            </span>
+                          </dd>
+                        </dl>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white overflow-hidden shadow rounded-lg">
+                  <div className="p-5">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        <TrendingUp className="h-6 w-6 text-purple-600" />
+                      </div>
+                      <div className="ml-5 w-0 flex-1">
+                        <dl>
+                          <dt className="text-sm font-medium text-gray-500 truncate">EMS Units</dt>
+                          <dd className="text-lg font-medium text-gray-900">
+                            {overview?.totalUnits || 0}
+                            <span className="text-sm text-green-600 ml-2">
+                              ({overview?.activeUnits || 0} active)
+                            </span>
+                          </dd>
+                        </dl>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white overflow-hidden shadow rounded-lg">
+                  <div className="p-5">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        <DollarSign className="h-6 w-6 text-orange-600" />
+                      </div>
+                      <div className="ml-5 w-0 flex-1">
+                        <dl>
+                          <dt className="text-sm font-medium text-gray-500 truncate">Total Trips</dt>
+                          <dd className="text-lg font-medium text-gray-900">
+                            {tripStats?.totalTrips || 0}
+                            <span className="text-sm text-blue-600 ml-2">
+                              ({tripStats?.pendingTrips || 0} pending)
+                            </span>
+                          </dd>
+                        </dl>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <Activity className="h-6 w-6 text-blue-600" />
+              {/* Trip Statistics */}
+              {tripStats && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="bg-white shadow rounded-lg p-6">
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">Trips by Transport Level</h3>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">BLS</span>
+                        <span className="text-sm font-medium text-gray-900">{tripStats.tripsByLevel.BLS}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">ALS</span>
+                        <span className="text-sm font-medium text-gray-900">{tripStats.tripsByLevel.ALS}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">CCT</span>
+                        <span className="text-sm font-medium text-gray-900">{tripStats.tripsByLevel.CCT}</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">Active Trips</dt>
-                      <dd className="text-lg font-medium text-gray-900">24</dd>
-                    </dl>
+
+                  <div className="bg-white shadow rounded-lg p-6">
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">Trips by Priority</h3>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">Low</span>
+                        <span className="text-sm font-medium text-gray-900">{tripStats.tripsByPriority.LOW}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">Medium</span>
+                        <span className="text-sm font-medium text-gray-900">{tripStats.tripsByPriority.MEDIUM}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">High</span>
+                        <span className="text-sm font-medium text-gray-900">{tripStats.tripsByPriority.HIGH}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">Urgent</span>
+                        <span className="text-sm font-medium text-gray-900">{tripStats.tripsByPriority.URGENT}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
-
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <TrendingUp className="h-6 w-6 text-purple-600" />
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">Efficiency</dt>
-                      <dd className="text-lg font-medium text-gray-900">87.3%</dd>
-                    </dl>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <BarChart3 className="h-6 w-6 text-orange-600" />
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">Backhaul Pairs</dt>
-                      <dd className="text-lg font-medium text-gray-900">8</dd>
-                    </dl>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white shadow rounded-lg p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">System Overview</h3>
-            <div className="text-center py-8">
-              <BarChart3 className="mx-auto h-12 w-12 text-gray-400" />
-              <h4 className="mt-2 text-sm font-medium text-gray-900">Detailed Analytics</h4>
-              <p className="mt-1 text-sm text-gray-500">
-                Use the tabs above to view detailed analytics and optimization data.
-              </p>
-            </div>
-          </div>
+              )}
+            </>
+          )}
         </div>
       )}
 
@@ -132,6 +266,10 @@ const Analytics: React.FC = () => {
           showUnitManagement={true}
           title="Revenue Optimization Analytics"
         />
+      )}
+
+      {activeTab === 'revenue-settings' && (
+        <RevenueSettings />
       )}
 
       {activeTab === 'performance' && (
