@@ -187,6 +187,42 @@ model SystemAnalytics {
   @@map("system_analytics")
 }
 
+model pricingModel {
+  id                    String   @id @default(cuid())
+  agencyId              String?  // Agency-specific pricing
+  name                  String   // "Standard", "Peak Hours", "Weekend"
+  isActive              Boolean  @default(true)
+  
+  // Base Pricing
+  baseRates             Json     // Transport level base rates
+  perMileRates          Json     // Per-mile rates by transport level
+  priorityMultipliers   Json     // Priority-based multipliers
+  
+  // Time-based Pricing
+  peakHourMultipliers   Json     // Time-of-day multipliers
+  weekendMultipliers    Json     // Weekend/holiday multipliers
+  seasonalMultipliers   Json     // Seasonal pricing adjustments
+  
+  // Geographic Pricing
+  zoneMultipliers       Json     // Geographic zone multipliers
+  distanceTiers         Json     // Distance-based pricing tiers
+  
+  // Service-specific Pricing
+  specialRequirements   Json     // Special equipment/needs pricing
+  isolationPricing      Decimal? @db.Decimal(8,2)
+  bariatricPricing      Decimal? @db.Decimal(8,2)
+  oxygenPricing         Decimal? @db.Decimal(8,2)
+  monitoringPricing     Decimal? @db.Decimal(8,2)
+  
+  // Insurance-specific Rates
+  insuranceRates        Json     // Insurance company specific rates
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  @@map("pricing_models")
+}
+
 // Backhaul opportunities tracking (Added per audit report)
 model BackhaulOpportunities {
   id            String    @id @default(cuid())
