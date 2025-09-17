@@ -23,6 +23,7 @@ import NotificationSettings from './NotificationSettings';
 import UserManagement from './UserManagement';
 import TCCUnitsManagement from './TCCUnitsManagement';
 import TCCRouteOptimizer from './TCCRouteOptimizer';
+import Analytics from './Analytics';
 
 interface User {
   id: string;
@@ -47,6 +48,7 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
     const baseNavigation = [
       { name: 'Overview', href: '/dashboard', icon: Home },
       { name: 'Trips', href: '/dashboard/trips', icon: Truck },
+      { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
       { name: 'Units', href: '/dashboard/units', icon: Truck },
       { name: 'Healthcare Facilities', href: '/dashboard/hospitals', icon: Building2 },
       { name: 'EMS Agencies', href: '/dashboard/agencies', icon: Truck },
@@ -222,6 +224,7 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
               <Routes>
                 <Route path="/" element={<Overview />} />
                 <Route path="/trips" element={<TripsView user={user} />} />
+                <Route path="/analytics" element={<Analytics />} />
                 <Route path="/units" element={<TCCUnitsManagement />} />
                 <Route path="/hospitals/*" element={<Hospitals />} />
                 <Route path="/agencies/*" element={<Agencies />} />
