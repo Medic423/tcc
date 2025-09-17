@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart3, TrendingUp, Activity, DollarSign } from 'lucide-react';
+import { BarChart3, TrendingUp, Activity, DollarSign, Settings } from 'lucide-react';
 import RevenueOptimizationPanel from './RevenueOptimizationPanel';
+import RevenueSettings from './RevenueSettings';
 import { emsAnalyticsAPI } from '../services/api';
 
 interface EMSAnalyticsProps {
@@ -27,6 +28,7 @@ const EMSAnalytics: React.FC<EMSAnalyticsProps> = ({ user }) => {
     { id: 'overview', name: 'Overview', icon: BarChart3 },
     { id: 'performance', name: 'Performance', icon: TrendingUp },
     { id: 'units', name: 'Unit Management', icon: Activity },
+    { id: 'revenue-settings', name: 'Revenue Settings', icon: Settings },
   ];
 
   const loadAgencyAnalytics = async () => {
@@ -112,8 +114,23 @@ const EMSAnalytics: React.FC<EMSAnalyticsProps> = ({ user }) => {
             </div>
           )}
 
-          {!loading && !error && overview && trips && (
+          {!loading && !error && (
             <>
+              {/* Agency Header */}
+              <div className="bg-white shadow rounded-lg p-6 mb-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-xl font-semibold text-gray-900">{overview?.agencyName || user.agencyName || 'Your Agency'}</h2>
+                    <p className="text-sm text-gray-500">Agency Performance Dashboard</p>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm text-gray-500">Last Updated</div>
+                    <div className="text-sm font-medium text-gray-900">{new Date().toLocaleTimeString()}</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Key Metrics */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div className="bg-white overflow-hidden shadow rounded-lg">
                   <div className="p-5">
@@ -124,7 +141,7 @@ const EMSAnalytics: React.FC<EMSAnalyticsProps> = ({ user }) => {
                       <div className="ml-5 w-0 flex-1">
                         <dl>
                           <dt className="text-sm font-medium text-gray-500 truncate">Total Trips</dt>
-                          <dd className="text-lg font-medium text-gray-900">{overview.totalTrips}</dd>
+                          <dd className="text-lg font-medium text-gray-900">{overview?.totalTrips || 0}</dd>
                         </dl>
                       </div>
                     </div>
@@ -139,8 +156,8 @@ const EMSAnalytics: React.FC<EMSAnalyticsProps> = ({ user }) => {
                       </div>
                       <div className="ml-5 w-0 flex-1">
                         <dl>
-                          <dt className="text-sm font-medium text-gray-500 truncate">Completed Trips</dt>
-                          <dd className="text-lg font-medium text-gray-900">{overview.completedTrips}</dd>
+                          <dt className="text-sm font-medium text-gray-500 truncate">Completed</dt>
+                          <dd className="text-lg font-medium text-gray-900">{overview?.completedTrips || 0}</dd>
                         </dl>
                       </div>
                     </div>
@@ -156,7 +173,7 @@ const EMSAnalytics: React.FC<EMSAnalyticsProps> = ({ user }) => {
                       <div className="ml-5 w-0 flex-1">
                         <dl>
                           <dt className="text-sm font-medium text-gray-500 truncate">Efficiency</dt>
-                          <dd className="text-lg font-medium text-gray-900">{`${(overview.efficiency * 100).toFixed(1)}%`}</dd>
+                          <dd className="text-lg font-medium text-gray-900">{overview?.efficiency ? `${(overview.efficiency * 100).toFixed(1)}%` : '0%'}</dd>
                         </dl>
                       </div>
                     </div>
@@ -171,8 +188,8 @@ const EMSAnalytics: React.FC<EMSAnalyticsProps> = ({ user }) => {
                       </div>
                       <div className="ml-5 w-0 flex-1">
                         <dl>
-                          <dt className="text-sm font-medium text-gray-500 truncate">Avg Response Time</dt>
-                          <dd className="text-lg font-medium text-gray-900">{overview.averageResponseTime ? `${overview.averageResponseTime.toFixed(1)} min` : '0 min'}</dd>
+                          <dt className="text-sm font-medium text-gray-500 truncate">Avg Response</dt>
+                          <dd className="text-lg font-medium text-gray-900">{overview?.averageResponseTime ? `${overview.averageResponseTime.toFixed(1)} min` : '0 min'}</dd>
                         </dl>
                       </div>
                     </div>
@@ -180,43 +197,60 @@ const EMSAnalytics: React.FC<EMSAnalyticsProps> = ({ user }) => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-white shadow rounded-lg p-6">
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Trip Status Breakdown</h3>
-                  <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-500">Completed</span>
-                      <span className="text-sm font-medium text-gray-900">{trips.completedTrips}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-500">Pending</span>
-                      <span className="text-sm font-medium text-gray-900">{trips.pendingTrips}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-500">Cancelled</span>
-                      <span className="text-sm font-medium text-gray-900">{trips.cancelledTrips}</span>
+              {/* Trip Statistics */}
+              {trips && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="bg-white shadow rounded-lg p-6">
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">Trip Status Breakdown</h3>
+                    <div className="space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-500">Completed</span>
+                        <span className="text-sm font-medium text-gray-900">{trips.completedTrips || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-500">Pending</span>
+                        <span className="text-sm font-medium text-gray-900">{trips.pendingTrips || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-500">Cancelled</span>
+                        <span className="text-sm font-medium text-gray-900">{trips.cancelledTrips || 0}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="bg-white shadow rounded-lg p-6">
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Transport Level Distribution</h3>
-                  <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-500">BLS</span>
-                      <span className="text-sm font-medium text-gray-900">{trips.tripsByLevel?.BLS || 0}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-500">ALS</span>
-                      <span className="text-sm font-medium text-gray-900">{trips.tripsByLevel?.ALS || 0}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-500">CCT</span>
-                      <span className="text-sm font-medium text-gray-900">{trips.tripsByLevel?.CCT || 0}</span>
+                  <div className="bg-white shadow rounded-lg p-6">
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">Transport Level Distribution</h3>
+                    <div className="space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-500">BLS</span>
+                        <span className="text-sm font-medium text-gray-900">{trips.tripsByLevel?.BLS || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-500">ALS</span>
+                        <span className="text-sm font-medium text-gray-900">{trips.tripsByLevel?.ALS || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-500">CCT</span>
+                        <span className="text-sm font-medium text-gray-900">{trips.tripsByLevel?.CCT || 0}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
+              )}
+
+              {/* Empty State Message */}
+              {overview && overview.totalTrips === 0 && (
+                <div className="bg-blue-50 border border-blue-200 rounded-md p-6">
+                  <div className="text-center">
+                    <BarChart3 className="mx-auto h-12 w-12 text-blue-400" />
+                    <h3 className="mt-2 text-sm font-medium text-blue-900">No Trips Yet</h3>
+                    <p className="mt-1 text-sm text-blue-700">
+                      Your agency hasn't been assigned any trips yet. Once trips are assigned, 
+                      you'll see detailed analytics and performance metrics here.
+                    </p>
+                  </div>
+                </div>
+              )}
             </>
           )}
         </div>
@@ -478,6 +512,10 @@ const EMSAnalytics: React.FC<EMSAnalyticsProps> = ({ user }) => {
             </div>
           </div>
         </div>
+      )}
+
+      {activeTab === 'revenue-settings' && (
+        <RevenueSettings />
       )}
     </div>
   );

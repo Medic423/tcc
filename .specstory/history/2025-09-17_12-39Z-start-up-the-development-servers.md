@@ -4470,3 +4470,691 @@ _**Assistant**_
 
 ---
 
+You're right! Let me investigate why the analytics tiles aren't updating with real data. Let me check the current state and debug this issue.
+
+
+---
+
+<details>
+                <summary>Searched codebase "How are the analytics API endpoints implemented in the backend?" • **15** results</summary>
+            
+| File | Lines |
+|------|-------|
+| `backend/src/routes/analytics.ts` | Lundefined-29 |
+| `backend/src/routes/units.ts` | L44-127 |
+| `backend/src/routes/productionUnits.ts` | L23-51 |
+| `backend/src/routes/emsAnalytics.ts` | L44-161 |
+| `backend/src/routes/emsAnalytics.ts` | L167-278 |
+| `backend/src/routes/analytics.ts` | L4-51 |
+| `backend/src/routes/analytics.ts` | L13-73 |
+| `backend/src/routes/emsAnalytics.ts` | L18-161 |
+| `backend/src/routes/optimization.ts` | L17-158 |
+| `backend/src/routes/analytics.ts` | L57-97 |
+| `backend/src/index.ts` | L78-81 |
+| `backend/src/routes/analytics.ts` | L35-95 |
+| `backend/src/index.ts` | L81-84 |
+| `backend/src/routes/emsAnalytics.ts` | Lundefined-16 |
+| `backend/src/routes/optimization.ts` | L93-163 |
+
+</details>
+
+---
+
+Let me check the analytics service implementation:
+
+
+---
+
+Read file: undefined
+
+---
+
+Now let me check the analytics routes to see if they're properly implemented:
+
+
+---
+
+Read file: undefined
+
+---
+
+The backend looks correct. Let me check if the analytics routes are properly registered in the main index file:
+
+
+---
+
+
+
+---
+
+The backend routes are properly registered. Let me check if there's an issue with the frontend API calls. Let me test the frontend directly by checking the browser console:
+
+
+---
+
+```bash
+curl -s "http://localhost:3000" | grep -o "src=\"/src/[^\"]*" | head -5
+```
+
+```
+src="/src/main.tsx?t=1758125910754
+
+```
+
+---
+
+Let me check if there's an issue with the API base URL configuration in the frontend:
+
+
+---
+
+Read file: undefined
+
+---
+
+The API configuration looks correct. Let me check if there's an issue with the Analytics component's data loading. Let me add some debugging to see what's happening:
+
+
+---
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/Analytics.tsx</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 12, lines removed: 1
+
+```diff
+@@ -59,19 +59,30 @@
+        setLoading(true);
+        setError(null);
++       
++       console.log('🔍 Analytics: Loading analytics data...');
+        
+        const [overviewResponse, tripsResponse] = await Promise.all([
+          analyticsAPI.getOverview(),
+          analyticsAPI.getTrips()
+        ]);
++ 
++       console.log('🔍 Analytics: Overview response:', overviewResponse);
++       console.log('🔍 Analytics: Trips response:', tripsResponse);
+  
+        if (overviewResponse.data?.success) {
++         console.log('🔍 Analytics: Setting overview data:', overviewResponse.data.data);
+          setOverview(overviewResponse.data.data);
++       } else {
++         console.warn('🔍 Analytics: Overview response not successful:', overviewResponse.data);
+        }
+  
+        if (tripsResponse.data?.success) {
++         console.log('🔍 Analytics: Setting trip stats data:', tripsResponse.data.data);
+          setTripStats(tripsResponse.data.data);
++       } else {
++         console.warn('🔍 Analytics: Trips response not successful:', tripsResponse.data);
+        }
+      } catch (err: any) {
+-       console.error('Error loading analytics data:', err);
++       console.error('🔍 Analytics: Error loading analytics data:', err);
+        setError(err.response?.data?.error || 'Failed to load analytics data');
+      } finally {
+```
+
+</details>
+
+---
+
+Now let me also add some debugging to see what data is being displayed:
+
+
+---
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/Analytics.tsx</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 13, lines removed: undefined
+
+```diff
+@@ -136,4 +136,17 @@
+            ) : (
+              <>
++               {/* Debug Info */}
++               {process.env.NODE_ENV === 'development' && (
++                 <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 mb-4">
++                   <div className="text-sm text-yellow-800">
++                     <strong>Debug Info:</strong><br/>
++                     Overview: {overview ? 'Loaded' : 'Not loaded'} | 
++                     Trip Stats: {tripStats ? 'Loaded' : 'Not loaded'}<br/>
++                     Overview Data: {JSON.stringify(overview, null, 2)}<br/>
++                     Trip Stats Data: {JSON.stringify(tripStats, null, 2)}
++                   </div>
++                 </div>
++               )}
++               
+                {/* System Overview Stats */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+```
+
+</details>
+
+---
+
+Now let me test this by opening the frontend and checking the console. But first, let me check if there might be an authentication issue. Let me test the API with a proper token:
+
+
+---
+
+```bash
+TOKEN=$(curl -s -X POST http://localhost:5001/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "admin@tcc.com", "password": "admin123"}' | jq -r '.token') && \
+echo "Token: $TOKEN" && \
+curl -s "http://localhost:5001/api/tcc/analytics/overview" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" | jq .
+```
+
+```
+Token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtZmVlNzN1YjAwMDAxMTFpajUzMWhsamMiLCJlbWFpbCI6ImFkbWluQHRjYy5jb20iLCJ1c2VyVHlwZSI6IkFETUlOIiwiaWF0IjoxNzU4MTI2MjEzLCJleHAiOjE3NTgyMTI2MTN9.yTRfVoxGObJlryAe4BgR8s1NOMxFGf0fLfMJeLO5shw
+{
+  "success": true,
+  "data": {
+    "totalHospitals": 35,
+    "totalAgencies": 3,
+    "totalFacilities": 35,
+    "activeHospitals": 33,
+    "activeAgencies": 3,
+    "activeFacilities": 33,
+    "totalUnits": 0,
+    "activeUnits": 0
+  }
+}
+
+```
+
+---
+
+The API is working correctly. The issue might be that the frontend is not properly authenticated or there's a CORS issue. Let me check if the frontend is making the API calls correctly by looking at the browser's network tab. But first, let me check if there's a simpler issue - maybe the Analytics component is not being rendered at all.
+
+Let me check if the Analytics component is being used in the main app:
+
+
+---
+
+
+
+---
+
+I can see that the Analytics component is being used. Let me check if it's being imported and used in the main App component:
+
+
+---
+
+
+
+---
+
+Let me check the main App component to see how Analytics is being used:
+
+
+---
+
+Read file: undefined
+
+---
+
+Now let me check the TCCDashboard to see if it includes the Analytics component:
+
+
+---
+
+Read file: undefined
+
+---
+
+Let me see more of the TCCDashboard to find the Analytics component:
+
+
+---
+
+
+
+---
+
+Ah! The Analytics component is not being used in the TCCDashboard. That's the issue! Let me add it:
+
+
+---
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/TCCDashboard.tsx</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 1, lines removed: undefined
+
+```diff
+@@ -24,4 +24,5 @@
+  import TCCUnitsManagement from './TCCUnitsManagement';
+  import TCCRouteOptimizer from './TCCRouteOptimizer';
++ import Analytics from './Analytics';
+  
+  interface User {
+```
+
+</details>
+
+---
+
+Now let me add Analytics to the navigation menu:
+
+
+---
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/TCCDashboard.tsx</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 1, lines removed: undefined
+
+```diff
+@@ -49,4 +49,5 @@
+        { name: 'Overview', href: '/dashboard', icon: Home },
+        { name: 'Trips', href: '/dashboard/trips', icon: Truck },
++       { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
+        { name: 'Units', href: '/dashboard/units', icon: Truck },
+        { name: 'Healthcare Facilities', href: '/dashboard/hospitals', icon: Building2 },
+```
+
+</details>
+
+---
+
+Now let me add the Analytics route to the Routes section:
+
+
+---
+
+
+
+---
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/TCCDashboard.tsx</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 1, lines removed: undefined
+
+```diff
+@@ -225,4 +225,5 @@
+                  <Route path="/" element={<Overview />} />
+                  <Route path="/trips" element={<TripsView user={user} />} />
++                 <Route path="/analytics" element={<Analytics />} />
+                  <Route path="/units" element={<TCCUnitsManagement />} />
+                  <Route path="/hospitals/*" element={<Hospitals />} />
+```
+
+</details>
+
+---
+
+Now let me remove the debug information from the Analytics component since we found the issue:
+
+
+---
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/Analytics.tsx</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: undefined, lines removed: 13
+
+```diff
+@@ -136,17 +136,4 @@
+            ) : (
+              <>
+-               {/* Debug Info */}
+-               {process.env.NODE_ENV === 'development' && (
+-                 <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 mb-4">
+-                   <div className="text-sm text-yellow-800">
+-                     <strong>Debug Info:</strong><br/>
+-                     Overview: {overview ? 'Loaded' : 'Not loaded'} | 
+-                     Trip Stats: {tripStats ? 'Loaded' : 'Not loaded'}<br/>
+-                     Overview Data: {JSON.stringify(overview, null, 2)}<br/>
+-                     Trip Stats Data: {JSON.stringify(tripStats, null, 2)}
+-                   </div>
+-                 </div>
+-               )}
+-               
+                {/* System Overview Stats */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+```
+
+</details>
+
+---
+
+Let me also clean up the console.log statements:
+
+
+---
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/Analytics.tsx</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 1, lines removed: 12
+
+```diff
+@@ -59,30 +59,19 @@
+        setLoading(true);
+        setError(null);
+-       
+-       console.log('🔍 Analytics: Loading analytics data...');
+        
+        const [overviewResponse, tripsResponse] = await Promise.all([
+          analyticsAPI.getOverview(),
+          analyticsAPI.getTrips()
+        ]);
+- 
+-       console.log('🔍 Analytics: Overview response:', overviewResponse);
+-       console.log('🔍 Analytics: Trips response:', tripsResponse);
+  
+        if (overviewResponse.data?.success) {
+-         console.log('🔍 Analytics: Setting overview data:', overviewResponse.data.data);
+          setOverview(overviewResponse.data.data);
+-       } else {
+-         console.warn('🔍 Analytics: Overview response not successful:', overviewResponse.data);
+        }
+  
+        if (tripsResponse.data?.success) {
+-         console.log('🔍 Analytics: Setting trip stats data:', tripsResponse.data.data);
+          setTripStats(tripsResponse.data.data);
+-       } else {
+-         console.warn('🔍 Analytics: Trips response not successful:', tripsResponse.data);
+        }
+      } catch (err: any) {
+-       console.error('🔍 Analytics: Error loading analytics data:', err);
++       console.error('Error loading analytics data:', err);
+        setError(err.response?.data?.error || 'Failed to load analytics data');
+      } finally {
+```
+
+</details>
+
+---
+
+Now let me check for any linting errors:
+
+
+---
+
+
+
+---
+
+Perfect! Now let me test the changes by checking if the frontend loads correctly:
+
+
+---
+
+```bash
+curl -s http://localhost:3000 | head -10
+```
+
+```
+<!doctype html>
+<html lang="en">
+  <head>
+    <script type="module">import { injectIntoGlobalHook } from "/@react-refresh";
+injectIntoGlobalHook(window);
+window.$RefreshReg$ = () => {};
+window.$RefreshSig$ = () => (type) => type;</script>
+
+    <script type="module" src="/@vite/client"></script>
+
+
+```
+
+---
+
+Great! Now let me commit these changes:
+
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git add .
+```
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git commit -m "fix: Add Analytics component to TCC Dashboard navigation
+
+- Import Analytics component in TCCDashboard
+- Add Analytics to navigation menu with BarChart3 icon
+- Add /analytics route to TCCDashboard Routes
+- Remove debug console.log statements from Analytics component
+- Analytics tiles should now be accessible and display real database data
+
+Fixes issue where Analytics component was not accessible in TCC Dashboard."
+```
+
+```
+[feature/analytics-route-optimization-completion 6f2b32f] fix: Add Analytics component to TCC Dashboard navigation
+ 3 files changed, 906 insertions(+), 1 deletion(-)
+
+```
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git push origin feature/analytics-route-optimization-completion
+```
+
+```
+To https://github.com/Medic423/tcc
+   cbe58bf..6f2b32f  feature/analytics-route-optimization-completion -> feature/analytics-route-optimization-completion
+
+```
+
+---
+
+## ✅ **ANALYTICS TILES FIXED!**
+
+I found and fixed the issue! The problem was that the **Analytics component wasn't included in the TCC Dashboard navigation** at all.
+
+### 🔧 **What Was Wrong:**
+- The Analytics component was created and working correctly
+- The backend APIs were returning real data
+- But the Analytics component was **never added to the TCC Dashboard navigation**
+- So users couldn't access it to see the analytics tiles
+
+### ✅ **What I Fixed:**
+
+1. **Added Analytics to TCC Dashboard:**
+   - Imported `Analytics` component in `TCCDashboard.tsx`
+   - Added "Analytics" to the navigation menu with BarChart3 icon
+   - Added `/analytics` route to the Routes section
+
+2. **Cleaned Up Code:**
+   - Removed debug console.log statements
+   - Removed temporary debug UI elements
+
+### 🎯 **Now You Can:**
+
+1. **Access Analytics:** Go to TCC Dashboard → "Analytics" in the sidebar
+2. **See Real Data:** All tiles now show live database values:
+   - **Healthcare Facilities**: 35 total (33 active)
+   - **EMS Agencies**: 3 total (3 active) 
+   - **Total Trips**: 108 (35 pending, 46 completed)
+   - **Trip Distribution**: BLS (36), ALS (40), CCT (32)
+   - **Priority Breakdown**: Low (21), Medium (25), High (27), Urgent (17)
+
+3. **Use Revenue Settings:** Available in both TCC Analytics and EMS Dashboard
+
+The analytics tiles should now be fully functional and displaying real-time data from your database! 🚀
+
+---
+
+_**User (2025-09-17 13:32Z)**_
+
+Yes, looks good. This works perfectly. I think what was missed is that this Analytics should also be in the EMS tab and limited to the scope of the agency logging in. Does that make scense?
+
+---
+
+_**Assistant**_
+
+Absolutely! That makes perfect sense. The EMS Dashboard should have agency-specific analytics that only show data relevant to the logged-in EMS agency, not system-wide data. Let me implement that.
+
+
+---
+
+## Todo List
+
+- [-] Create agency-specific analytics for EMS Dashboard showing only data for the logged-in agency
+- [ ] Update EMS Analytics component to use agency-scoped data instead of system-wide data
+- [ ] Test that EMS analytics show only agency-specific data
+
+---
+
+Let me first check the current EMS Analytics component to see what needs to be updated:
+
+
+---
+
+Read file: undefined
+
+---
+
+I can see that the EMS Analytics component is already using the `emsAnalyticsAPI` which should be agency-specific. Let me check what the EMS analytics API endpoints return and make sure they're properly scoped to the agency:
+
+
+---
+
+```bash
+TOKEN=$(curl -s -X POST http://localhost:5001/api/auth/ems/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "fferguson@movalleyems.com", "password": "movalley123"}' | jq -r '.token') && \
+echo "EMS Token: $TOKEN" && \
+curl -s "http://localhost:5001/api/ems/analytics/overview" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" | jq .
+```
+
+```
+EMS Token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtZm82azRkZTAwMDExMmQydXU2MGVvZ3EiLCJlbWFpbCI6ImZmZXJndXNvbkBtb3ZhbGxleWVtcy5jb20iLCJ1c2VyVHlwZSI6IkVNUyIsImlhdCI6MTc1ODEyNjQ3NiwiZXhwIjoxNzU4MjEyODc2fQ.l8wB3bQXJaLRYRmOLC-9p8TFr5jaRbLIcEH9nH1xWp8
+{
+  "success": true,
+  "data": {
+    "totalTrips": 0,
+    "completedTrips": 0,
+    "pendingTrips": 0,
+    "efficiency": 0,
+    "averageResponseTime": 0,
+    "agencyName": "Mountain Valley EMS"
+  }
+}
+
+```
+
+---
+
+```bash
+TOKEN=$(curl -s -X POST http://localhost:5001/api/auth/ems/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "fferguson@movalleyems.com", "password": "movalley123"}' | jq -r '.token') && \
+curl -s "http://localhost:5001/api/ems/analytics/trips" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" | jq .
+```
+
+```
+{
+  "success": true,
+  "data": {
+    "totalTrips": 0,
+    "completedTrips": 0,
+    "pendingTrips": 0,
+    "cancelledTrips": 0,
+    "tripsByLevel": {
+      "BLS": 0,
+      "ALS": 0,
+      "CCT": 0
+    },
+    "tripsByPriority": {
+      "LOW": 0,
+      "MEDIUM": 0,
+      "HIGH": 0,
+      "URGENT": 0,
+      "CRITICAL": 0
+    },
+    "averageTripDuration": 0
+  }
+}
+
+```
+
+---
+
+Perfect! The EMS analytics API is already working and returning agency-specific data (showing 0 trips for Mountain Valley EMS since they haven't been assigned any trips yet). The issue is that the EMS Analytics component needs to be updated to display this data properly in a more user-friendly format, similar to the TCC Analytics but scoped to the agency.
+
+Let me update the EMS Analytics component to have a better overview section with agency-specific metrics:
+
+
+---
+
+The string to replace was not found in the file.
+
+---
+
+Let me read the current EMS Analytics component to see its structure:
+
+
+---
+
+Read file: undefined
+
+---
+
+I can see the EMS Analytics component is already well-structured and shows agency-specific data. The issue might be that it's not displaying data when there are no trips assigned to the agency yet. Let me improve the display to handle empty states better and add more agency-specific information. Let me also add a revenue settings tab to the EMS Analytics:
+
+
+---
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/EMSAnalytics.tsx</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 2, lines removed: 1
+
+```diff
+@@ -1,5 +1,6 @@
+  import React, { useState, useEffect } from 'react';
+- import { BarChart3, TrendingUp, Activity, DollarSign } from 'lucide-react';
++ import { BarChart3, TrendingUp, Activity, DollarSign, Settings } from 'lucide-react';
+  import RevenueOptimizationPanel from './RevenueOptimizationPanel';
++ import RevenueSettings from './RevenueSettings';
+  import { emsAnalyticsAPI } from '../services/api';
+  
+```
+
+</details>
+
+---
+
+
+
+---
+
+
+
+---
+
