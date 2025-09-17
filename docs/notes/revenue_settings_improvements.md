@@ -1,5 +1,6 @@
 # Revenue Settings Enhancement Plan
 
+<<<<<<< HEAD
 ## 📊 Progress Summary
 - **Phase 1 (Crew Cost Management)**: ✅ **COMPLETED** - All crew cost tracking, vehicle costs, and profitability analysis implemented
 - **Phase 2 (Advanced Pricing Models)**: ✅ **COMPLETED** - Time-based, geographic, and service-specific pricing
@@ -7,6 +8,8 @@
 - **Phase 4 (Cost Analysis & Profitability)**: ✅ **COMPLETED** - Detailed cost breakdowns and analysis
 - **Phase 5 (Real-time Optimization)**: ✅ **COMPLETED** - Live optimization engine and what-if scenarios
 
+=======
+>>>>>>> 013b3748 (docs: Add comprehensive revenue settings enhancement plan)
 ## Overview
 Based on the revenue routes analysis document (`2_revenue_routes_af.md`) and our current database schema, this plan outlines comprehensive enhancements to the revenue calculation system to support advanced route optimization and cost modeling.
 
@@ -316,6 +319,7 @@ model RevenueOptimizationRun {
 
 ### 7. Implementation Phases
 
+<<<<<<< HEAD
 #### Phase 1: Crew Cost Management (Week 1-2) ✅ COMPLETED
 **Database Changes:**
 - ✅ Added crew cost fields to Unit model in EMS schema (crewSize, crewComposition, baseHourlyRate, overtimeMultiplier, shiftLengthHours, maxOvertimeHours)
@@ -522,6 +526,32 @@ model RevenueOptimizationRun {
 - ✅ Backend optimization engine processing scenarios correctly
 - ✅ User tutorial created and documented
 - ✅ All Phase 5 deliverables completed successfully
+=======
+#### Phase 1: Crew Cost Management (Week 1-2)
+- Add crew role model and unit cost fields
+- Implement crew cost calculation in revenue settings
+- Add crew management UI to revenue settings
+
+#### Phase 2: Advanced Pricing Models (Week 3-4)
+- Create pricing model system
+- Implement time-based and geographic pricing
+- Add advanced pricing controls to UI
+
+#### Phase 3: Route Optimization Parameters (Week 5-6)
+- Add route optimization settings model
+- Implement optimization weight controls
+- Add constraint and target settings
+
+#### Phase 4: Cost Analysis & Profitability (Week 7-8)
+- Create trip cost breakdown system
+- Implement detailed cost tracking
+- Add profitability analysis tools
+
+#### Phase 5: Real-time Optimization (Week 9-10)
+- Build revenue optimization engine
+- Implement real-time optimization
+- Add what-if scenario modeling
+>>>>>>> 013b3748 (docs: Add comprehensive revenue settings enhancement plan)
 
 ### 8. Expected Benefits
 
