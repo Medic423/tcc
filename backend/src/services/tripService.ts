@@ -29,6 +29,7 @@ export interface EnhancedCreateTripRequest {
   
   // Trip Details
   fromLocation: string;
+  pickupLocationId?: string; // Reference to specific pickup location within hospital
   toLocation: string;
   scheduledTime: string; // ISO string
   transportLevel: 'BLS' | 'ALS' | 'CCT' | 'Other';
@@ -107,6 +108,7 @@ export class TripService {
         specialNeeds: data.specialNeeds || null,
         insuranceCompany: data.insuranceCompany || null,
         fromLocation: data.fromLocation,
+        pickupLocationId: data.pickupLocationId || null,
         toLocation: data.toLocation,
         scheduledTime: scheduledTime,
         transportLevel: data.transportLevel,
