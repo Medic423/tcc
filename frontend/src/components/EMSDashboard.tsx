@@ -77,6 +77,7 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
             patientId: trip.patientId,
             origin: trip.fromLocation,
             destination: trip.toLocation,
+            pickupLocation: trip.pickupLocation,
             transportLevel: trip.transportLevel || 'BLS',
             priority: trip.priority,
             distance: '12.5 miles', // Mock data
@@ -104,6 +105,7 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
             patientId: trip.patientId,
             origin: trip.fromLocation,
             destination: trip.toLocation,
+            pickupLocation: trip.pickupLocation,
             transportLevel: trip.transportLevel || 'BLS',
             priority: trip.priority,
             status: trip.status,
@@ -531,6 +533,13 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
                             <p className="text-sm text-gray-500">
                               {trip.origin} → {trip.destination}
                             </p>
+                            {trip.pickupLocation && (
+                              <div className="mt-1 text-sm text-blue-600">
+                                <span className="font-medium">Pickup:</span> {trip.pickupLocation.name}
+                                {trip.pickupLocation.floor && ` (Floor ${trip.pickupLocation.floor})`}
+                                {trip.pickupLocation.room && ` - Room ${trip.pickupLocation.room}`}
+                              </div>
+                            )}
                           </div>
                           <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(trip.priority)}`}>
                             {trip.priority}
@@ -604,6 +613,13 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
                       <p className="text-sm text-gray-500 mt-1">
                         {trip.origin} → {trip.destination}
                       </p>
+                      {trip.pickupLocation && (
+                        <div className="mt-1 text-sm text-blue-600">
+                          <span className="font-medium">Pickup:</span> {trip.pickupLocation.name}
+                          {trip.pickupLocation.floor && ` (Floor ${trip.pickupLocation.floor})`}
+                          {trip.pickupLocation.room && ` - Room ${trip.pickupLocation.room}`}
+                        </div>
+                      )}
                       <div className="mt-2 text-sm text-gray-600">
                         <span className="font-medium">Pickup Time:</span> {trip.pickupTime}
                       </div>

@@ -70,6 +70,7 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
             id: trip.id,
             patientId: trip.patientName,
             destination: trip.toLocation,
+            pickupLocation: trip.pickupLocation,
             transportLevel: 'BLS', // Default since not in current schema
             status: trip.status,
             requestTime: new Date(trip.createdAt).toLocaleString(),
@@ -320,6 +321,13 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                             <p className="text-sm font-medium text-gray-900">
                               Patient {trip.patientId} - {trip.destination}
                             </p>
+                            {trip.pickupLocation && (
+                              <p className="text-xs text-blue-600">
+                                Pickup: {trip.pickupLocation.name}
+                                {trip.pickupLocation.floor && ` (Floor ${trip.pickupLocation.floor})`}
+                                {trip.pickupLocation.room && ` - Room ${trip.pickupLocation.room}`}
+                              </p>
+                            )}
                             <p className="text-xs text-gray-500">
                               {trip.transportLevel} • {trip.priority} Priority • {trip.requestTime}
                             </p>
@@ -365,6 +373,9 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                       Destination
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Pickup Location
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Level
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -386,6 +397,21 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {trip.destination}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {trip.pickupLocation ? (
+                          <div>
+                            <div className="font-medium text-gray-900">{trip.pickupLocation.name}</div>
+                            {trip.pickupLocation.floor && (
+                              <div className="text-xs text-gray-500">Floor: {trip.pickupLocation.floor}</div>
+                            )}
+                            {trip.pickupLocation.room && (
+                              <div className="text-xs text-gray-500">Room: {trip.pickupLocation.room}</div>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-gray-400 italic">No specific location</span>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {trip.transportLevel}
