@@ -30,6 +30,13 @@ router.get('/', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
       orderBy: {
         timestamp: 'desc'
       },
+      select: {
+        id: true,
+        metricName: true,
+        metricValue: true,
+        timestamp: true,
+        userId: true
+      },
       take: 50 // Limit to last 50 notifications
     });
 

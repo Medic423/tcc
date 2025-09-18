@@ -3,6 +3,7 @@ import { RevenueOptimizer } from '../services/revenueOptimizer';
 import { BackhaulDetector } from '../services/backhaulDetector';
 import { MultiUnitOptimizer } from '../services/multiUnitOptimizer';
 import { databaseManager } from '../services/databaseManager';
+import { authenticateAdmin } from '../middleware/authenticateAdmin';
 
 const router = express.Router();
 
@@ -645,6 +646,48 @@ router.post('/what-if', async (req, res) => {
       error: 'Internal server error during what-if analysis'
     });
   }
+});
+
+/**
+ * GET /api/optimize/stream
+ * Server-Sent Events stream for real-time optimization metrics
+ */
+router.get('/stream', authenticateAdmin, async (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders?.();
+
+  const writeEvent = (event: string, data: any) => {
+    res.write(`event: ${event}\n`);
+    res.write(`data: ${JSON.stringify(data)}\n\n`);
+  };
+
+  writeEvent('connected', { ok: true, timestamp: new Date().toISOString() });
+
+  let isClosed = false;
+  req.on('close', () => {
+    isClosed = true;
+  });
+
+  const interval = setInterval(async () => {
+    if (isClosed) {
+      clearInterval(interval);
+      return;
+    }
+
+    try {
+      const now = new Date();
+      const start = new Date(now.getTime() - 5 * 60 * 1000);
+      const snapshot = await getPerformanceMetrics(start, now);
+      writeEvent('metrics', {
+        timestamp: new Date().toISOString(),
+        summary: snapshot
+      });
+    } catch (error) {
+      writeEvent('error', { message: 'Failed to compute metrics' });
+    }
+  }, 5000);
 });
 
 // Helper functions - Real database queries
