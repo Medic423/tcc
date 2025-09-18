@@ -46,7 +46,7 @@ interface PickupLocation {
 
 const HospitalSettings: React.FC = () => {
   // Tab state
-  const [activeTab, setActiveTab] = useState<'dropdowns' | 'pickup-locations'>('dropdowns');
+  const [activeTab, setActiveTab] = useState<'dropdowns' | 'pickup-locations' | 'main-contact'>('dropdowns');
   
   // Dropdown options state
   const [categories, setCategories] = useState<string[]>([]);
@@ -372,6 +372,16 @@ const HospitalSettings: React.FC = () => {
               }`}
             >
               Pickup Locations
+            </button>
+            <button
+              onClick={() => setActiveTab('main-contact')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'main-contact'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Main Contact
             </button>
           </nav>
         </div>
@@ -755,6 +765,115 @@ const HospitalSettings: React.FC = () => {
             </ul>
           </div>
         </>
+      )}
+
+      {activeTab === 'main-contact' && (
+        <div className="space-y-6">
+          <div className="bg-white shadow rounded-lg">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-medium text-gray-900">Main Contact Information</h3>
+              <p className="mt-1 text-sm text-gray-500">
+                Set the main contact person for this facility's administration of the TCC application.
+              </p>
+            </div>
+            <div className="px-6 py-6">
+              <form className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label htmlFor="contactName" className="block text-sm font-medium text-gray-700 mb-2">
+                      Contact Name *
+                    </label>
+                    <input
+                      type="text"
+                      id="contactName"
+                      name="contactName"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Enter contact name"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="contactTitle" className="block text-sm font-medium text-gray-700 mb-2">
+                      Title/Position
+                    </label>
+                    <input
+                      type="text"
+                      id="contactTitle"
+                      name="contactTitle"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="e.g., IT Director, Administrator"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label htmlFor="contactEmail" className="block text-sm font-medium text-gray-700 mb-2">
+                      Email Address *
+                    </label>
+                    <input
+                      type="email"
+                      id="contactEmail"
+                      name="contactEmail"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="contact@hospital.com"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="contactPhone" className="block text-sm font-medium text-gray-700 mb-2">
+                      Phone Number
+                    </label>
+                    <input
+                      type="tel"
+                      id="contactPhone"
+                      name="contactPhone"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="(555) 123-4567"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="contactNotes" className="block text-sm font-medium text-gray-700 mb-2">
+                    Additional Notes
+                  </label>
+                  <textarea
+                    id="contactNotes"
+                    name="contactNotes"
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Any additional information about this contact person..."
+                  />
+                </div>
+
+                <div className="flex justify-end space-x-3">
+                  <button
+                    type="button"
+                    className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  >
+                    Save Contact Information
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          {/* Instructions */}
+          <div className="p-4 bg-blue-50 border border-blue-200 rounded-md">
+            <h4 className="font-semibold text-blue-900 mb-2">Instructions</h4>
+            <ul className="text-sm text-blue-800 space-y-1">
+              <li>• This contact person will be the main administrator for this facility's TCC application</li>
+              <li>• They will receive notifications about system updates and important changes</li>
+              <li>• This information may be used for support and troubleshooting purposes</li>
+              <li>• Ensure the email address is monitored regularly for important communications</li>
+            </ul>
+          </div>
+        </div>
       )}
     </div>
   );
