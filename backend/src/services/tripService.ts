@@ -277,6 +277,25 @@ export class TripService {
 
       const trips = await prisma.trip.findMany({
         where,
+        include: {
+          pickupLocation: {
+            select: {
+              id: true,
+              name: true,
+              description: true,
+              contactPhone: true,
+              contactEmail: true,
+              floor: true,
+              room: true,
+              hospital: {
+                select: {
+                  id: true,
+                  name: true
+                }
+              }
+            }
+          }
+        },
         orderBy: {
           createdAt: 'desc',
         },
@@ -299,6 +318,25 @@ export class TripService {
     try {
       const trip = await prisma.trip.findUnique({
         where: { id },
+        include: {
+          pickupLocation: {
+            select: {
+              id: true,
+              name: true,
+              description: true,
+              contactPhone: true,
+              contactEmail: true,
+              floor: true,
+              room: true,
+              hospital: {
+                select: {
+                  id: true,
+                  name: true
+                }
+              }
+            }
+          }
+        }
       });
 
       if (!trip) {
