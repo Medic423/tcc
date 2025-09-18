@@ -423,14 +423,29 @@ const RevenueSettings: React.FC = () => {
     loadCostAnalysisData();
   }, [selectedPeriod, selectedDateRange]);
 
-  const startStream = () => {
+  const startStream = async () => {
     if (eventSourceRef.current) return;
-    const url = `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001'}/api/optimize/stream`;
-    const es = new EventSource(url, { withCredentials: true } as any);
+    
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.log('No token available for SSE connection');
+      return;
+    }
+
+    // Use token in URL for EventSource authentication
+    const url = `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001'}/api/optimize/stream?token=${encodeURIComponent(token)}`;
+    console.log('Creating EventSource connection to:', url);
+    const es = new EventSource(url);
     eventSourceRef.current = es;
-    es.addEventListener('connected', () => setStreamConnected(true));
+    
+    es.addEventListener('connected', (event) => {
+      console.log('SSE connected event received:', event);
+      setStreamConnected(true);
+    });
+    
     es.addEventListener('metrics', (evt: MessageEvent) => {
       try {
+        console.log('SSE metrics event received:', evt.data);
         const payload = JSON.parse((evt as any).data);
         const summary = payload.summary || payload;
         setRealtimeMetrics({
@@ -440,12 +455,29 @@ const RevenueSettings: React.FC = () => {
           averageTripTime: summary.averageTripTime || 0,
           totalRevenue: summary.totalRevenue || 0,
           efficiency: summary.efficiency || 0,
-          customerSatisfaction: summary.customerSatisfaction,
-          lastUpdated: payload.timestamp
+          customerSatisfaction: summary.customerSatisfaction || 4.2,
+          lastUpdated: payload.timestamp || new Date().toISOString()
         });
-      } catch {}
+      } catch (error) {
+        console.error('Error parsing SSE metrics:', error);
+      }
     });
-    es.addEventListener('error', () => setStreamConnected(false));
+    
+    es.addEventListener('error', (error) => {
+      console.error('SSE error event:', error);
+      setStreamConnected(false);
+    });
+    
+    es.onopen = () => {
+      console.log('SSE connection opened successfully');
+      setStreamConnected(true);
+    };
+    
+    es.onerror = (error) => {
+      console.error('SSE connection error:', error);
+      console.error('EventSource readyState:', es.readyState);
+      setStreamConnected(false);
+    };
   };
 
   const stopStream = () => {
@@ -456,15 +488,24 @@ const RevenueSettings: React.FC = () => {
     setStreamConnected(false);
   };
 
+  // Initialize SSE stream when component mounts and user is authenticated
   useEffect(() => {
-    if (!streamPaused) {
-      startStream();
-    } else {
-      stopStream();
+    const token = localStorage.getItem('token');
+    if (token && !streamPaused) {
+      startStream().catch(console.error);
     }
     return () => {
       stopStream();
     };
+  }, []);
+
+  // Handle stream pause/resume
+  useEffect(() => {
+    if (!streamPaused) {
+      startStream().catch(console.error);
+    } else {
+      stopStream();
+    }
   }, [streamPaused]);
 
   const loadSavedSettings = () => {
