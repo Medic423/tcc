@@ -40,6 +40,14 @@ router.post('/login', async (req, res) => {
     }
 
     console.log('TCC_DEBUG: Login successful, user ID in token:', result.user?.id);
+    // Set HttpOnly cookie for SSE/cookie-based auth
+    res.cookie('tcc_token', result.token, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 24 * 60 * 60 * 1000
+    });
+
     res.json({
       success: true,
       message: 'Login successful',
@@ -669,6 +677,14 @@ router.post('/ems/login', async (req, res) => {
       { expiresIn: '24h' }
     );
 
+    // Set HttpOnly cookie
+    res.cookie('tcc_token', token, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 24 * 60 * 60 * 1000
+    });
+
     res.json({
       success: true,
       message: 'Login successful',
@@ -748,6 +764,14 @@ router.post('/healthcare/login', async (req, res) => {
       process.env.JWT_SECRET || 'fallback-secret',
       { expiresIn: '24h' }
     );
+
+    // Set HttpOnly cookie
+    res.cookie('tcc_token', token, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 24 * 60 * 60 * 1000
+    });
 
     res.json({
       success: true,
