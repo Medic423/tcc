@@ -37,6 +37,7 @@ interface FormData {
   
   // Trip Details
   fromLocation: string;
+  pickupLocationId: string;
   toLocation: string;
   scheduledTime: string;
   transportLevel: string;
@@ -56,6 +57,24 @@ interface FormData {
   notes: string;
 }
 
+interface PickupLocation {
+  id: string;
+  hospitalId: string;
+  name: string;
+  description?: string;
+  contactPhone?: string;
+  contactEmail?: string;
+  floor?: string;
+  room?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  hospital?: {
+    id: string;
+    name: string;
+  };
+}
+
 interface FormOptions {
   diagnosis: string[];
   mobility: string[];
@@ -64,6 +83,7 @@ interface FormOptions {
   insurance: string[];
   facilities: any[];
   agencies: any[];
+  pickupLocations: PickupLocation[];
 }
 
 const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated, onCancel }) => {
@@ -78,7 +98,8 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
     urgency: [],
     insurance: [],
     facilities: [],
-    agencies: []
+    agencies: [],
+    pickupLocations: []
   });
 
   const [formData, setFormData] = useState<FormData>({
@@ -88,6 +109,7 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
     insuranceCompany: '',
     generateQRCode: false,
     fromLocation: user.facilityName || '',
+    pickupLocationId: '',
     toLocation: '',
     scheduledTime: '',
     transportLevel: 'BLS',
@@ -156,12 +178,52 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
     }
   };
 
+  const loadPickupLocationsForHospital = async (hospitalId: string) => {
+    try {
+      const response = await fetch(`/api/tcc/pickup-locations/hospital/${hospitalId}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setFormOptions(prev => ({
+            ...prev,
+            pickupLocations: data.data || []
+          }));
+        }
+      }
+    } catch (error) {
+      console.error('Error loading pickup locations:', error);
+    }
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
     }));
+
+    // Load pickup locations when fromLocation changes
+    if (name === 'fromLocation' && value) {
+      const selectedFacility = formOptions.facilities.find(f => f.name === value);
+      if (selectedFacility) {
+        loadPickupLocationsForHospital(selectedFacility.id);
+      } else {
+        // Clear pickup locations if facility not found
+        setFormOptions(prev => ({
+          ...prev,
+          pickupLocations: []
+        }));
+        setFormData(prev => ({
+          ...prev,
+          pickupLocationId: ''
+        }));
+      }
+    }
 
     // Load agencies when destination changes (only for selected facilities)
     if (name === 'toLocation' && value && destinationMode === 'select') {
@@ -378,17 +440,64 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   From Location *
                 </label>
-                <input
-                  type="text"
+                <select
                   name="fromLocation"
                   value={formData.fromLocation}
                   onChange={handleChange}
                   required
                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-                  placeholder="Origin facility"
-                />
+                >
+                  <option value="">Select origin facility</option>
+                  {formOptions.facilities.map((facility) => (
+                    <option key={facility.id} value={facility.name}>
+                      {facility.name} - {facility.type}
+                    </option>
+                  ))}
+                </select>
               </div>
 
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Pickup Location *
+                </label>
+                <select
+                  name="pickupLocationId"
+                  value={formData.pickupLocationId}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                >
+                  <option value="">Select pickup location</option>
+                  {formOptions.pickupLocations.map((location) => (
+                    <option key={location.id} value={location.id}>
+                      {location.name} {location.floor && `(${location.floor})`}
+                    </option>
+                  ))}
+                </select>
+                {formData.pickupLocationId && (
+                  <div className="mt-2 text-sm text-gray-600">
+                    {(() => {
+                      const selectedLocation = formOptions.pickupLocations.find(loc => loc.id === formData.pickupLocationId);
+                      return selectedLocation ? (
+                        <div>
+                          {selectedLocation.contactPhone && (
+                            <p><strong>Contact:</strong> {selectedLocation.contactPhone}</p>
+                          )}
+                          {selectedLocation.contactEmail && (
+                            <p><strong>Email:</strong> {selectedLocation.contactEmail}</p>
+                          )}
+                          {selectedLocation.room && (
+                            <p><strong>Room:</strong> {selectedLocation.room}</p>
+                          )}
+                        </div>
+                      ) : null;
+                    })()}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   To Location *
@@ -708,6 +817,12 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
                 <div className="bg-white border rounded-lg p-4">
                   <h4 className="font-medium text-gray-900 mb-2">Trip Details</h4>
                   <p className="text-sm text-gray-600">From: {formData.fromLocation}</p>
+                  {formData.pickupLocationId && (() => {
+                    const selectedLocation = formOptions.pickupLocations.find(loc => loc.id === formData.pickupLocationId);
+                    return selectedLocation ? (
+                      <p className="text-sm text-gray-600">Pickup: {selectedLocation.name} {selectedLocation.floor && `(${selectedLocation.floor})`}</p>
+                    ) : null;
+                  })()}
                   <p className="text-sm text-gray-600">To: {formData.toLocation}</p>
                   <p className="text-sm text-gray-600">Level: {formData.transportLevel}</p>
                   <p className="text-sm text-gray-600">Urgency: {formData.urgencyLevel}</p>
