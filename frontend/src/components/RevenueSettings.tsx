@@ -655,10 +655,14 @@ const RevenueSettings: React.FC = () => {
       
       const token = localStorage.getItem('token');
       console.log('Token available for data loading:', !!token);
-      const headers = {
-        'Content-Type': 'application/json',
-        ...(token && { 'Authorization': `Bearer ${token}` })
+      
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json'
       };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
       
       // Load cost analysis summary
       const summaryResponse = await fetch(`http://localhost:5001/api/tcc/analytics/cost-analysis?startDate=${selectedDateRange.start}&endDate=${selectedDateRange.end}`, {
@@ -733,12 +737,18 @@ const RevenueSettings: React.FC = () => {
       };
 
       console.log('Creating sample cost breakdown...');
+      
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json'
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
       const response = await fetch('http://localhost:5001/api/tcc/analytics/cost-breakdown', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token && { 'Authorization': `Bearer ${token}` })
-        },
+        headers,
         body: JSON.stringify({
           tripId: `sample-trip-${Date.now()}`,
           breakdownData: sampleBreakdown
