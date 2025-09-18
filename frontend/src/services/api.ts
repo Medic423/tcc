@@ -6,6 +6,7 @@ console.log('TCC_DEBUG: API_BASE_URL is set to:', API_BASE_URL);
 // Create axios instance
 const api = axios.create({
   baseURL: API_BASE_URL,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
