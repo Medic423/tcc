@@ -3,7 +3,8 @@ import { RevenueOptimizer } from '../services/revenueOptimizer';
 import { BackhaulDetector } from '../services/backhaulDetector';
 import { MultiUnitOptimizer } from '../services/multiUnitOptimizer';
 import { databaseManager } from '../services/databaseManager';
-import { authenticateAdmin } from '../middleware/authenticateAdmin';
+import { authenticateAdmin, AuthenticatedRequest } from '../middleware/authenticateAdmin';
+import { authService } from '../services/authService';
 
 const router = express.Router();
 
@@ -652,7 +653,30 @@ router.post('/what-if', async (req, res) => {
  * GET /api/optimize/stream
  * Server-Sent Events stream for real-time optimization metrics
  */
-router.get('/stream', authenticateAdmin, async (req, res) => {
+router.get('/stream', async (req: AuthenticatedRequest, res) => {
+  // Manual token verification for SSE
+  const token = req.query.token as string || req.headers.authorization?.replace('Bearer ', '') || req.cookies?.tcc_token;
+  
+  if (!token) {
+    res.status(401).json({ success: false, error: 'Access token required' });
+    return;
+  }
+
+  try {
+    const user = await authService.verifyToken(token);
+    if (!user) {
+      res.status(401).json({ success: false, error: 'Invalid or expired token' });
+      return;
+    }
+
+    // Set user for the request
+    req.user = user;
+  } catch (error) {
+    console.error('SSE authentication error:', error);
+    res.status(401).json({ success: false, error: 'Authentication failed' });
+    return;
+  }
+
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
