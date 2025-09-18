@@ -12,16 +12,21 @@ export const authenticateAdmin = async (
 ) => {
   try {
     const authHeader = req.headers.authorization;
+    let token: string | undefined;
+
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.substring(7);
+    } else if ((req as any).cookies && (req as any).cookies.tcc_token) {
+      token = (req as any).cookies.tcc_token;
+    }
     
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!token) {
       return res.status(401).json({
         success: false,
         error: 'Access token required'
       });
     }
 
-    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
-    
     const user = await authService.verifyToken(token);
     
     if (!user) {
