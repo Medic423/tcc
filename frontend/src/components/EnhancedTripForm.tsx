@@ -124,6 +124,7 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
   });
 
   const [destinationMode, setDestinationMode] = useState<'select' | 'manual'>('select');
+  const [loadingPickupLocations, setLoadingPickupLocations] = useState(false);
 
   const steps = [
     { id: 1, name: 'Patient Info', icon: User },
@@ -136,6 +137,16 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
   useEffect(() => {
     loadFormOptions();
   }, []);
+
+  // Load pickup locations when fromLocation is set (including pre-selected facility)
+  useEffect(() => {
+    if (formData.fromLocation && formOptions.facilities.length > 0) {
+      const selectedFacility = formOptions.facilities.find(f => f.name === formData.fromLocation);
+      if (selectedFacility) {
+        loadPickupLocationsForHospital(selectedFacility.id);
+      }
+    }
+  }, [formData.fromLocation, formOptions.facilities]);
 
   const loadFormOptions = async () => {
     try {
@@ -180,6 +191,7 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
 
   const loadPickupLocationsForHospital = async (hospitalId: string) => {
     try {
+      setLoadingPickupLocations(true);
       const response = await fetch(`/api/tcc/pickup-locations/hospital/${hospitalId}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -197,6 +209,8 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
       }
     } catch (error) {
       console.error('Error loading pickup locations:', error);
+    } finally {
+      setLoadingPickupLocations(false);
     }
   };
 
@@ -465,16 +479,27 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
                   value={formData.pickupLocationId}
                   onChange={handleChange}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                  disabled={loadingPickupLocations}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                 >
-                  <option value="">Select pickup location</option>
-                  {formOptions.pickupLocations.map((location) => (
-                    <option key={location.id} value={location.id}>
-                      {location.name} {location.floor && `(${location.floor})`}
-                    </option>
-                  ))}
+                  <option value="">
+                    {loadingPickupLocations ? 'Loading pickup locations...' : 'Select pickup location'}
+                  </option>
+                  {formOptions.pickupLocations && formOptions.pickupLocations.length > 0 ? (
+                    formOptions.pickupLocations.map((location) => (
+                      <option key={location.id} value={location.id}>
+                        {location.name} {location.floor && `(${location.floor})`}
+                      </option>
+                    ))
+                  ) : (
+                    !loadingPickupLocations && formData.fromLocation && (
+                      <option value="" disabled>
+                        No pickup locations available for this facility
+                      </option>
+                    )
+                  )}
                 </select>
-                {formData.pickupLocationId && (
+                {formData.pickupLocationId && formOptions.pickupLocations && (
                   <div className="mt-2 text-sm text-gray-600">
                     {(() => {
                       const selectedLocation = formOptions.pickupLocations.find(loc => loc.id === formData.pickupLocationId);
@@ -817,7 +842,7 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
                 <div className="bg-white border rounded-lg p-4">
                   <h4 className="font-medium text-gray-900 mb-2">Trip Details</h4>
                   <p className="text-sm text-gray-600">From: {formData.fromLocation}</p>
-                  {formData.pickupLocationId && (() => {
+                  {formData.pickupLocationId && formOptions.pickupLocations && (() => {
                     const selectedLocation = formOptions.pickupLocations.find(loc => loc.id === formData.pickupLocationId);
                     return selectedLocation ? (
                       <p className="text-sm text-gray-600">Pickup: {selectedLocation.name} {selectedLocation.floor && `(${selectedLocation.floor})`}</p>
