@@ -38,6 +38,20 @@ interface Trip {
   mobilityLevel?: string;
   oxygenRequired: boolean;
   monitoringRequired: boolean;
+  pickupLocationId?: string;
+  pickupLocation?: {
+    id: string;
+    name: string;
+    description?: string;
+    contactPhone?: string;
+    contactEmail?: string;
+    floor?: string;
+    room?: string;
+    hospital?: {
+      id: string;
+      name: string;
+    };
+  };
   createdAt: string;
   updatedAt: string;
 }
@@ -241,6 +255,10 @@ const TripsView: React.FC<TripsViewProps> = ({ user }) => {
       'Trip Number',
       'Patient ID',
       'From Location',
+      'Pickup Location',
+      'Pickup Floor',
+      'Pickup Room',
+      'Pickup Contact',
       'To Location',
       'Status',
       'Priority',
@@ -254,6 +272,10 @@ const TripsView: React.FC<TripsViewProps> = ({ user }) => {
       trip.tripNumber,
       trip.patientId,
       trip.fromLocation,
+      trip.pickupLocation?.name || 'N/A',
+      trip.pickupLocation?.floor || 'N/A',
+      trip.pickupLocation?.room || 'N/A',
+      trip.pickupLocation?.contactPhone || trip.pickupLocation?.contactEmail || 'N/A',
       trip.toLocation,
       trip.status,
       trip.priority,
@@ -549,6 +571,9 @@ const TripsView: React.FC<TripsViewProps> = ({ user }) => {
                   From Location
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Pickup Location
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   To Location
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -591,6 +616,24 @@ const TripsView: React.FC<TripsViewProps> = ({ user }) => {
                       <MapPin className="w-4 h-4 mr-2 text-gray-400" />
                       {trip.fromLocation}
                     </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {trip.pickupLocation ? (
+                      <div className="flex items-center">
+                        <MapPin className="w-4 h-4 mr-2 text-blue-400" />
+                        <div>
+                          <div className="font-medium text-gray-900">{trip.pickupLocation.name}</div>
+                          {trip.pickupLocation.floor && (
+                            <div className="text-xs text-gray-500">Floor: {trip.pickupLocation.floor}</div>
+                          )}
+                          {trip.pickupLocation.room && (
+                            <div className="text-xs text-gray-500">Room: {trip.pickupLocation.room}</div>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="text-gray-400 italic">No specific location</span>
+                    )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     <div className="flex items-center">
@@ -697,6 +740,32 @@ const TripsView: React.FC<TripsViewProps> = ({ user }) => {
                     <label className="block text-sm font-medium text-gray-700">From Location</label>
                     <p className="mt-1 text-sm text-gray-900">{selectedTrip.fromLocation}</p>
                   </div>
+                  
+                  {selectedTrip.pickupLocation && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Pickup Location</label>
+                      <div className="mt-1 p-3 bg-blue-50 rounded-md">
+                        <p className="text-sm font-medium text-gray-900">{selectedTrip.pickupLocation.name}</p>
+                        {selectedTrip.pickupLocation.description && (
+                          <p className="text-sm text-gray-600 mt-1">{selectedTrip.pickupLocation.description}</p>
+                        )}
+                        <div className="mt-2 space-y-1">
+                          {selectedTrip.pickupLocation.floor && (
+                            <p className="text-xs text-gray-500"><span className="font-medium">Floor:</span> {selectedTrip.pickupLocation.floor}</p>
+                          )}
+                          {selectedTrip.pickupLocation.room && (
+                            <p className="text-xs text-gray-500"><span className="font-medium">Room:</span> {selectedTrip.pickupLocation.room}</p>
+                          )}
+                          {selectedTrip.pickupLocation.contactPhone && (
+                            <p className="text-xs text-gray-500"><span className="font-medium">Phone:</span> {selectedTrip.pickupLocation.contactPhone}</p>
+                          )}
+                          {selectedTrip.pickupLocation.contactEmail && (
+                            <p className="text-xs text-gray-500"><span className="font-medium">Email:</span> {selectedTrip.pickupLocation.contactEmail}</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700">To Location</label>
