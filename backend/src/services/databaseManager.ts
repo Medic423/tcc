@@ -1,10 +1,10 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient as CenterPrismaClient } from '.prisma/center';
 import { PrismaClient as EMSPrismaClient } from '@prisma/ems';
 import { PrismaClient as HospitalPrismaClient } from '@prisma/hospital';
 
 class DatabaseManager {
   private static instance: DatabaseManager;
-  private prisma: PrismaClient;
+  private prisma: CenterPrismaClient;
   private emsPrisma: EMSPrismaClient;
   private hospitalPrisma: HospitalPrismaClient;
   private connectionRetries = 0;
@@ -12,10 +12,10 @@ class DatabaseManager {
   private retryDelay = 2000; // 2 seconds
 
   private constructor() {
-    this.prisma = new PrismaClient({
+    this.prisma = new CenterPrismaClient({
       datasources: {
         db: {
-          url: process.env.DATABASE_URL
+          url: process.env.DATABASE_URL_CENTER
         }
       },
       // Add connection configuration for Render PostgreSQL
@@ -52,12 +52,12 @@ class DatabaseManager {
     return DatabaseManager.instance;
   }
 
-  public getPrismaClient(): PrismaClient {
+  public getPrismaClient(): CenterPrismaClient {
     return this.prisma;
   }
 
   // Backward compatibility methods for existing service calls
-  public getCenterDB(): PrismaClient {
+  public getCenterDB(): CenterPrismaClient {
     return this.prisma;
   }
 

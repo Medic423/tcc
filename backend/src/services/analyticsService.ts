@@ -199,7 +199,7 @@ export class AnalyticsService {
       CCT: 0
     };
 
-    tripsByLevel.forEach((group: any) => {
+    tripsByLevel.forEach((group: { transportLevel: string; _count: { transportLevel: number } }) => {
       if (group.transportLevel in tripsByLevelFormatted) {
         tripsByLevelFormatted[group.transportLevel as keyof typeof tripsByLevelFormatted] = group._count.transportLevel;
       }
@@ -218,7 +218,7 @@ export class AnalyticsService {
       URGENT: 0
     };
 
-    tripsByPriority.forEach((group: any) => {
+    tripsByPriority.forEach((group: { priority: string; _count: { priority: number } }) => {
       if (group.priority in tripsByPriorityFormatted) {
         tripsByPriorityFormatted[group.priority as keyof typeof tripsByPriorityFormatted] = group._count.priority;
       }
@@ -291,7 +291,7 @@ export class AnalyticsService {
       });
 
       const averageResponseTime = responseTimeData.length > 0
-        ? responseTimeData.reduce((sum, trip) => {
+        ? responseTimeData.reduce((sum: number, trip: { acceptedTimestamp: Date | null; completionTimestamp: Date | null }) => {
             const responseTime = trip.acceptedTimestamp && trip.completionTimestamp 
               ? (trip.completionTimestamp.getTime() - trip.acceptedTimestamp.getTime()) / (1000 * 60) // Convert to minutes
               : 0;
@@ -352,7 +352,7 @@ export class AnalyticsService {
         CCT: 0
       };
 
-      tripsByLevelData.forEach((group: any) => {
+      tripsByLevelData.forEach((group: { transportLevel: string; _count: { transportLevel: number } }) => {
         if (group.transportLevel in tripsByLevel) {
           tripsByLevel[group.transportLevel as keyof typeof tripsByLevel] = group._count.transportLevel;
         }
@@ -473,17 +473,17 @@ export class AnalyticsService {
     }
 
     // Calculate totals
-    const totalRevenue = breakdowns.reduce((sum: number, b: any) => sum + Number(b.totalRevenue), 0);
-    const totalCost = breakdowns.reduce((sum: number, b: any) => sum + Number(b.totalCost), 0);
+    const totalRevenue = breakdowns.reduce((sum: number, b: { totalRevenue: any }) => sum + Number(b.totalRevenue), 0);
+    const totalCost = breakdowns.reduce((sum: number, b: { totalCost: any }) => sum + Number(b.totalCost), 0);
     const grossProfit = totalRevenue - totalCost;
     const averageProfitMargin = totalRevenue > 0 ? (grossProfit / totalRevenue) * 100 : 0;
 
     // Calculate averages
-    const averageRevenuePerMile = breakdowns.reduce((sum: number, b: any) => sum + Number(b.revenuePerMile), 0) / breakdowns.length;
-    const averageCostPerMile = breakdowns.reduce((sum: number, b: any) => sum + Number(b.costPerMile), 0) / breakdowns.length;
-    const averageLoadedMileRatio = breakdowns.reduce((sum: number, b: any) => sum + Number(b.loadedMileRatio), 0) / breakdowns.length;
-    const averageDeadheadMileRatio = breakdowns.reduce((sum: number, b: any) => sum + Number(b.deadheadMileRatio), 0) / breakdowns.length;
-    const averageUtilizationRate = breakdowns.reduce((sum: number, b: any) => sum + Number(b.utilizationRate), 0) / breakdowns.length;
+    const averageRevenuePerMile = breakdowns.reduce((sum: number, b: { revenuePerMile: any }) => sum + Number(b.revenuePerMile), 0) / breakdowns.length;
+    const averageCostPerMile = breakdowns.reduce((sum: number, b: { costPerMile: any }) => sum + Number(b.costPerMile), 0) / breakdowns.length;
+    const averageLoadedMileRatio = breakdowns.reduce((sum: number, b: { loadedMileRatio: any }) => sum + Number(b.loadedMileRatio), 0) / breakdowns.length;
+    const averageDeadheadMileRatio = breakdowns.reduce((sum: number, b: { deadheadMileRatio: any }) => sum + Number(b.deadheadMileRatio), 0) / breakdowns.length;
+    const averageUtilizationRate = breakdowns.reduce((sum: number, b: { utilizationRate: any }) => sum + Number(b.utilizationRate), 0) / breakdowns.length;
 
     // Group by transport level
     const tripsByTransportLevel = {
@@ -492,7 +492,7 @@ export class AnalyticsService {
       CCT: { count: 0, revenue: 0, cost: 0, profit: 0, margin: 0 }
     };
 
-    breakdowns.forEach((breakdown: any) => {
+    breakdowns.forEach((breakdown: { transportLevel: string; totalRevenue: any; totalCost: any }) => {
       const level = breakdown.transportLevel as keyof typeof tripsByTransportLevel;
       if (level in tripsByTransportLevel) {
         const revenue = Number(breakdown.totalRevenue);
@@ -518,7 +518,7 @@ export class AnalyticsService {
       URGENT: { count: 0, revenue: 0, cost: 0, profit: 0, margin: 0 }
     };
 
-    breakdowns.forEach((breakdown: any) => {
+    breakdowns.forEach((breakdown: { priorityLevel: string; totalRevenue: any; totalCost: any }) => {
       const priority = breakdown.priorityLevel as keyof typeof tripsByPriority;
       if (priority in tripsByPriority) {
         const revenue = Number(breakdown.totalRevenue);
@@ -547,7 +547,7 @@ export class AnalyticsService {
       profitMargin: number;
     }>();
 
-    breakdowns.forEach((breakdown: any) => {
+    breakdowns.forEach((breakdown: { costCenterId?: string | null; costCenterName?: string | null; totalRevenue: any; totalCost: any }) => {
       const costCenterId = breakdown.costCenterId || 'unassigned';
       const costCenterName = breakdown.costCenterName || 'Unassigned';
       
@@ -648,14 +648,14 @@ export class AnalyticsService {
     });
 
     // Calculate current period metrics
-    const currentRevenue = currentBreakdowns.reduce((sum: number, b: any) => sum + Number(b.totalRevenue), 0);
-    const currentCost = currentBreakdowns.reduce((sum: number, b: any) => sum + Number(b.totalCost), 0);
+    const currentRevenue = currentBreakdowns.reduce((sum: number, b: { totalRevenue: any }) => sum + Number(b.totalRevenue), 0);
+    const currentCost = currentBreakdowns.reduce((sum: number, b: { totalCost: any }) => sum + Number(b.totalCost), 0);
     const currentProfit = currentRevenue - currentCost;
     const currentMargin = currentRevenue > 0 ? (currentProfit / currentRevenue) * 100 : 0;
 
     // Calculate previous period metrics
-    const previousRevenue = previousBreakdowns.reduce((sum: number, b: any) => sum + Number(b.totalRevenue), 0);
-    const previousCost = previousBreakdowns.reduce((sum: number, b: any) => sum + Number(b.totalCost), 0);
+    const previousRevenue = previousBreakdowns.reduce((sum: number, b: { totalRevenue: any }) => sum + Number(b.totalRevenue), 0);
+    const previousCost = previousBreakdowns.reduce((sum: number, b: { totalCost: any }) => sum + Number(b.totalCost), 0);
     const previousProfit = previousRevenue - previousCost;
     const previousMargin = previousRevenue > 0 ? (previousProfit / previousRevenue) * 100 : 0;
 
@@ -665,11 +665,11 @@ export class AnalyticsService {
     const profitGrowth = previousProfit !== 0 ? ((currentProfit - previousProfit) / Math.abs(previousProfit)) * 100 : 0;
 
     // Calculate efficiency metrics
-    const totalHours = currentBreakdowns.reduce((sum: number, b: any) => sum + Number(b.tripDurationHours), 0);
+    const totalHours = currentBreakdowns.reduce((sum: number, b: { tripDurationHours: any }) => sum + Number(b.tripDurationHours), 0);
     const efficiencyMetrics = {
-      loadedMileRatio: currentBreakdowns.reduce((sum: number, b: any) => sum + Number(b.loadedMileRatio), 0) / currentBreakdowns.length || 0,
-      deadheadMileRatio: currentBreakdowns.reduce((sum: number, b: any) => sum + Number(b.deadheadMileRatio), 0) / currentBreakdowns.length || 0,
-      utilizationRate: currentBreakdowns.reduce((sum: number, b: any) => sum + Number(b.utilizationRate), 0) / currentBreakdowns.length || 0,
+      loadedMileRatio: currentBreakdowns.reduce((sum: number, b: { loadedMileRatio: any }) => sum + Number(b.loadedMileRatio), 0) / currentBreakdowns.length || 0,
+      deadheadMileRatio: currentBreakdowns.reduce((sum: number, b: { deadheadMileRatio: any }) => sum + Number(b.deadheadMileRatio), 0) / currentBreakdowns.length || 0,
+      utilizationRate: currentBreakdowns.reduce((sum: number, b: { utilizationRate: any }) => sum + Number(b.utilizationRate), 0) / currentBreakdowns.length || 0,
       revenuePerHour: totalHours > 0 ? currentRevenue / totalHours : 0,
       costPerHour: totalHours > 0 ? currentCost / totalHours : 0
     };
@@ -725,7 +725,8 @@ export class AnalyticsService {
         transportLevel: breakdownData.transportLevel || 'BLS',
         priorityLevel: breakdownData.priorityLevel || 'LOW',
         costCenterId: breakdownData.costCenterId || undefined,
-        costCenterName: breakdownData.costCenterName || undefined
+        costCenterName: breakdownData.costCenterName || undefined,
+        calculatedAt: (breakdownData as any).calculatedAt || undefined
       }
     });
 

@@ -390,6 +390,22 @@ const RevenueSettings: React.FC = () => {
     start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     end: new Date().toISOString().split('T')[0]
   });
+  const [realtimeMetrics, setRealtimeMetrics] = useState<{
+    totalTrips: number;
+    completedTrips: number;
+    averageResponseTime: number;
+    averageTripTime: number;
+    totalRevenue: number;
+    efficiency: number;
+    customerSatisfaction?: number;
+    lastUpdated?: string;
+  }>({ totalTrips: 0, completedTrips: 0, averageResponseTime: 0, averageTripTime: 0, totalRevenue: 0, efficiency: 0 });
+  const [streamConnected, setStreamConnected] = useState(false);
+  const [streamPaused, setStreamPaused] = useState(false);
+  const eventSourceRef = React.useRef<EventSource | null>(null);
+  const [whatIfUnitIds, setWhatIfUnitIds] = useState<string>("");
+  const [whatIfRequestIds, setWhatIfRequestIds] = useState<string>("");
+  const [whatIfResult, setWhatIfResult] = useState<any>(null);
 
   // Load saved settings on mount
   useEffect(() => {
@@ -406,6 +422,50 @@ const RevenueSettings: React.FC = () => {
   useEffect(() => {
     loadCostAnalysisData();
   }, [selectedPeriod, selectedDateRange]);
+
+  const startStream = () => {
+    if (eventSourceRef.current) return;
+    const url = `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001'}/api/optimize/stream`;
+    const es = new EventSource(url, { withCredentials: true } as any);
+    eventSourceRef.current = es;
+    es.addEventListener('connected', () => setStreamConnected(true));
+    es.addEventListener('metrics', (evt: MessageEvent) => {
+      try {
+        const payload = JSON.parse((evt as any).data);
+        const summary = payload.summary || payload;
+        setRealtimeMetrics({
+          totalTrips: summary.totalTrips || 0,
+          completedTrips: summary.completedTrips || 0,
+          averageResponseTime: summary.averageResponseTime || 0,
+          averageTripTime: summary.averageTripTime || 0,
+          totalRevenue: summary.totalRevenue || 0,
+          efficiency: summary.efficiency || 0,
+          customerSatisfaction: summary.customerSatisfaction,
+          lastUpdated: payload.timestamp
+        });
+      } catch {}
+    });
+    es.addEventListener('error', () => setStreamConnected(false));
+  };
+
+  const stopStream = () => {
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
+      eventSourceRef.current = null;
+    }
+    setStreamConnected(false);
+  };
+
+  useEffect(() => {
+    if (!streamPaused) {
+      startStream();
+    } else {
+      stopStream();
+    }
+    return () => {
+      stopStream();
+    };
+  }, [streamPaused]);
 
   const loadSavedSettings = () => {
     try {
@@ -1782,6 +1842,47 @@ const RevenueSettings: React.FC = () => {
 
         {/* Revenue Preview */}
         <div className="space-y-6">
+          {/* Real-time Optimization (Phase 5) */}
+          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+            <div className="flex items-center mb-4">
+              <span className="h-2 w-2 rounded-full mr-2" style={{ backgroundColor: streamConnected ? '#16a34a' : '#9ca3af' }} />
+              <h3 className="text-lg font-semibold text-gray-900">Real-time Optimization</h3>
+              <span className="ml-2 text-xs text-gray-500">{streamConnected ? 'Live' : 'Disconnected'}</span>
+              <button
+                onClick={() => setStreamPaused(p => !p)}
+                className="ml-auto px-3 py-1 text-xs rounded border border-gray-300 hover:bg-gray-50"
+              >{streamPaused ? 'Resume' : 'Pause'}</button>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-xs text-gray-500">Total Trips (5m)</div>
+                <div className="text-lg font-semibold">{realtimeMetrics.totalTrips}</div>
+              </div>
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-xs text-gray-500">Completed Trips</div>
+                <div className="text-lg font-semibold">{realtimeMetrics.completedTrips}</div>
+              </div>
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-xs text-gray-500">Avg Response (min)</div>
+                <div className="text-lg font-semibold">{realtimeMetrics.averageResponseTime.toFixed(1)}</div>
+              </div>
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-xs text-gray-500">Avg Trip Time (min)</div>
+                <div className="text-lg font-semibold">{realtimeMetrics.averageTripTime.toFixed(1)}</div>
+              </div>
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-xs text-gray-500">Revenue (est)</div>
+                <div className="text-lg font-semibold">${realtimeMetrics.totalRevenue.toFixed(2)}</div>
+              </div>
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-xs text-gray-500">Efficiency</div>
+                <div className="text-lg font-semibold">{(realtimeMetrics.efficiency * 100).toFixed(0)}%</div>
+              </div>
+            </div>
+            {realtimeMetrics.lastUpdated && (
+              <div className="mt-2 text-xs text-gray-500">Updated {new Date(realtimeMetrics.lastUpdated).toLocaleTimeString()}</div>
+            )}
+          </div>
           <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
             <div className="flex items-center mb-4">
               <Calculator className="h-5 w-5 text-blue-600 mr-2" />
@@ -1851,6 +1952,87 @@ const RevenueSettings: React.FC = () => {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* What-if Scenario (Phase 5) */}
+          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">What-if Scenario</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">Deadhead Mile Weight</label>
+                <input type="number" step="0.1" value={settings.routeOptimization.deadheadMileWeight} onChange={(e)=>setSettings(prev=>({...prev,routeOptimization:{...prev.routeOptimization,deadheadMileWeight: parseFloat(e.target.value)||0}}))} className="w-full px-3 py-2 border rounded" />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">Wait Time Weight</label>
+                <input type="number" step="0.1" value={settings.routeOptimization.waitTimeWeight} onChange={(e)=>setSettings(prev=>({...prev,routeOptimization:{...prev.routeOptimization,waitTimeWeight: parseFloat(e.target.value)||0}}))} className="w-full px-3 py-2 border rounded" />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">Backhaul Bonus</label>
+                <input type="number" step="5" value={settings.routeOptimization.backhaulRevenueBonus} onChange={(e)=>setSettings(prev=>({...prev,routeOptimization:{...prev.routeOptimization,backhaulRevenueBonus: parseFloat(e.target.value)||0}}))} className="w-full px-3 py-2 border rounded" />
+              </div>
+              <div className="md:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm text-gray-600 mb-1">Unit IDs (comma-separated, optional)</label>
+                  <input type="text" value={whatIfUnitIds} onChange={(e)=>setWhatIfUnitIds(e.target.value)} className="w-full px-3 py-2 border rounded" placeholder="leave blank to auto-select" />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-600 mb-1">Request IDs (comma-separated, optional)</label>
+                  <input type="text" value={whatIfRequestIds} onChange={(e)=>setWhatIfRequestIds(e.target.value)} className="w-full px-3 py-2 border rounded" placeholder="leave blank to auto-select" />
+                </div>
+              </div>
+            </div>
+            <div className="mt-4 flex items-center gap-3">
+              <button
+                onClick={async ()=>{
+                  try{
+                    setOptimizationLoading(true);
+                    const token = localStorage.getItem('token');
+                    const baseUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001';
+                    const authHeaders: any = token ? { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
+
+                    // Resolve unitIds
+                    let unitIds: string[] = whatIfUnitIds.split(',').map(s=>s.trim()).filter(Boolean);
+                    if (unitIds.length === 0) {
+                      try {
+                        const r = await fetch(`${baseUrl}/api/units`, { headers: authHeaders });
+                        const j = await r.json();
+                        unitIds = (j?.data || []).slice(0,3).map((u:any)=>u.id);
+                      } catch {}
+                    }
+
+                    // Resolve requestIds (pending trips)
+                    let requestIds: string[] = whatIfRequestIds.split(',').map(s=>s.trim()).filter(Boolean);
+                    if (requestIds.length === 0) {
+                      try {
+                        const r = await fetch(`${baseUrl}/api/trips?status=PENDING`, { headers: authHeaders });
+                        const j = await r.json();
+                        requestIds = (j?.data || []).slice(0,5).map((t:any)=>t.id);
+                      } catch {}
+                    }
+
+                    const scenarioSettings = { ...settings.routeOptimization };
+                    const baseSettings = { ...settings.routeOptimization };
+
+                    const resp = await fetch(`${baseUrl}/api/optimize/what-if`, {
+                      method: 'POST',
+                      headers: authHeaders,
+                      body: JSON.stringify({ unitIds, requestIds, scenarioSettings, baseSettings })
+                    });
+                    const data = await resp.json();
+                    setWhatIfResult(data?.data || null);
+                  } finally { setOptimizationLoading(false); }
+                }}
+                className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
+                disabled={optimizationLoading}
+              >{optimizationLoading? 'Running...' : 'Run What-if'}</button>
+              {whatIfResult ? (
+                <div className="text-sm text-gray-600">
+                  Δ Revenue: ${((whatIfResult?.differences?.revenueDifference)||0).toFixed(2)} · Δ Deadhead: {((whatIfResult?.differences?.deadheadMilesDifference)||0).toFixed(1)} mi · Δ Efficiency: {(((whatIfResult?.differences?.efficiencyDifference)||0)*100).toFixed(0)}%
+                </div>
+              ) : (
+                <div className="text-sm text-gray-600">Ready to simulate changes using current weights and constraints.</div>
+              )}
             </div>
           </div>
 

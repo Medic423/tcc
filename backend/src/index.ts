@@ -11,7 +11,7 @@ import agencyRoutes from './routes/agencies';
 import facilityRoutes from './routes/facilities';
 import analyticsRoutes from './routes/analytics';
 import tripRoutes from './routes/trips';
-// import optimizationRoutes from './routes/optimization'; // Temporarily disabled due to schema changes
+import optimizationRoutes from './routes/optimization';
 import notificationRoutes from './routes/notifications';
 import unitRoutes from './routes/units';
 import tccUnitRoutes from './routes/tccUnits';
@@ -82,7 +82,7 @@ app.use('/api/tcc/analytics', analyticsRoutes);
 app.use('/api/tcc/units', tccUnitRoutes);
 app.use('/api/dropdown-options', dropdownOptionsRoutes);
 // app.use('/api/ems/analytics', emsAnalyticsRoutes); // Temporarily disabled due to schema changes
-// app.use('/api/optimize', optimizationRoutes); // Temporarily disabled due to schema changes
+app.use('/api/optimize', optimizationRoutes);
 
 // Test endpoints
 app.get('/api/test', (req, res) => {
