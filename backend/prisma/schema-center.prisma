@@ -48,7 +48,30 @@ model Hospital {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
+  // Relations
+  pickupLocations PickupLocation[]
+
   @@map("hospitals")
+}
+
+model PickupLocation {
+  id          String   @id @default(cuid())
+  hospitalId  String
+  name        String   // e.g., "Emergency Department", "First Floor Nurses Station"
+  description String?  // Optional description
+  contactPhone String? // Contact phone number for this location
+  contactEmail String? // Contact email for this location
+  floor       String?  // Floor number or name
+  room        String?  // Room number or name
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  hospital    Hospital @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+  trips       Trip[]   @relation("PickupLocation")
+
+  @@map("pickup_locations")
 }
 
 model EMSAgency {
@@ -103,6 +126,7 @@ model Trip {
   
   // Trip Details
   fromLocation      String
+  pickupLocationId  String?  // Reference to specific pickup location within hospital
   toLocation        String
   scheduledTime     DateTime
   transportLevel    String    // BLS, ALS, CCT, Other
@@ -172,6 +196,9 @@ model Trip {
   completionTimestamp DateTime?
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
+
+  // Relations
+  pickupLocation    PickupLocation? @relation("PickupLocation", fields: [pickupLocationId], references: [id])
 
   @@map("trips")
 }
