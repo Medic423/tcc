@@ -116,12 +116,15 @@ router.post('/enhanced', async (req, res) => {
     } = req.body;
 
     // Validation
-    if (!fromLocation || !toLocation || !scheduledTime || !transportLevel || !urgencyLevel) {
+    if (!fromLocation || !toLocation || !transportLevel || !urgencyLevel) {
       return res.status(400).json({
         success: false,
-        error: 'Missing required fields: fromLocation, toLocation, scheduledTime, transportLevel, urgencyLevel'
+        error: 'Missing required fields: fromLocation, toLocation, transportLevel, urgencyLevel'
       });
     }
+
+    // Set default scheduled time if not provided
+    const finalScheduledTime = scheduledTime || new Date().toISOString();
 
     if (!['BLS', 'ALS', 'CCT', 'Other'].includes(transportLevel)) {
       return res.status(400).json({
@@ -145,7 +148,7 @@ router.post('/enhanced', async (req, res) => {
       fromLocation,
       pickupLocationId,
       toLocation,
-      scheduledTime,
+      scheduledTime: finalScheduledTime,
       transportLevel,
       urgencyLevel,
       diagnosis,
