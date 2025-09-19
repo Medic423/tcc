@@ -10,13 +10,11 @@ import {
   Bell,
   Navigation,
   Settings,
-  BarChart3,
-  DollarSign
+  BarChart3
 } from 'lucide-react';
 import Notifications from './Notifications';
 import UnitsManagement from './UnitsManagement';
 import EMSAnalytics from './EMSAnalytics';
-import RevenueSettings from './RevenueSettings';
 
 interface EMSDashboardProps {
   user: {
@@ -30,7 +28,7 @@ interface EMSDashboardProps {
 }
 
 const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('available');
   
   // Settings state
   const [settingsData, setSettingsData] = useState({
@@ -176,8 +174,8 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
       console.log('TCC_DEBUG: Frontend success response:', responseData);
 
       setSettingsSuccess(true);
-      // Navigate back to overview tab after successful save
-      setActiveTab('overview');
+      // Navigate back to available trips tab after successful save
+      setActiveTab('available');
       setTimeout(() => setSettingsSuccess(false), 3000);
     } catch (error: any) {
       console.error('TCC_DEBUG: Frontend error updating agency:', error);
@@ -201,8 +199,8 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
     });
     setSettingsError(null);
     setSettingsSuccess(false);
-    // Navigate back to overview tab
-    setActiveTab('overview');
+    // Navigate back to available trips tab
+    setActiveTab('available');
   };
 
   const handleAcceptTrip = async (tripId: string) => {
@@ -411,12 +409,10 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <nav className="flex space-x-8">
             {[
-              { id: 'overview', name: 'Overview', icon: Truck },
               { id: 'available', name: 'Available Trips', icon: MapPin },
               { id: 'accepted', name: 'My Trips', icon: CheckCircle },
               { id: 'units', name: 'Units', icon: Settings },
               { id: 'analytics', name: 'Analytics', icon: BarChart3 },
-              { id: 'revenue-settings', name: 'Revenue Settings', icon: DollarSign },
               { id: 'settings', name: 'Settings', icon: User }
             ].map((tab) => {
               const Icon = tab.icon;
@@ -444,8 +440,23 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {activeTab === 'overview' && (
+
+        {activeTab === 'available' && (
           <div className="space-y-6">
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-md p-4">
+                <div className="flex">
+                  <AlertCircle className="h-5 w-5 text-red-400" />
+                  <div className="ml-3">
+                    <p className="text-sm font-medium text-red-800">
+                      {error}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Summary Tiles */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <div className="bg-white p-6 rounded-lg shadow">
                 <div className="flex items-center">
@@ -487,98 +498,6 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
                 </div>
               </div>
             </div>
-
-            <div className="bg-white rounded-lg shadow">
-              <div className="px-6 py-4 border-b border-gray-200">
-                <h3 className="text-lg font-medium text-gray-900">Recent Activity</h3>
-              </div>
-              <div className="p-6">
-                {(availableTrips.length > 0 || acceptedTrips.length > 0) ? (
-                  <div className="space-y-4">
-                    {/* Show recent available trips */}
-                    {availableTrips.slice(0, 3).map((trip) => (
-                      <div key={`available-${trip.id}`} className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
-                        <div className="flex items-center space-x-4">
-                          <div className="w-3 h-3 rounded-full bg-blue-400"></div>
-                          <div>
-                            <p className="text-sm font-medium text-gray-900">
-                              Available: {trip.patientId} - {trip.origin} to {trip.destination}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {trip.transportLevel} • {trip.priority} Priority • {trip.requestTime}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                            AVAILABLE
-                          </span>
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(trip.priority)}`}>
-                            {trip.priority}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                    
-                    {/* Show recent accepted trips */}
-                    {acceptedTrips.slice(0, 3).map((trip) => (
-                      <div key={`accepted-${trip.id}`} className="flex items-center justify-between p-4 bg-green-50 rounded-lg">
-                        <div className="flex items-center space-x-4">
-                          <div className={`w-3 h-3 rounded-full ${
-                            trip.status === 'ACCEPTED' ? 'bg-green-400' :
-                            trip.status === 'IN_PROGRESS' ? 'bg-blue-400' :
-                            trip.status === 'COMPLETED' ? 'bg-gray-400' : 'bg-gray-400'
-                          }`}></div>
-                          <div>
-                            <p className="text-sm font-medium text-gray-900">
-                              {trip.status === 'ACCEPTED' ? 'Accepted' : 
-                               trip.status === 'IN_PROGRESS' ? 'In Progress' : 
-                               trip.status === 'COMPLETED' ? 'Completed' : trip.status}: {trip.patientId} - {trip.origin} to {trip.destination}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {trip.transportLevel} • {trip.priority} Priority • {trip.requestTime}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(trip.status)}`}>
-                            {trip.status}
-                          </span>
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(trip.priority)}`}>
-                            {trip.priority}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                    
-                    {(availableTrips.length > 3 || acceptedTrips.length > 3) && (
-                      <p className="text-sm text-gray-500 text-center">
-                        Showing recent activity - {availableTrips.length + acceptedTrips.length} total trips
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-gray-500">No recent trip activity found.</p>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'available' && (
-          <div className="space-y-6">
-            {error && (
-              <div className="bg-red-50 border border-red-200 rounded-md p-4">
-                <div className="flex">
-                  <AlertCircle className="h-5 w-5 text-red-400" />
-                  <div className="ml-3">
-                    <p className="text-sm font-medium text-red-800">
-                      {error}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
             
             <div className="bg-white rounded-lg shadow">
               <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
@@ -846,9 +765,6 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
           <EMSAnalytics user={user} />
         )}
 
-        {activeTab === 'revenue-settings' && (
-          <RevenueSettings />
-        )}
 
         {activeTab === 'units' && (
           <>
