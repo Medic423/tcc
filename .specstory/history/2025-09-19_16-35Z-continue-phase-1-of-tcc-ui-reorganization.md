@@ -6814,7 +6814,258 @@ Now let me update the timeline display to make the text horizontal to save space
 
 ---
 
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/TripsView.tsx</summary>
 
+undefined
+
+**Chunk 1**
+Lines added: 8, lines removed: 6
+
+```diff
+@@ -310,11 +310,13 @@
+            {expanded && (
+              <div className="px-6 pb-4 bg-gray-50">
+-               <div className="space-y-3">
++               <div className="space-y-2">
+                  {timeline.map((event, index) => (
+-                   <div key={index} className="flex items-start">
+-                     <div className="flex-shrink-0 w-2 h-2 bg-blue-600 rounded-full mt-2"></div>
+-                     <div className="ml-3">
+-                       <p className="text-sm font-medium text-gray-900">{event.event}</p>
+-                       <p className="text-xs text-gray-500">{event.description}</p>
++                   <div key={index} className="flex items-center">
++                     <div className="flex-shrink-0 w-2 h-2 bg-blue-600 rounded-full mr-3"></div>
++                     <div className="flex-1 flex items-center justify-between">
++                       <div className="flex items-center space-x-4">
++                         <p className="text-sm font-medium text-gray-900">{event.event}</p>
++                         <p className="text-xs text-gray-500">{event.description}</p>
++                       </div>
+                        <p className="text-xs text-gray-400">{formatDateTime(event.timestamp)}</p>
+                      </div>
+```
+
+</details>
+
+---
+
+Let me check for any linting errors:
+
+
+---
+
+
+
+---
+
+Perfect! Now let me commit and push these improvements:
+
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git add .
+```
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git commit -m "Improve trip card display: simplify priority and horizontal timeline
+
+- Simplified priority display to match EMS module: ROUTINE, URGENT, EMERGENT
+- Converted CRITICAL→EMERGENT, HIGH→URGENT, MEDIUM/LOW→ROUTINE
+- Made trip timeline text horizontal to save vertical space
+- Timeline now shows event, description, and timestamp in a single row
+- Improved space efficiency while maintaining readability"
+```
+
+```
+[feature/ui-cleanup-phase2 f90d0bf] Improve trip card display: simplify priority and horizontal timeline
+ 2 files changed, 1044 insertions(+), 13 deletions(-)
+
+```
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git push origin feature/ui-cleanup-phase2
+```
+
+```
+To https://github.com/Medic423/tcc
+   003dc74..f90d0bf  feature/ui-cleanup-phase2 -> feature/ui-cleanup-phase2
+
+```
+
+---
+
+Perfect! I've made both tweaks you requested:
+
+## ✅ **Display Improvements Complete**
+
+### **🎯 Priority Display Simplified**
+- **Converted to EMS module format**: Now shows only `ROUTINE`, `URGENT`, `EMERGENT`
+- **Mapping logic**:
+  - `CRITICAL` → `EMERGENT` (red)
+  - `HIGH` → `URGENT` (orange) 
+  - `MEDIUM`/`LOW` → `ROUTINE` (green)
+- **Consistent with other modules** for better user experience
+
+### **📏 Timeline Layout Optimized**
+- **Horizontal text layout** - Timeline events now display in a single row
+- **Space-efficient design** - Event name, description, and timestamp all on one line
+- **Better visual flow** - Uses `flex` layout with proper spacing
+- **Maintains readability** while saving vertical space
+
+### **🔧 Technical Changes**
+- Added `formatPriority()` function to convert priority levels
+- Updated `getPriorityColor()` to handle the new priority format
+- Redesigned timeline layout from vertical stacked to horizontal inline
+- Reduced `space-y-3` to `space-y-2` for tighter spacing
+
+The changes have been committed and pushed. The trip cards now have a cleaner, more consistent priority display and a more space-efficient timeline layout that matches the EMS module's design patterns!
+
+---
+
+_**User (2025-09-18 18:12Z)**_
+
+In the image you'll see "Transfer Requested  Transfer request was initiated" The second part of that "Transfer request was initiated" is redundant and can be removed. Then you maybe able to put  "Trip Created" next to it so there is a stack of two and two instead of four single lines. You can also make the "Accept" "Decline" buttons half their current size and stack them. Finally we need to add the ability to "Edit / Delete" each record.  
+
+---
+
+_**Assistant**_
+
+Perfect! I can see the timeline display in the image. Let me make those improvements:
+
+1. Remove redundant descriptions from timeline events
+2. Stack timeline events in pairs (2x2 layout)
+3. Make Accept/Decline buttons half size and stack them
+4. Add Edit/Delete functionality for each trip record
+
+
+---
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/TripsView.tsx</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -89,5 +89,5 @@
+            event: 'Trip Created', 
+            timestamp: trip.createdAt,
+-           description: 'Trip request was created in the system'
++           description: ''
+          });
+        }
+```
+
+**Chunk 2**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -97,5 +97,5 @@
+            event: 'Request Sent', 
+            timestamp: trip.requestTimestamp,
+-           description: 'Request was sent to EMS agencies'
++           description: ''
+          });
+        }
+```
+
+**Chunk 3**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -105,5 +105,5 @@
+            event: 'Transfer Requested', 
+            timestamp: trip.transferRequestTime,
+-           description: 'Transfer request was initiated'
++           description: ''
+          });
+        }
+```
+
+**Chunk 4**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -113,5 +113,5 @@
+            event: 'Accepted by EMS', 
+            timestamp: trip.acceptedTimestamp,
+-           description: `Trip was accepted by agency ${trip.assignedAgencyId || 'Unknown'}`
++           description: ''
+          });
+        }
+```
+
+**Chunk 5**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -121,5 +121,5 @@
+            event: 'EMS Arrived', 
+            timestamp: trip.emsArrivalTime,
+-           description: 'EMS unit arrived at pickup location'
++           description: ''
+          });
+        }
+```
+
+**Chunk 6**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -129,5 +129,5 @@
+            event: 'Patient Picked Up', 
+            timestamp: trip.pickupTimestamp,
+-           description: 'Patient was picked up and trip started'
++           description: ''
+          });
+        }
+```
+
+**Chunk 7**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -137,5 +137,5 @@
+            event: 'Trip Started', 
+            timestamp: trip.actualStartTime,
+-           description: 'Transport trip officially started'
++           description: ''
+          });
+        }
+```
+
+**Chunk 8**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -145,5 +145,5 @@
+            event: 'Trip Ended', 
+            timestamp: trip.actualEndTime,
+-           description: 'Transport trip officially ended'
++           description: ''
+          });
+        }
+```
+
+**Chunk 9**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -153,5 +153,5 @@
+            event: 'Trip Completed', 
+            timestamp: trip.completionTimestamp,
+-           description: 'Trip was marked as completed'
++           description: ''
+          });
+        }
+```
+
+</details>
 
 ---
 
