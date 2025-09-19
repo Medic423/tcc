@@ -89,7 +89,7 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
 
     // Additional features
     const additionalFeatures = [
-      { name: 'Notifications', href: '/dashboard/notifications', icon: Bell, category: 'additional' },
+      // Notifications moved to Settings dropdown
     ];
 
     // Admin users see all sections
@@ -553,8 +553,8 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
                 <Route path="/route-optimization" element={<TCCRouteOptimizer />} />
                 <Route path="/healthcare-portal" element={<HealthcarePortal />} />
                 <Route path="/ems-dashboard" element={<EMSDashboard user={user} onLogout={onLogout} />} />
-                <Route path="/notifications" element={<NotificationSettings />} />
                 <Route path="/settings" element={<UserManagement />} />
+                <Route path="/settings/notifications" element={<NotificationSettings />} />
                 <Route path="/financial" element={<FinancialDashboard />} />
                 <Route path="/my-trips" element={<div className="text-center py-12"><h3 className="text-lg font-medium text-gray-900">My Trips</h3><p className="text-gray-500">Coming soon...</p></div>} />
                 <Route path="/my-assignments" element={<div className="text-center py-12"><h3 className="text-lg font-medium text-gray-900">My Assignments</h3><p className="text-gray-500">Coming soon...</p></div>} />
