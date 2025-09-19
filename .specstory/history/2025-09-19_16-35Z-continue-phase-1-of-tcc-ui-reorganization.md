@@ -8617,11 +8617,147 @@ Now let me also add some debugging to the useEffect that loads agencies:
 
 ---
 
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/EnhancedTripForm.tsx</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 7, lines removed: undefined
+
+```diff
+@@ -151,6 +151,13 @@
+    // Load agencies when reaching step 4 (Agency Selection)
+    useEffect(() => {
++     console.log('TCC_DEBUG: Agency loading useEffect triggered', {
++       currentStep,
++       fromLocation: formData.fromLocation,
++       facilitiesCount: formOptions.facilities.length
++     });
++     
+      if (currentStep === 4 && formData.fromLocation && formOptions.facilities.length > 0) {
+        const selectedFacility = formOptions.facilities.find(f => f.name === formData.fromLocation);
++       console.log('TCC_DEBUG: Selected facility:', selectedFacility);
+        if (selectedFacility) {
+          loadAgenciesForHospital(selectedFacility.id);
+```
+
+</details>
+
+---
+
+Now let me also add debugging to see what agencies are being displayed:
 
 
 ---
 
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/EnhancedTripForm.tsx</summary>
 
+undefined
+
+**Chunk 1**
+Lines added: 1, lines removed: undefined
+
+```diff
+@@ -795,4 +795,5 @@
+                ) : (
+                  <div className="space-y-3">
++                   {console.log('TCC_DEBUG: Rendering agencies:', formOptions.agencies)}
+                    {formOptions.agencies.length > 0 ? (
+                    formOptions.agencies.map((agency) => (
+```
+
+</details>
+
+---
+
+Now let me commit these debugging changes and test them:
+
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git add .
+```
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git commit -m "Add debugging for agency loading in Create Trip form
+
+- Add useEffect to load agencies when reaching step 4
+- Add console logging to debug agency loading process
+- Track form state changes and API responses"
+```
+
+```
+[main 6014812] Add debugging for agency loading in Create Trip form
+ 2 files changed, 510 insertions(+)
+
+```
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git push origin main
+```
+
+```
+To https://github.com/Medic423/tcc
+   1e25331..6014812  main -> main
+
+```
+
+---
+
+Perfect! I've added debugging to help identify the issue with agency loading. The changes I made:
+
+## ✅ **Added Agency Loading Debugging**
+
+### **Changes Made:**
+
+1. **Added useEffect for Step 4 Agency Loading**:
+   - Triggers when `currentStep === 4` (Agency Selection step)
+   - Loads agencies for the selected hospital
+   - Includes console logging to track the process
+
+2. **Enhanced Agency Loading Function**:
+   - Added detailed console logging for API calls
+   - Tracks hospital ID and notification radius
+   - Logs the full API response
+
+3. **Added Rendering Debug**:
+   - Console logs the agencies array when rendering step 4
+   - Helps identify if agencies are loaded but not displaying
+
+### **How to Test:**
+
+1. **Navigate to TCC Create Trip**:
+   - Go to TCC Dashboard → Trips → Create Trip button
+   - Fill out steps 1-3 (Patient Info, Trip Details, Clinical Info)
+
+2. **Check Console Logs**:
+   - Open browser developer tools (F12)
+   - Go to Console tab
+   - When you reach step 4, you should see logs like:
+     ```
+     TCC_DEBUG: Agency loading useEffect triggered
+     TCC_DEBUG: Loading agencies for hospital: [hospital-id]
+     TCC_DEBUG: Agencies response: [response-data]
+     TCC_DEBUG: Rendering agencies: [agencies-array]
+     ```
+
+3. **Expected Behavior**:
+   - Agencies should load automatically when reaching step 4
+   - You should see agency cards with names, service types, and unit availability
+   - You should be able to select/deselect agencies
+
+### **What to Look For:**
+
+- **If no logs appear**: The useEffect isn't triggering (step 4 not reached or conditions not met)
+- **If API call fails**: Check the network tab for the `/api/trips/agencies/{hospitalId}` request
+- **If agencies load but don't display**: Check the data structure in the console logs
+
+The debugging will help us identify exactly where the issue is occurring in the agency loading process. Can you try creating a trip and let me know what you see in the console logs when you reach step 4?
 
 ---
 
