@@ -89,17 +89,17 @@ router.post('/create', authenticateAdmin, async (req, res) => {
       const systemAnalytics = await prisma.$queryRaw`SELECT * FROM system_analytics`;
       
       // Try to get agencies and dropdown_options if they exist
-      let agencies = [];
-      let dropdownOptions = [];
+      let agencies: any[] = [];
+      let dropdownOptions: any[] = [];
       
       try {
-        agencies = await prisma.$queryRaw`SELECT * FROM agencies`;
+        agencies = await prisma.$queryRaw`SELECT * FROM agencies` as any[];
       } catch (error) {
         console.log('TCC_DEBUG: agencies table does not exist, skipping...');
       }
       
       try {
-        dropdownOptions = await prisma.$queryRaw`SELECT * FROM dropdown_options`;
+        dropdownOptions = await prisma.$queryRaw`SELECT * FROM dropdown_options` as any[];
       } catch (error) {
         console.log('TCC_DEBUG: dropdown_options table does not exist, skipping...');
       }
@@ -130,7 +130,7 @@ router.post('/create', authenticateAdmin, async (req, res) => {
       });
       
       // Try to export EMS data if database exists
-      let emsData = {};
+      let emsData: any = {};
       try {
         const emsTrips = await emsPrisma.$queryRaw`SELECT * FROM trips`;
         emsData.trips = emsTrips;
@@ -171,7 +171,7 @@ router.post('/create', authenticateAdmin, async (req, res) => {
       });
       
       // Try to export Hospital data if database exists
-      let hospitalData = {};
+      let hospitalData: any = {};
       try {
         const hospitalTrips = await hospitalPrisma.$queryRaw`SELECT * FROM trips`;
         hospitalData.trips = hospitalTrips;
@@ -205,7 +205,7 @@ router.post('/create', authenticateAdmin, async (req, res) => {
       });
       
       // Try to export Center data if database exists
-      let centerData = {};
+      let centerData: any = {};
       try {
         const centerTrips = await centerPrisma.$queryRaw`SELECT * FROM trips`;
         centerData.trips = centerTrips;
