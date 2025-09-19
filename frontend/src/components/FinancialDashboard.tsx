@@ -18,6 +18,23 @@ import {
   MapPin
 } from 'lucide-react';
 import { analyticsAPI } from '../services/api';
+import { 
+  LineChart, 
+  Line, 
+  AreaChart, 
+  Area, 
+  BarChart, 
+  Bar, 
+  PieChart as RechartsPieChart, 
+  Pie,
+  Cell, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  Legend, 
+  ResponsiveContainer 
+} from 'recharts';
 
 interface CostAnalysisSummary {
   totalRevenue: number;
@@ -196,6 +213,56 @@ const FinancialDashboard: React.FC = () => {
     return 'bg-red-100';
   };
 
+  // Generate sample chart data
+  const generateRevenueCostTrendData = () => {
+    const data = [];
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+    
+    for (let i = 0; i < months.length; i++) {
+      const baseRevenue = 50000 + (i * 5000) + Math.random() * 10000;
+      const baseCost = 35000 + (i * 3000) + Math.random() * 8000;
+      
+      data.push({
+        month: months[i],
+        revenue: Math.round(baseRevenue),
+        cost: Math.round(baseCost),
+        profit: Math.round(baseRevenue - baseCost)
+      });
+    }
+    
+    return data;
+  };
+
+  const generateCostBreakdownData = () => {
+    return [
+      { name: 'Crew Labor', value: 45000, color: '#8884d8' },
+      { name: 'Vehicle', value: 25000, color: '#82ca9d' },
+      { name: 'Fuel', value: 15000, color: '#ffc658' },
+      { name: 'Maintenance', value: 12000, color: '#ff7300' },
+      { name: 'Overhead', value: 18000, color: '#8dd1e1' }
+    ];
+  };
+
+  const generateProfitabilityTrendData = () => {
+    const data = [];
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+    
+    for (let i = 0; i < months.length; i++) {
+      const margin = 15 + (i * 2) + Math.random() * 5;
+      data.push({
+        month: months[i],
+        margin: Math.round(margin * 10) / 10,
+        profit: Math.round(20000 + (i * 3000) + Math.random() * 5000)
+      });
+    }
+    
+    return data;
+  };
+
+  const revenueCostData = generateRevenueCostTrendData();
+  const costBreakdownData = generateCostBreakdownData();
+  const profitabilityData = generateProfitabilityTrendData();
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -370,15 +437,40 @@ const FinancialDashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Revenue vs Cost Chart Placeholder */}
+          {/* Revenue vs Cost Chart */}
           <div className="bg-white p-6 rounded-lg shadow">
             <h3 className="text-lg font-medium text-gray-900 mb-4">Revenue vs Cost Trend</h3>
-            <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
-              <div className="text-center">
-                <BarChart3 className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-                <p className="text-gray-500">Chart visualization would go here</p>
-                <p className="text-sm text-gray-400">Integration with charting library needed</p>
-              </div>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={revenueCostData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`} />
+                  <Tooltip 
+                    formatter={(value: number) => [formatCurrency(value), '']}
+                    labelFormatter={(label) => `Month: ${label}`}
+                  />
+                  <Legend />
+                  <Area 
+                    type="monotone" 
+                    dataKey="revenue" 
+                    stackId="1" 
+                    stroke="#10b981" 
+                    fill="#10b981" 
+                    fillOpacity={0.6}
+                    name="Revenue"
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="cost" 
+                    stackId="2" 
+                    stroke="#ef4444" 
+                    fill="#ef4444" 
+                    fillOpacity={0.6}
+                    name="Cost"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
           </div>
         </div>
@@ -464,15 +556,29 @@ const FinancialDashboard: React.FC = () => {
         <div className="space-y-6">
           <h2 className="text-xl font-semibold text-gray-900">Cost Analysis</h2>
           
-          {/* Cost Breakdown Chart Placeholder */}
+          {/* Cost Breakdown Chart */}
           <div className="bg-white p-6 rounded-lg shadow">
             <h3 className="text-lg font-medium text-gray-900 mb-4">Cost Breakdown</h3>
-            <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
-              <div className="text-center">
-                <PieChart className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-                <p className="text-gray-500">Cost breakdown chart would go here</p>
-                <p className="text-sm text-gray-400">Shows crew, vehicle, fuel, maintenance, overhead costs</p>
-              </div>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <RechartsPieChart>
+                  <Pie
+                    data={costBreakdownData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {costBreakdownData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value: number) => [formatCurrency(value), 'Cost']} />
+                </RechartsPieChart>
+              </ResponsiveContainer>
             </div>
           </div>
 
@@ -526,12 +632,39 @@ const FinancialDashboard: React.FC = () => {
           {/* Profitability Trends */}
           <div className="bg-white p-6 rounded-lg shadow">
             <h3 className="text-lg font-medium text-gray-900 mb-4">Profitability Trends</h3>
-            <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
-              <div className="text-center">
-                <TrendingUp className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-                <p className="text-gray-500">Profitability trend chart would go here</p>
-                <p className="text-sm text-gray-400">Shows profit margins over time</p>
-              </div>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={profitabilityData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis yAxisId="left" />
+                  <YAxis yAxisId="right" orientation="right" />
+                  <Tooltip 
+                    formatter={(value: number, name: string) => [
+                      name === 'margin' ? `${value}%` : formatCurrency(value), 
+                      name === 'margin' ? 'Margin' : 'Profit'
+                    ]}
+                    labelFormatter={(label) => `Month: ${label}`}
+                  />
+                  <Legend />
+                  <Line 
+                    yAxisId="left"
+                    type="monotone" 
+                    dataKey="profit" 
+                    stroke="#3b82f6" 
+                    strokeWidth={2}
+                    name="Profit"
+                  />
+                  <Line 
+                    yAxisId="right"
+                    type="monotone" 
+                    dataKey="margin" 
+                    stroke="#10b981" 
+                    strokeWidth={2}
+                    name="Margin %"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
             </div>
           </div>
 
