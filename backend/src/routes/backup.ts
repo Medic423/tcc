@@ -81,14 +81,28 @@ router.post('/create', authenticateAdmin, async (req, res) => {
     try {
       console.log('TCC_DEBUG: Exporting TCC database...');
       
-      // Get all tables from the main database
+      // Get all tables from the main database (only tables that exist)
       const trips = await prisma.$queryRaw`SELECT * FROM trips`;
       const hospitals = await prisma.$queryRaw`SELECT * FROM hospitals`;
-      const agencies = await prisma.$queryRaw`SELECT * FROM agencies`;
       const facilities = await prisma.$queryRaw`SELECT * FROM facilities`;
       const centerUsers = await prisma.$queryRaw`SELECT * FROM center_users`;
       const systemAnalytics = await prisma.$queryRaw`SELECT * FROM system_analytics`;
-      const dropdownOptions = await prisma.$queryRaw`SELECT * FROM dropdown_options`;
+      
+      // Try to get agencies and dropdown_options if they exist
+      let agencies = [];
+      let dropdownOptions = [];
+      
+      try {
+        agencies = await prisma.$queryRaw`SELECT * FROM agencies`;
+      } catch (error) {
+        console.log('TCC_DEBUG: agencies table does not exist, skipping...');
+      }
+      
+      try {
+        dropdownOptions = await prisma.$queryRaw`SELECT * FROM dropdown_options`;
+      } catch (error) {
+        console.log('TCC_DEBUG: dropdown_options table does not exist, skipping...');
+      }
       
       backupData.databases.tcc = {
         trips,
@@ -114,15 +128,31 @@ router.post('/create', authenticateAdmin, async (req, res) => {
           }
         }
       });
-      const emsTrips = await emsPrisma.$queryRaw`SELECT * FROM trips`;
-      const emsUsers = await emsPrisma.$queryRaw`SELECT * FROM ems_users`;
-      const emsUnits = await emsPrisma.$queryRaw`SELECT * FROM units`;
       
-      backupData.databases.ems = {
-        trips: emsTrips,
-        users: emsUsers,
-        units: emsUnits
-      };
+      // Try to export EMS data if database exists
+      let emsData = {};
+      try {
+        const emsTrips = await emsPrisma.$queryRaw`SELECT * FROM trips`;
+        emsData.trips = emsTrips;
+      } catch (error) {
+        console.log('TCC_DEBUG: trips table does not exist in EMS database, skipping...');
+      }
+      
+      try {
+        const emsUsers = await emsPrisma.$queryRaw`SELECT * FROM ems_users`;
+        emsData.users = emsUsers;
+      } catch (error) {
+        console.log('TCC_DEBUG: ems_users table does not exist in EMS database, skipping...');
+      }
+      
+      try {
+        const emsUnits = await emsPrisma.$queryRaw`SELECT * FROM units`;
+        emsData.units = emsUnits;
+      } catch (error) {
+        console.log('TCC_DEBUG: units table does not exist in EMS database, skipping...');
+      }
+      
+      backupData.databases.ems = emsData;
       await emsPrisma.$disconnect();
       console.log('TCC_DEBUG: EMS database exported successfully');
     } catch (error) {
@@ -139,13 +169,24 @@ router.post('/create', authenticateAdmin, async (req, res) => {
           }
         }
       });
-      const hospitalTrips = await hospitalPrisma.$queryRaw`SELECT * FROM trips`;
-      const hospitalUsers = await hospitalPrisma.$queryRaw`SELECT * FROM healthcare_users`;
       
-      backupData.databases.hospital = {
-        trips: hospitalTrips,
-        users: hospitalUsers
-      };
+      // Try to export Hospital data if database exists
+      let hospitalData = {};
+      try {
+        const hospitalTrips = await hospitalPrisma.$queryRaw`SELECT * FROM trips`;
+        hospitalData.trips = hospitalTrips;
+      } catch (error) {
+        console.log('TCC_DEBUG: trips table does not exist in Hospital database, skipping...');
+      }
+      
+      try {
+        const hospitalUsers = await hospitalPrisma.$queryRaw`SELECT * FROM healthcare_users`;
+        hospitalData.users = hospitalUsers;
+      } catch (error) {
+        console.log('TCC_DEBUG: healthcare_users table does not exist in Hospital database, skipping...');
+      }
+      
+      backupData.databases.hospital = hospitalData;
       await hospitalPrisma.$disconnect();
       console.log('TCC_DEBUG: Hospital database exported successfully');
     } catch (error) {
@@ -162,13 +203,24 @@ router.post('/create', authenticateAdmin, async (req, res) => {
           }
         }
       });
-      const centerTrips = await centerPrisma.$queryRaw`SELECT * FROM trips`;
-      const centerUsers = await centerPrisma.$queryRaw`SELECT * FROM center_users`;
       
-      backupData.databases.center = {
-        trips: centerTrips,
-        users: centerUsers
-      };
+      // Try to export Center data if database exists
+      let centerData = {};
+      try {
+        const centerTrips = await centerPrisma.$queryRaw`SELECT * FROM trips`;
+        centerData.trips = centerTrips;
+      } catch (error) {
+        console.log('TCC_DEBUG: trips table does not exist in Center database, skipping...');
+      }
+      
+      try {
+        const centerUsers = await centerPrisma.$queryRaw`SELECT * FROM center_users`;
+        centerData.users = centerUsers;
+      } catch (error) {
+        console.log('TCC_DEBUG: center_users table does not exist in Center database, skipping...');
+      }
+      
+      backupData.databases.center = centerData;
       await centerPrisma.$disconnect();
       console.log('TCC_DEBUG: Center database exported successfully');
     } catch (error) {
