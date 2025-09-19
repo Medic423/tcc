@@ -360,39 +360,29 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
               <div className="px-3 py-2">
                 <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Analysis</h3>
               </div>
-              {Object.entries(dropdownMenus).filter(([key]) => ['analytics', 'financial'].includes(key)).map(([key, menu]) => (
-                <div key={key}>
-                  <div className="px-3 py-2">
-                    <div className="flex items-center text-gray-600 font-medium">
-                      <menu.icon className="mr-3 h-5 w-5 text-gray-400" />
-                      {menu.title}
-                    </div>
-                  </div>
-                  {menu.items.map((item: any, index: number) => {
-                    const isActive = location.pathname === item.href || 
-                      (item.href !== '/dashboard' && location.pathname.startsWith(item.href));
-                    return (
-                      <Link
-                        key={index}
-                        to={item.href}
-                        className={`${
-                          isActive
-                            ? 'bg-primary-100 text-primary-900'
-                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                        } group flex items-center px-6 py-2 text-sm font-medium rounded-md ml-4`}
-                        onClick={() => setMobileMenuOpen(false)}
-                      >
-                        <item.icon
-                          className={`${
-                            isActive ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500'
-                          } mr-3 flex-shrink-0 h-4 w-4`}
-                        />
-                        {item.name}
-                      </Link>
-                    );
-                  })}
-                </div>
-              ))}
+              {navigation.analysisReporting.map((item) => {
+                const isActive = location.pathname === item.href || 
+                  (item.href !== '/dashboard' && location.pathname.startsWith(item.href));
+                return (
+                  <Link
+                    key={item.name}
+                    to={item.href}
+                    className={`${
+                      isActive
+                        ? 'bg-primary-100 text-primary-900'
+                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    } group flex items-center px-3 py-2 text-base font-medium rounded-md`}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <item.icon
+                      className={`${
+                        isActive ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500'
+                      } mr-3 flex-shrink-0 h-5 w-5`}
+                    />
+                    {item.name}
+                  </Link>
+                );
+              })}
               
               {/* Additional Features */}
               <div className="px-3 py-2">
@@ -512,10 +502,26 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
                   })}
                 </div>
 
-                {/* Analysis & Reporting - Dropdown Menus */}
+                {/* Analysis & Reporting - Direct Links */}
                 <div className="flex space-x-6">
-                  <DropdownMenu menuKey="analytics" menu={dropdownMenus.analytics} />
-                  <DropdownMenu menuKey="financial" menu={dropdownMenus.financial} />
+                  {navigation.analysisReporting.map((item) => {
+                    const isActive = location.pathname === item.href || 
+                      (item.href !== '/dashboard' && location.pathname.startsWith(item.href));
+                    return (
+                      <Link
+                        key={item.name}
+                        to={item.href}
+                        className={`${
+                          isActive
+                            ? 'text-green-600 border-b-2 border-green-600'
+                            : 'text-gray-500 hover:text-gray-700 hover:border-b-2 hover:border-gray-300'
+                        } flex items-center px-1 py-2 text-sm font-medium border-b-2 border-transparent transition-colors`}
+                      >
+                        <item.icon className="mr-2 h-4 w-4" />
+                        {item.name}
+                      </Link>
+                    );
+                  })}
                 </div>
 
                 {/* Additional Features */}
