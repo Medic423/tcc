@@ -43,6 +43,7 @@ import TCCUnitsManagement from './TCCUnitsManagement';
 import TCCRouteOptimizer from './TCCRouteOptimizer';
 import Analytics from './Analytics';
 import FinancialDashboard from './FinancialDashboard';
+import TripHistory from './TripHistory';
 
 interface User {
   id: string;
@@ -545,6 +546,7 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
               <Routes>
                 <Route path="/" element={<Overview />} />
                 <Route path="/trips" element={<TripsView user={user} />} />
+                <Route path="/trips/history" element={<TripHistory />} />
                 <Route path="/analytics" element={<Analytics />} />
                 <Route path="/units" element={<TCCUnitsManagement />} />
                 <Route path="/hospitals/*" element={<Hospitals />} />
