@@ -111,7 +111,7 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
     fromLocation: user.facilityName || '',
     pickupLocationId: '',
     toLocation: '',
-    scheduledTime: '',
+    scheduledTime: new Date().toISOString().slice(0, 16), // Default to current time in datetime-local format
     transportLevel: 'BLS',
     urgencyLevel: 'Routine',
     diagnosis: '',
@@ -309,7 +309,8 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
       const tripData = {
         ...formData,
         patientWeight: formData.patientWeight ? parseFloat(formData.patientWeight) : null,
-        notificationRadius: formData.notificationRadius || 100
+        notificationRadius: formData.notificationRadius || 100,
+        scheduledTime: formData.scheduledTime || new Date().toISOString()
       };
 
       const response = await tripsAPI.createEnhanced(tripData);
