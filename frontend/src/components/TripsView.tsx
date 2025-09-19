@@ -186,16 +186,28 @@ const TripCard: React.FC<{ trip: Trip; user: User }> = ({ trip, user }) => {
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'CRITICAL':
+      case 'EMERGENT':
         return 'bg-red-100 text-red-800';
-      case 'HIGH':
+      case 'URGENT':
         return 'bg-orange-100 text-orange-800';
-      case 'MEDIUM':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'LOW':
+      case 'ROUTINE':
         return 'bg-green-100 text-green-800';
       default:
         return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const formatPriority = (priority: string) => {
+    switch (priority) {
+      case 'CRITICAL':
+        return 'EMERGENT';
+      case 'HIGH':
+        return 'URGENT';
+      case 'MEDIUM':
+      case 'LOW':
+        return 'ROUTINE';
+      default:
+        return priority;
     }
   };
 
@@ -257,8 +269,8 @@ const TripCard: React.FC<{ trip: Trip; user: User }> = ({ trip, user }) => {
 
           {/* Priority Column */}
           <div>
-            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getPriorityColor(trip.priority)}`}>
-              {trip.priority}
+            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getPriorityColor(formatPriority(trip.priority))}`}>
+              {formatPriority(trip.priority)}
             </span>
           </div>
 
@@ -297,13 +309,15 @@ const TripCard: React.FC<{ trip: Trip; user: User }> = ({ trip, user }) => {
           
           {expanded && (
             <div className="px-6 pb-4 bg-gray-50">
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {timeline.map((event, index) => (
-                  <div key={index} className="flex items-start">
-                    <div className="flex-shrink-0 w-2 h-2 bg-blue-600 rounded-full mt-2"></div>
-                    <div className="ml-3">
-                      <p className="text-sm font-medium text-gray-900">{event.event}</p>
-                      <p className="text-xs text-gray-500">{event.description}</p>
+                  <div key={index} className="flex items-center">
+                    <div className="flex-shrink-0 w-2 h-2 bg-blue-600 rounded-full mr-3"></div>
+                    <div className="flex-1 flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <p className="text-sm font-medium text-gray-900">{event.event}</p>
+                        <p className="text-xs text-gray-500">{event.description}</p>
+                      </div>
                       <p className="text-xs text-gray-400">{formatDateTime(event.timestamp)}</p>
                     </div>
                   </div>
