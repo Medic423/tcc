@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Routes, Route, Link, useLocation } from 'react-router-dom';
 import { 
   Home, 
@@ -11,7 +11,24 @@ import {
   Bell,
   DollarSign,
   Navigation,
-  ChevronDown
+  ChevronDown,
+  Plus,
+  Activity,
+  TrendingUp,
+  FileText,
+  Users,
+  Settings,
+  Database,
+  AlertCircle,
+  CheckCircle,
+  BarChart2,
+  PieChart,
+  DollarSign as DollarIcon,
+  CreditCard,
+  UserPlus,
+  Shield,
+  Bell as BellIcon,
+  HardDrive
 } from 'lucide-react';
 import Notifications from './Notifications';
 import Overview from './Overview';
@@ -44,7 +61,10 @@ interface TCCDashboardProps {
 
 const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const location = useLocation();
+  const dropdownRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   const getNavigation = () => {
     // Core Operations (Left) - Always visible
@@ -93,7 +113,77 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
   };
 
   const navigation = getNavigation();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Dropdown menu configurations
+  const dropdownMenus = {
+    analytics: {
+      title: 'Analytics',
+      icon: BarChart3,
+      items: [
+        { name: 'Overview', href: '/dashboard/analytics', icon: BarChart2 },
+        { name: 'Revenue', href: '/dashboard/analytics/revenue', icon: TrendingUp },
+        { name: 'Performance', href: '/dashboard/analytics/performance', icon: Activity },
+        { name: 'Reports', href: '/dashboard/analytics/reports', icon: FileText },
+      ]
+    },
+    financial: {
+      title: 'Financial',
+      icon: DollarSign,
+      items: [
+        { name: 'Overview', href: '/dashboard/financial', icon: BarChart2 },
+        { name: 'Revenue Analysis', href: '/dashboard/financial/revenue', icon: TrendingUp },
+        { name: 'Cost Analysis', href: '/dashboard/financial/costs', icon: PieChart },
+        { name: 'Profitability', href: '/dashboard/financial/profitability', icon: DollarIcon },
+        { name: 'Billing', href: '/dashboard/financial/billing', icon: CreditCard },
+      ]
+    },
+    settings: {
+      title: 'Settings',
+      icon: Settings,
+      items: [
+        { name: 'System Settings', href: '/dashboard/settings', icon: Settings },
+        { name: 'User Management', href: '/dashboard/settings/users', icon: Users },
+        { name: 'Notifications', href: '/dashboard/settings/notifications', icon: BellIcon },
+        { name: 'Backup', href: '/dashboard/settings/backup', icon: HardDrive },
+      ]
+    }
+  };
+
+  // Contextual quick actions
+  const quickActions = {
+    trips: [
+      { name: 'Create Trip', href: '/dashboard/trips/create', icon: Plus, color: 'text-green-600' },
+      { name: 'Active Trips', href: '/dashboard/trips/active', icon: Activity, color: 'text-blue-600' },
+      { name: 'Trip History', href: '/dashboard/trips/history', icon: FileText, color: 'text-gray-600' },
+    ],
+    hospitals: [
+      { name: 'Add Hospital', href: '/dashboard/hospitals/create', icon: Plus, color: 'text-green-600' },
+      { name: 'Hospital Status', href: '/dashboard/hospitals/status', icon: CheckCircle, color: 'text-blue-600' },
+      { name: 'Configuration', href: '/dashboard/hospitals/config', icon: Settings, color: 'text-gray-600' },
+    ],
+    agencies: [
+      { name: 'Add Agency', href: '/dashboard/agencies/create', icon: Plus, color: 'text-green-600' },
+      { name: 'Agency Status', href: '/dashboard/agencies/status', icon: Activity, color: 'text-blue-600' },
+      { name: 'Performance', href: '/dashboard/agencies/performance', icon: TrendingUp, color: 'text-gray-600' },
+    ]
+  };
+
+  // Handle click outside to close dropdowns
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (activeDropdown && dropdownRefs.current[activeDropdown]) {
+        const dropdownElement = dropdownRefs.current[activeDropdown];
+        if (dropdownElement && !dropdownElement.contains(event.target as Node)) {
+          setActiveDropdown(null);
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [activeDropdown]);
 
   // Flatten all navigation items for current page detection
   const allNavItems = [
@@ -107,6 +197,94 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
     location.pathname === item.href || 
     (item.href !== '/dashboard' && location.pathname.startsWith(item.href))
   )?.name || 'Dashboard';
+
+  // Dropdown Menu Component
+  const DropdownMenu = ({ menuKey, menu }: { menuKey: string; menu: any }) => {
+    const isActive = activeDropdown === menuKey;
+    const hasActiveItem = menu.items.some((item: any) => 
+      location.pathname === item.href || 
+      (item.href !== '/dashboard' && location.pathname.startsWith(item.href))
+    );
+
+    return (
+      <div className="relative" ref={el => dropdownRefs.current[menuKey] = el}>
+        <button
+          onClick={() => setActiveDropdown(isActive ? null : menuKey)}
+          className={`${
+            hasActiveItem
+              ? 'text-green-600 border-b-2 border-green-600'
+              : 'text-gray-500 hover:text-gray-700 hover:border-b-2 hover:border-gray-300'
+          } flex items-center px-1 py-2 text-sm font-medium border-b-2 border-transparent transition-colors`}
+        >
+          <menu.icon className="mr-2 h-4 w-4" />
+          {menu.title}
+          <ChevronDown className={`ml-1 h-4 w-4 transition-transform ${isActive ? 'rotate-180' : ''}`} />
+        </button>
+        
+        {isActive && (
+          <div className="absolute top-full left-0 mt-1 w-56 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-50">
+            <div className="py-1">
+              {menu.items.map((item: any, index: number) => {
+                const isItemActive = location.pathname === item.href || 
+                  (item.href !== '/dashboard' && location.pathname.startsWith(item.href));
+                return (
+                  <Link
+                    key={index}
+                    to={item.href}
+                    className={`${
+                      isItemActive
+                        ? 'bg-green-50 text-green-700'
+                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                    } group flex items-center px-4 py-2 text-sm`}
+                    onClick={() => setActiveDropdown(null)}
+                  >
+                    <item.icon className="mr-3 h-4 w-4 text-gray-400 group-hover:text-gray-500" />
+                    {item.name}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Quick Actions Component
+  const QuickActions = ({ sectionKey, actions }: { sectionKey: string; actions: any[] }) => {
+    const [showActions, setShowActions] = useState(false);
+    
+    return (
+      <div className="relative" ref={el => dropdownRefs.current[`${sectionKey}-actions`] = el}>
+        <button
+          onClick={() => setShowActions(!showActions)}
+          className="text-gray-500 hover:text-gray-700 flex items-center px-1 py-2 text-sm font-medium transition-colors"
+        >
+          <Plus className="mr-2 h-4 w-4" />
+          Quick Actions
+          <ChevronDown className={`ml-1 h-4 w-4 transition-transform ${showActions ? 'rotate-180' : ''}`} />
+        </button>
+        
+        {showActions && (
+          <div className="absolute top-full left-0 mt-1 w-48 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-50">
+            <div className="py-1">
+              {actions.map((action, index) => (
+                <Link
+                  key={index}
+                  to={action.href}
+                  className="text-gray-700 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-4 py-2 text-sm"
+                  onClick={() => setShowActions(false)}
+                >
+                  <action.icon className={`mr-3 h-4 w-4 ${action.color}`} />
+                  {action.name}
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-gray-100">
@@ -165,29 +343,39 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
               <div className="px-3 py-2">
                 <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Analysis</h3>
               </div>
-              {navigation.analysisReporting.map((item) => {
-                const isActive = location.pathname === item.href || 
-                  (item.href !== '/dashboard' && location.pathname.startsWith(item.href));
-                return (
-                  <Link
-                    key={item.name}
-                    to={item.href}
-                    className={`${
-                      isActive
-                        ? 'bg-primary-100 text-primary-900'
-                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                    } group flex items-center px-3 py-2 text-base font-medium rounded-md`}
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <item.icon
-                      className={`${
-                        isActive ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500'
-                      } mr-3 flex-shrink-0 h-5 w-5`}
-                    />
-                    {item.name}
-                  </Link>
-                );
-              })}
+              {Object.entries(dropdownMenus).filter(([key]) => ['analytics', 'financial'].includes(key)).map(([key, menu]) => (
+                <div key={key}>
+                  <div className="px-3 py-2">
+                    <div className="flex items-center text-gray-600 font-medium">
+                      <menu.icon className="mr-3 h-5 w-5 text-gray-400" />
+                      {menu.title}
+                    </div>
+                  </div>
+                  {menu.items.map((item: any, index: number) => {
+                    const isActive = location.pathname === item.href || 
+                      (item.href !== '/dashboard' && location.pathname.startsWith(item.href));
+                    return (
+                      <Link
+                        key={index}
+                        to={item.href}
+                        className={`${
+                          isActive
+                            ? 'bg-primary-100 text-primary-900'
+                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                        } group flex items-center px-6 py-2 text-sm font-medium rounded-md ml-4`}
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <item.icon
+                          className={`${
+                            isActive ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500'
+                          } mr-3 flex-shrink-0 h-4 w-4`}
+                        />
+                        {item.name}
+                      </Link>
+                    );
+                  })}
+                </div>
+              ))}
               
               {/* Additional Features */}
               <div className="px-3 py-2">
@@ -219,34 +407,40 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
               
               {/* Administration */}
               {navigation.administration.length > 0 && (
-                <>
+                <div>
                   <div className="px-3 py-2">
                     <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Administration</h3>
                   </div>
-                  {navigation.administration.map((item) => {
+                  <div className="px-3 py-2">
+                    <div className="flex items-center text-gray-600 font-medium">
+                      <dropdownMenus.settings.icon className="mr-3 h-5 w-5 text-gray-400" />
+                      {dropdownMenus.settings.title}
+                    </div>
+                  </div>
+                  {dropdownMenus.settings.items.map((item: any, index: number) => {
                     const isActive = location.pathname === item.href || 
                       (item.href !== '/dashboard' && location.pathname.startsWith(item.href));
                     return (
                       <Link
-                        key={item.name}
+                        key={index}
                         to={item.href}
                         className={`${
                           isActive
                             ? 'bg-primary-100 text-primary-900'
                             : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                        } group flex items-center px-3 py-2 text-base font-medium rounded-md`}
+                        } group flex items-center px-6 py-2 text-sm font-medium rounded-md ml-4`}
                         onClick={() => setMobileMenuOpen(false)}
                       >
                         <item.icon
                           className={`${
                             isActive ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500'
-                          } mr-3 flex-shrink-0 h-5 w-5`}
+                          } mr-3 flex-shrink-0 h-4 w-4`}
                         />
                         {item.name}
                       </Link>
                     );
                   })}
-                </>
+                </div>
               )}
             </div>
           )}
@@ -272,42 +466,34 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
                     const isActive = location.pathname === item.href || 
                       (item.href !== '/dashboard' && location.pathname.startsWith(item.href));
                     return (
-                      <Link
-                        key={item.name}
-                        to={item.href}
-                        className={`${
-                          isActive
-                            ? 'text-primary-600 border-b-2 border-primary-600'
-                            : 'text-gray-500 hover:text-gray-700 hover:border-b-2 hover:border-gray-300'
-                        } flex items-center px-1 py-2 text-sm font-medium border-b-2 border-transparent transition-colors`}
-                      >
-                        <item.icon className="mr-2 h-4 w-4" />
-                        {item.name}
-                      </Link>
+                      <div key={item.name} className="flex items-center space-x-2">
+                        <Link
+                          to={item.href}
+                          className={`${
+                            isActive
+                              ? 'text-primary-600 border-b-2 border-primary-600'
+                              : 'text-gray-500 hover:text-gray-700 hover:border-b-2 hover:border-gray-300'
+                          } flex items-center px-1 py-2 text-sm font-medium border-b-2 border-transparent transition-colors`}
+                        >
+                          <item.icon className="mr-2 h-4 w-4" />
+                          {item.name}
+                        </Link>
+                        {/* Add Quick Actions for specific sections */}
+                        {(item.name === 'Trips' || item.name === 'Hospitals' || item.name === 'Agencies') && (
+                          <QuickActions 
+                            sectionKey={item.name.toLowerCase()} 
+                            actions={quickActions[item.name.toLowerCase() as keyof typeof quickActions]} 
+                          />
+                        )}
+                      </div>
                     );
                   })}
                 </div>
 
-                {/* Analysis & Reporting */}
+                {/* Analysis & Reporting - Dropdown Menus */}
                 <div className="flex space-x-6">
-                  {navigation.analysisReporting.map((item) => {
-                    const isActive = location.pathname === item.href || 
-                      (item.href !== '/dashboard' && location.pathname.startsWith(item.href));
-                    return (
-                      <Link
-                        key={item.name}
-                        to={item.href}
-                        className={`${
-                          isActive
-                            ? 'text-green-600 border-b-2 border-green-600'
-                            : 'text-gray-500 hover:text-gray-700 hover:border-b-2 hover:border-gray-300'
-                        } flex items-center px-1 py-2 text-sm font-medium border-b-2 border-transparent transition-colors`}
-                      >
-                        <item.icon className="mr-2 h-4 w-4" />
-                        {item.name}
-                      </Link>
-                    );
-                  })}
+                  <DropdownMenu menuKey="analytics" menu={dropdownMenus.analytics} />
+                  <DropdownMenu menuKey="financial" menu={dropdownMenus.financial} />
                 </div>
 
                 {/* Additional Features */}
@@ -332,27 +518,10 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
                   })}
                 </div>
 
-                {/* Administration */}
+                {/* Administration - Settings Dropdown */}
                 {navigation.administration.length > 0 && (
                   <div className="flex space-x-6">
-                    {navigation.administration.map((item) => {
-                      const isActive = location.pathname === item.href || 
-                        (item.href !== '/dashboard' && location.pathname.startsWith(item.href));
-                      return (
-                        <Link
-                          key={item.name}
-                          to={item.href}
-                          className={`${
-                            isActive
-                              ? 'text-gray-600 border-b-2 border-gray-600'
-                              : 'text-gray-500 hover:text-gray-700 hover:border-b-2 hover:border-gray-300'
-                          } flex items-center px-1 py-2 text-sm font-medium border-b-2 border-transparent transition-colors`}
-                        >
-                          <item.icon className="mr-2 h-4 w-4" />
-                          {item.name}
-                        </Link>
-                      );
-                    })}
+                    <DropdownMenu menuKey="settings" menu={dropdownMenus.settings} />
                   </div>
                 )}
               </nav>
