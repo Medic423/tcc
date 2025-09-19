@@ -18,7 +18,7 @@ import unitRoutes from './routes/units';
 import tccUnitRoutes from './routes/tccUnits';
 import dropdownOptionsRoutes from './routes/dropdownOptions';
 import pickupLocationRoutes from './routes/pickupLocations';
-// import emsAnalyticsRoutes from './routes/emsAnalytics'; // Temporarily disabled due to schema changes
+import emsAnalyticsRoutes from './routes/emsAnalytics';
 
 // Load environment variables
 dotenv.config();
@@ -85,7 +85,7 @@ app.use('/api/tcc/analytics', analyticsRoutes);
 app.use('/api/tcc/units', tccUnitRoutes);
 app.use('/api/dropdown-options', dropdownOptionsRoutes);
 app.use('/api/tcc/pickup-locations', pickupLocationRoutes);
-// app.use('/api/ems/analytics', emsAnalyticsRoutes); // Temporarily disabled due to schema changes
+app.use('/api/ems/analytics', emsAnalyticsRoutes);
 app.use('/api/optimize', optimizationRoutes);
 
 // Test endpoints
