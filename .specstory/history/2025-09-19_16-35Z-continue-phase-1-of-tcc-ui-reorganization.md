@@ -9442,3 +9442,271 @@ This completes the TCC UI cleanup as requested!
 
 ---
 
+_**User (2025-09-18 18:12Z)**_
+
+In the "Settings" drop down the current landing page for the item "System Setting" should be moved to be the landing page for the item "User Management" and then "System Setting" can be removed from the drop down.
+
+---
+
+_**Assistant**_
+
+I can see from the terminal logs that the system is working well - the backend is running and the frontend is compiling successfully. Now I need to update the Settings dropdown to move the current "System Settings" landing page to "User Management" and remove "System Settings" from the dropdown.
+
+Let me first check what the current "System Settings" route points to and then make the necessary changes:
+
+
+---
+
+Read file: undefined
+
+---
+
+Now let me check what the current routes are:
+
+
+---
+
+Read file: undefined
+
+---
+
+Perfect! I can see that:
+1. Currently `/dashboard/settings` points to `<UserManagement />` (line 556)
+2. The dropdown has "System Settings" pointing to `/dashboard/settings` and "User Management" pointing to `/dashboard/settings/users` (lines 122-123)
+
+I need to:
+1. Remove "System Settings" from the dropdown
+2. Change "User Management" to point to `/dashboard/settings` instead of `/dashboard/settings/users`
+3. Update the route to make `/dashboard/settings/users` point to `<UserManagement />` as well (or remove it if not needed)
+
+Let me make these changes:
+
+
+---
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/TCCDashboard.tsx</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 1, lines removed: 2
+
+```diff
+@@ -120,6 +120,5 @@
+        icon: Settings,
+        items: [
+-         { name: 'System Settings', href: '/dashboard/settings', icon: Settings },
+-         { name: 'User Management', href: '/dashboard/settings/users', icon: Users },
++         { name: 'User Management', href: '/dashboard/settings', icon: Users },
+          { name: 'Notifications', href: '/dashboard/settings/notifications', icon: BellIcon },
+          { name: 'Backup', href: '/dashboard/settings/backup', icon: HardDrive },
+```
+
+</details>
+
+---
+
+Now I need to add a route for `/dashboard/settings/users` to maintain backward compatibility, or I can remove it if it's not needed. Let me add the route to ensure the old URL still works:
+
+
+---
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/TCCDashboard.tsx</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 1, lines removed: undefined
+
+```diff
+@@ -554,4 +554,5 @@
+                  <Route path="/ems-dashboard" element={<EMSDashboard user={user} onLogout={onLogout} />} />
+                  <Route path="/settings" element={<UserManagement />} />
++                 <Route path="/settings/users" element={<UserManagement />} />
+                  <Route path="/settings/notifications" element={<NotificationSettings />} />
+                  <Route path="/financial" element={<FinancialDashboard />} />
+```
+
+</details>
+
+---
+
+Now let me commit these changes:
+
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git add .
+```
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git commit -m "Reorganize Settings dropdown menu
+
+- Remove 'System Settings' from Settings dropdown
+- Make 'User Management' the primary landing page for /dashboard/settings
+- Keep /dashboard/settings/users route for backward compatibility
+- Simplify Settings dropdown to focus on core admin functions"
+```
+
+```
+[main d1b9472] Reorganize Settings dropdown menu
+ 2 files changed, 217 insertions(+), 2 deletions(-)
+
+```
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git push origin main
+```
+
+```
+To https://github.com/Medic423/tcc
+   fab513b..d1b9472  main -> main
+
+```
+
+---
+
+Perfect! I've successfully reorganized the Settings dropdown menu as requested. Here's what I changed:
+
+## ✅ **Reorganized Settings Dropdown Menu**
+
+### **Changes Made:**
+
+1. **Removed "System Settings"**:
+   - Eliminated the "System Settings" option from the Settings dropdown
+   - This simplifies the menu and removes redundancy
+
+2. **Made "User Management" the Primary Landing Page**:
+   - Changed "User Management" to point to `/dashboard/settings` (the main settings route)
+   - This makes User Management the default page when clicking "Settings"
+
+3. **Maintained Backward Compatibility**:
+   - Added a route for `/dashboard/settings/users` that also points to `<UserManagement />`
+   - This ensures any existing bookmarks or links still work
+
+### **New Settings Dropdown Structure:**
+- **User Management** → `/dashboard/settings` (main landing page)
+- **Notifications** → `/dashboard/settings/notifications`
+- **Backup** → `/dashboard/settings/backup`
+
+### **Result:**
+- **Cleaner Menu**: Removed redundant "System Settings" option
+- **Better UX**: User Management is now the primary settings page
+- **Consistent Navigation**: Settings dropdown now focuses on core admin functions
+- **Backward Compatible**: Old URLs still work
+
+The TCC Settings dropdown is now more streamlined and user-friendly, with User Management as the main landing page for settings functionality.
+
+---
+
+_**User (2025-09-18 18:12Z)**_
+
+In the Settings drop down there is a "Backup" option. This button currently doesn't do anything. What you were thinking in terms of functionality for this button. Don't write any code just show me your thoughts and I'll decided which direction to go.
+
+---
+
+_**Assistant**_
+
+
+
+---
+
+Looking at the current "Backup" option in the Settings dropdown, I can see it's currently a placeholder. Let me think through what functionality would make sense for a backup feature in the TCC system:
+
+## **Backup Functionality Options**
+
+### **1. Database Backup**
+- **Full Database Export**: Export all data (trips, users, agencies, hospitals, etc.) to a JSON/SQL file
+- **Selective Backup**: Allow users to choose which data types to backup (trips only, user data only, etc.)
+- **Automated Scheduling**: Set up daily/weekly/monthly automatic backups
+- **Backup History**: Keep track of previous backups with timestamps
+
+### **2. Configuration Backup**
+- **System Settings**: Export notification settings, user permissions, system configurations
+- **Agency/Hospital Data**: Backup facility information, contact details, service areas
+- **User Accounts**: Export user data, roles, and permissions
+
+### **3. Trip Data Backup**
+- **Trip History Export**: Export completed trips for external analysis or compliance
+- **Financial Data**: Export revenue, cost, and performance metrics
+- **Audit Trail**: Backup all trip status changes, timestamps, and user actions
+
+### **4. File Management**
+- **Download to Local**: Generate downloadable backup files
+- **Cloud Storage**: Integrate with external storage (Google Drive, Dropbox, etc.)
+- **Email Backup**: Send backup files via email to administrators
+- **External Drive**: Save to the `/Volumes/Acasis/` drive you mentioned
+
+### **5. Restore Functionality**
+- **Data Import**: Allow restoring from previous backups
+- **Selective Restore**: Choose which data to restore
+- **Backup Validation**: Verify backup integrity before restore
+
+## **My Recommendation**
+
+I'd suggest starting with **Option 1 (Database Backup)** as the core functionality, specifically:
+
+1. **Full Database Export** - Export all TCC data to a timestamped JSON file
+2. **Download to Local** - Generate a downloadable backup file
+3. **External Drive Integration** - Save to your `/Volumes/Acasis/` drive
+4. **Backup History** - Show previous backups with dates/sizes
+
+This would provide immediate value for data protection and compliance, while being relatively straightforward to implement.
+
+**What direction interests you most?** Are you thinking more about data protection, compliance/auditing, or system maintenance?
+
+---
+
+_**User (2025-09-18 18:12Z)**_
+
+I would implement all four items in your recommendation. 
+
+---
+
+_**Assistant**_
+
+Perfect! I'll implement all four items from my recommendation for the Backup functionality. This will create a comprehensive backup system that provides data protection, compliance, and system maintenance capabilities.
+
+Let me start by creating the backup functionality:
+
+## **Backup System Implementation Plan**
+
+### **1. Full Database Export** - Export all TCC data to a timestamped JSON file
+### **2. Download to Local** - Generate a downloadable backup file  
+### **3. External Drive Integration** - Save to your `/Volumes/Acasis/` drive
+### **4. Backup History** - Show previous backups with dates/sizes
+
+I'll create:
+- **Backend API endpoint** for backup generation
+- **Frontend component** for backup management
+- **Backup service** for data export
+- **File management** for local and external drive storage
+
+Let me start implementing this:
+
+
+
+---
+
+Tool edit_file not found.
+
+---
+
+Let me use the correct tool to create the backup routes file:
+
+
+---
+
+
+
+---
+
+
+
+---
+
