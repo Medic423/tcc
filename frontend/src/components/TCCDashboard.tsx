@@ -69,7 +69,7 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
   const getNavigation = () => {
     // Core Operations (Left) - Always visible
     const coreOperations = [
-      { name: 'Dashboard', href: '/dashboard', icon: Home, category: 'core' },
+      { name: 'Status', href: '/dashboard', icon: Home, category: 'core' },
       { name: 'Trips', href: '/dashboard/trips', icon: Truck, category: 'core' },
       { name: 'Hospitals', href: '/dashboard/hospitals', icon: Building2, category: 'core' },
       { name: 'Agencies', href: '/dashboard/agencies', icon: Truck, category: 'core' },
