@@ -148,6 +148,23 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
     }
   }, [formData.fromLocation, formOptions.facilities]);
 
+  // Load agencies when reaching step 4 (Agency Selection)
+  useEffect(() => {
+    console.log('TCC_DEBUG: Agency loading useEffect triggered', {
+      currentStep,
+      fromLocation: formData.fromLocation,
+      facilitiesCount: formOptions.facilities.length
+    });
+    
+    if (currentStep === 4 && formData.fromLocation && formOptions.facilities.length > 0) {
+      const selectedFacility = formOptions.facilities.find(f => f.name === formData.fromLocation);
+      console.log('TCC_DEBUG: Selected facility:', selectedFacility);
+      if (selectedFacility) {
+        loadAgenciesForHospital(selectedFacility.id);
+      }
+    }
+  }, [currentStep, formData.fromLocation, formOptions.facilities]);
+
   const loadFormOptions = async () => {
     try {
       const [diagnosisRes, mobilityRes, transportRes, urgencyRes, insuranceRes, facilitiesRes] = await Promise.all([
@@ -179,7 +196,9 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
 
   const loadAgenciesForHospital = async (hospitalId: string) => {
     try {
+      console.log('TCC_DEBUG: Loading agencies for hospital:', hospitalId, 'with radius:', formData.notificationRadius);
       const response = await tripsAPI.getAgenciesForHospital(hospitalId, formData.notificationRadius);
+      console.log('TCC_DEBUG: Agencies response:', response.data);
       setFormOptions(prev => ({
         ...prev,
         agencies: response.data.data || []
@@ -775,6 +794,7 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
                 </div>
               ) : (
                 <div className="space-y-3">
+                  {console.log('TCC_DEBUG: Rendering agencies:', formOptions.agencies)}
                   {formOptions.agencies.length > 0 ? (
                   formOptions.agencies.map((agency) => (
                     <div
