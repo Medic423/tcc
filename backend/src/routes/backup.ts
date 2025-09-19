@@ -61,6 +61,14 @@ router.post('/create', authenticateAdmin, async (req, res) => {
     const backupData = {
       timestamp: new Date().toISOString(),
       version: '1.0',
+      backupType: 'full_database_export',
+      description: 'Complete TCC system backup including all databases and tables',
+      systemInfo: {
+        nodeVersion: process.version,
+        platform: process.platform,
+        arch: process.arch,
+        uptime: process.uptime()
+      },
       databases: {
         tcc: {},
         ems: {},
@@ -69,58 +77,100 @@ router.post('/create', authenticateAdmin, async (req, res) => {
       }
     };
 
-    // Export TCC database
+    // Export TCC database (main database)
     try {
-      const tccData = await prisma.$queryRaw`SELECT * FROM "Trip"`;
-      backupData.databases.tcc = { trips: tccData };
+      console.log('TCC_DEBUG: Exporting TCC database...');
+      
+      // Get all tables from the main database
+      const trips = await prisma.$queryRaw`SELECT * FROM trips`;
+      const hospitals = await prisma.$queryRaw`SELECT * FROM hospitals`;
+      const agencies = await prisma.$queryRaw`SELECT * FROM agencies`;
+      const facilities = await prisma.$queryRaw`SELECT * FROM facilities`;
+      const centerUsers = await prisma.$queryRaw`SELECT * FROM center_users`;
+      const systemAnalytics = await prisma.$queryRaw`SELECT * FROM system_analytics`;
+      const dropdownOptions = await prisma.$queryRaw`SELECT * FROM dropdown_options`;
+      
+      backupData.databases.tcc = {
+        trips,
+        hospitals,
+        agencies,
+        facilities,
+        centerUsers,
+        systemAnalytics,
+        dropdownOptions
+      };
+      console.log('TCC_DEBUG: TCC database exported successfully');
     } catch (error) {
       console.error('Error exporting TCC data:', error);
     }
 
     // Export EMS database
     try {
+      console.log('TCC_DEBUG: Exporting EMS database...');
       const emsPrisma = new PrismaClient({
         datasources: {
           db: {
-            url: process.env.EMS_DATABASE_URL
+            url: process.env.DATABASE_URL_EMS
           }
         }
       });
-      const emsData = await emsPrisma.$queryRaw`SELECT * FROM "Trip"`;
-      backupData.databases.ems = { trips: emsData };
+      const emsTrips = await emsPrisma.$queryRaw`SELECT * FROM trips`;
+      const emsUsers = await emsPrisma.$queryRaw`SELECT * FROM ems_users`;
+      const emsUnits = await emsPrisma.$queryRaw`SELECT * FROM units`;
+      
+      backupData.databases.ems = {
+        trips: emsTrips,
+        users: emsUsers,
+        units: emsUnits
+      };
       await emsPrisma.$disconnect();
+      console.log('TCC_DEBUG: EMS database exported successfully');
     } catch (error) {
       console.error('Error exporting EMS data:', error);
     }
 
     // Export Hospital database
     try {
+      console.log('TCC_DEBUG: Exporting Hospital database...');
       const hospitalPrisma = new PrismaClient({
         datasources: {
           db: {
-            url: process.env.HOSPITAL_DATABASE_URL
+            url: process.env.DATABASE_URL_HOSPITAL
           }
         }
       });
-      const hospitalData = await hospitalPrisma.$queryRaw`SELECT * FROM "Trip"`;
-      backupData.databases.hospital = { trips: hospitalData };
+      const hospitalTrips = await hospitalPrisma.$queryRaw`SELECT * FROM trips`;
+      const hospitalUsers = await hospitalPrisma.$queryRaw`SELECT * FROM healthcare_users`;
+      
+      backupData.databases.hospital = {
+        trips: hospitalTrips,
+        users: hospitalUsers
+      };
       await hospitalPrisma.$disconnect();
+      console.log('TCC_DEBUG: Hospital database exported successfully');
     } catch (error) {
       console.error('Error exporting Hospital data:', error);
     }
 
     // Export Center database
     try {
+      console.log('TCC_DEBUG: Exporting Center database...');
       const centerPrisma = new PrismaClient({
         datasources: {
           db: {
-            url: process.env.CENTER_DATABASE_URL
+            url: process.env.DATABASE_URL_CENTER
           }
         }
       });
-      const centerData = await centerPrisma.$queryRaw`SELECT * FROM "Trip"`;
-      backupData.databases.center = { trips: centerData };
+      const centerTrips = await centerPrisma.$queryRaw`SELECT * FROM trips`;
+      const centerUsers = await centerPrisma.$queryRaw`SELECT * FROM center_users`;
+      
+      backupData.databases.center = {
+        trips: centerTrips,
+        users: centerUsers
+      };
       await centerPrisma.$disconnect();
+      console.log('TCC_DEBUG: Center database exported successfully');
     } catch (error) {
       console.error('Error exporting Center data:', error);
     }
