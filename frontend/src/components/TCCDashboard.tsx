@@ -123,7 +123,6 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
       items: [
         { name: 'Overview', href: '/dashboard/trips', icon: Truck },
         { name: 'Create Trip', href: '/dashboard/trips/create', icon: Plus, color: 'text-green-600' },
-        { name: 'Active Trips', href: '/dashboard/trips/active', icon: Activity, color: 'text-blue-600' },
         { name: 'Trip History', href: '/dashboard/trips/history', icon: FileText, color: 'text-gray-600' },
       ]
     },
