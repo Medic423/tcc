@@ -536,7 +536,7 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
       </div>
 
       {/* Main content */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden">
 
         {/* Page content */}
         <main className="flex-1 relative overflow-y-auto focus:outline-none">
