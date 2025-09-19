@@ -954,6 +954,232 @@ export class TripService {
     // Fallback to default rates
     return defaultRates[transportLevel as keyof typeof defaultRates] || defaultRates['BLS'];
   }
+
+  /**
+   * Get trip history with timeline and filtering
+   */
+  async getTripHistory(filters: {
+    status?: string;
+    agencyId?: string;
+    dateFrom?: string;
+    dateTo?: string;
+    limit: number;
+    offset: number;
+    search?: string;
+  }) {
+    console.log('TCC_DEBUG: Getting trip history with filters:', filters);
+    
+    try {
+      const {
+        status,
+        agencyId,
+        dateFrom,
+        dateTo,
+        limit,
+        offset,
+        search
+      } = filters;
+
+      // Build where clause
+      const whereClause: any = {
+        // Only show completed, cancelled, or in-progress trips for history
+        status: {
+          in: ['COMPLETED', 'CANCELLED', 'IN_PROGRESS']
+        }
+      };
+
+      // Add status filter if provided
+      if (status && status !== 'all') {
+        whereClause.status = status;
+      }
+
+      // Add agency filter if provided
+      if (agencyId) {
+        whereClause.assignedAgencyId = agencyId;
+      }
+
+      // Add date range filter if provided
+      if (dateFrom || dateTo) {
+        whereClause.createdAt = {};
+        if (dateFrom) {
+          whereClause.createdAt.gte = new Date(dateFrom);
+        }
+        if (dateTo) {
+          whereClause.createdAt.lte = new Date(dateTo);
+        }
+      }
+
+      // Add search filter if provided
+      if (search) {
+        whereClause.OR = [
+          { tripNumber: { contains: search, mode: 'insensitive' } },
+          { patientId: { contains: search, mode: 'insensitive' } },
+          { fromLocation: { contains: search, mode: 'insensitive' } },
+          { toLocation: { contains: search, mode: 'insensitive' } }
+        ];
+      }
+
+      // Get total count for pagination
+      const totalCount = await prisma.trip.count({ where: whereClause });
+
+      // Get trips with related data
+      const trips = await prisma.trip.findMany({
+        where: whereClause,
+        include: {
+          pickupLocation: {
+            select: {
+              name: true,
+              hospital: {
+                select: {
+                  name: true
+                }
+              }
+            }
+          }
+        },
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+        skip: offset
+      });
+
+      // Build timeline for each trip
+      const tripsWithTimeline = trips.map(trip => {
+        const timeline = this.buildTripTimeline(trip);
+        
+        // Calculate durations
+        const responseTimeMinutes = trip.acceptedTimestamp && trip.requestTimestamp
+          ? Math.round((new Date(trip.acceptedTimestamp).getTime() - new Date(trip.requestTimestamp).getTime()) / (1000 * 60))
+          : null;
+
+        const tripDurationMinutes = trip.completionTimestamp && trip.pickupTimestamp
+          ? Math.round((new Date(trip.completionTimestamp).getTime() - new Date(trip.pickupTimestamp).getTime()) / (1000 * 60))
+          : null;
+
+        return {
+          id: trip.id,
+          tripNumber: trip.tripNumber,
+          patientId: trip.patientId,
+          fromLocation: trip.fromLocation,
+          toLocation: trip.toLocation,
+          status: trip.status,
+          priority: trip.priority,
+          transportLevel: trip.transportLevel,
+          urgencyLevel: trip.urgencyLevel,
+          timeline,
+          assignedAgencyId: trip.assignedAgencyId,
+          assignedUnitId: trip.assignedUnitId,
+          assignedTo: trip.assignedTo,
+          responseTimeMinutes,
+          tripDurationMinutes,
+          distanceMiles: trip.distanceMiles,
+          tripCost: trip.tripCost,
+          createdAt: trip.createdAt,
+          updatedAt: trip.updatedAt,
+          pickupLocation: trip.pickupLocation
+        };
+      });
+
+      console.log('TCC_DEBUG: Found trips for history:', tripsWithTimeline.length);
+
+      return {
+        success: true,
+        data: {
+          trips: tripsWithTimeline,
+          pagination: {
+            total: totalCount,
+            limit,
+            offset,
+            hasMore: offset + limit < totalCount
+          }
+        }
+      };
+    } catch (error) {
+      console.error('TCC_DEBUG: Error getting trip history:', error);
+      return { success: false, error: 'Failed to fetch trip history' };
+    }
+  }
+
+  /**
+   * Build timeline for a trip based on available timestamps
+   */
+  private buildTripTimeline(trip: any) {
+    const timeline = [];
+    
+    if (trip.createdAt) {
+      timeline.push({ 
+        event: 'Trip Created', 
+        timestamp: trip.createdAt,
+        description: 'Trip request was created in the system'
+      });
+    }
+    
+    if (trip.requestTimestamp) {
+      timeline.push({ 
+        event: 'Request Sent', 
+        timestamp: trip.requestTimestamp,
+        description: 'Request was sent to EMS agencies'
+      });
+    }
+    
+    if (trip.transferRequestTime) {
+      timeline.push({ 
+        event: 'Transfer Requested', 
+        timestamp: trip.transferRequestTime,
+        description: 'Transfer request was initiated'
+      });
+    }
+    
+    if (trip.acceptedTimestamp) {
+      timeline.push({ 
+        event: 'Accepted by EMS', 
+        timestamp: trip.acceptedTimestamp,
+        description: `Trip was accepted by agency ${trip.assignedAgencyId}`
+      });
+    }
+    
+    if (trip.emsArrivalTime) {
+      timeline.push({ 
+        event: 'EMS Arrived', 
+        timestamp: trip.emsArrivalTime,
+        description: 'EMS unit arrived at pickup location'
+      });
+    }
+    
+    if (trip.pickupTimestamp) {
+      timeline.push({ 
+        event: 'Patient Picked Up', 
+        timestamp: trip.pickupTimestamp,
+        description: 'Patient was picked up and trip started'
+      });
+    }
+    
+    if (trip.actualStartTime) {
+      timeline.push({ 
+        event: 'Trip Started', 
+        timestamp: trip.actualStartTime,
+        description: 'Transport trip officially started'
+      });
+    }
+    
+    if (trip.actualEndTime) {
+      timeline.push({ 
+        event: 'Trip Ended', 
+        timestamp: trip.actualEndTime,
+        description: 'Transport trip officially ended'
+      });
+    }
+    
+    if (trip.completionTimestamp) {
+      timeline.push({ 
+        event: 'Trip Completed', 
+        timestamp: trip.completionTimestamp,
+        description: 'Trip was marked as completed'
+      });
+    }
+    
+    // Sort timeline by timestamp
+    return timeline.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+  }
 }
 
 export const tripService = new TripService();

@@ -211,6 +211,55 @@ router.get('/', async (req, res) => {
 });
 
 /**
+ * GET /api/trips/history
+ * Get trip history with timeline and filtering
+ */
+router.get('/history', async (req, res) => {
+  try {
+    console.log('TCC_DEBUG: Get trip history request with query:', req.query);
+    
+    const {
+      status,
+      agencyId,
+      dateFrom,
+      dateTo,
+      limit = '50',
+      offset = '0',
+      search
+    } = req.query;
+
+    const result = await tripService.getTripHistory({
+      status: status as string,
+      agencyId: agencyId as string,
+      dateFrom: dateFrom as string,
+      dateTo: dateTo as string,
+      limit: parseInt(limit as string),
+      offset: parseInt(offset as string),
+      search: search as string
+    });
+
+    if (!result.success) {
+      return res.status(400).json({
+        success: false,
+        error: result.error
+      });
+    }
+
+    res.json({
+      success: true,
+      data: result.data
+    });
+
+  } catch (error) {
+    console.error('TCC_DEBUG: Get trip history error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+});
+
+/**
  * GET /api/trips/:id
  * Get a single transport request by ID
  */
