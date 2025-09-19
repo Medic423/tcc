@@ -88,7 +88,7 @@ const TripCard: React.FC<{ trip: Trip; user: User }> = ({ trip, user }) => {
         events.push({ 
           event: 'Trip Created', 
           timestamp: trip.createdAt,
-          description: 'Trip request was created in the system'
+          description: ''
         });
       }
       
@@ -96,7 +96,7 @@ const TripCard: React.FC<{ trip: Trip; user: User }> = ({ trip, user }) => {
         events.push({ 
           event: 'Request Sent', 
           timestamp: trip.requestTimestamp,
-          description: 'Request was sent to EMS agencies'
+          description: ''
         });
       }
       
@@ -104,7 +104,7 @@ const TripCard: React.FC<{ trip: Trip; user: User }> = ({ trip, user }) => {
         events.push({ 
           event: 'Transfer Requested', 
           timestamp: trip.transferRequestTime,
-          description: 'Transfer request was initiated'
+          description: ''
         });
       }
       
@@ -112,7 +112,7 @@ const TripCard: React.FC<{ trip: Trip; user: User }> = ({ trip, user }) => {
         events.push({ 
           event: 'Accepted by EMS', 
           timestamp: trip.acceptedTimestamp,
-          description: `Trip was accepted by agency ${trip.assignedAgencyId || 'Unknown'}`
+          description: ''
         });
       }
       
@@ -120,7 +120,7 @@ const TripCard: React.FC<{ trip: Trip; user: User }> = ({ trip, user }) => {
         events.push({ 
           event: 'EMS Arrived', 
           timestamp: trip.emsArrivalTime,
-          description: 'EMS unit arrived at pickup location'
+          description: ''
         });
       }
       
@@ -128,7 +128,7 @@ const TripCard: React.FC<{ trip: Trip; user: User }> = ({ trip, user }) => {
         events.push({ 
           event: 'Patient Picked Up', 
           timestamp: trip.pickupTimestamp,
-          description: 'Patient was picked up and trip started'
+          description: ''
         });
       }
       
@@ -136,7 +136,7 @@ const TripCard: React.FC<{ trip: Trip; user: User }> = ({ trip, user }) => {
         events.push({ 
           event: 'Trip Started', 
           timestamp: trip.actualStartTime,
-          description: 'Transport trip officially started'
+          description: ''
         });
       }
       
@@ -144,7 +144,7 @@ const TripCard: React.FC<{ trip: Trip; user: User }> = ({ trip, user }) => {
         events.push({ 
           event: 'Trip Ended', 
           timestamp: trip.actualEndTime,
-          description: 'Transport trip officially ended'
+          description: ''
         });
       }
       
@@ -152,7 +152,7 @@ const TripCard: React.FC<{ trip: Trip; user: User }> = ({ trip, user }) => {
         events.push({ 
           event: 'Trip Completed', 
           timestamp: trip.completionTimestamp,
-          description: 'Trip was marked as completed'
+          description: ''
         });
       }
       
@@ -165,6 +165,20 @@ const TripCard: React.FC<{ trip: Trip; user: User }> = ({ trip, user }) => {
 
   const formatDateTime = (dateString: string) => {
     return new Date(dateString).toLocaleString();
+  };
+
+  const handleEditTrip = (trip: Trip) => {
+    // TODO: Implement edit functionality
+    console.log('Edit trip:', trip.id);
+    // This could open a modal or navigate to an edit page
+  };
+
+  const handleDeleteTrip = (trip: Trip) => {
+    // TODO: Implement delete functionality
+    if (window.confirm(`Are you sure you want to delete trip ${trip.tripNumber}?`)) {
+      console.log('Delete trip:', trip.id);
+      // This would call an API to delete the trip
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -275,13 +289,29 @@ const TripCard: React.FC<{ trip: Trip; user: User }> = ({ trip, user }) => {
           </div>
 
           {/* Actions Column */}
-          <div className="flex space-x-2">
-            <button className="bg-green-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-green-700">
-              Accept
-            </button>
-            <button className="bg-red-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-red-700">
-              Decline
-            </button>
+          <div className="flex flex-col space-y-1">
+            <div className="flex space-x-1">
+              <button className="bg-green-600 text-white px-2 py-1 rounded text-xs font-medium hover:bg-green-700">
+                Accept
+              </button>
+              <button className="bg-red-600 text-white px-2 py-1 rounded text-xs font-medium hover:bg-red-700">
+                Decline
+              </button>
+            </div>
+            <div className="flex space-x-1">
+              <button 
+                onClick={() => handleEditTrip(trip)}
+                className="bg-blue-600 text-white px-2 py-1 rounded text-xs font-medium hover:bg-blue-700"
+              >
+                Edit
+              </button>
+              <button 
+                onClick={() => handleDeleteTrip(trip)}
+                className="bg-gray-600 text-white px-2 py-1 rounded text-xs font-medium hover:bg-gray-700"
+              >
+                Delete
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -309,15 +339,12 @@ const TripCard: React.FC<{ trip: Trip; user: User }> = ({ trip, user }) => {
           
           {expanded && (
             <div className="px-6 pb-4 bg-gray-50">
-              <div className="space-y-2">
+              <div className="grid grid-cols-2 gap-4">
                 {timeline.map((event, index) => (
                   <div key={index} className="flex items-center">
                     <div className="flex-shrink-0 w-2 h-2 bg-blue-600 rounded-full mr-3"></div>
                     <div className="flex-1 flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <p className="text-sm font-medium text-gray-900">{event.event}</p>
-                        <p className="text-xs text-gray-500">{event.description}</p>
-                      </div>
+                      <p className="text-sm font-medium text-gray-900">{event.event}</p>
                       <p className="text-xs text-gray-400">{formatDateTime(event.timestamp)}</p>
                     </div>
                   </div>
