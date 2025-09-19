@@ -70,9 +70,9 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
     // Core Operations (Left) - Always visible
     const coreOperations = [
       { name: 'Dashboard', href: '/dashboard', icon: Home, category: 'core' },
-      { name: 'Trips', href: '/dashboard/trips', icon: Truck, category: 'core' },
-      { name: 'Hospitals', href: '/dashboard/hospitals', icon: Building2, category: 'core' },
-      { name: 'Agencies', href: '/dashboard/agencies', icon: Truck, category: 'core' },
+      { name: 'Trips', href: '/dashboard/trips', icon: Truck, category: 'core', hasDropdown: true },
+      { name: 'Hospitals', href: '/dashboard/hospitals', icon: Building2, category: 'core', hasDropdown: true },
+      { name: 'Agencies', href: '/dashboard/agencies', icon: Truck, category: 'core', hasDropdown: true },
     ];
 
     // Analysis & Reporting (Center)
@@ -116,6 +116,36 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
 
   // Dropdown menu configurations
   const dropdownMenus = {
+    trips: {
+      title: 'Trips',
+      icon: Truck,
+      items: [
+        { name: 'Overview', href: '/dashboard/trips', icon: Truck },
+        { name: 'Create Trip', href: '/dashboard/trips/create', icon: Plus, color: 'text-green-600' },
+        { name: 'Active Trips', href: '/dashboard/trips/active', icon: Activity, color: 'text-blue-600' },
+        { name: 'Trip History', href: '/dashboard/trips/history', icon: FileText, color: 'text-gray-600' },
+      ]
+    },
+    hospitals: {
+      title: 'Hospitals',
+      icon: Building2,
+      items: [
+        { name: 'Overview', href: '/dashboard/hospitals', icon: Building2 },
+        { name: 'Add Hospital', href: '/dashboard/hospitals/create', icon: Plus, color: 'text-green-600' },
+        { name: 'Hospital Status', href: '/dashboard/hospitals/status', icon: CheckCircle, color: 'text-blue-600' },
+        { name: 'Configuration', href: '/dashboard/hospitals/config', icon: Settings, color: 'text-gray-600' },
+      ]
+    },
+    agencies: {
+      title: 'Agencies',
+      icon: Truck,
+      items: [
+        { name: 'Overview', href: '/dashboard/agencies', icon: Truck },
+        { name: 'Add Agency', href: '/dashboard/agencies/create', icon: Plus, color: 'text-green-600' },
+        { name: 'Agency Status', href: '/dashboard/agencies/status', icon: Activity, color: 'text-blue-600' },
+        { name: 'Performance', href: '/dashboard/agencies/performance', icon: TrendingUp, color: 'text-gray-600' },
+      ]
+    },
     analytics: {
       title: 'Analytics',
       icon: BarChart3,
@@ -149,24 +179,6 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
     }
   };
 
-  // Contextual quick actions
-  const quickActions = {
-    trips: [
-      { name: 'Create Trip', href: '/dashboard/trips/create', icon: Plus, color: 'text-green-600' },
-      { name: 'Active Trips', href: '/dashboard/trips/active', icon: Activity, color: 'text-blue-600' },
-      { name: 'Trip History', href: '/dashboard/trips/history', icon: FileText, color: 'text-gray-600' },
-    ],
-    hospitals: [
-      { name: 'Add Hospital', href: '/dashboard/hospitals/create', icon: Plus, color: 'text-green-600' },
-      { name: 'Hospital Status', href: '/dashboard/hospitals/status', icon: CheckCircle, color: 'text-blue-600' },
-      { name: 'Configuration', href: '/dashboard/hospitals/config', icon: Settings, color: 'text-gray-600' },
-    ],
-    agencies: [
-      { name: 'Add Agency', href: '/dashboard/agencies/create', icon: Plus, color: 'text-green-600' },
-      { name: 'Agency Status', href: '/dashboard/agencies/status', icon: Activity, color: 'text-blue-600' },
-      { name: 'Performance', href: '/dashboard/agencies/performance', icon: TrendingUp, color: 'text-gray-600' },
-    ]
-  };
 
   // Handle click outside to close dropdowns
   useEffect(() => {
@@ -238,7 +250,7 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
                     } group flex items-center px-4 py-2 text-sm`}
                     onClick={() => setActiveDropdown(null)}
                   >
-                    <item.icon className="mr-3 h-4 w-4 text-gray-400 group-hover:text-gray-500" />
+                    <item.icon className={`mr-3 h-4 w-4 ${item.color || 'text-gray-400 group-hover:text-gray-500'}`} />
                     {item.name}
                   </Link>
                 );
@@ -250,41 +262,6 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
     );
   };
 
-  // Quick Actions Component
-  const QuickActions = ({ sectionKey, actions }: { sectionKey: string; actions: any[] }) => {
-    const [showActions, setShowActions] = useState(false);
-    
-    return (
-      <div className="relative" ref={el => dropdownRefs.current[`${sectionKey}-actions`] = el}>
-        <button
-          onClick={() => setShowActions(!showActions)}
-          className="text-gray-500 hover:text-gray-700 flex items-center px-1 py-2 text-sm font-medium transition-colors"
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          Quick Actions
-          <ChevronDown className={`ml-1 h-4 w-4 transition-transform ${showActions ? 'rotate-180' : ''}`} />
-        </button>
-        
-        {showActions && (
-          <div className="absolute top-full left-0 mt-1 w-48 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-50">
-            <div className="py-1">
-              {actions.map((action, index) => (
-                <Link
-                  key={index}
-                  to={action.href}
-                  className="text-gray-700 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-4 py-2 text-sm"
-                  onClick={() => setShowActions(false)}
-                >
-                  <action.icon className={`mr-3 h-4 w-4 ${action.color}`} />
-                  {action.name}
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  };
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-gray-100">
@@ -318,6 +295,46 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
               {navigation.coreOperations.map((item) => {
                 const isActive = location.pathname === item.href || 
                   (item.href !== '/dashboard' && location.pathname.startsWith(item.href));
+                
+                // Use dropdown for items that have dropdowns, otherwise use regular link
+                if (item.hasDropdown) {
+                  const menuKey = item.name.toLowerCase();
+                  const menu = dropdownMenus[menuKey as keyof typeof dropdownMenus];
+                  return (
+                    <div key={item.name}>
+                      <div className="px-3 py-2">
+                        <div className="flex items-center text-gray-600 font-medium">
+                          <menu.icon className="mr-3 h-5 w-5 text-gray-400" />
+                          {menu.title}
+                        </div>
+                      </div>
+                      {menu.items.map((dropdownItem: any, index: number) => {
+                        const isItemActive = location.pathname === dropdownItem.href || 
+                          (dropdownItem.href !== '/dashboard' && location.pathname.startsWith(dropdownItem.href));
+                        return (
+                          <Link
+                            key={index}
+                            to={dropdownItem.href}
+                            className={`${
+                              isItemActive
+                                ? 'bg-primary-100 text-primary-900'
+                                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                            } group flex items-center px-6 py-2 text-sm font-medium rounded-md ml-4`}
+                            onClick={() => setMobileMenuOpen(false)}
+                          >
+                            <dropdownItem.icon
+                              className={`${
+                                isItemActive ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500'
+                              } mr-3 flex-shrink-0 h-4 w-4`}
+                            />
+                            {dropdownItem.name}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  );
+                }
+                
                 return (
                   <Link
                     key={item.name}
@@ -465,27 +482,32 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
                   {navigation.coreOperations.map((item) => {
                     const isActive = location.pathname === item.href || 
                       (item.href !== '/dashboard' && location.pathname.startsWith(item.href));
+                    
+                    // Use dropdown for items that have dropdowns, otherwise use regular link
+                    if (item.hasDropdown) {
+                      const menuKey = item.name.toLowerCase();
+                      return (
+                        <DropdownMenu 
+                          key={item.name} 
+                          menuKey={menuKey} 
+                          menu={dropdownMenus[menuKey as keyof typeof dropdownMenus]} 
+                        />
+                      );
+                    }
+                    
                     return (
-                      <div key={item.name} className="flex items-center space-x-2">
-                        <Link
-                          to={item.href}
-                          className={`${
-                            isActive
-                              ? 'text-primary-600 border-b-2 border-primary-600'
-                              : 'text-gray-500 hover:text-gray-700 hover:border-b-2 hover:border-gray-300'
-                          } flex items-center px-1 py-2 text-sm font-medium border-b-2 border-transparent transition-colors`}
-                        >
-                          <item.icon className="mr-2 h-4 w-4" />
-                          {item.name}
-                        </Link>
-                        {/* Add Quick Actions for specific sections */}
-                        {(item.name === 'Trips' || item.name === 'Hospitals' || item.name === 'Agencies') && (
-                          <QuickActions 
-                            sectionKey={item.name.toLowerCase()} 
-                            actions={quickActions[item.name.toLowerCase() as keyof typeof quickActions]} 
-                          />
-                        )}
-                      </div>
+                      <Link
+                        key={item.name}
+                        to={item.href}
+                        className={`${
+                          isActive
+                            ? 'text-primary-600 border-b-2 border-primary-600'
+                            : 'text-gray-500 hover:text-gray-700 hover:border-b-2 hover:border-gray-300'
+                        } flex items-center px-1 py-2 text-sm font-medium border-b-2 border-transparent transition-colors`}
+                      >
+                        <item.icon className="mr-2 h-4 w-4" />
+                        {item.name}
+                      </Link>
                     );
                   })}
                 </div>
