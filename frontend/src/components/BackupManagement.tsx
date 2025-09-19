@@ -296,7 +296,7 @@ const BackupManagement: React.FC = () => {
             <div>
               <h3 className="text-sm font-medium text-blue-800">External Drive Backup</h3>
               <p className="text-sm text-blue-700 mt-1">
-                Backups are automatically copied to <code className="bg-blue-100 px-1 rounded">/Volumes/Acasis/tcc-backups/</code> 
+                Database backups are stored in <code className="bg-blue-100 px-1 rounded">database-backups/</code> and automatically copied to <code className="bg-blue-100 px-1 rounded">/Volumes/Acasis/tcc-database-backups/</code> 
                 when the external drive is available.
               </p>
             </div>

@@ -10,7 +10,7 @@ const prisma = new PrismaClient();
 // Get backup history
 router.get('/history', authenticateAdmin, async (req, res) => {
   try {
-    const backupDir = path.join(process.cwd(), 'backups');
+    const backupDir = path.join(process.cwd(), 'database-backups');
     
     // Ensure backup directory exists
     if (!fs.existsSync(backupDir)) {
@@ -49,8 +49,8 @@ router.get('/history', authenticateAdmin, async (req, res) => {
 router.post('/create', authenticateAdmin, async (req, res) => {
   try {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const filename = `tcc-backup-${timestamp}.json`;
-    const backupDir = path.join(process.cwd(), 'backups');
+    const filename = `tcc-database-backup-${timestamp}.json`;
+    const backupDir = path.join(process.cwd(), 'database-backups');
     
     // Ensure backup directory exists
     if (!fs.existsSync(backupDir)) {
@@ -232,7 +232,7 @@ router.post('/create', authenticateAdmin, async (req, res) => {
     fs.writeFileSync(filePath, JSON.stringify(backupData, null, 2));
 
     // Copy to external drive if available
-    const externalDrivePath = '/Volumes/Acasis/tcc-backups';
+    const externalDrivePath = '/Volumes/Acasis/tcc-database-backups';
     if (fs.existsSync('/Volumes/Acasis')) {
       try {
         if (!fs.existsSync(externalDrivePath)) {
@@ -240,7 +240,7 @@ router.post('/create', authenticateAdmin, async (req, res) => {
         }
         const externalFilePath = path.join(externalDrivePath, filename);
         fs.copyFileSync(filePath, externalFilePath);
-        console.log(`Backup copied to external drive: ${externalFilePath}`);
+        console.log(`Database backup copied to external drive: ${externalFilePath}`);
       } catch (error) {
         console.error('Error copying to external drive:', error);
       }
@@ -268,7 +268,7 @@ router.post('/create', authenticateAdmin, async (req, res) => {
 router.get('/download/:filename', authenticateAdmin, async (req, res) => {
   try {
     const { filename } = req.params;
-    const backupDir = path.join(process.cwd(), 'backups');
+    const backupDir = path.join(process.cwd(), 'database-backups');
     const filePath = path.join(backupDir, filename);
 
     if (!fs.existsSync(filePath)) {
@@ -292,7 +292,7 @@ router.get('/download/:filename', authenticateAdmin, async (req, res) => {
 router.delete('/:filename', authenticateAdmin, async (req, res) => {
   try {
     const { filename } = req.params;
-    const backupDir = path.join(process.cwd(), 'backups');
+    const backupDir = path.join(process.cwd(), 'database-backups');
     const filePath = path.join(backupDir, filename);
 
     if (!fs.existsSync(filePath)) {
@@ -305,7 +305,7 @@ router.delete('/:filename', authenticateAdmin, async (req, res) => {
     fs.unlinkSync(filePath);
 
     // Also delete from external drive if it exists
-    const externalDrivePath = '/Volumes/Acasis/tcc-backups';
+    const externalDrivePath = '/Volumes/Acasis/tcc-database-backups';
     const externalFilePath = path.join(externalDrivePath, filename);
     if (fs.existsSync(externalFilePath)) {
       try {
