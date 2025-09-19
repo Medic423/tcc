@@ -19,6 +19,7 @@ import tccUnitRoutes from './routes/tccUnits';
 import dropdownOptionsRoutes from './routes/dropdownOptions';
 import pickupLocationRoutes from './routes/pickupLocations';
 import emsAnalyticsRoutes from './routes/emsAnalytics';
+import backupRoutes from './routes/backup';
 
 // Load environment variables
 dotenv.config();
@@ -87,6 +88,7 @@ app.use('/api/dropdown-options', dropdownOptionsRoutes);
 app.use('/api/tcc/pickup-locations', pickupLocationRoutes);
 app.use('/api/ems/analytics', emsAnalyticsRoutes);
 app.use('/api/optimize', optimizationRoutes);
+app.use('/api/backup', backupRoutes);
 
 // Test endpoints
 app.get('/api/test', (req, res) => {
