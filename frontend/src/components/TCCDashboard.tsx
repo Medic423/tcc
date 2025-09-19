@@ -89,8 +89,6 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
 
     // Additional features
     const additionalFeatures = [
-      { name: 'Units', href: '/dashboard/units', icon: Truck, category: 'additional' },
-      { name: 'Route Optimization', href: '/dashboard/route-optimization', icon: Navigation, category: 'additional' },
       { name: 'Notifications', href: '/dashboard/notifications', icon: Bell, category: 'additional' },
     ];
 
@@ -122,7 +120,6 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
       icon: Truck,
       items: [
         { name: 'Overview', href: '/dashboard/trips', icon: Truck },
-        { name: 'Create Trip', href: '/dashboard/trips/create', icon: Plus, color: 'text-green-600' },
         { name: 'Trip History', href: '/dashboard/trips/history', icon: FileText, color: 'text-gray-600' },
       ]
     },
