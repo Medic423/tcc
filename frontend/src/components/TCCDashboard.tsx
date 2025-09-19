@@ -430,7 +430,7 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
               </div>
 
               {/* Navigation Menu */}
-              <nav className="flex space-x-8">
+              <nav className="flex space-x-6">
                 {/* Core Operations */}
                 <div className="flex space-x-6">
                   {navigation.coreOperations.map((item) => {
