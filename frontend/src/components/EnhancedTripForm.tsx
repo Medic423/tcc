@@ -811,34 +811,34 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
                     </div>
                   ) : (
                     formOptions.agencies.map((agency) => (
-                    <div
-                      key={agency.id}
-                      className={`border rounded-lg p-4 cursor-pointer transition-colors ${
-                        formData.selectedAgencies.includes(agency.id)
-                          ? 'border-orange-500 bg-orange-50'
-                          : 'border-gray-200 hover:border-orange-300'
-                      }`}
-                      onClick={() => handleAgencyToggle(agency.id)}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h4 className="font-medium text-gray-900">{agency.name}</h4>
-                          <p className="text-sm text-gray-500">{agency.serviceType}</p>
-                          <p className="text-xs text-gray-400">
-                            {agency.availableUnits || 0}/{agency.totalUnits || 0} units available
-                          </p>
-                        </div>
-                        <div className="flex items-center">
-                          <input
-                            type="checkbox"
-                            checked={formData.selectedAgencies.includes(agency.id)}
-                            onChange={() => {}}
-                            className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
-                          />
+                      <div
+                        key={agency.id}
+                        className={`border rounded-lg p-4 cursor-pointer transition-colors ${
+                          formData.selectedAgencies.includes(agency.id)
+                            ? 'border-orange-500 bg-orange-50'
+                            : 'border-gray-200 hover:border-orange-300'
+                        }`}
+                        onClick={() => handleAgencyToggle(agency.id)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="font-medium text-gray-900">{agency.name}</h4>
+                            <p className="text-sm text-gray-500">{agency.serviceType}</p>
+                            <p className="text-xs text-gray-400">
+                              {agency.availableUnits || 0}/{agency.totalUnits || 0} units available
+                            </p>
+                          </div>
+                          <div className="flex items-center">
+                            <input
+                              type="checkbox"
+                              checked={formData.selectedAgencies.includes(agency.id)}
+                              onChange={() => {}}
+                              className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+                            />
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))
+                    ))
                   )}
                 </div>
               )}
