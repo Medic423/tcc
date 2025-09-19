@@ -373,16 +373,16 @@ const TripHistory: React.FC = () => {
 
                 {/* Performance Metrics */}
                 <div className="mt-4 flex items-center space-x-6 text-sm text-gray-600">
-                  {trip.distanceMiles && (
+                  {trip.distanceMiles && !isNaN(Number(trip.distanceMiles)) && (
                     <div className="flex items-center">
                       <MapPin className="h-4 w-4 mr-1 text-gray-400" />
-                      <span>{trip.distanceMiles.toFixed(1)} miles</span>
+                      <span>{Number(trip.distanceMiles).toFixed(1)} miles</span>
                     </div>
                   )}
-                  {trip.tripCost && (
+                  {trip.tripCost && !isNaN(Number(trip.tripCost)) && (
                     <div className="flex items-center">
                       <DollarSign className="h-4 w-4 mr-1 text-gray-400" />
-                      <span>${trip.tripCost.toFixed(2)}</span>
+                      <span>${Number(trip.tripCost).toFixed(2)}</span>
                     </div>
                   )}
                   <div className="flex items-center">
