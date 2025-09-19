@@ -151,6 +151,25 @@ export const analyticsAPI = {
   
   getHospitals: () =>
     api.get('/api/tcc/analytics/hospitals'),
+  
+  // Financial Analytics
+  getCostAnalysis: (startDate?: string, endDate?: string) =>
+    api.get('/api/tcc/analytics/cost-analysis', { 
+      params: { startDate, endDate } 
+    }),
+  
+  getProfitability: (period?: string) =>
+    api.get('/api/tcc/analytics/profitability', { 
+      params: { period } 
+    }),
+  
+  getTripCostBreakdowns: (tripId?: string, limit?: number) =>
+    api.get('/api/tcc/analytics/cost-breakdowns', { 
+      params: { tripId, limit } 
+    }),
+  
+  createTripCostBreakdown: (tripId: string, breakdownData: any) =>
+    api.post('/api/tcc/analytics/cost-breakdown', { tripId, breakdownData }),
 };
 
 // Trips API
