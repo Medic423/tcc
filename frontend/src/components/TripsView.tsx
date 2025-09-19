@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Search, 
   Filter, 
@@ -359,6 +360,7 @@ const TripCard: React.FC<{ trip: Trip; user: User }> = ({ trip, user }) => {
 };
 
 const TripsView: React.FC<TripsViewProps> = ({ user }) => {
+  const navigate = useNavigate();
   const [trips, setTrips] = useState<Trip[]>([]);
   const [filteredTrips, setFilteredTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
@@ -637,7 +639,7 @@ const TripsView: React.FC<TripsViewProps> = ({ user }) => {
       {/* Quick Actions */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
         <button
-          onClick={() => window.location.href = '/dashboard/trips/create'}
+          onClick={() => navigate('/dashboard/trips/create')}
           className="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow cursor-pointer"
         >
           <div className="p-5">
