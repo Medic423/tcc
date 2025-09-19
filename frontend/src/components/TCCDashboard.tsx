@@ -43,7 +43,6 @@ import TCCUnitsManagement from './TCCUnitsManagement';
 import TCCRouteOptimizer from './TCCRouteOptimizer';
 import Analytics from './Analytics';
 import FinancialDashboard from './FinancialDashboard';
-import TripHistory from './TripHistory';
 
 interface User {
   id: string;
@@ -71,7 +70,7 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
     // Core Operations (Left) - Always visible
     const coreOperations = [
       { name: 'Dashboard', href: '/dashboard', icon: Home, category: 'core' },
-      { name: 'Trips', href: '/dashboard/trips', icon: Truck, category: 'core', hasDropdown: true },
+      { name: 'Trips', href: '/dashboard/trips', icon: Truck, category: 'core' },
       { name: 'Hospitals', href: '/dashboard/hospitals', icon: Building2, category: 'core' },
       { name: 'Agencies', href: '/dashboard/agencies', icon: Truck, category: 'core' },
     ];
@@ -115,14 +114,6 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
 
   // Dropdown menu configurations
   const dropdownMenus = {
-    trips: {
-      title: 'Trips',
-      icon: Truck,
-      items: [
-        { name: 'Overview', href: '/dashboard/trips', icon: Truck },
-        { name: 'Trip History', href: '/dashboard/trips/history', icon: FileText, color: 'text-gray-600' },
-      ]
-    },
     settings: {
       title: 'Settings',
       icon: Settings,
@@ -553,7 +544,6 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
               <Routes>
                 <Route path="/" element={<Overview />} />
                 <Route path="/trips" element={<TripsView user={user} />} />
-                <Route path="/trips/history" element={<TripHistory />} />
                 <Route path="/analytics" element={<Analytics />} />
                 <Route path="/units" element={<TCCUnitsManagement />} />
                 <Route path="/hospitals/*" element={<Hospitals />} />
