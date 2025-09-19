@@ -71,8 +71,8 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
     const coreOperations = [
       { name: 'Dashboard', href: '/dashboard', icon: Home, category: 'core' },
       { name: 'Trips', href: '/dashboard/trips', icon: Truck, category: 'core', hasDropdown: true },
-      { name: 'Hospitals', href: '/dashboard/hospitals', icon: Building2, category: 'core', hasDropdown: true },
-      { name: 'Agencies', href: '/dashboard/agencies', icon: Truck, category: 'core', hasDropdown: true },
+      { name: 'Hospitals', href: '/dashboard/hospitals', icon: Building2, category: 'core' },
+      { name: 'Agencies', href: '/dashboard/agencies', icon: Truck, category: 'core' },
     ];
 
     // Analysis & Reporting (Center)
@@ -124,47 +124,6 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
         { name: 'Create Trip', href: '/dashboard/trips/create', icon: Plus, color: 'text-green-600' },
         { name: 'Active Trips', href: '/dashboard/trips/active', icon: Activity, color: 'text-blue-600' },
         { name: 'Trip History', href: '/dashboard/trips/history', icon: FileText, color: 'text-gray-600' },
-      ]
-    },
-    hospitals: {
-      title: 'Hospitals',
-      icon: Building2,
-      items: [
-        { name: 'Overview', href: '/dashboard/hospitals', icon: Building2 },
-        { name: 'Add Hospital', href: '/dashboard/hospitals/create', icon: Plus, color: 'text-green-600' },
-        { name: 'Hospital Status', href: '/dashboard/hospitals/status', icon: CheckCircle, color: 'text-blue-600' },
-        { name: 'Configuration', href: '/dashboard/hospitals/config', icon: Settings, color: 'text-gray-600' },
-      ]
-    },
-    agencies: {
-      title: 'Agencies',
-      icon: Truck,
-      items: [
-        { name: 'Overview', href: '/dashboard/agencies', icon: Truck },
-        { name: 'Add Agency', href: '/dashboard/agencies/create', icon: Plus, color: 'text-green-600' },
-        { name: 'Agency Status', href: '/dashboard/agencies/status', icon: Activity, color: 'text-blue-600' },
-        { name: 'Performance', href: '/dashboard/agencies/performance', icon: TrendingUp, color: 'text-gray-600' },
-      ]
-    },
-    analytics: {
-      title: 'Analytics',
-      icon: BarChart3,
-      items: [
-        { name: 'Overview', href: '/dashboard/analytics', icon: BarChart2 },
-        { name: 'Revenue', href: '/dashboard/analytics/revenue', icon: TrendingUp },
-        { name: 'Performance', href: '/dashboard/analytics/performance', icon: Activity },
-        { name: 'Reports', href: '/dashboard/analytics/reports', icon: FileText },
-      ]
-    },
-    financial: {
-      title: 'Financial',
-      icon: DollarSign,
-      items: [
-        { name: 'Overview', href: '/dashboard/financial', icon: BarChart2 },
-        { name: 'Revenue Analysis', href: '/dashboard/financial/revenue', icon: TrendingUp },
-        { name: 'Cost Analysis', href: '/dashboard/financial/costs', icon: PieChart },
-        { name: 'Profitability', href: '/dashboard/financial/profitability', icon: DollarIcon },
-        { name: 'Billing', href: '/dashboard/financial/billing', icon: CreditCard },
       ]
     },
     settings: {
