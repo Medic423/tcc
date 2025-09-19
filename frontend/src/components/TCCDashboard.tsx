@@ -119,8 +119,7 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
       title: 'Settings',
       icon: Settings,
       items: [
-        { name: 'System Settings', href: '/dashboard/settings', icon: Settings },
-        { name: 'User Management', href: '/dashboard/settings/users', icon: Users },
+        { name: 'User Management', href: '/dashboard/settings', icon: Users },
         { name: 'Notifications', href: '/dashboard/settings/notifications', icon: BellIcon },
         { name: 'Backup', href: '/dashboard/settings/backup', icon: HardDrive },
       ]
@@ -554,6 +553,7 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
                 <Route path="/healthcare-portal" element={<HealthcarePortal />} />
                 <Route path="/ems-dashboard" element={<EMSDashboard user={user} onLogout={onLogout} />} />
                 <Route path="/settings" element={<UserManagement />} />
+                <Route path="/settings/users" element={<UserManagement />} />
                 <Route path="/settings/notifications" element={<NotificationSettings />} />
                 <Route path="/financial" element={<FinancialDashboard />} />
                 <Route path="/my-trips" element={<div className="text-center py-12"><h3 className="text-lg font-medium text-gray-900">My Trips</h3><p className="text-gray-500">Coming soon...</p></div>} />
