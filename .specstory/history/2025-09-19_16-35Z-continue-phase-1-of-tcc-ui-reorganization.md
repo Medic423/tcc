@@ -9227,3 +9227,218 @@ Now you can test the Create Trip functionality again! The frontend should compil
 
 ---
 
+_**User (2025-09-18 18:12Z)**_
+
+Works as expected! Almost done with the TCC cleanup. In the menu bar there is a "Notifications" tab that should be moved to the "Notifications" choice in the "Settings" drop down. Then notificatrions can be removed from the menu bar.
+
+---
+
+_**Assistant**_
+
+Perfect! I can see from the terminal logs that the Create Trip functionality is working correctly now - the backend is receiving the enhanced trip request data and the frontend is compiling without errors.
+
+Now let me move the "Notifications" tab from the menu bar to the "Settings" dropdown as requested.
+
+
+---
+
+Read file: undefined
+
+---
+
+Let me see the rest of the navigation structure and the dropdown menus:
+
+
+---
+
+Read file: undefined
+
+---
+
+Perfect! I can see that the "Notifications" is already in the Settings dropdown (line 124), but it's also still in the main menu bar (line 92). Let me remove it from the main menu bar:
+
+
+---
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/TCCDashboard.tsx</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -90,5 +90,5 @@
+      // Additional features
+      const additionalFeatures = [
+-       { name: 'Notifications', href: '/dashboard/notifications', icon: Bell, category: 'additional' },
++       // Notifications moved to Settings dropdown
+      ];
+  
+```
+
+</details>
+
+---
+
+Now I need to update the logic that handles the navigation since `additionalFeatures` is now empty. Let me check how it's used:
+
+
+---
+
+Read file: undefined
+
+---
+
+I need to update the logic to handle the empty `additionalFeatures` array. Let me also check how it's used in the rendering:
+
+
+---
+
+Read file: undefined
+
+---
+
+The code should work fine with an empty `additionalFeatures` array. Let me also check if there are any routes that need to be updated. Let me look at the routes section:
+
+
+---
+
+Read file: undefined
+
+---
+
+Let me see the rest of the routes:
+
+
+---
+
+Read file: undefined
+
+---
+
+I can see that there's still a route for `/notifications` (line 556) that should be moved to `/settings/notifications`. Let me update the route:
+
+
+---
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/TCCDashboard.tsx</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -554,5 +554,5 @@
+                  <Route path="/healthcare-portal" element={<HealthcarePortal />} />
+                  <Route path="/ems-dashboard" element={<EMSDashboard user={user} onLogout={onLogout} />} />
+-                 <Route path="/notifications" element={<NotificationSettings />} />
++                 <Route path="/settings/notifications" element={<NotificationSettings />} />
+                  <Route path="/settings" element={<UserManagement />} />
+                  <Route path="/financial" element={<FinancialDashboard />} />
+```
+
+</details>
+
+---
+
+Now I need to add a route for the main settings page. Let me add that:
+
+
+---
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/TCCDashboard.tsx</summary>
+
+undefined
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -554,6 +554,6 @@
+                  <Route path="/healthcare-portal" element={<HealthcarePortal />} />
+                  <Route path="/ems-dashboard" element={<EMSDashboard user={user} onLogout={onLogout} />} />
++                 <Route path="/settings" element={<UserManagement />} />
+                  <Route path="/settings/notifications" element={<NotificationSettings />} />
+-                 <Route path="/settings" element={<UserManagement />} />
+                  <Route path="/financial" element={<FinancialDashboard />} />
+                  <Route path="/my-trips" element={<div className="text-center py-12"><h3 className="text-lg font-medium text-gray-900">My Trips</h3><p className="text-gray-500">Coming soon...</p></div>} />
+```
+
+</details>
+
+---
+
+Now let me commit these changes:
+
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git add .
+```
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git commit -m "Move Notifications from menu bar to Settings dropdown
+
+- Remove Notifications from main menu bar navigation
+- Keep Notifications in Settings dropdown menu
+- Update route from /notifications to /settings/notifications
+- Clean up menu bar by consolidating admin functions under Settings"
+```
+
+```
+[main fab513b] Move Notifications from menu bar to Settings dropdown
+ 2 files changed, 236 insertions(+), 2 deletions(-)
+
+```
+
+---
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git push origin main
+```
+
+```
+To https://github.com/Medic423/tcc
+   c9d6eaa..fab513b  main -> main
+
+```
+
+---
+
+Perfect! I've successfully moved the "Notifications" tab from the menu bar to the "Settings" dropdown. Here's what I changed:
+
+## ✅ **Moved Notifications to Settings Dropdown**
+
+### **Changes Made:**
+
+1. **Removed from Main Menu Bar**:
+   - Removed "Notifications" from the `additionalFeatures` array
+   - This eliminates the standalone Notifications tab from the top menu bar
+
+2. **Kept in Settings Dropdown**:
+   - Notifications remains in the Settings dropdown menu (it was already there)
+   - Users can still access it via Settings → Notifications
+
+3. **Updated Route**:
+   - Changed route from `/notifications` to `/settings/notifications`
+   - This ensures the URL structure matches the new navigation hierarchy
+
+### **Result:**
+- **Cleaner Menu Bar**: The top menu bar now only shows the core navigation items
+- **Better Organization**: All administrative functions (including Notifications) are now consolidated under the Settings dropdown
+- **Consistent Navigation**: The URL structure now reflects the hierarchical organization
+
+The TCC menu bar is now much cleaner with just the essential navigation items:
+- **Left**: Dashboard, Trips, Hospitals, Agencies
+- **Center**: Analytics, Financial  
+- **Right**: Settings (with dropdown containing System Settings, User Management, Notifications, Backup)
+
+This completes the TCC UI cleanup as requested!
+
+---
+
