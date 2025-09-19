@@ -8,7 +8,6 @@ import {
   LogOut,
   Menu,
   X,
-  Bell,
   DollarSign,
   Navigation,
   ChevronDown,
@@ -30,7 +29,6 @@ import {
   Bell as BellIcon,
   HardDrive
 } from 'lucide-react';
-import Notifications from './Notifications';
 import Overview from './Overview';
 import TripsView from './TripsView';
 import Hospitals from './Hospitals';
@@ -522,7 +520,6 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
 
               {/* User Menu */}
               <div className="flex items-center space-x-4">
-                <Notifications user={user} />
                 <div className="flex items-center space-x-3">
                   <div className="text-right">
                     <p className="text-sm font-medium text-gray-700">{user.name}</p>
