@@ -230,11 +230,20 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
         {/* Mobile Header */}
         <div className="md:hidden">
           <div className="flex items-center justify-between px-4 py-3">
-            <div className="flex items-center">
-              <div className="h-8 w-8 bg-primary-600 rounded-lg flex items-center justify-center">
-                <Building2 className="h-5 w-5 text-white" />
+            <div className="flex items-center space-x-3">
+              <div className="flex items-center">
+                <div className="h-8 w-8 bg-primary-600 rounded-lg flex items-center justify-center">
+                  <Building2 className="h-5 w-5 text-white" />
+                </div>
+                <span className="ml-2 text-xl font-bold text-gray-900">TCC</span>
               </div>
-              <span className="ml-2 text-xl font-bold text-gray-900">TCC</span>
+              <button
+                onClick={onLogout}
+                className="p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                title="Sign out"
+              >
+                <LogOut className="h-5 w-5" />
+              </button>
             </div>
             <button
               type="button"
@@ -417,12 +426,21 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
         <div className="hidden md:block">
           <div className="px-6 py-4">
             <div className="flex items-center justify-between">
-              {/* Logo */}
-              <div className="flex items-center">
-                <div className="h-8 w-8 bg-primary-600 rounded-lg flex items-center justify-center">
-                  <Building2 className="h-5 w-5 text-white" />
+              {/* Logo and Logout */}
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center">
+                  <div className="h-8 w-8 bg-primary-600 rounded-lg flex items-center justify-center">
+                    <Building2 className="h-5 w-5 text-white" />
+                  </div>
+                  <span className="ml-2 text-xl font-bold text-gray-900">TCC</span>
                 </div>
-                <span className="ml-2 text-xl font-bold text-gray-900">TCC</span>
+                <button
+                  onClick={onLogout}
+                  className="p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  title="Sign out"
+                >
+                  <LogOut className="h-5 w-5" />
+                </button>
               </div>
 
               {/* Navigation Menu */}
@@ -522,13 +540,6 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
                     <p className="text-sm font-medium text-gray-700">{user.name}</p>
                     <p className="text-xs text-gray-500">{user.email}</p>
                   </div>
-                  <button
-                    onClick={onLogout}
-                    className="p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    title="Sign out"
-                  >
-                    <LogOut className="h-5 w-5" />
-                  </button>
                 </div>
               </div>
             </div>
