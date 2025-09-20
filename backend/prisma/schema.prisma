@@ -81,6 +81,7 @@ model EMSAgency {
   requiresReview       Boolean          @default(false)
   serviceRadius        Int?
   totalUnits           Int              @default(0)
+  agencyResponses      AgencyResponse[]
 
   @@map("ems_agencies")
 }
@@ -164,6 +165,7 @@ model AgencyResponse {
   isSelected        Boolean   @default(false)
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
+  agency            EMSAgency @relation(fields: [agencyId], references: [id], onDelete: Cascade)
   trip              Trip      @relation(fields: [tripId], references: [id], onDelete: Cascade)
 
   @@map("agency_responses")
