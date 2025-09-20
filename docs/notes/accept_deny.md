@@ -82,7 +82,49 @@ Based on codebase analysis, here's how the current system works:
 
 ## Proposed Solution: Multi-Agency Response Tracking
 
-### Phase 1B: Database Schema Enhancement (Next)
+### Phase 1B: Database Schema Enhancement ✅ **COMPLETED**
+
+#### **Changes Made**
+1. **Trip Model Enhancements**:
+   - Added `responseDeadline: DateTime?` - deadline for agency responses
+   - Added `maxResponses: Int @default(5)` - maximum number of responses allowed
+   - Added `responseStatus: String @default("PENDING")` - PENDING, RESPONSES_RECEIVED, AGENCY_SELECTED
+   - Added `selectionMode: String @default("SPECIFIC_AGENCIES")` - BROADCAST, SPECIFIC_AGENCIES
+   - Added `agencyResponses: AgencyResponse[]` - relation to responses
+
+2. **AgencyResponse Model Created**:
+   - `id: String @id @default(cuid())` - unique identifier
+   - `tripId: String` - foreign key to Trip
+   - `agencyId: String` - foreign key to EMSAgency
+   - `response: String` - 'ACCEPTED', 'DECLINED', 'PENDING'
+   - `responseTimestamp: DateTime @default(now())` - when response was made
+   - `responseNotes: String?` - optional notes from agency
+   - `estimatedArrival: DateTime?` - agency's estimated arrival time
+   - `isSelected: Boolean @default(false)` - whether this response was selected
+   - `createdAt/updatedAt: DateTime` - timestamps
+
+3. **Relations Added**:
+   - `Trip.agencyResponses -> AgencyResponse[]` - one-to-many
+   - `EMSAgency.agencyResponses -> AgencyResponse[]` - one-to-many
+   - `AgencyResponse.trip -> Trip` - many-to-one (CASCADE delete)
+   - `AgencyResponse.agency -> EMSAgency` - many-to-one (CASCADE delete)
+
+#### **Testing Results**
+- ✅ Database migration applied successfully
+- ✅ All new fields accessible and working
+- ✅ Relations working correctly
+- ✅ CRUD operations successful
+- ✅ Default values working correctly
+- ✅ Trip updates with new fields working
+
+#### **Git Commits**
+- `ff2b2b5`: Step 2: Add AgencyResponse model and Trip enhancements
+- `2dbbf36`: Step 3: Apply database migration for Phase 1B
+- `61c76c8`: Step 4: Test database schema changes - PASSED
+
+---
+
+### Phase 1C: Basic API Endpoints (Next)
 
 #### New Table: `AgencyResponses`
 ```sql
