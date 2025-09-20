@@ -48,7 +48,7 @@ model Hospital {
 }
 
 model EMSAgency {
-  id                   String    @id @default(cuid())
+  id                   String           @id @default(cuid())
   name                 String
   contactName          String
   phone                String
@@ -61,23 +61,21 @@ model EMSAgency {
   operatingHours       Json?
   capabilities         String[]
   pricingStructure     Json?
-  isActive             Boolean   @default(true)
-  status               String    @default("ACTIVE")
-  createdAt            DateTime  @default(now())
-  updatedAt            DateTime  @updatedAt
-  acceptsNotifications Boolean   @default(true)
+  isActive             Boolean          @default(true)
+  status               String           @default("ACTIVE")
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+  acceptsNotifications Boolean          @default(true)
   approvedAt           DateTime?
   approvedBy           String?
-  availableUnits       Int       @default(0)
-  lastUpdated          DateTime  @default(now())
+  availableUnits       Int              @default(0)
+  lastUpdated          DateTime         @default(now())
   latitude             Float?
   longitude            Float?
   notificationMethods  String[]
-  requiresReview       Boolean   @default(false)
+  requiresReview       Boolean          @default(false)
   serviceRadius        Int?
-  totalUnits           Int       @default(0)
-
-  // Relations
+  totalUnits           Int              @default(0)
   agencyResponses      AgencyResponse[]
 
   @@map("ems_agencies")
@@ -141,16 +139,12 @@ model Trip {
   revenuePerHour           Decimal?          @db.Decimal(10, 2)
   tripCost                 Decimal?          @db.Decimal(10, 2)
   pickupLocationId         String?
-  pickup_locations         pickup_locations? @relation(fields: [pickupLocationId], references: [id])
-
-  // New fields for multiple agency response handling
-  responseDeadline         DateTime?
   maxResponses             Int               @default(5)
-  responseStatus           String            @default("PENDING") // PENDING, RESPONSES_RECEIVED, AGENCY_SELECTED
-  selectionMode            String            @default("SPECIFIC_AGENCIES") // BROADCAST, SPECIFIC_AGENCIES
-  
-  // Relations
+  responseDeadline         DateTime?
+  responseStatus           String            @default("PENDING")
+  selectionMode            String            @default("SPECIFIC_AGENCIES")
   agencyResponses          AgencyResponse[]
+  pickup_locations         pickup_locations? @relation(fields: [pickupLocationId], references: [id])
 
   @@map("trips")
 }
@@ -159,17 +153,16 @@ model AgencyResponse {
   id                String    @id @default(cuid())
   tripId            String
   agencyId          String
-  response          String    // 'ACCEPTED', 'DECLINED', 'PENDING'
+  response          String
   responseTimestamp DateTime  @default(now())
   responseNotes     String?
   estimatedArrival  DateTime?
   isSelected        Boolean   @default(false)
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
-  
-  trip              Trip      @relation(fields: [tripId], references: [id], onDelete: Cascade)
   agency            EMSAgency @relation(fields: [agencyId], references: [id], onDelete: Cascade)
-  
+  trip              Trip      @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
   @@map("agency_responses")
 }
 

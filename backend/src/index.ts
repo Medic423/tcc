@@ -12,6 +12,7 @@ import agencyRoutes from './routes/agencies';
 import facilityRoutes from './routes/facilities';
 import analyticsRoutes from './routes/analytics';
 import tripRoutes from './routes/trips';
+import agencyResponseRoutes from './routes/agencyResponses';
 import optimizationRoutes from './routes/optimization';
 import notificationRoutes from './routes/notifications';
 import unitRoutes from './routes/units';
@@ -77,6 +78,7 @@ app.get('/health', async (req, res) => {
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/trips', tripRoutes);
+app.use('/api/agency-responses', agencyResponseRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/units', unitRoutes);
 app.use('/api/tcc/hospitals', hospitalRoutes);
