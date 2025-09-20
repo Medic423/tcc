@@ -57,49 +57,6 @@ app.post('/api/auth/healthcare/login', (req, res) => {
   });
 });
 
-// Healthcare registration
-app.post('/api/auth/healthcare/register', (req, res) => {
-  console.log('Healthcare registration attempt:', req.body);
-  
-  const { 
-    email, 
-    password, 
-    name, 
-    facilityName, 
-    facilityType, 
-    address, 
-    city, 
-    state, 
-    zipCode, 
-    phone, 
-    latitude, 
-    longitude 
-  } = req.body;
-
-  // Basic validation
-  if (!email || !password || !name || !facilityName || !facilityType) {
-    return res.status(400).json({
-      success: false,
-      error: 'Email, password, name, facilityName, and facilityType are required'
-    });
-  }
-
-  // Mock successful registration
-  res.status(201).json({
-    success: true,
-    message: 'Healthcare facility registration submitted for approval',
-    user: {
-      id: `healthcare-${Date.now()}`,
-      email: email,
-      name: name,
-      facilityName: facilityName,
-      facilityType: facilityType,
-      userType: 'HEALTHCARE',
-      isActive: false // Requires admin approval
-    }
-  });
-});
-
 // EMS login
 app.post('/api/auth/ems/login', (req, res) => {
   console.log('EMS login attempt:', req.body);

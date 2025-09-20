@@ -406,7 +406,8 @@ router.get('/settings', async (req, res) => {
         data: {
           id: `global-${Date.now()}`,
           agencyId: null,
-          updatedAt: new Date()
+          updatedAt: new Date(),
+          // All other fields will use their default values from schema
         }
       });
     }
@@ -503,7 +504,8 @@ router.post('/settings/reset', async (req, res) => {
         data: {
           id: `default-${agencyId || 'global'}-${Date.now()}`,
           agencyId: agencyId as string || null,
-          updatedAt: new Date()
+          updatedAt: new Date(),
+          // All other fields will use their default values from schema
         }
     });
 
