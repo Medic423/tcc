@@ -4,6 +4,7 @@ import {
   Plus, 
   Clock, 
   CheckCircle, 
+  AlertCircle,
   AlertTriangle,
   User,
   LogOut,
@@ -13,7 +14,6 @@ import {
 import Notifications from './Notifications';
 import EnhancedTripForm from './EnhancedTripForm';
 import HospitalSettings from './HospitalSettings';
-import { asNumber, toFixed, toPercentage } from '../utils/numberUtils';
 
 interface HealthcareDashboardProps {
   user: {
@@ -107,22 +107,28 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
 
   const loadTrips = async () => {
     try {
-      const response = await (await import('../services/api')).default.get('/api/trips');
-      const data = response.data;
-      if (data?.success && data.data) {
+      const response = await fetch('/api/trips', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data) {
           // Transform API data to match component expectations
           const transformedTrips = data.data.map((trip: any) => ({
             id: trip.id,
-            patientId: trip.patientId || trip.patientName || 'Unknown',
-            destination: trip.toLocation || 'Unknown',
-            pickupLocation: trip.pickup_locations || null,
+            patientId: trip.patientName,
+            destination: trip.toLocation,
+            pickupLocation: trip.pickupLocation,
             transportLevel: trip.transportLevel || 'BLS',
-            status: trip.status || 'PENDING',
-            requestTime: trip.createdAt ? new Date(trip.createdAt).toLocaleString() : 'Unknown',
-            priority: trip.priority || 'MEDIUM',
-            urgencyLevel: trip.urgencyLevel || trip.priority || 'Routine'
+            status: trip.status,
+            requestTime: new Date(trip.createdAt).toLocaleString(),
+            priority: trip.priority,
+            urgencyLevel: trip.urgencyLevel
           }));
           setTrips(transformedTrips);
+        }
       }
     } catch (error) {
       console.error('Error loading trips:', error);
@@ -143,11 +149,22 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
     
     setUpdating(true);
     try {
-      const api = (await import('../services/api')).default;
-      await api.put(`/api/trips/${editingTrip.id}/status`, {
-        status: editFormData.status,
-        ...(editFormData.status === 'COMPLETED' && { completionTimestamp: new Date().toISOString() })
+      const response = await fetch(`/api/trips/${editingTrip.id}/status`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          status: editFormData.status,
+          ...(editFormData.status === 'COMPLETED' && { completionTimestamp: new Date().toISOString() })
+        }),
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update trip');
+      }
 
       // Reload trips to get updated data
       await loadTrips();
@@ -166,11 +183,22 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
     
     setUpdating(true);
     try {
-      const api = (await import('../services/api')).default;
-      await api.put(`/api/trips/${tripId}/status`, {
-        status: 'COMPLETED',
-        completionTimestamp: new Date().toISOString()
+      const response = await fetch(`/api/trips/${tripId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          status: 'COMPLETED',
+          completionTimestamp: new Date().toISOString()
+        }),
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to complete trip');
+      }
 
       // Reload trips to get updated data
       await loadTrips();
@@ -195,11 +223,17 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
     setLoadingResponses(true);
     try {
       const url = tripId ? `/api/agency-responses?tripId=${tripId}` : '/api/agency-responses';
-      const api = (await import('../services/api')).default;
-      const response = await api.get(url);
-      const data = response.data;
-      if (data?.success && data.data) {
-        setAgencyResponses(data.data);
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data) {
+          setAgencyResponses(data.data);
+        }
       }
     } catch (error) {
       console.error('Error loading agency responses:', error);
@@ -210,11 +244,22 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
 
   const handleSelectAgency = async (tripId: string, agencyResponseId: string, reason?: string) => {
     try {
-      const api = (await import('../services/api')).default;
-      await api.post(`/api/agency-responses/select/${tripId}`, {
-        agencyResponseId,
-        selectionNotes: reason || 'Selected by healthcare provider'
+      const response = await fetch(`/api/agency-responses/select/${tripId}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          agencyResponseId: agencyResponseId,
+          selectionNotes: reason || 'Selected by healthcare provider'
+        }),
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to select agency');
+      }
 
       // Reload responses and trips
       await loadAgencyResponses(tripId);
@@ -225,13 +270,9 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
     }
   };
 
-  const handleViewResponses = (trip: any) => {
-    // Switch to Agency Responses tab
-    setActiveTab('responses');
-    // Set the selected trip for context
+  const handleViewResponses = async (trip: any) => {
     setSelectedTrip(trip);
-    // Load responses for this specific trip
-    loadAgencyResponses(trip.id);
+    await loadAgencyResponses(trip.id);
   };
 
   const getStatusColor = (status: string) => {
@@ -244,13 +285,19 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
     }
   };
 
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'HIGH': return 'text-red-600 bg-red-100';
+      case 'MEDIUM': return 'text-yellow-600 bg-yellow-100';
+      case 'LOW': return 'text-green-600 bg-green-100';
+      default: return 'text-gray-600 bg-gray-100';
+    }
+  };
 
-  // Add error boundary for render safety
-  try {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        {/* Header */}
-        <header className="bg-white shadow-sm border-b">
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
@@ -335,7 +382,7 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                           Pending Requests
                         </dt>
                         <dd className="text-lg font-medium text-gray-900">
-                          {trips.filter(trip => (trip.status || 'PENDING') === 'PENDING').length}
+                          {trips.filter(trip => trip.status === 'PENDING').length}
                         </dd>
                       </dl>
                     </div>
@@ -357,7 +404,7 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                           Completed Today
                         </dt>
                         <dd className="text-lg font-medium text-gray-900">
-                          {trips.filter(trip => (trip.status || 'PENDING') === 'COMPLETED').length}
+                          {trips.filter(trip => trip.status === 'COMPLETED').length}
                         </dd>
                       </dl>
                     </div>
@@ -379,7 +426,7 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                           High Priority
                         </dt>
                         <dd className="text-lg font-medium text-gray-900">
-                          {trips.filter(trip => (trip.urgencyLevel || trip.priority || 'Routine') === 'Emergent' || (trip.priority || 'MEDIUM') === 'HIGH').length}
+                          {trips.filter(trip => trip.urgencyLevel === 'Emergent' || trip.priority === 'HIGH').length}
                         </dd>
                       </dl>
                     </div>
@@ -401,22 +448,26 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                       <div className="flex items-center space-x-4">
                         <div>
                           <p className="text-sm font-medium text-gray-900">
-                            Patient ID: {trip.patientId || 'Unknown'} - {trip.destination || 'Unknown'}
+                            Patient ID: {trip.patientId} - {trip.destination}
                           </p>
-                          <p className="text-xs text-blue-600">
-                            Pickup: {trip.destination || 'Unknown'}
-                          </p>
+                          {trip.pickupLocation && (
+                            <p className="text-xs text-blue-600">
+                              Pickup: {trip.pickupLocation.name}
+                              {trip.pickupLocation.floor && ` (Floor ${trip.pickupLocation.floor})`}
+                              {trip.pickupLocation.room && ` - Room ${trip.pickupLocation.room}`}
+                            </p>
+                          )}
                           <p className="text-xs text-gray-500">
-                            {trip.transportLevel || 'BLS'} • {trip.urgencyLevel || trip.priority || 'Routine'} • {trip.requestTime || 'Unknown'}
+                            {trip.transportLevel} • {trip.urgencyLevel || trip.priority} • {trip.requestTime}
                           </p>
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(trip.status || 'PENDING')}`}>
-                          {trip.status || 'PENDING'}
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(trip.status)}`}>
+                          {trip.status}
                         </span>
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getUrgencyLevelStyle(trip.urgencyLevel || trip.priority || 'Routine')}`}>
-                          {trip.urgencyLevel || trip.priority || 'Routine'}
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getUrgencyLevelStyle(trip.urgencyLevel || trip.priority)}`}>
+                          {trip.urgencyLevel || trip.priority}
                         </span>
                         <div className="flex space-x-2 ml-4">
                           <button
@@ -577,42 +628,14 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
               </div>
             </div>
 
-            {/* Selected Trip Header */}
-            {selectedTrip && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-lg font-medium text-blue-900">
-                      Viewing Responses for: {selectedTrip.patientId}
-                    </h3>
-                    <p className="text-sm text-blue-700">
-                      {selectedTrip.fromLocation} → {selectedTrip.toLocation} • {selectedTrip.transportLevel} • {selectedTrip.urgencyLevel || selectedTrip.priority}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setSelectedTrip(null);
-                      loadAgencyResponses(); // Load all responses
-                    }}
-                    className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                  >
-                    View All Responses
-                  </button>
-                </div>
-              </div>
-            )}
-
             {/* Response List */}
             <div className="bg-white shadow overflow-hidden sm:rounded-md">
               <div className="px-4 py-5 sm:px-6">
                 <h3 className="text-lg leading-6 font-medium text-gray-900">
-                  {selectedTrip ? 'Agency Response Details' : 'All Agency Responses'}
+                  Agency Response Details
                 </h3>
                 <p className="mt-1 max-w-2xl text-sm text-gray-500">
-                  {selectedTrip 
-                    ? `View and manage agency responses for this transport request`
-                    : 'View and manage agency responses for all transport requests'
-                  }
+                  View and manage agency responses for transport requests
                 </p>
               </div>
               <ul className="divide-y divide-gray-200">
@@ -788,24 +811,6 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
       )}
     </div>
   );
-  } catch (error) {
-    console.error('HealthcareDashboard render error:', error);
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Something went wrong</h2>
-          <p className="text-gray-600 mb-4">There was an error loading the healthcare dashboard.</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
-          >
-            Reload Page
-          </button>
-        </div>
-      </div>
-    );
-  }
 };
 
 export default HealthcareDashboard;
