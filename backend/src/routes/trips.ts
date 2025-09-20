@@ -319,10 +319,10 @@ router.put('/:id/status', async (req, res) => {
       });
     }
 
-    if (!['PENDING', 'ACCEPTED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'].includes(status)) {
+    if (!['PENDING', 'ACCEPTED', 'DECLINED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'].includes(status)) {
       return res.status(400).json({
         success: false,
-        error: 'Invalid status. Must be PENDING, ACCEPTED, IN_PROGRESS, COMPLETED, or CANCELLED'
+        error: 'Invalid status. Must be PENDING, ACCEPTED, DECLINED, IN_PROGRESS, COMPLETED, or CANCELLED'
       });
     }
 
