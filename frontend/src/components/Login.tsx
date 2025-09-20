@@ -128,13 +128,6 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             </button>
           </div>
 
-          <div className="text-center">
-            <div className="text-sm text-gray-600">
-              <p className="font-medium">Demo Credentials:</p>
-              <p><strong>Admin:</strong> admin@tcc.com / admin123</p>
-              <p><strong>User:</strong> user@tcc.com / admin123</p>
-            </div>
-          </div>
         </form>
       </div>
     </div>

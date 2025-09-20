@@ -132,13 +132,6 @@ const HealthcareLogin: React.FC<HealthcareLoginProps> = ({ onBack, onLogin }) =>
             </button>
           </div>
 
-          <div className="text-center">
-            <div className="text-sm text-gray-600">
-              <p className="font-medium">Demo Credentials:</p>
-              <p><strong>Email:</strong> admin@altoonaregional.org</p>
-              <p><strong>Password:</strong> upmc123</p>
-            </div>
-          </div>
         </form>
       </div>
     </div>

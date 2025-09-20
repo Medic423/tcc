@@ -138,13 +138,6 @@ const EMSLogin: React.FC<EMSLoginProps> = ({ onBack, onLogin }) => {
             </button>
           </div>
 
-          <div className="text-center">
-            <div className="text-sm text-gray-600">
-              <p className="font-medium">Demo Credentials:</p>
-              <p><strong>Email:</strong> fferguson@movalleyems.com</p>
-              <p><strong>Password:</strong> password123</p>
-            </div>
-          </div>
         </form>
       </div>
     </div>
