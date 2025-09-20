@@ -30,6 +30,9 @@ interface HealthcareDashboardProps {
 
 const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogout }) => {
   const [activeTab, setActiveTab] = useState('create');
+  const [agencyResponses, setAgencyResponses] = useState<any[]>([]);
+  const [selectedTrip, setSelectedTrip] = useState<any>(null);
+  const [loadingResponses, setLoadingResponses] = useState(false);
   const [trips, setTrips] = useState([
     {
       id: '1',
@@ -80,6 +83,13 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
   useEffect(() => {
     loadTrips();
   }, []);
+
+  // Load agency responses when responses tab is active
+  useEffect(() => {
+    if (activeTab === 'responses') {
+      loadAgencyResponses();
+    }
+  }, [activeTab]);
 
   // Function to get urgency level styling
   const getUrgencyLevelStyle = (urgencyLevel: string) => {
@@ -208,6 +218,63 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
     onLogout();
   };
 
+  // Agency Response Management Functions
+  const loadAgencyResponses = async (tripId?: string) => {
+    setLoadingResponses(true);
+    try {
+      const url = tripId ? `/api/agency-responses?tripId=${tripId}` : '/api/agency-responses';
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data) {
+          setAgencyResponses(data.data);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading agency responses:', error);
+    } finally {
+      setLoadingResponses(false);
+    }
+  };
+
+  const handleSelectAgency = async (tripId: string, agencyResponseId: string, reason?: string) => {
+    try {
+      const response = await fetch(`/api/agency-responses/select/${tripId}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          agencyResponseId: agencyResponseId,
+          selectionNotes: reason || 'Selected by healthcare provider'
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to select agency');
+      }
+
+      // Reload responses and trips
+      await loadAgencyResponses(tripId);
+      await loadTrips();
+    } catch (error: any) {
+      console.error('Error selecting agency:', error);
+      alert(error.message || 'Failed to select agency');
+    }
+  };
+
+  const handleViewResponses = async (trip: any) => {
+    setSelectedTrip(trip);
+    await loadAgencyResponses(trip.id);
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'PENDING': return 'text-yellow-600 bg-yellow-100';
@@ -271,6 +338,7 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
           <nav className="flex space-x-8">
             {[
               { id: 'trips', name: 'Transport Requests', icon: Clock },
+              { id: 'responses', name: 'Agency Responses', icon: Bell },
               { id: 'create', name: 'Create Request', icon: Plus },
               { id: 'hospital-settings', name: 'Hospital Settings', icon: Building2 }
             ].map((tab) => {
@@ -403,6 +471,12 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                         </span>
                         <div className="flex space-x-2 ml-4">
                           <button
+                            onClick={() => handleViewResponses(trip)}
+                            className="text-purple-600 hover:text-purple-900 text-xs px-2 py-1 rounded hover:bg-purple-50"
+                          >
+                            View Responses
+                          </button>
+                          <button
                             onClick={() => handleEditTrip(trip)}
                             className="text-blue-600 hover:text-blue-900 text-xs px-2 py-1 rounded hover:bg-blue-50"
                             disabled={updating}
@@ -447,6 +521,207 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                 setActiveTab('overview');
               }}
             />
+          </div>
+        )}
+
+        {activeTab === 'responses' && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-gray-900">Agency Responses</h2>
+              <button
+                onClick={() => loadAgencyResponses()}
+                disabled={loadingResponses}
+                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loadingResponses ? 'Loading...' : 'Refresh Responses'}
+              </button>
+            </div>
+
+            {/* Response Summary */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="bg-white overflow-hidden shadow rounded-lg">
+                <div className="p-5">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0">
+                      <div className="p-3 rounded-md bg-blue-500">
+                        <Bell className="h-6 w-6 text-white" />
+                      </div>
+                    </div>
+                    <div className="ml-5 w-0 flex-1">
+                      <dl>
+                        <dt className="text-sm font-medium text-gray-500 truncate">
+                          Total Responses
+                        </dt>
+                        <dd className="text-lg font-medium text-gray-900">
+                          {agencyResponses.length}
+                        </dd>
+                      </dl>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white overflow-hidden shadow rounded-lg">
+                <div className="p-5">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0">
+                      <div className="p-3 rounded-md bg-green-500">
+                        <CheckCircle className="h-6 w-6 text-white" />
+                      </div>
+                    </div>
+                    <div className="ml-5 w-0 flex-1">
+                      <dl>
+                        <dt className="text-sm font-medium text-gray-500 truncate">
+                          Accepted
+                        </dt>
+                        <dd className="text-lg font-medium text-gray-900">
+                          {agencyResponses.filter(r => r.response === 'ACCEPTED').length}
+                        </dd>
+                      </dl>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white overflow-hidden shadow rounded-lg">
+                <div className="p-5">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0">
+                      <div className="p-3 rounded-md bg-red-500">
+                        <X className="h-6 w-6 text-white" />
+                      </div>
+                    </div>
+                    <div className="ml-5 w-0 flex-1">
+                      <dl>
+                        <dt className="text-sm font-medium text-gray-500 truncate">
+                          Declined
+                        </dt>
+                        <dd className="text-lg font-medium text-gray-900">
+                          {agencyResponses.filter(r => r.response === 'DECLINED').length}
+                        </dd>
+                      </dl>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white overflow-hidden shadow rounded-lg">
+                <div className="p-5">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0">
+                      <div className="p-3 rounded-md bg-yellow-500">
+                        <Clock className="h-6 w-6 text-white" />
+                      </div>
+                    </div>
+                    <div className="ml-5 w-0 flex-1">
+                      <dl>
+                        <dt className="text-sm font-medium text-gray-500 truncate">
+                          Selected
+                        </dt>
+                        <dd className="text-lg font-medium text-gray-900">
+                          {agencyResponses.filter(r => r.isSelected).length}
+                        </dd>
+                      </dl>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Response List */}
+            <div className="bg-white shadow overflow-hidden sm:rounded-md">
+              <div className="px-4 py-5 sm:px-6">
+                <h3 className="text-lg leading-6 font-medium text-gray-900">
+                  Agency Response Details
+                </h3>
+                <p className="mt-1 max-w-2xl text-sm text-gray-500">
+                  View and manage agency responses for transport requests
+                </p>
+              </div>
+              <ul className="divide-y divide-gray-200">
+                {loadingResponses ? (
+                  <li className="px-4 py-5 sm:px-6">
+                    <div className="text-center text-gray-500">
+                      <div className="flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600 mr-2"></div>
+                        Loading agency responses...
+                      </div>
+                    </div>
+                  </li>
+                ) : agencyResponses.length === 0 ? (
+                  <li className="px-4 py-5 sm:px-6">
+                    <div className="text-center text-gray-500">
+                      No agency responses found. Create a transport request to see responses.
+                    </div>
+                  </li>
+                ) : (
+                  agencyResponses.map((response) => (
+                    <li key={response.id} className="px-4 py-5 sm:px-6">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          <div className="flex-shrink-0">
+                            <div className={`p-2 rounded-md ${
+                              response.response === 'ACCEPTED' ? 'bg-green-100' : 
+                              response.response === 'DECLINED' ? 'bg-red-100' : 'bg-gray-100'
+                            }`}>
+                              {response.response === 'ACCEPTED' ? (
+                                <CheckCircle className="h-5 w-5 text-green-600" />
+                              ) : response.response === 'DECLINED' ? (
+                                <X className="h-5 w-5 text-red-600" />
+                              ) : (
+                                <Clock className="h-5 w-5 text-gray-600" />
+                              )}
+                            </div>
+                          </div>
+                          <div className="ml-4">
+                            <div className="flex items-center">
+                              <p className="text-sm font-medium text-gray-900">
+                                Agency {response.agencyId}
+                              </p>
+                              {response.isSelected && (
+                                <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                  Selected
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-sm text-gray-500">
+                              Trip ID: {response.tripId}
+                            </p>
+                            {response.responseNotes && (
+                              <p className="text-sm text-gray-600 mt-1">
+                                {response.responseNotes}
+                              </p>
+                            )}
+                            {response.estimatedArrival && (
+                              <p className="text-sm text-gray-500 mt-1">
+                                ETA: {new Date(response.estimatedArrival).toLocaleString()}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            response.response === 'ACCEPTED' ? 'bg-green-100 text-green-800' :
+                            response.response === 'DECLINED' ? 'bg-red-100 text-red-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {response.response}
+                          </span>
+                          {response.response === 'ACCEPTED' && !response.isSelected && (
+                            <button
+                              onClick={() => handleSelectAgency(response.tripId, response.id)}
+                              className="px-3 py-1 bg-green-600 text-white text-xs rounded-md hover:bg-green-700"
+                            >
+                              Select Agency
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </li>
+                  ))
+                )}
+              </ul>
+            </div>
           </div>
         )}
 
