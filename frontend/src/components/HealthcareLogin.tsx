@@ -58,14 +58,6 @@ const HealthcareLogin: React.FC<HealthcareLoginProps> = ({ onBack, onLogin }) =>
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <button
-            onClick={onBack}
-            className="flex items-center text-gray-600 hover:text-gray-800 mb-4"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Login Options
-          </button>
-          
           <div className="flex justify-center">
             <div className="bg-green-100 p-3 rounded-full">
               <Building2 className="h-8 w-8 text-green-600" />
@@ -129,6 +121,16 @@ const HealthcareLogin: React.FC<HealthcareLoginProps> = ({ onBack, onLogin }) =>
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? 'Signing in...' : 'Sign In'}
+            </button>
+          </div>
+
+          <div className="text-center">
+            <button
+              onClick={onBack}
+              className="flex items-center justify-center text-gray-600 hover:text-gray-800 text-sm"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Login Options
             </button>
           </div>
 
