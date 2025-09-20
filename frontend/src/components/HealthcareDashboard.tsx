@@ -270,9 +270,13 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
     }
   };
 
-  const handleViewResponses = async (trip: any) => {
+  const handleViewResponses = (trip: any) => {
+    // Switch to Agency Responses tab
+    setActiveTab('responses');
+    // Set the selected trip for context
     setSelectedTrip(trip);
-    await loadAgencyResponses(trip.id);
+    // Load responses for this specific trip
+    loadAgencyResponses(trip.id);
   };
 
   const getStatusColor = (status: string) => {
@@ -628,14 +632,42 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
               </div>
             </div>
 
+            {/* Selected Trip Header */}
+            {selectedTrip && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-medium text-blue-900">
+                      Viewing Responses for: {selectedTrip.patientId}
+                    </h3>
+                    <p className="text-sm text-blue-700">
+                      {selectedTrip.fromLocation} → {selectedTrip.toLocation} • {selectedTrip.transportLevel} • {selectedTrip.urgencyLevel || selectedTrip.priority}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setSelectedTrip(null);
+                      loadAgencyResponses(); // Load all responses
+                    }}
+                    className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                  >
+                    View All Responses
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Response List */}
             <div className="bg-white shadow overflow-hidden sm:rounded-md">
               <div className="px-4 py-5 sm:px-6">
                 <h3 className="text-lg leading-6 font-medium text-gray-900">
-                  Agency Response Details
+                  {selectedTrip ? 'Agency Response Details' : 'All Agency Responses'}
                 </h3>
                 <p className="mt-1 max-w-2xl text-sm text-gray-500">
-                  View and manage agency responses for transport requests
+                  {selectedTrip 
+                    ? `View and manage agency responses for this transport request`
+                    : 'View and manage agency responses for all transport requests'
+                  }
                 </p>
               </div>
               <ul className="divide-y divide-gray-200">
