@@ -21,42 +21,30 @@ model CenterUser {
 }
 
 model Hospital {
-  id             String    @id @default(cuid())
-  name           String
-  address        String
-  city           String
-  state          String
-  zipCode        String
-  phone          String?
-  email          String?
-  type           String
-  capabilities   String[]
-  region         String
-  coordinates    Json?
-  latitude       Float?
-  longitude      Float?
-  operatingHours String?
-  isActive       Boolean   @default(true)
-  requiresReview Boolean   @default(false)
-  approvedAt     DateTime?
-  approvedBy     String?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  id               String             @id @default(cuid())
+  name             String
+  address          String
+  city             String
+  state            String
+  zipCode          String
+  phone            String?
+  email            String?
+  type             String
+  capabilities     String[]
+  region           String
+  coordinates      Json?
+  latitude         Float?
+  longitude        Float?
+  operatingHours   String?
+  isActive         Boolean            @default(true)
+  requiresReview   Boolean            @default(false)
+  approvedAt       DateTime?
+  approvedBy       String?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  pickup_locations pickup_locations[]
 
   @@map("hospitals")
-}
-
-model Agency {
-  id          String   @id @default(cuid())
-  name        String
-  type        String
-  region      String
-  contactInfo Json?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@map("agencies")
 }
 
 model EMSAgency {
@@ -95,69 +83,74 @@ model EMSAgency {
   @@map("ems_agencies")
 }
 
-model Facility {
-  id        String   @id @default(cuid())
-  name      String
-  type      String
-  address   String
-  city      String
-  state     String
-  zipCode   String
-  phone     String?
-  email     String?
-  region    String
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("facilities")
-}
-
 model Trip {
-  id                   String    @id @default(cuid())
-  tripNumber           String    @unique
-  patientId            String
-  patientWeight        String?
-  specialNeeds         String?
-  fromLocation         String
-  toLocation           String
-  scheduledTime        DateTime
-  transportLevel       String
-  urgencyLevel         String
-  diagnosis            String?
-  mobilityLevel        String?
-  oxygenRequired       Boolean   @default(false)
-  monitoringRequired   Boolean   @default(false)
-  generateQRCode       Boolean   @default(false)
-  qrCodeData           String?
-  selectedAgencies     String[]
-  notificationRadius   Int?
-  transferRequestTime  DateTime?
-  transferAcceptedTime DateTime?
-  emsArrivalTime       DateTime?
-  emsDepartureTime     DateTime?
-  actualStartTime      DateTime?
-  actualEndTime        DateTime?
-  status               String
-  priority             String
-  notes                String?
-  assignedTo           String?
-  assignedAgencyId     String?
-  assignedUnitId       String?
-  acceptedTimestamp    DateTime?
-  pickupTimestamp      DateTime?
-  completionTimestamp  DateTime?
-  createdAt            DateTime  @default(now())
-  updatedAt            DateTime  @updatedAt
+  id                       String            @id @default(cuid())
+  tripNumber               String            @unique
+  patientId                String
+  patientWeight            String?
+  specialNeeds             String?
+  fromLocation             String
+  toLocation               String
+  scheduledTime            DateTime
+  transportLevel           String
+  urgencyLevel             String
+  diagnosis                String?
+  mobilityLevel            String?
+  oxygenRequired           Boolean           @default(false)
+  monitoringRequired       Boolean           @default(false)
+  generateQRCode           Boolean           @default(false)
+  qrCodeData               String?
+  selectedAgencies         String[]
+  notificationRadius       Int?
+  transferRequestTime      DateTime?
+  transferAcceptedTime     DateTime?
+  emsArrivalTime           DateTime?
+  emsDepartureTime         DateTime?
+  actualStartTime          DateTime?
+  actualEndTime            DateTime?
+  status                   String
+  priority                 String
+  notes                    String?
+  assignedTo               String?
+  assignedAgencyId         String?
+  assignedUnitId           String?
+  acceptedTimestamp        DateTime?
+  pickupTimestamp          DateTime?
+  completionTimestamp      DateTime?
+  createdAt                DateTime          @default(now())
+  updatedAt                DateTime          @updatedAt
+  actualTripTimeMinutes    Int?
+  backhaulOpportunity      Boolean           @default(false)
+  completionTimeMinutes    Int?
+  customerSatisfaction     Int?
+  deadheadMiles            Float?
+  destinationLatitude      Float?
+  destinationLongitude     Float?
+  distanceMiles            Float?
+  efficiency               Decimal?          @db.Decimal(5, 2)
+  estimatedTripTimeMinutes Int?
+  insuranceCompany         String?
+  insurancePayRate         Decimal?          @db.Decimal(10, 2)
+  loadedMiles              Decimal?          @db.Decimal(10, 2)
+  originLatitude           Float?
+  originLongitude          Float?
+  perMileRate              Decimal?          @db.Decimal(8, 2)
+  performanceScore         Decimal?          @db.Decimal(5, 2)
+  requestTimestamp         DateTime?         @default(now())
+  responseTimeMinutes      Int?
+  revenuePerHour           Decimal?          @db.Decimal(10, 2)
+  tripCost                 Decimal?          @db.Decimal(10, 2)
+  pickupLocationId         String?
+  pickup_locations         pickup_locations? @relation(fields: [pickupLocationId], references: [id])
 
   // New fields for multiple agency response handling
-  responseDeadline     DateTime?
-  maxResponses         Int       @default(5)
-  responseStatus       String    @default("PENDING") // PENDING, RESPONSES_RECEIVED, AGENCY_SELECTED
-  selectionMode        String    @default("SPECIFIC_AGENCIES") // BROADCAST, SPECIFIC_AGENCIES
+  responseDeadline         DateTime?
+  maxResponses             Int               @default(5)
+  responseStatus           String            @default("PENDING") // PENDING, RESPONSES_RECEIVED, AGENCY_SELECTED
+  selectionMode            String            @default("SPECIFIC_AGENCIES") // BROADCAST, SPECIFIC_AGENCIES
   
   // Relations
-  agencyResponses      AgencyResponse[]
+  agencyResponses          AgencyResponse[]
 
   @@map("trips")
 }
@@ -186,80 +179,151 @@ model SystemAnalytics {
   metricValue Json
   timestamp   DateTime @default(now())
   userId      String?
+  createdAt   DateTime @default(now())
 
   @@map("system_analytics")
 }
 
-// Trip Cost Breakdown (Phase 4)
 model TripCostBreakdown {
-  id                    String   @id @default(cuid())
-  tripId                String   // Reference to Trip
-  
-  // Revenue Components
-  baseRevenue           Decimal  @db.Decimal(10,2)  // Base transport rate
-  mileageRevenue        Decimal  @db.Decimal(10,2)  // Per-mile revenue
-  priorityRevenue       Decimal  @db.Decimal(10,2)  // Priority-based revenue
-  specialRequirementsRevenue Decimal @db.Decimal(10,2)  // Special requirements surcharge
-  insuranceAdjustment   Decimal  @db.Decimal(10,2)  // Insurance rate adjustment
-  totalRevenue          Decimal  @db.Decimal(10,2)  // Total revenue
-  
-  // Cost Components
-  crewLaborCost         Decimal  @db.Decimal(10,2)  // Crew labor cost
-  vehicleCost           Decimal  @db.Decimal(10,2)  // Vehicle operational cost
-  fuelCost              Decimal  @db.Decimal(10,2)  // Fuel cost
-  maintenanceCost       Decimal  @db.Decimal(10,2)  // Maintenance cost
-  overheadCost          Decimal  @db.Decimal(10,2)  // Overhead allocation
-  totalCost             Decimal  @db.Decimal(10,2)  // Total cost
-  
-  // Profitability Metrics
-  grossProfit           Decimal  @db.Decimal(10,2)  // Gross profit (revenue - cost)
-  profitMargin          Decimal  @db.Decimal(5,2)   // Profit margin percentage
-  revenuePerMile        Decimal  @db.Decimal(8,2)   // Revenue per mile
-  costPerMile           Decimal  @db.Decimal(8,2)   // Cost per mile
-  
-  // Efficiency Metrics
-  loadedMileRatio       Decimal  @db.Decimal(3,2)   // Loaded miles / total miles
-  deadheadMileRatio     Decimal  @db.Decimal(3,2)   // Deadhead miles / total miles
-  utilizationRate       Decimal  @db.Decimal(3,2)   // Utilization rate
-  
-  // Trip Details (for analysis)
-  tripDistance          Decimal  @db.Decimal(6,2)   // Total trip distance
-  loadedMiles           Decimal  @db.Decimal(6,2)   // Loaded miles
-  deadheadMiles         Decimal  @db.Decimal(6,2)   // Deadhead miles
-  tripDurationHours     Decimal  @db.Decimal(4,2)   // Trip duration in hours
-  transportLevel        String   // BLS, ALS, CCT
-  priorityLevel         String   // LOW, MEDIUM, HIGH, URGENT
-  
-  // Cost Center Allocation
-  costCenterId          String?  // Reference to cost center
-  costCenterName        String?  // Cost center name for reporting
-  
-  // Analysis Timestamps
-  calculatedAt          DateTime @default(now())    // When breakdown was calculated
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
-  
+  id                         String   @id @default(cuid())
+  tripId                     String
+  baseRevenue                Decimal  @db.Decimal(10, 2)
+  mileageRevenue             Decimal  @db.Decimal(10, 2)
+  priorityRevenue            Decimal  @db.Decimal(10, 2)
+  specialRequirementsRevenue Decimal  @db.Decimal(10, 2)
+  insuranceAdjustment        Decimal  @db.Decimal(10, 2)
+  totalRevenue               Decimal  @db.Decimal(10, 2)
+  crewLaborCost              Decimal  @db.Decimal(10, 2)
+  vehicleCost                Decimal  @db.Decimal(10, 2)
+  fuelCost                   Decimal  @db.Decimal(10, 2)
+  maintenanceCost            Decimal  @db.Decimal(10, 2)
+  overheadCost               Decimal  @db.Decimal(10, 2)
+  totalCost                  Decimal  @db.Decimal(10, 2)
+  grossProfit                Decimal  @db.Decimal(10, 2)
+  profitMargin               Decimal  @db.Decimal(5, 2)
+  revenuePerMile             Decimal  @db.Decimal(8, 2)
+  costPerMile                Decimal  @db.Decimal(8, 2)
+  loadedMileRatio            Decimal  @db.Decimal(3, 2)
+  deadheadMileRatio          Decimal  @db.Decimal(3, 2)
+  utilizationRate            Decimal  @db.Decimal(3, 2)
+  tripDistance               Decimal  @db.Decimal(6, 2)
+  loadedMiles                Decimal  @db.Decimal(6, 2)
+  deadheadMiles              Decimal  @db.Decimal(6, 2)
+  tripDurationHours          Decimal  @db.Decimal(4, 2)
+  transportLevel             String
+  priorityLevel              String
+  costCenterId               String?
+  costCenterName             String?
+  calculatedAt               DateTime @default(now())
+  createdAt                  DateTime @default(now())
+  updatedAt                  DateTime @updatedAt
+
   @@map("trip_cost_breakdowns")
 }
 
-// Cost Centers (Phase 4)
 model CostCenter {
-  id                    String   @id @default(cuid())
-  name                  String   // Cost center name
-  description           String?  // Cost center description
-  code                  String   @unique // Cost center code
-  
-  // Overhead Allocation
-  overheadRate          Decimal  @db.Decimal(5,2)  @default(0.0)  // Overhead rate percentage
-  fixedCosts            Decimal  @db.Decimal(10,2) @default(0.0)  // Fixed costs
-  variableCosts         Decimal  @db.Decimal(10,2) @default(0.0)  // Variable costs
-  
-  // Allocation Method
-  allocationMethod      String   @default("TRIP_COUNT") // TRIP_COUNT, REVENUE, MILES, HOURS
-  isActive              Boolean  @default(true)
-  
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
-  
+  id               String   @id @default(cuid())
+  name             String
+  description      String?
+  code             String   @unique
+  overheadRate     Decimal  @default(0.0) @db.Decimal(5, 2)
+  fixedCosts       Decimal  @default(0.0) @db.Decimal(10, 2)
+  variableCosts    Decimal  @default(0.0) @db.Decimal(10, 2)
+  allocationMethod String   @default("TRIP_COUNT")
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
   @@map("cost_centers")
+}
+
+model backhaul_opportunities {
+  id           String   @id
+  tripId1      String
+  tripId2      String
+  revenueBonus Decimal? @db.Decimal(10, 2)
+  efficiency   Decimal? @db.Decimal(5, 2)
+  createdAt    DateTime @default(now())
+  isActive     Boolean  @default(true)
+}
+
+model pickup_locations {
+  id           String   @id
+  hospitalId   String
+  name         String
+  description  String?
+  contactPhone String?
+  contactEmail String?
+  floor        String?
+  room         String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime
+  hospitals    Hospital @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+  trips        Trip[]
+}
+
+model pricing_models {
+  id                  String   @id
+  agencyId            String?
+  name                String
+  isActive            Boolean  @default(true)
+  baseRates           Json
+  perMileRates        Json
+  priorityMultipliers Json
+  peakHourMultipliers Json
+  weekendMultipliers  Json
+  seasonalMultipliers Json
+  zoneMultipliers     Json
+  distanceTiers       Json
+  specialRequirements Json
+  isolationPricing    Decimal? @db.Decimal(8, 2)
+  bariatricPricing    Decimal? @db.Decimal(8, 2)
+  oxygenPricing       Decimal? @db.Decimal(8, 2)
+  monitoringPricing   Decimal? @db.Decimal(8, 2)
+  insuranceRates      Json
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime
+}
+
+model route_optimization_settings {
+  id                           String   @id
+  agencyId                     String?
+  deadheadMileWeight           Decimal  @default(1.0) @db.Decimal(5, 2)
+  waitTimeWeight               Decimal  @default(1.0) @db.Decimal(5, 2)
+  backhaulBonusWeight          Decimal  @default(1.0) @db.Decimal(5, 2)
+  overtimeRiskWeight           Decimal  @default(1.0) @db.Decimal(5, 2)
+  revenueWeight                Decimal  @default(1.0) @db.Decimal(5, 2)
+  maxDeadheadMiles             Decimal  @default(50.0) @db.Decimal(6, 2)
+  maxWaitTimeMinutes           Int      @default(30)
+  maxOvertimeHours             Decimal  @default(4.0) @db.Decimal(4, 2)
+  maxResponseTimeMinutes       Int      @default(15)
+  maxServiceDistance           Decimal  @default(100.0) @db.Decimal(6, 2)
+  backhaulTimeWindow           Int      @default(60)
+  backhaulDistanceLimit        Decimal  @default(25.0) @db.Decimal(6, 2)
+  backhaulRevenueBonus         Decimal  @default(50.0) @db.Decimal(8, 2)
+  enableBackhaulOptimization   Boolean  @default(true)
+  targetLoadedMileRatio        Decimal  @default(0.75) @db.Decimal(3, 2)
+  targetRevenuePerHour         Decimal  @default(200.0) @db.Decimal(8, 2)
+  targetResponseTime           Int      @default(12)
+  targetEfficiency             Decimal  @default(0.85) @db.Decimal(3, 2)
+  optimizationAlgorithm        String   @default("HYBRID")
+  maxOptimizationTime          Int      @default(30)
+  enableRealTimeOptimization   Boolean  @default(true)
+  crewAvailabilityWeight       Decimal  @default(1.0) @db.Decimal(5, 2)
+  equipmentCompatibilityWeight Decimal  @default(1.0) @db.Decimal(5, 2)
+  patientPriorityWeight        Decimal  @default(1.0) @db.Decimal(5, 2)
+  isActive                     Boolean  @default(true)
+  createdAt                    DateTime @default(now())
+  updatedAt                    DateTime
+}
+
+model unit_analytics {
+  id                  String   @id
+  unitId              String
+  performanceScore    Decimal? @db.Decimal(5, 2)
+  efficiency          Decimal? @db.Decimal(5, 2)
+  totalTrips          Int      @default(0)
+  averageResponseTime Decimal? @db.Decimal(5, 2)
+  lastUpdated         DateTime @default(now())
 }
