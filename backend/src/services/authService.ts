@@ -51,25 +51,60 @@ export class AuthService {
       if (user) {
         // Use the actual userType from the Center database
         userType = user.userType as 'ADMIN' | 'USER';
+        // Ensure the user object has the new fields
+        user = {
+          ...user,
+          phone: user.phone || null,
+          emailNotifications: user.emailNotifications || true,
+          smsNotifications: user.smsNotifications || false
+        };
       } else {
         // Try Hospital database (Healthcare users)
         const hospitalDB = databaseManager.getHospitalDB();
-        user = await hospitalDB.healthcareUser.findUnique({
+        const hospitalUser = await hospitalDB.healthcareUser.findUnique({
           where: { email }
         });
-        if (user) {
+        if (hospitalUser) {
           userType = 'HEALTHCARE';
+          // Convert hospital user to center user format
+          user = {
+            id: hospitalUser.id,
+            email: hospitalUser.email,
+            password: hospitalUser.password,
+            name: hospitalUser.name,
+            userType: 'HEALTHCARE',
+            phone: (hospitalUser as any).phone || null,
+            emailNotifications: true,
+            smsNotifications: false,
+            isActive: hospitalUser.isActive,
+            createdAt: hospitalUser.createdAt,
+            updatedAt: hospitalUser.updatedAt
+          };
         }
       }
 
       if (!user) {
         // Try EMS database (EMS users)
         const emsDB = databaseManager.getEMSDB();
-        user = await emsDB.eMSUser.findUnique({
+        const emsUser = await emsDB.eMSUser.findUnique({
           where: { email }
         });
-        if (user) {
+        if (emsUser) {
           userType = 'EMS';
+          // Convert EMS user to center user format
+          user = {
+            id: emsUser.id,
+            email: emsUser.email,
+            password: emsUser.password,
+            name: emsUser.name,
+            userType: 'EMS',
+            phone: (emsUser as any).phone || null,
+            emailNotifications: true,
+            smsNotifications: false,
+            isActive: emsUser.isActive,
+            createdAt: emsUser.createdAt,
+            updatedAt: emsUser.updatedAt
+          };
         }
       }
 
