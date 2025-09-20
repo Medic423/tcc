@@ -40,7 +40,6 @@ export class AuthService {
       const { email, password } = credentials;
 
       // First try Center database (Admin and User types)
-      console.log('TCC_DEBUG: Attempting Center database lookup for email:', email);
       const centerDB = databaseManager.getCenterDB();
       let user = await centerDB.centerUser.findUnique({
         where: { email },
@@ -50,48 +49,30 @@ export class AuthService {
           password: true,
           name: true,
           userType: true,
+          phone: true,
+          emailNotifications: true,
+          smsNotifications: true,
           isActive: true,
           createdAt: true,
           updatedAt: true
         }
       });
-      
-      console.log('TCC_DEBUG: Center database result:', user ? {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        userType: user.userType,
-        isActive: user.isActive,
-        passwordLength: user.password ? user.password.length : 0
-      } : 'null');
 
       let userType: 'ADMIN' | 'USER' | 'HEALTHCARE' | 'EMS' = 'ADMIN';
       let userData: User;
 
       if (user) {
-        console.log('TCC_DEBUG: User found in Center database, checking password...');
-        console.log('TCC_DEBUG: User type from database:', user.userType);
-        console.log('TCC_DEBUG: User isActive:', user.isActive);
-        
         // Use the actual userType from the Center database
         userType = user.userType as 'ADMIN' | 'USER';
-        console.log('TCC_DEBUG: Set userType to:', userType);
-        
         // Ensure the user object has the new fields
         user = {
           ...user,
-          phone: (user as any).phone || null,
-          emailNotifications: (user as any).emailNotifications || true,
-          smsNotifications: (user as any).smsNotifications || false
-        } as any;
-        
-        console.log('TCC_DEBUG: About to compare passwords...');
-        console.log('TCC_DEBUG: Provided password length:', password ? password.length : 0);
-        console.log('TCC_DEBUG: Stored password length:', user?.password ? user.password.length : 0);
+          phone: user.phone || null,
+          emailNotifications: user.emailNotifications || true,
+          smsNotifications: user.smsNotifications || false
+        };
       } else {
-        console.log('TCC_DEBUG: No user found in Center database, trying Hospital database...');
         // Try Hospital database (Healthcare users)
-        console.log('TCC_DEBUG: Attempting Hospital database lookup for email:', email);
         const hospitalDB = databaseManager.getHospitalDB();
         const hospitalUser = await hospitalDB.healthcareUser.findUnique({
           where: { email },
@@ -101,8 +82,6 @@ export class AuthService {
             password: true,
             name: true,
             phone: true,
-            emailNotifications: true,
-            smsNotifications: true,
             isActive: true,
             createdAt: true,
             updatedAt: true,
@@ -110,17 +89,7 @@ export class AuthService {
             facilityType: true
           }
         });
-        
-        console.log('TCC_DEBUG: Hospital database result:', hospitalUser ? {
-          id: hospitalUser.id,
-          email: hospitalUser.email,
-          name: hospitalUser.name,
-          isActive: hospitalUser.isActive,
-          passwordLength: hospitalUser.password ? hospitalUser.password.length : 0
-        } : 'null');
-        
         if (hospitalUser) {
-          console.log('TCC_DEBUG: Healthcare user found, setting userType to HEALTHCARE');
           userType = 'HEALTHCARE';
           // Convert hospital user to center user format
           user = {
@@ -130,20 +99,19 @@ export class AuthService {
             name: hospitalUser.name,
             userType: 'HEALTHCARE',
             phone: hospitalUser.phone || null,
-            emailNotifications: hospitalUser.emailNotifications || true,
-            smsNotifications: hospitalUser.smsNotifications || false,
+            emailNotifications: true,
+            smsNotifications: false,
             isActive: hospitalUser.isActive,
             createdAt: hospitalUser.createdAt,
-            updatedAt: hospitalUser.updatedAt,
-            facilityName: hospitalUser.facilityName
-          } as any;
+            updatedAt: hospitalUser.updatedAt
+          };
         }
       }
 
       if (!user) {
         // Try EMS database (EMS users)
         const emsDB = databaseManager.getEMSDB();
-        const emsUser = await emsDB.EMSUser.findUnique({
+        const emsUser = await emsDB.eMSUser.findUnique({
           where: { email },
           select: {
             id: true,
@@ -151,8 +119,6 @@ export class AuthService {
             password: true,
             name: true,
             phone: true,
-            emailNotifications: true,
-            smsNotifications: true,
             isActive: true,
             createdAt: true,
             updatedAt: true,
@@ -170,14 +136,12 @@ export class AuthService {
             name: emsUser.name,
             userType: 'EMS',
             phone: emsUser.phone || null,
-            emailNotifications: emsUser.emailNotifications || true,
-            smsNotifications: emsUser.smsNotifications || false,
+            emailNotifications: true,
+            smsNotifications: false,
             isActive: emsUser.isActive,
             createdAt: emsUser.createdAt,
-            updatedAt: emsUser.updatedAt,
-            agencyId: emsUser.agencyId,
-            agencyName: emsUser.agencyName
-          } as any;
+            updatedAt: emsUser.updatedAt
+          };
         }
       }
 
@@ -199,26 +163,13 @@ export class AuthService {
       }
 
       // Verify password
-      console.log('TCC_DEBUG: About to verify password with bcrypt...');
-      console.log('TCC_DEBUG: User type:', userType);
-      console.log('TCC_DEBUG: User ID:', user.id);
-      console.log('TCC_DEBUG: User email:', user.email);
-      console.log('TCC_DEBUG: User isActive:', user.isActive);
-      console.log('TCC_DEBUG: Provided password (first 3 chars):', password ? password.substring(0, 3) : 'null');
-      console.log('TCC_DEBUG: Stored password hash (first 10 chars):', user.password ? user.password.substring(0, 10) : 'null');
-      
       const isValidPassword = await bcrypt.compare(password, user.password);
-      console.log('TCC_DEBUG: Password comparison result:', isValidPassword);
-      
       if (!isValidPassword) {
-        console.log('TCC_DEBUG: Password verification failed - returning invalid credentials error');
         return {
           success: false,
           error: 'Invalid email or password'
         };
       }
-      
-      console.log('TCC_DEBUG: Password verification successful!');
 
       // For EMS users, use the agency ID from the relationship
       let agencyId = user.id; // Default to user ID for non-EMS users
@@ -343,7 +294,7 @@ export class AuthService {
         const emsDB = databaseManager.getEMSDB();
         // For EMS users, decoded.id contains the agency ID, not the user ID
         // We need to find the user by email since that's what we have in the token
-        const user = await emsDB.EMSUser.findUnique({
+        const user = await emsDB.eMSUser.findUnique({
           where: { email: decoded.email }
         });
 
