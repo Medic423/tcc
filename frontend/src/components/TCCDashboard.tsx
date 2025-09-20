@@ -69,7 +69,7 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
   const getNavigation = () => {
     // Core Operations (Left) - Always visible
     const coreOperations = [
-      { name: 'Status', href: '/dashboard', icon: Home, category: 'core' },
+      { name: 'Dashboard', href: '/dashboard', icon: Home, category: 'core' },
       { name: 'Trips', href: '/dashboard/trips', icon: Truck, category: 'core' },
       { name: 'Hospitals', href: '/dashboard/hospitals', icon: Building2, category: 'core' },
       { name: 'Agencies', href: '/dashboard/agencies', icon: Truck, category: 'core' },
@@ -249,7 +249,6 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
               </div>
               {navigation.coreOperations.map((item) => {
                 const isActive = location.pathname === item.href || 
-                  (item.href === '/dashboard' && location.pathname === '/') ||
                   (item.href !== '/dashboard' && location.pathname.startsWith(item.href));
                 
                 // Use dropdown for items that have dropdowns, otherwise use regular link
@@ -431,12 +430,11 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
               </div>
 
               {/* Navigation Menu */}
-              <nav className="flex space-x-6">
+              <nav className="flex space-x-8">
                 {/* Core Operations */}
                 <div className="flex space-x-6">
                   {navigation.coreOperations.map((item) => {
                     const isActive = location.pathname === item.href || 
-                      (item.href === '/dashboard' && location.pathname === '/') ||
                       (item.href !== '/dashboard' && location.pathname.startsWith(item.href));
                     
                     // Use dropdown for items that have dropdowns, otherwise use regular link
@@ -542,7 +540,7 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
           <div className="py-6">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
               <Routes>
-                <Route path="/" element={<TripsView user={user} />} />
+                <Route path="/" element={<Overview />} />
                 <Route path="/trips" element={<TripsView user={user} />} />
                 <Route path="/trips/create" element={<TCCCreateTrip user={user} />} />
                 <Route path="/analytics" element={<Analytics />} />

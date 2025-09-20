@@ -1,6 +1,7 @@
 import express from 'express';
 import { tripService, CreateTripRequest, UpdateTripStatusRequest, EnhancedCreateTripRequest } from '../services/tripService';
 import { authenticateAdmin, AuthenticatedRequest } from '../middleware/authenticateAdmin';
+import { CreateTripWithResponsesRequest, UpdateTripResponseFieldsRequest } from '../types/agencyResponse';
 
 const router = express.Router();
 
@@ -681,6 +682,236 @@ router.get('/options/insurance', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to get insurance options'
+    });
+  }
+});
+
+// ============================================================================
+// NEW TRIP ENDPOINTS WITH RESPONSE HANDLING
+// Phase 1C: Basic API Endpoints implementation
+// ============================================================================
+
+/**
+ * POST /api/trips/with-responses
+ * Create a new trip with response handling capabilities
+ */
+router.post('/with-responses', async (req, res) => {
+  try {
+    console.log('TCC_DEBUG: Create trip with responses request received:', req.body);
+    
+    const {
+      patientId,
+      patientWeight,
+      specialNeeds,
+      insuranceCompany,
+      fromLocation,
+      pickupLocationId,
+      toLocation,
+      scheduledTime,
+      transportLevel,
+      urgencyLevel,
+      diagnosis,
+      mobilityLevel,
+      oxygenRequired,
+      monitoringRequired,
+      generateQRCode,
+      selectedAgencies,
+      notificationRadius,
+      notes,
+      priority,
+      responseDeadline,
+      maxResponses,
+      selectionMode
+    } = req.body;
+
+    // Validation
+    if (!fromLocation || !toLocation || !transportLevel || !urgencyLevel) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields: fromLocation, toLocation, transportLevel, urgencyLevel'
+      });
+    }
+
+    if (!['BLS', 'ALS', 'CCT', 'Other'].includes(transportLevel)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid transport level. Must be BLS, ALS, CCT, or Other'
+      });
+    }
+
+    if (!['Routine', 'Urgent', 'Emergent'].includes(urgencyLevel)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid urgency level. Must be Routine, Urgent, or Emergent'
+      });
+    }
+
+    if (selectionMode && !['BROADCAST', 'SPECIFIC_AGENCIES'].includes(selectionMode)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid selection mode. Must be BROADCAST or SPECIFIC_AGENCIES'
+      });
+    }
+
+    const tripData: CreateTripWithResponsesRequest = {
+      patientId,
+      patientWeight,
+      specialNeeds,
+      insuranceCompany,
+      fromLocation,
+      pickupLocationId,
+      toLocation,
+      scheduledTime: scheduledTime || new Date().toISOString(),
+      transportLevel,
+      urgencyLevel,
+      diagnosis,
+      mobilityLevel,
+      oxygenRequired: oxygenRequired || false,
+      monitoringRequired: monitoringRequired || false,
+      generateQRCode: generateQRCode || false,
+      selectedAgencies: selectedAgencies || [],
+      notificationRadius: notificationRadius || 100,
+      notes,
+      priority,
+      responseDeadline,
+      maxResponses: maxResponses || 5,
+      selectionMode: selectionMode || 'SPECIFIC_AGENCIES'
+    };
+
+    const result = await tripService.createTripWithResponses(tripData);
+    
+    console.log('TCC_DEBUG: Trip with responses created successfully:', result);
+    res.status(201).json(result);
+  } catch (error) {
+    console.error('TCC_DEBUG: Error creating trip with responses:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to create trip with response handling'
+    });
+  }
+});
+
+/**
+ * PUT /api/trips/:id/response-fields
+ * Update trip response handling fields
+ */
+router.put('/:id/response-fields', async (req, res) => {
+  try {
+    console.log('TCC_DEBUG: Update trip response fields request:', { id: req.params.id, body: req.body });
+    
+    const { id } = req.params;
+    const {
+      responseDeadline,
+      maxResponses,
+      responseStatus,
+      selectionMode
+    } = req.body;
+
+    if (responseStatus && !['PENDING', 'RESPONSES_RECEIVED', 'AGENCY_SELECTED'].includes(responseStatus)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid response status. Must be PENDING, RESPONSES_RECEIVED, or AGENCY_SELECTED'
+      });
+    }
+
+    if (selectionMode && !['BROADCAST', 'SPECIFIC_AGENCIES'].includes(selectionMode)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid selection mode. Must be BROADCAST or SPECIFIC_AGENCIES'
+      });
+    }
+
+    const updateData: UpdateTripResponseFieldsRequest = {
+      responseDeadline,
+      maxResponses,
+      responseStatus,
+      selectionMode
+    };
+
+    const result = await tripService.updateTripResponseFields(id, updateData);
+
+    if (!result.success) {
+      return res.status(400).json({
+        success: false,
+        error: result.error
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Trip response fields updated successfully',
+      data: result.data
+    });
+
+  } catch (error) {
+    console.error('TCC_DEBUG: Update trip response fields error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+});
+
+/**
+ * GET /api/trips/:id/with-responses
+ * Get a trip with all agency responses
+ */
+router.get('/:id/with-responses', async (req, res) => {
+  try {
+    console.log('TCC_DEBUG: Get trip with responses request:', req.params.id);
+    
+    const { id } = req.params;
+    const result = await tripService.getTripWithResponses(id);
+
+    if (!result.success) {
+      return res.status(404).json({
+        success: false,
+        error: result.error
+      });
+    }
+
+    res.json({
+      success: true,
+      data: result.data
+    });
+
+  } catch (error) {
+    console.error('TCC_DEBUG: Get trip with responses error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+});
+
+/**
+ * GET /api/trips/:id/response-summary
+ * Get response summary for a trip
+ */
+router.get('/:id/response-summary', async (req, res) => {
+  try {
+    console.log('TCC_DEBUG: Get response summary request:', req.params.id);
+    
+    const { id } = req.params;
+    const result = await tripService.getTripResponseSummary(id);
+
+    if (!result.success) {
+      return res.status(404).json({
+        success: false,
+        error: result.error
+      });
+    }
+
+    res.json({
+      success: true,
+      data: result.data
+    });
+
+  } catch (error) {
+    console.error('TCC_DEBUG: Get response summary error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error'
     });
   }
 });
