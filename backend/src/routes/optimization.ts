@@ -377,7 +377,7 @@ router.get('/settings', async (req, res) => {
     const prisma = databaseManager.getCenterDB();
     
     // Get settings for specific agency or global defaults
-    let settings = await prisma.routeOptimizationSettings.findFirst({
+    let settings = await prisma.route_optimization_settings.findFirst({
       where: {
         agencyId: agencyId as string || null,
         isActive: true
@@ -389,7 +389,7 @@ router.get('/settings', async (req, res) => {
 
     // If no agency-specific settings, get global defaults
     if (!settings && agencyId) {
-      settings = await prisma.routeOptimizationSettings.findFirst({
+      settings = await prisma.route_optimization_settings.findFirst({
         where: {
           agencyId: null,
           isActive: true
@@ -402,10 +402,12 @@ router.get('/settings', async (req, res) => {
 
     // If no settings exist at all, create default global settings
     if (!settings) {
-      settings = await prisma.routeOptimizationSettings.create({
+      settings = await prisma.route_optimization_settings.create({
         data: {
+          id: `global-${Date.now()}`,
           agencyId: null,
-          // All fields will use their default values from schema
+          updatedAt: new Date(),
+          // All other fields will use their default values from schema
         }
       });
     }
@@ -434,7 +436,7 @@ router.post('/settings', async (req, res) => {
     const prisma = databaseManager.getCenterDB();
 
     // Check if settings already exist for this agency
-    const existingSettings = await prisma.routeOptimizationSettings.findFirst({
+    const existingSettings = await prisma.route_optimization_settings.findFirst({
       where: {
         agencyId: agencyId as string || null,
         isActive: true
@@ -444,7 +446,7 @@ router.post('/settings', async (req, res) => {
     let settings;
     if (existingSettings) {
       // Update existing settings
-      settings = await prisma.routeOptimizationSettings.update({
+      settings = await prisma.route_optimization_settings.update({
         where: { id: existingSettings.id },
         data: {
           ...settingsData,
@@ -453,8 +455,9 @@ router.post('/settings', async (req, res) => {
       });
     } else {
       // Create new settings
-      settings = await prisma.routeOptimizationSettings.create({
+      settings = await prisma.route_optimization_settings.create({
         data: {
+          id: `agency-${agencyId}-${Date.now()}`,
           agencyId: agencyId as string || null,
           ...settingsData
         }
@@ -485,7 +488,7 @@ router.post('/settings/reset', async (req, res) => {
     const prisma = databaseManager.getCenterDB();
 
     // Deactivate existing settings
-    await prisma.routeOptimizationSettings.updateMany({
+    await prisma.route_optimization_settings.updateMany({
       where: {
         agencyId: agencyId as string || null,
         isActive: true
@@ -496,11 +499,13 @@ router.post('/settings/reset', async (req, res) => {
     });
 
     // Create new default settings
-    const settings = await prisma.routeOptimizationSettings.create({
-      data: {
-        agencyId: agencyId as string || null,
-        // All fields will use their default values from schema
-      }
+    const settings = await prisma.route_optimization_settings.create({
+        data: {
+          id: `default-${agencyId || 'global'}-${Date.now()}`,
+          agencyId: agencyId as string || null,
+          updatedAt: new Date(),
+          // All other fields will use their default values from schema
+        }
     });
 
     res.json({
@@ -546,7 +551,7 @@ router.post('/preview', async (req, res) => {
     let optimizationSettings = settings;
     if (!optimizationSettings) {
       const prisma = databaseManager.getCenterDB();
-      const dbSettings = await prisma.routeOptimizationSettings.findFirst({
+      const dbSettings = await prisma.route_optimization_settings.findFirst({
         where: { isActive: true },
         orderBy: { createdAt: 'desc' }
       });
