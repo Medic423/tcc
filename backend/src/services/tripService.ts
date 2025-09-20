@@ -57,7 +57,7 @@ export interface EnhancedCreateTripRequest {
 }
 
 export interface UpdateTripStatusRequest {
-  status: 'PENDING' | 'ACCEPTED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+  status: 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
   assignedAgencyId?: string;
   assignedUnitId?: string;
   acceptedTimestamp?: string;

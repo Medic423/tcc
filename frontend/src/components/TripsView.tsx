@@ -30,7 +30,7 @@ interface Trip {
   patientId: string;
   fromLocation: string;
   toLocation: string;
-  status: 'PENDING' | 'ACCEPTED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+  status: 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
   priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
   transportLevel: 'BLS' | 'ALS' | 'CCT' | 'Other';
   scheduledTime: string;
@@ -500,6 +500,7 @@ const TripsView: React.FC<TripsViewProps> = ({ user }) => {
     const statusConfig = {
       PENDING: { color: 'bg-yellow-100 text-yellow-800', icon: Clock },
       ACCEPTED: { color: 'bg-blue-100 text-blue-800', icon: CheckCircle },
+      DECLINED: { color: 'bg-orange-100 text-orange-800', icon: X },
       IN_PROGRESS: { color: 'bg-purple-100 text-purple-800', icon: Truck },
       COMPLETED: { color: 'bg-green-100 text-green-800', icon: CheckCircle },
       CANCELLED: { color: 'bg-red-100 text-red-800', icon: X }
