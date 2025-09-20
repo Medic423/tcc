@@ -8,14 +8,19 @@ datasource db {
 }
 
 model CenterUser {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String
-  name      String
-  userType  String
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                 String                  @id @default(cuid())
+  email              String                  @unique
+  password           String
+  name               String
+  userType           String
+  phone              String?
+  emailNotifications Boolean                 @default(true)
+  smsNotifications   Boolean                 @default(false)
+  isActive           Boolean                 @default(true)
+  createdAt          DateTime                @default(now())
+  updatedAt          DateTime                @updatedAt
+  notificationPreferences NotificationPreference[]
+  notificationLogs   NotificationLog[]
 
   @@map("center_users")
 }
@@ -317,4 +322,32 @@ model unit_analytics {
   totalTrips          Int      @default(0)
   averageResponseTime Decimal? @db.Decimal(5, 2)
   lastUpdated         DateTime @default(now())
+}
+
+model NotificationPreference {
+  id               String     @id @default(cuid())
+  userId           String
+  notificationType String
+  emailEnabled     Boolean    @default(true)
+  smsEnabled       Boolean    @default(false)
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  user             CenterUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, notificationType])
+  @@map("notification_preferences")
+}
+
+model NotificationLog {
+  id               String     @id @default(cuid())
+  userId           String
+  notificationType String
+  channel          String     // 'email' or 'sms'
+  status           String     // 'sent', 'delivered', 'failed'
+  sentAt           DateTime   @default(now())
+  deliveredAt      DateTime?
+  errorMessage     String?
+  user             CenterUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notification_logs")
 }
