@@ -14,8 +14,8 @@ import analyticsRoutes from './routes/analytics';
 import tripRoutes from './routes/trips';
 import agencyResponseRoutes from './routes/agencyResponses';
 import optimizationRoutes from './routes/optimization';
-import notificationRoutes from './routes/notifications';
-import adminNotificationRoutes from './routes/adminNotifications';
+// import notificationRoutes from './routes/notifications';
+// import adminNotificationRoutes from './routes/adminNotifications';
 import unitRoutes from './routes/units';
 import tccUnitRoutes from './routes/tccUnits';
 import dropdownOptionsRoutes from './routes/dropdownOptions';
@@ -80,8 +80,9 @@ app.get('/health', async (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/trips', tripRoutes);
 app.use('/api/agency-responses', agencyResponseRoutes);
-app.use('/api/notifications', notificationRoutes);
-app.use('/api/admin/notifications', adminNotificationRoutes);
+// Notification routes disabled - services not available
+// app.use('/api/notifications', notificationRoutes);
+// app.use('/api/admin/notifications', adminNotificationRoutes);
 app.use('/api/units', unitRoutes);
 app.use('/api/tcc/hospitals', hospitalRoutes);
 app.use('/api/tcc/agencies', agencyRoutes);

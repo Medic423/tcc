@@ -15,7 +15,9 @@ import {
   Clock,
   Users,
   Truck,
-  MapPin
+  MapPin,
+  Share2,
+  X
 } from 'lucide-react';
 import { analyticsAPI } from '../services/api';
 import { 
@@ -35,6 +37,13 @@ import {
   Legend, 
   ResponsiveContainer 
 } from 'recharts';
+
+// Import report components
+import FinancialSummaryReport from './reports/FinancialSummaryReport';
+import RevenueReport from './reports/RevenueReport';
+import CostReport from './reports/CostReport';
+import ProfitabilityReport from './reports/ProfitabilityReport';
+import ExportDataReport from './reports/ExportDataReport';
 
 interface CostAnalysisSummary {
   totalRevenue: number;
@@ -129,6 +138,15 @@ interface ProfitabilityAnalysis {
   }>;
 }
 
+interface GeneratedReport {
+  id: string;
+  type: 'financial-summary' | 'revenue' | 'cost' | 'profitability' | 'export-data';
+  name: string;
+  data: any;
+  generatedAt: string;
+  isOpen: boolean;
+}
+
 const FinancialDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(true);
@@ -138,6 +156,9 @@ const FinancialDashboard: React.FC = () => {
   const [costAnalysis, setCostAnalysis] = useState<CostAnalysisSummary | null>(null);
   const [profitabilityAnalysis, setProfitabilityAnalysis] = useState<ProfitabilityAnalysis | null>(null);
   const [tripCostBreakdowns, setTripCostBreakdowns] = useState<TripCostBreakdown[]>([]);
+  
+  // Reports state
+  const [generatedReports, setGeneratedReports] = useState<GeneratedReport[]>([]);
   
   // Filter states
   const [selectedPeriod, setSelectedPeriod] = useState('month');
@@ -151,7 +172,7 @@ const FinancialDashboard: React.FC = () => {
     { id: 'revenue', name: 'Revenue Analysis', icon: TrendingUp },
     { id: 'costs', name: 'Cost Analysis', icon: TrendingDown },
     { id: 'profitability', name: 'Profitability', icon: PieChart },
-    { id: 'billing', name: 'Billing & Reports', icon: FileText },
+    { id: 'billing', name: 'Reports', icon: FileText },
   ];
 
   // Load financial data
@@ -211,6 +232,228 @@ const FinancialDashboard: React.FC = () => {
     if (margin >= 20) return 'bg-green-100';
     if (margin >= 10) return 'bg-yellow-100';
     return 'bg-red-100';
+  };
+
+  // Report generation functions
+  const generateFinancialSummary = () => {
+    if (!costAnalysis) {
+      alert('No financial data available. Please refresh the data first.');
+      return;
+    }
+
+    const reportData = {
+      period: selectedPeriod,
+      dateRange: selectedDateRange,
+      totalRevenue: costAnalysis.totalRevenue,
+      totalCost: costAnalysis.totalCost,
+      grossProfit: costAnalysis.grossProfit,
+      averageProfitMargin: costAnalysis.averageProfitMargin,
+      totalTrips: costAnalysis.totalTrips,
+      averageRevenuePerMile: costAnalysis.averageRevenuePerMile,
+      averageCostPerMile: costAnalysis.averageCostPerMile,
+      averageUtilizationRate: costAnalysis.averageUtilizationRate,
+      generatedAt: new Date().toISOString()
+    };
+
+    createReport('financial-summary', 'Financial Summary Report', reportData);
+  };
+
+  const generateRevenueReport = () => {
+    if (!costAnalysis) {
+      alert('No financial data available. Please refresh the data first.');
+      return;
+    }
+
+    const reportData = {
+      period: selectedPeriod,
+      dateRange: selectedDateRange,
+      tripsByTransportLevel: costAnalysis.tripsByTransportLevel,
+      tripsByPriority: costAnalysis.tripsByPriority,
+      averageRevenuePerMile: costAnalysis.averageRevenuePerMile,
+      generatedAt: new Date().toISOString()
+    };
+
+    createReport('revenue', 'Revenue Analysis Report', reportData);
+  };
+
+  const generateCostReport = () => {
+    if (!costAnalysis) {
+      alert('No financial data available. Please refresh the data first.');
+      return;
+    }
+
+    const reportData = {
+      period: selectedPeriod,
+      dateRange: selectedDateRange,
+      totalCost: costAnalysis.totalCost,
+      averageCostPerMile: costAnalysis.averageCostPerMile,
+      costCenterBreakdown: costAnalysis.costCenterBreakdown,
+      tripCostBreakdowns: tripCostBreakdowns.slice(0, 50), // Limit to 50 most recent
+      generatedAt: new Date().toISOString()
+    };
+
+    createReport('cost', 'Cost Analysis Report', reportData);
+  };
+
+  const generateProfitabilityReport = () => {
+    if (!profitabilityAnalysis) {
+      alert('No profitability data available. Please refresh the data first.');
+      return;
+    }
+
+    const reportData = {
+      period: selectedPeriod,
+      profitabilityAnalysis,
+      generatedAt: new Date().toISOString()
+    };
+
+    createReport('profitability', 'Profitability Analysis Report', reportData);
+  };
+
+  // Client Billing removed - not available in V1 backend
+
+  const exportData = () => {
+    if (!costAnalysis) {
+      alert('No financial data available. Please refresh the data first.');
+      return;
+    }
+
+    const exportData = {
+      costAnalysis,
+      profitabilityAnalysis,
+      tripCostBreakdowns: tripCostBreakdowns.slice(0, 100), // Limit to 100 most recent
+      exportDate: new Date().toISOString()
+    };
+
+    createReport('export-data', 'Financial Data Export', exportData);
+  };
+
+  // Report management functions
+  const createReport = (type: GeneratedReport['type'], name: string, data: any) => {
+    const newReport: GeneratedReport = {
+      id: `${type}-${Date.now()}`,
+      type,
+      name,
+      data,
+      generatedAt: new Date().toISOString(),
+      isOpen: true
+    };
+
+    setGeneratedReports(prev => [newReport, ...prev]);
+  };
+
+  const closeReport = (reportId: string) => {
+    setGeneratedReports(prev => 
+      prev.map(report => 
+        report.id === reportId ? { ...report, isOpen: false } : report
+      )
+    );
+  };
+
+  const removeReport = (reportId: string) => {
+    setGeneratedReports(prev => prev.filter(report => report.id !== reportId));
+  };
+
+  const downloadReport = (reportId: string) => {
+    const report = generatedReports.find(r => r.id === reportId);
+    if (!report) return;
+
+    try {
+      let content: string;
+      let mimeType: string;
+      let fileExtension: string;
+
+      if (report.type === 'export-data') {
+        // For export data, generate CSV format
+        content = generateCSVFromData(report.data);
+        mimeType = 'text/csv';
+        fileExtension = 'csv';
+      } else {
+        // For other reports, use JSON format
+        content = JSON.stringify(report.data, null, 2);
+        mimeType = 'application/json';
+        fileExtension = 'json';
+      }
+
+      const blob = new Blob([content], { type: mimeType });
+      const url = window.URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${report.name}_${new Date().toISOString().split('T')[0]}.${fileExtension}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading report:', error);
+      alert('Error downloading report. Please try again.');
+    }
+  };
+
+  const generateCSVFromData = (data: any): string => {
+    const csvRows: string[] = [];
+    
+    // Add cost analysis data
+    if (data.costAnalysis) {
+      csvRows.push('=== COST ANALYSIS ===');
+      csvRows.push('Metric,Value');
+      csvRows.push(`Total Revenue,${data.costAnalysis.totalRevenue || 0}`);
+      csvRows.push(`Total Cost,${data.costAnalysis.totalCost || 0}`);
+      csvRows.push(`Gross Profit,${data.costAnalysis.grossProfit || 0}`);
+      csvRows.push(`Average Profit Margin,${data.costAnalysis.averageProfitMargin || 0}%`);
+      csvRows.push(`Total Trips,${data.costAnalysis.totalTrips || 0}`);
+      csvRows.push(`Average Revenue per Mile,${data.costAnalysis.averageRevenuePerMile || 0}`);
+      csvRows.push(`Average Cost per Mile,${data.costAnalysis.averageCostPerMile || 0}`);
+      csvRows.push(`Average Utilization Rate,${data.costAnalysis.averageUtilizationRate || 0}%`);
+      csvRows.push('');
+    }
+
+    // Add profitability analysis data
+    if (data.profitabilityAnalysis) {
+      csvRows.push('=== PROFITABILITY ANALYSIS ===');
+      csvRows.push('Metric,Value');
+      csvRows.push(`Period,${data.profitabilityAnalysis.period || 'N/A'}`);
+      csvRows.push(`Total Revenue,${data.profitabilityAnalysis.totalRevenue || 0}`);
+      csvRows.push(`Total Cost,${data.profitabilityAnalysis.totalCost || 0}`);
+      csvRows.push(`Gross Profit,${data.profitabilityAnalysis.grossProfit || 0}`);
+      csvRows.push(`Profit Margin,${data.profitabilityAnalysis.profitMargin || 0}%`);
+      csvRows.push(`Trip Count,${data.profitabilityAnalysis.tripCount || 0}`);
+      csvRows.push(`Average Revenue per Trip,${data.profitabilityAnalysis.averageRevenuePerTrip || 0}`);
+      csvRows.push(`Average Cost per Trip,${data.profitabilityAnalysis.averageCostPerTrip || 0}`);
+      csvRows.push('');
+    }
+
+    // Add trip cost breakdowns data
+    if (data.tripCostBreakdowns && data.tripCostBreakdowns.length > 0) {
+      csvRows.push('=== TRIP COST BREAKDOWNS ===');
+      csvRows.push('Trip ID,Transport Level,Priority,Total Revenue,Total Cost,Gross Profit,Profit Margin,Revenue per Mile,Cost per Mile,Calculated At');
+      
+      data.tripCostBreakdowns.forEach((trip: any) => {
+        csvRows.push([
+          trip.tripId || 'N/A',
+          trip.transportLevel || 'N/A',
+          trip.priorityLevel || 'N/A',
+          trip.totalRevenue || 0,
+          trip.totalCost || 0,
+          trip.grossProfit || 0,
+          trip.profitMargin || 0,
+          trip.revenuePerMile || 0,
+          trip.costPerMile || 0,
+          trip.calculatedAt ? new Date(trip.calculatedAt).toISOString() : 'N/A'
+        ].join(','));
+      });
+    }
+
+    return csvRows.join('\n');
+  };
+
+  const shareReport = (reportId: string) => {
+    const report = generatedReports.find(r => r.id === reportId);
+    if (!report) return;
+
+    // In a real app, this would generate a shareable link
+    alert(`Share link for ${report.name} would be generated here.`);
   };
 
   // Generate sample chart data
@@ -709,13 +952,16 @@ const FinancialDashboard: React.FC = () => {
 
       {activeTab === 'billing' && (
         <div className="space-y-6">
-          <h2 className="text-xl font-semibold text-gray-900">Billing & Reports</h2>
+          <h2 className="text-xl font-semibold text-gray-900">Reports</h2>
           
           {/* Report Generation */}
           <div className="bg-white p-6 rounded-lg shadow">
             <h3 className="text-lg font-medium text-gray-900 mb-4">Generate Reports</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <button className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <button 
+                onClick={generateFinancialSummary}
+                className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+              >
                 <FileText className="h-6 w-6 text-blue-600 mr-3" />
                 <div className="text-left">
                   <p className="font-medium text-gray-900">Financial Summary</p>
@@ -723,7 +969,10 @@ const FinancialDashboard: React.FC = () => {
                 </div>
               </button>
               
-              <button className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+              <button 
+                onClick={generateRevenueReport}
+                className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+              >
                 <DollarSign className="h-6 w-6 text-green-600 mr-3" />
                 <div className="text-left">
                   <p className="font-medium text-gray-900">Revenue Report</p>
@@ -731,7 +980,10 @@ const FinancialDashboard: React.FC = () => {
                 </div>
               </button>
               
-              <button className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+              <button 
+                onClick={generateCostReport}
+                className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+              >
                 <TrendingDown className="h-6 w-6 text-red-600 mr-3" />
                 <div className="text-left">
                   <p className="font-medium text-gray-900">Cost Report</p>
@@ -739,7 +991,10 @@ const FinancialDashboard: React.FC = () => {
                 </div>
               </button>
               
-              <button className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+              <button 
+                onClick={generateProfitabilityReport}
+                className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+              >
                 <PieChart className="h-6 w-6 text-purple-600 mr-3" />
                 <div className="text-left">
                   <p className="font-medium text-gray-900">Profitability Report</p>
@@ -747,19 +1002,16 @@ const FinancialDashboard: React.FC = () => {
                 </div>
               </button>
               
-              <button className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
-                <Users className="h-6 w-6 text-indigo-600 mr-3" />
-                <div className="text-left">
-                  <p className="font-medium text-gray-900">Client Billing</p>
-                  <p className="text-sm text-gray-500">Generate client invoices</p>
-                </div>
-              </button>
+              {/* Client Billing removed - not available in V1 backend */}
               
-              <button className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+              <button 
+                onClick={exportData}
+                className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+              >
                 <Download className="h-6 w-6 text-gray-600 mr-3" />
                 <div className="text-left">
                   <p className="font-medium text-gray-900">Export Data</p>
-                  <p className="text-sm text-gray-500">Export to CSV/Excel</p>
+                  <p className="text-sm text-gray-500">Export to CSV format</p>
                 </div>
               </button>
             </div>
@@ -768,14 +1020,104 @@ const FinancialDashboard: React.FC = () => {
           {/* Recent Reports */}
           <div className="bg-white p-6 rounded-lg shadow">
             <h3 className="text-lg font-medium text-gray-900 mb-4">Recent Reports</h3>
-            <div className="text-center py-8 text-gray-500">
-              <FileText className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-              <p>No reports generated yet</p>
-              <p className="text-sm text-gray-400">Generate your first report using the options above</p>
-            </div>
+            {generatedReports.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <FileText className="h-12 w-12 text-gray-400 mx-auto mb-2" />
+                <p>No reports generated yet</p>
+                <p className="text-sm text-gray-400">Generate your first report using the options above</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {generatedReports.map((report) => (
+                  <div key={report.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <FileText className="h-5 w-5 text-blue-600" />
+                        <div>
+                          <h4 className="font-medium text-gray-900">{report.name}</h4>
+                          <p className="text-sm text-gray-500">
+                            Generated: {new Date(report.generatedAt).toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => downloadReport(report.id)}
+                          className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                          title="Download Report"
+                        >
+                          <Download className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => shareReport(report.id)}
+                          className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                          title="Share Report"
+                        >
+                          <Share2 className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => removeReport(report.id)}
+                          className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                          title="Remove Report"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
+
+      {/* Generated Reports */}
+      {generatedReports.filter(report => report.isOpen).map((report) => (
+        <div key={report.id} className="mt-6">
+          {report.type === 'financial-summary' && (
+            <FinancialSummaryReport
+              data={report.data}
+              onClose={() => closeReport(report.id)}
+              onDownload={() => downloadReport(report.id)}
+              onShare={() => shareReport(report.id)}
+            />
+          )}
+          {report.type === 'revenue' && (
+            <RevenueReport
+              data={report.data}
+              onClose={() => closeReport(report.id)}
+              onDownload={() => downloadReport(report.id)}
+              onShare={() => shareReport(report.id)}
+            />
+          )}
+          {report.type === 'cost' && (
+            <CostReport
+              data={report.data}
+              onClose={() => closeReport(report.id)}
+              onDownload={() => downloadReport(report.id)}
+              onShare={() => shareReport(report.id)}
+            />
+          )}
+          {report.type === 'profitability' && (
+            <ProfitabilityReport
+              data={report.data}
+              onClose={() => closeReport(report.id)}
+              onDownload={() => downloadReport(report.id)}
+              onShare={() => shareReport(report.id)}
+            />
+          )}
+          {/* Client Billing removed - not available in V1 backend */}
+          {report.type === 'export-data' && (
+            <ExportDataReport
+              data={report.data}
+              onClose={() => closeReport(report.id)}
+              onDownload={() => downloadReport(report.id)}
+              onShare={() => shareReport(report.id)}
+            />
+          )}
+        </div>
+      ))}
     </div>
   );
 };
