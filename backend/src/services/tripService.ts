@@ -1258,23 +1258,6 @@ export class TripService {
           response: data.response,
           responseNotes: data.responseNotes,
           estimatedArrival: data.estimatedArrival ? new Date(data.estimatedArrival) : null,
-        },
-        include: {
-          agency: {
-            select: {
-              id: true,
-              name: true,
-              contactName: true,
-              phone: true,
-              email: true,
-              address: true,
-              city: true,
-              state: true,
-              zipCode: true,
-              capabilities: true,
-              serviceArea: true,
-            }
-          }
         }
       });
 
@@ -1328,24 +1311,7 @@ export class TripService {
 
       const response = await prisma.agencyResponse.update({
         where: { id: responseId },
-        data: updateData,
-        include: {
-          agency: {
-            select: {
-              id: true,
-              name: true,
-              contactName: true,
-              phone: true,
-              email: true,
-              address: true,
-              city: true,
-              state: true,
-              zipCode: true,
-              capabilities: true,
-              serviceArea: true,
-            }
-          }
-        }
+        data: updateData
       });
 
       console.log('TCC_DEBUG: Agency response updated successfully:', response.id);
@@ -1382,23 +1348,6 @@ export class TripService {
 
       const responses = await prisma.agencyResponse.findMany({
         where,
-        include: {
-          agency: {
-            select: {
-              id: true,
-              name: true,
-              contactName: true,
-              phone: true,
-              email: true,
-              address: true,
-              city: true,
-              state: true,
-              zipCode: true,
-              capabilities: true,
-              serviceArea: true,
-            }
-          }
-        },
         orderBy: { responseTimestamp: 'desc' }
       });
 
@@ -1418,24 +1367,7 @@ export class TripService {
     
     try {
       const response = await prisma.agencyResponse.findUnique({
-        where: { id: responseId },
-        include: {
-          agency: {
-            select: {
-              id: true,
-              name: true,
-              contactName: true,
-              phone: true,
-              email: true,
-              address: true,
-              city: true,
-              state: true,
-              zipCode: true,
-              capabilities: true,
-              serviceArea: true,
-            }
-          }
-        }
+        where: { id: responseId }
       });
 
       if (!response) {
@@ -1477,8 +1409,7 @@ export class TripService {
 
       // Verify the response exists and is accepted
       const response = await prisma.agencyResponse.findUnique({
-        where: { id: data.agencyResponseId },
-        include: { agency: true }
+        where: { id: data.agencyResponseId }
       });
 
       if (!response) {
@@ -1534,23 +1465,6 @@ export class TripService {
         where: { id: tripId },
         include: {
           agencyResponses: {
-            include: {
-              agency: {
-                select: {
-                  id: true,
-                  name: true,
-                  contactName: true,
-                  phone: true,
-                  email: true,
-                  address: true,
-                  city: true,
-                  state: true,
-                  zipCode: true,
-                  capabilities: true,
-                  serviceArea: true,
-                }
-              }
-            },
             orderBy: { responseTimestamp: 'asc' }
           }
         }
@@ -1576,15 +1490,7 @@ export class TripService {
     
     try {
       const responses = await prisma.agencyResponse.findMany({
-        where: { tripId },
-        include: {
-          agency: {
-            select: {
-              id: true,
-              name: true
-            }
-          }
-        }
+        where: { tripId }
       });
 
       const summary: ResponseSummary = {
@@ -1602,8 +1508,8 @@ export class TripService {
         );
         
         summary.selectedAgency = {
-          id: selectedResponse.agency.id,
-          name: selectedResponse.agency.name,
+          id: selectedResponse.agencyId,
+          name: `Agency ${selectedResponse.agencyId}`,
           responseTime
         };
       }

@@ -205,16 +205,19 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
 
   const handleAcceptTrip = async (tripId: string) => {
     try {
-      const response = await fetch(`/api/trips/${tripId}/status`, {
-        method: 'PUT',
+      // Use new agency response system
+      const response = await fetch('/api/agency-responses', {
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          status: 'ACCEPTED',
-          assignedAgencyId: user.id, // Using user ID as agency ID for now
-          acceptedTimestamp: new Date().toISOString()
+          tripId: tripId,
+          agencyId: user.id, // Using user ID as agency ID for now
+          response: 'ACCEPTED',
+          responseNotes: 'Agency accepted this transport request',
+          estimatedArrival: new Date(Date.now() + 15 * 60 * 1000).toISOString() // 15 minutes from now
         }),
       });
 
@@ -233,14 +236,18 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
 
   const handleDeclineTrip = async (tripId: string) => {
     try {
-      const response = await fetch(`/api/trips/${tripId}/status`, {
-        method: 'PUT',
+      // Use new agency response system
+      const response = await fetch('/api/agency-responses', {
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          status: 'DECLINED'
+          tripId: tripId,
+          agencyId: user.id, // Using user ID as agency ID for now
+          response: 'DECLINED',
+          responseNotes: 'Agency declined this transport request'
         }),
       });
 
