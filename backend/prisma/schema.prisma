@@ -89,6 +89,9 @@ model EMSAgency {
   serviceRadius        Int?
   totalUnits           Int       @default(0)
 
+  // Relations
+  agencyResponses      AgencyResponse[]
+
   @@map("ems_agencies")
 }
 
@@ -147,7 +150,34 @@ model Trip {
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
 
+  // New fields for multiple agency response handling
+  responseDeadline     DateTime?
+  maxResponses         Int       @default(5)
+  responseStatus       String    @default("PENDING") // PENDING, RESPONSES_RECEIVED, AGENCY_SELECTED
+  selectionMode        String    @default("SPECIFIC_AGENCIES") // BROADCAST, SPECIFIC_AGENCIES
+  
+  // Relations
+  agencyResponses      AgencyResponse[]
+
   @@map("trips")
+}
+
+model AgencyResponse {
+  id                String    @id @default(cuid())
+  tripId            String
+  agencyId          String
+  response          String    // 'ACCEPTED', 'DECLINED', 'PENDING'
+  responseTimestamp DateTime  @default(now())
+  responseNotes     String?
+  estimatedArrival  DateTime?
+  isSelected        Boolean   @default(false)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  trip              Trip      @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  agency            EMSAgency @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  
+  @@map("agency_responses")
 }
 
 model SystemAnalytics {
