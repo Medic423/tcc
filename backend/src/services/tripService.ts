@@ -2,6 +2,18 @@ import { databaseManager } from './databaseManager';
 import emailService from './emailService';
 import { PatientIdService, DIAGNOSIS_OPTIONS, MOBILITY_OPTIONS, TRANSPORT_LEVEL_OPTIONS, URGENCY_OPTIONS } from './patientIdService';
 import { DistanceService } from './distanceService';
+import { 
+  AgencyResponse, 
+  CreateAgencyResponseRequest, 
+  UpdateAgencyResponseRequest, 
+  AgencyResponseWithDetails, 
+  TripWithResponses, 
+  ResponseSummary, 
+  SelectAgencyRequest, 
+  TripResponseFilters, 
+  CreateTripWithResponsesRequest, 
+  UpdateTripResponseFieldsRequest 
+} from '../types/agencyResponse';
 
 const prisma = databaseManager.getCenterDB();
 
@@ -1179,6 +1191,548 @@ export class TripService {
     
     // Sort timeline by timestamp
     return timeline.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+  }
+
+  // ============================================================================
+  // AGENCY RESPONSE MANAGEMENT METHODS
+  // Phase 1C: Basic API Endpoints implementation
+  // ============================================================================
+
+  /**
+   * Create a new agency response
+   */
+  async createAgencyResponse(data: CreateAgencyResponseRequest) {
+    console.log('TCC_DEBUG: Creating agency response:', data);
+    
+    try {
+      // Verify trip exists and is in correct state
+      const trip = await prisma.trip.findUnique({
+        where: { id: data.tripId },
+        select: { 
+          id: true, 
+          responseStatus: true, 
+          responseDeadline: true,
+          maxResponses: true
+        }
+      });
+
+      if (!trip) {
+        return { success: false, error: 'Trip not found' };
+      }
+
+      if (trip.responseStatus === 'AGENCY_SELECTED') {
+        return { success: false, error: 'Agency has already been selected for this trip' };
+      }
+
+      // Check if response deadline has passed
+      if (trip.responseDeadline && new Date() > new Date(trip.responseDeadline)) {
+        return { success: false, error: 'Response deadline has passed' };
+      }
+
+      // Check if agency has already responded
+      const existingResponse = await prisma.agencyResponse.findFirst({
+        where: {
+          tripId: data.tripId,
+          agencyId: data.agencyId
+        }
+      });
+
+      if (existingResponse) {
+        return { success: false, error: 'Agency has already responded to this trip' };
+      }
+
+      // Check if max responses reached
+      const responseCount = await prisma.agencyResponse.count({
+        where: { tripId: data.tripId }
+      });
+
+      if (responseCount >= trip.maxResponses) {
+        return { success: false, error: 'Maximum number of responses reached for this trip' };
+      }
+
+      // Create the response
+      const response = await prisma.agencyResponse.create({
+        data: {
+          tripId: data.tripId,
+          agencyId: data.agencyId,
+          response: data.response,
+          responseNotes: data.responseNotes,
+          estimatedArrival: data.estimatedArrival ? new Date(data.estimatedArrival) : null,
+        },
+        include: {
+          agency: {
+            select: {
+              id: true,
+              name: true,
+              contactName: true,
+              phone: true,
+              email: true,
+              address: true,
+              city: true,
+              state: true,
+              zipCode: true,
+              capabilities: true,
+              serviceArea: true,
+            }
+          }
+        }
+      });
+
+      // Update trip response status if this is the first response
+      if (responseCount === 0) {
+        await prisma.trip.update({
+          where: { id: data.tripId },
+          data: { responseStatus: 'RESPONSES_RECEIVED' }
+        });
+      }
+
+      console.log('TCC_DEBUG: Agency response created successfully:', response.id);
+      return { success: true, data: response };
+    } catch (error) {
+      console.error('TCC_DEBUG: Error creating agency response:', error);
+      return { success: false, error: 'Failed to create agency response' };
+    }
+  }
+
+  /**
+   * Update an existing agency response
+   */
+  async updateAgencyResponse(responseId: string, data: UpdateAgencyResponseRequest) {
+    console.log('TCC_DEBUG: Updating agency response:', { responseId, data });
+    
+    try {
+      // Verify response exists and is not selected
+      const existingResponse = await prisma.agencyResponse.findUnique({
+        where: { id: responseId },
+        include: { trip: { select: { responseStatus: true } } }
+      });
+
+      if (!existingResponse) {
+        return { success: false, error: 'Agency response not found' };
+      }
+
+      if (existingResponse.isSelected) {
+        return { success: false, error: 'Cannot update a selected response' };
+      }
+
+      if (existingResponse.trip.responseStatus === 'AGENCY_SELECTED') {
+        return { success: false, error: 'Agency has already been selected for this trip' };
+      }
+
+      const updateData: any = {};
+      if (data.response) updateData.response = data.response;
+      if (data.responseNotes !== undefined) updateData.responseNotes = data.responseNotes;
+      if (data.estimatedArrival !== undefined) {
+        updateData.estimatedArrival = data.estimatedArrival ? new Date(data.estimatedArrival) : null;
+      }
+
+      const response = await prisma.agencyResponse.update({
+        where: { id: responseId },
+        data: updateData,
+        include: {
+          agency: {
+            select: {
+              id: true,
+              name: true,
+              contactName: true,
+              phone: true,
+              email: true,
+              address: true,
+              city: true,
+              state: true,
+              zipCode: true,
+              capabilities: true,
+              serviceArea: true,
+            }
+          }
+        }
+      });
+
+      console.log('TCC_DEBUG: Agency response updated successfully:', response.id);
+      return { success: true, data: response };
+    } catch (error) {
+      console.error('TCC_DEBUG: Error updating agency response:', error);
+      return { success: false, error: 'Failed to update agency response' };
+    }
+  }
+
+  /**
+   * Get agency responses with optional filtering
+   */
+  async getAgencyResponses(filters: TripResponseFilters = {}) {
+    console.log('TCC_DEBUG: Getting agency responses with filters:', filters);
+    
+    try {
+      const where: any = {};
+      
+      if (filters.tripId) where.tripId = filters.tripId;
+      if (filters.agencyId) where.agencyId = filters.agencyId;
+      if (filters.response) where.response = filters.response;
+      if (filters.isSelected !== undefined) where.isSelected = filters.isSelected;
+      
+      if (filters.dateFrom || filters.dateTo) {
+        where.responseTimestamp = {};
+        if (filters.dateFrom) {
+          where.responseTimestamp.gte = new Date(filters.dateFrom);
+        }
+        if (filters.dateTo) {
+          where.responseTimestamp.lte = new Date(filters.dateTo);
+        }
+      }
+
+      const responses = await prisma.agencyResponse.findMany({
+        where,
+        include: {
+          agency: {
+            select: {
+              id: true,
+              name: true,
+              contactName: true,
+              phone: true,
+              email: true,
+              address: true,
+              city: true,
+              state: true,
+              zipCode: true,
+              capabilities: true,
+              serviceArea: true,
+            }
+          }
+        },
+        orderBy: { responseTimestamp: 'desc' }
+      });
+
+      console.log('TCC_DEBUG: Found agency responses:', responses.length);
+      return { success: true, data: responses };
+    } catch (error) {
+      console.error('TCC_DEBUG: Error getting agency responses:', error);
+      return { success: false, error: 'Failed to fetch agency responses' };
+    }
+  }
+
+  /**
+   * Get a single agency response by ID
+   */
+  async getAgencyResponseById(responseId: string) {
+    console.log('TCC_DEBUG: Getting agency response by ID:', responseId);
+    
+    try {
+      const response = await prisma.agencyResponse.findUnique({
+        where: { id: responseId },
+        include: {
+          agency: {
+            select: {
+              id: true,
+              name: true,
+              contactName: true,
+              phone: true,
+              email: true,
+              address: true,
+              city: true,
+              state: true,
+              zipCode: true,
+              capabilities: true,
+              serviceArea: true,
+            }
+          }
+        }
+      });
+
+      if (!response) {
+        return { success: false, error: 'Agency response not found' };
+      }
+
+      console.log('TCC_DEBUG: Agency response found:', response.id);
+      return { success: true, data: response };
+    } catch (error) {
+      console.error('TCC_DEBUG: Error getting agency response:', error);
+      return { success: false, error: 'Failed to fetch agency response' };
+    }
+  }
+
+  /**
+   * Select an agency for a trip
+   */
+  async selectAgencyForTrip(tripId: string, data: SelectAgencyRequest) {
+    console.log('TCC_DEBUG: Selecting agency for trip:', { tripId, data });
+    
+    try {
+      // Verify trip exists and is in correct state
+      const trip = await prisma.trip.findUnique({
+        where: { id: tripId },
+        select: { 
+          id: true, 
+          responseStatus: true,
+          assignedAgencyId: true
+        }
+      });
+
+      if (!trip) {
+        return { success: false, error: 'Trip not found' };
+      }
+
+      if (trip.responseStatus === 'AGENCY_SELECTED') {
+        return { success: false, error: 'Agency has already been selected for this trip' };
+      }
+
+      // Verify the response exists and is accepted
+      const response = await prisma.agencyResponse.findUnique({
+        where: { id: data.agencyResponseId },
+        include: { agency: true }
+      });
+
+      if (!response) {
+        return { success: false, error: 'Agency response not found' };
+      }
+
+      if (response.tripId !== tripId) {
+        return { success: false, error: 'Agency response does not belong to this trip' };
+      }
+
+      if (response.response !== 'ACCEPTED') {
+        return { success: false, error: 'Can only select agencies that have accepted the trip' };
+      }
+
+      // Use transaction to ensure atomicity
+      const result = await prisma.$transaction(async (tx: any) => {
+        // Mark the selected response
+        await tx.agencyResponse.update({
+          where: { id: data.agencyResponseId },
+          data: { isSelected: true }
+        });
+
+        // Update the trip
+        const updatedTrip = await tx.trip.update({
+          where: { id: tripId },
+          data: {
+            responseStatus: 'AGENCY_SELECTED',
+            assignedAgencyId: response.agencyId,
+            status: 'ACCEPTED',
+            acceptedTimestamp: new Date()
+          }
+        });
+
+        return updatedTrip;
+      });
+
+      console.log('TCC_DEBUG: Agency selected successfully for trip:', tripId);
+      return { success: true, data: result };
+    } catch (error) {
+      console.error('TCC_DEBUG: Error selecting agency for trip:', error);
+      return { success: false, error: 'Failed to select agency for trip' };
+    }
+  }
+
+  /**
+   * Get trip with all agency responses
+   */
+  async getTripWithResponses(tripId: string) {
+    console.log('TCC_DEBUG: Getting trip with responses:', tripId);
+    
+    try {
+      const trip = await prisma.trip.findUnique({
+        where: { id: tripId },
+        include: {
+          agencyResponses: {
+            include: {
+              agency: {
+                select: {
+                  id: true,
+                  name: true,
+                  contactName: true,
+                  phone: true,
+                  email: true,
+                  address: true,
+                  city: true,
+                  state: true,
+                  zipCode: true,
+                  capabilities: true,
+                  serviceArea: true,
+                }
+              }
+            },
+            orderBy: { responseTimestamp: 'asc' }
+          }
+        }
+      });
+
+      if (!trip) {
+        return { success: false, error: 'Trip not found' };
+      }
+
+      console.log('TCC_DEBUG: Trip with responses found:', trip.id);
+      return { success: true, data: trip };
+    } catch (error) {
+      console.error('TCC_DEBUG: Error getting trip with responses:', error);
+      return { success: false, error: 'Failed to fetch trip with responses' };
+    }
+  }
+
+  /**
+   * Get response summary for a trip
+   */
+  async getTripResponseSummary(tripId: string) {
+    console.log('TCC_DEBUG: Getting response summary for trip:', tripId);
+    
+    try {
+      const responses = await prisma.agencyResponse.findMany({
+        where: { tripId },
+        include: {
+          agency: {
+            select: {
+              id: true,
+              name: true
+            }
+          }
+        }
+      });
+
+      const summary: ResponseSummary = {
+        totalResponses: responses.length,
+        acceptedResponses: responses.filter((r: any) => r.response === 'ACCEPTED').length,
+        declinedResponses: responses.filter((r: any) => r.response === 'DECLINED').length,
+        pendingResponses: responses.filter((r: any) => r.response === 'PENDING').length,
+      };
+
+      const selectedResponse = responses.find((r: any) => r.isSelected);
+      if (selectedResponse) {
+        const responseTime = Math.round(
+          (new Date(selectedResponse.responseTimestamp).getTime() - 
+           new Date(selectedResponse.createdAt).getTime()) / (1000 * 60)
+        );
+        
+        summary.selectedAgency = {
+          id: selectedResponse.agency.id,
+          name: selectedResponse.agency.name,
+          responseTime
+        };
+      }
+
+      console.log('TCC_DEBUG: Response summary calculated:', summary);
+      return { success: true, data: summary };
+    } catch (error) {
+      console.error('TCC_DEBUG: Error getting response summary:', error);
+      return { success: false, error: 'Failed to fetch response summary' };
+    }
+  }
+
+  /**
+   * Create a trip with response handling capabilities
+   */
+  async createTripWithResponses(data: CreateTripWithResponsesRequest) {
+    console.log('TCC_DEBUG: Creating trip with responses:', data);
+    
+    try {
+      // Generate patient ID if not provided
+      const patientId = data.patientId || PatientIdService.generatePatientId();
+      const tripNumber = `TRP-${Date.now()}`;
+      
+      // Map urgency level to priority for backward compatibility
+      const priorityMap = {
+        'Routine': 'LOW',
+        'Urgent': 'MEDIUM', 
+        'Emergent': 'HIGH'
+      } as const;
+      
+      const priority = data.priority || priorityMap[data.urgencyLevel] || 'LOW';
+      const scheduledTime = new Date(data.scheduledTime);
+      const transferRequestTime = new Date();
+      
+      // Calculate response deadline (default to 30 minutes from now)
+      const responseDeadline = data.responseDeadline 
+        ? new Date(data.responseDeadline)
+        : new Date(Date.now() + 30 * 60 * 1000); // 30 minutes from now
+
+      // Create trip data object
+      const tripData = {
+        tripNumber: tripNumber,
+        patientId: patientId,
+        patientWeight: data.patientWeight ? String(data.patientWeight) : null,
+        specialNeeds: data.specialNeeds || null,
+        insuranceCompany: data.insuranceCompany || null,
+        fromLocation: data.fromLocation,
+        pickupLocationId: data.pickupLocationId || null,
+        toLocation: data.toLocation,
+        scheduledTime: scheduledTime,
+        transportLevel: data.transportLevel,
+        urgencyLevel: data.urgencyLevel,
+        diagnosis: data.diagnosis || null,
+        mobilityLevel: data.mobilityLevel || null,
+        oxygenRequired: data.oxygenRequired || false,
+        monitoringRequired: data.monitoringRequired || false,
+        generateQRCode: data.generateQRCode || false,
+        qrCodeData: null, // Will be generated if needed
+        selectedAgencies: data.selectedAgencies || [],
+        notificationRadius: data.notificationRadius || 100,
+        transferRequestTime: transferRequestTime,
+        status: 'PENDING',
+        priority: priority,
+        notes: data.notes || null,
+        assignedTo: null,
+        
+        // New response handling fields
+        responseDeadline: responseDeadline,
+        maxResponses: data.maxResponses || 5,
+        responseStatus: 'PENDING' as const,
+        selectionMode: data.selectionMode || 'SPECIFIC_AGENCIES' as const,
+      };
+      
+      // Create trip in Center database
+      const centerTrip = await prisma.trip.create({
+        data: tripData,
+      });
+      
+      console.log('TCC_DEBUG: Trip with responses created in Center DB:', centerTrip);
+      
+      // Send notifications to selected agencies if any
+      if (data.selectedAgencies && data.selectedAgencies.length > 0) {
+        await this.sendNewTripNotifications(centerTrip);
+      }
+
+      return {
+        success: true,
+        data: centerTrip,
+        message: 'Trip with response handling created successfully'
+      };
+    } catch (error) {
+      console.error('TCC_DEBUG: Error creating trip with responses:', error);
+      return { success: false, error: 'Failed to create trip with response handling' };
+    }
+  }
+
+  /**
+   * Update trip response fields
+   */
+  async updateTripResponseFields(tripId: string, data: UpdateTripResponseFieldsRequest) {
+    console.log('TCC_DEBUG: Updating trip response fields:', { tripId, data });
+    
+    try {
+      const updateData: any = {};
+      
+      if (data.responseDeadline !== undefined) {
+        updateData.responseDeadline = data.responseDeadline ? new Date(data.responseDeadline) : null;
+      }
+      if (data.maxResponses !== undefined) {
+        updateData.maxResponses = data.maxResponses;
+      }
+      if (data.responseStatus !== undefined) {
+        updateData.responseStatus = data.responseStatus;
+      }
+      if (data.selectionMode !== undefined) {
+        updateData.selectionMode = data.selectionMode;
+      }
+
+      const trip = await prisma.trip.update({
+        where: { id: tripId },
+        data: updateData,
+      });
+
+      console.log('TCC_DEBUG: Trip response fields updated:', trip.id);
+      return { success: true, data: trip };
+    } catch (error) {
+      console.error('TCC_DEBUG: Error updating trip response fields:', error);
+      return { success: false, error: 'Failed to update trip response fields' };
+    }
   }
 }
 
