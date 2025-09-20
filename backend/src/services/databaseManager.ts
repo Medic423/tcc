@@ -1,6 +1,6 @@
 import { PrismaClient as CenterPrismaClient } from '@prisma/client';
-import { PrismaClient as EMSPrismaClient } from '@prisma/client';
-import { PrismaClient as HospitalPrismaClient } from '@prisma/client';
+import { PrismaClient as EMSPrismaClient } from '@prisma/ems';
+import { PrismaClient as HospitalPrismaClient } from '@prisma/hospital';
 
 class DatabaseManager {
   private static instance: DatabaseManager;
