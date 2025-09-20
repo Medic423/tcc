@@ -40,3 +40,6 @@ coverage/
 
 # Prisma
 prisma/migrations/
+
+# Specstory (contains sensitive data and secrets)
+.specstory/

@@ -36,7 +36,7 @@ import Agencies from './Agencies';
 import HealthcarePortal from './HealthcarePortal';
 import EMSDashboard from './EMSDashboard';
 import NotificationSettings from './NotificationSettings';
-import AdminNotificationManagement from './AdminNotificationManagement';
+// AdminNotificationManagement removed - notification services not available in V1
 import UserManagement from './UserManagement';
 import BackupManagement from './BackupManagement';
 import TCCUnitsManagement from './TCCUnitsManagement';
@@ -70,7 +70,7 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
   const getNavigation = () => {
     // Core Operations (Left) - Always visible
     const coreOperations = [
-      { name: 'Dashboard', href: '/dashboard', icon: Home, category: 'core' },
+      { name: 'Home', href: '/dashboard', icon: Home, category: 'core' },
       { name: 'Trips', href: '/dashboard/trips', icon: Truck, category: 'core' },
       { name: 'Hospitals', href: '/dashboard/hospitals', icon: Building2, category: 'core' },
       { name: 'Agencies', href: '/dashboard/agencies', icon: Truck, category: 'core' },
@@ -121,7 +121,6 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
       items: [
         { name: 'User Management', href: '/dashboard/settings', icon: Users },
         { name: 'Notifications', href: '/dashboard/settings/notifications', icon: BellIcon },
-        { name: 'Admin Notifications', href: '/dashboard/admin/notifications', icon: BellIcon },
         { name: 'Backup', href: '/dashboard/settings/backup', icon: HardDrive },
       ]
     }
@@ -414,109 +413,92 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
         <div className="hidden md:block">
           <div className="px-6 py-4">
             <div className="flex items-center justify-between">
-              {/* Logo and Logout */}
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center">
-                  <div className="h-8 w-8 bg-primary-600 rounded-lg flex items-center justify-center">
-                    <Building2 className="h-5 w-5 text-white" />
-                  </div>
-                  <span className="ml-2 text-xl font-bold text-gray-900">TCC</span>
+              {/* Logo */}
+              <div className="flex items-center">
+                <div className="h-8 w-8 bg-primary-600 rounded-lg flex items-center justify-center">
+                  <Building2 className="h-5 w-5 text-white" />
                 </div>
-                <button
-                  onClick={onLogout}
-                  className="p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  title="Sign out"
-                >
-                  <LogOut className="h-5 w-5" />
-                </button>
+                <span className="ml-2 text-xl font-bold text-gray-900">TCC</span>
               </div>
 
               {/* Navigation Menu */}
-              <nav className="flex space-x-8">
+              <nav className="flex items-center space-x-8">
                 {/* Core Operations */}
-                <div className="flex space-x-6">
-                  {navigation.coreOperations.map((item) => {
-                    const isActive = location.pathname === item.href || 
-                      (item.href !== '/dashboard' && location.pathname.startsWith(item.href));
-                    
-                    // Use dropdown for items that have dropdowns, otherwise use regular link
-                    if (item.hasDropdown) {
-                      const menuKey = item.name.toLowerCase();
-                      return (
-                        <DropdownMenu 
-                          key={item.name} 
-                          menuKey={menuKey} 
-                          menu={dropdownMenus[menuKey as keyof typeof dropdownMenus]} 
-                        />
-                      );
-                    }
-                    
+                {navigation.coreOperations.map((item) => {
+                  const isActive = location.pathname === item.href || 
+                    (item.href !== '/dashboard' && location.pathname.startsWith(item.href));
+                  
+                  // Use dropdown for items that have dropdowns, otherwise use regular link
+                  if (item.hasDropdown) {
+                    const menuKey = item.name.toLowerCase();
                     return (
-                      <Link
-                        key={item.name}
-                        to={item.href}
-                        className={`${
-                          isActive
-                            ? 'text-primary-600 border-b-2 border-primary-600'
-                            : 'text-gray-500 hover:text-gray-700 hover:border-b-2 hover:border-gray-300'
-                        } flex items-center px-1 py-2 text-sm font-medium border-b-2 border-transparent transition-colors`}
-                      >
-                        <item.icon className="mr-2 h-4 w-4" />
-                        {item.name}
-                      </Link>
+                      <DropdownMenu 
+                        key={item.name} 
+                        menuKey={menuKey} 
+                        menu={dropdownMenus[menuKey as keyof typeof dropdownMenus]} 
+                      />
                     );
-                  })}
-                </div>
+                  }
+                  
+                  return (
+                    <Link
+                      key={item.name}
+                      to={item.href}
+                      className={`${
+                        isActive
+                          ? 'text-primary-600 border-b-2 border-primary-600'
+                          : 'text-gray-500 hover:text-gray-700 hover:border-b-2 hover:border-gray-300'
+                      } flex items-center px-1 py-2 text-sm font-medium border-b-2 border-transparent transition-colors`}
+                    >
+                      <item.icon className="mr-2 h-4 w-4" />
+                      {item.name}
+                    </Link>
+                  );
+                })}
 
-                {/* Analysis & Reporting - Direct Links */}
-                <div className="flex space-x-6">
-                  {navigation.analysisReporting.map((item) => {
-                    const isActive = location.pathname === item.href || 
-                      (item.href !== '/dashboard' && location.pathname.startsWith(item.href));
-                    return (
-                      <Link
-                        key={item.name}
-                        to={item.href}
-                        className={`${
-                          isActive
-                            ? 'text-green-600 border-b-2 border-green-600'
-                            : 'text-gray-500 hover:text-gray-700 hover:border-b-2 hover:border-gray-300'
-                        } flex items-center px-1 py-2 text-sm font-medium border-b-2 border-transparent transition-colors`}
-                      >
-                        <item.icon className="mr-2 h-4 w-4" />
-                        {item.name}
-                      </Link>
-                    );
-                  })}
-                </div>
+                {/* Analysis & Reporting */}
+                {navigation.analysisReporting.map((item) => {
+                  const isActive = location.pathname === item.href || 
+                    (item.href !== '/dashboard' && location.pathname.startsWith(item.href));
+                  return (
+                    <Link
+                      key={item.name}
+                      to={item.href}
+                      className={`${
+                        isActive
+                          ? 'text-green-600 border-b-2 border-green-600'
+                          : 'text-gray-500 hover:text-gray-700 hover:border-b-2 hover:border-gray-300'
+                      } flex items-center px-1 py-2 text-sm font-medium border-b-2 border-transparent transition-colors`}
+                    >
+                      <item.icon className="mr-2 h-4 w-4" />
+                      {item.name}
+                    </Link>
+                  );
+                })}
 
                 {/* Additional Features */}
-                <div className="flex space-x-6">
-                  {navigation.additionalFeatures.map((item) => {
-                    const isActive = location.pathname === item.href || 
-                      (item.href !== '/dashboard' && location.pathname.startsWith(item.href));
-                    return (
-                      <Link
-                        key={item.name}
-                        to={item.href}
-                        className={`${
-                          isActive
-                            ? 'text-blue-600 border-b-2 border-blue-600'
-                            : 'text-gray-500 hover:text-gray-700 hover:border-b-2 hover:border-gray-300'
-                        } flex items-center px-1 py-2 text-sm font-medium border-b-2 border-transparent transition-colors`}
-                      >
-                        <item.icon className="mr-2 h-4 w-4" />
-                        {item.name}
-                      </Link>
-                    );
-                  })}
-                </div>
+                {navigation.additionalFeatures.map((item) => {
+                  const isActive = location.pathname === item.href || 
+                    (item.href !== '/dashboard' && location.pathname.startsWith(item.href));
+                  return (
+                    <Link
+                      key={item.name}
+                      to={item.href}
+                      className={`${
+                        isActive
+                          ? 'text-blue-600 border-b-2 border-blue-600'
+                          : 'text-gray-500 hover:text-gray-700 hover:border-b-2 hover:border-gray-300'
+                      } flex items-center px-1 py-2 text-sm font-medium border-b-2 border-transparent transition-colors`}
+                    >
+                      <item.icon className="mr-2 h-4 w-4" />
+                      {item.name}
+                    </Link>
+                  );
+                })}
 
                 {/* Administration - Settings Dropdown */}
                 {navigation.administration.length > 0 && (
-                  <div className="flex space-x-6">
-                    <DropdownMenu menuKey="settings" menu={dropdownMenus.settings} />
-                  </div>
+                  <DropdownMenu menuKey="settings" menu={dropdownMenus.settings} />
                 )}
               </nav>
 
@@ -528,6 +510,14 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
                     <p className="text-xs text-gray-500">{user.email}</p>
                   </div>
                 </div>
+                <button
+                  onClick={onLogout}
+                  className="flex items-center px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors"
+                  title="Sign out"
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Logout
+                </button>
               </div>
             </div>
           </div>
@@ -555,7 +545,7 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
                 <Route path="/settings" element={<UserManagement />} />
                 <Route path="/settings/users" element={<UserManagement />} />
                 <Route path="/settings/notifications" element={<NotificationSettings />} />
-                <Route path="/admin/notifications" element={<AdminNotificationManagement />} />
+                {/* Admin Notifications route removed - notification services not available in V1 */}
                 <Route path="/settings/backup" element={<BackupManagement />} />
                 <Route path="/financial" element={<FinancialDashboard />} />
                 <Route path="/my-trips" element={<div className="text-center py-12"><h3 className="text-lg font-medium text-gray-900">My Trips</h3><p className="text-gray-500">Coming soon...</p></div>} />

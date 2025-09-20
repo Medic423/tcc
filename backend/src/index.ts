@@ -80,6 +80,7 @@ app.get('/health', async (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/trips', tripRoutes);
 app.use('/api/agency-responses', agencyResponseRoutes);
+// Notification routes disabled - services not available
 // app.use('/api/notifications', notificationRoutes);
 // app.use('/api/admin/notifications', adminNotificationRoutes);
 app.use('/api/units', unitRoutes);
