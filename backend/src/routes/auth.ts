@@ -401,7 +401,7 @@ router.post('/ems/register', async (req, res) => {
       password, 
       name, 
       agencyName, 
-      serviceType, 
+      serviceArea, 
       address, 
       city, 
       state, 
@@ -413,10 +413,10 @@ router.post('/ems/register', async (req, res) => {
       operatingHours 
     } = req.body;
 
-    if (!email || !password || !name || !agencyName || !serviceType) {
+    if (!email || !password || !name || !agencyName) {
       return res.status(400).json({
         success: false,
-        error: 'Email, password, name, agencyName, and serviceType are required'
+        error: 'Email, password, name, and agencyName are required'
       });
     }
 
@@ -471,7 +471,9 @@ router.post('/ems/register', async (req, res) => {
         city: city || 'City to be provided',
         state: state || 'State to be provided',
         zipCode: zipCode || '00000',
+        serviceArea: serviceArea || [],
         capabilities: capabilities || [],
+        operatingHours: operatingHours || null,
         latitude: latitude ? parseFloat(latitude) : null,
         longitude: longitude ? parseFloat(longitude) : null,
         isActive: true, // Auto-approve new EMS registrations
