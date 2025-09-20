@@ -42,7 +42,20 @@ export class AuthService {
       // First try Center database (Admin and User types)
       const centerDB = databaseManager.getCenterDB();
       let user = await centerDB.centerUser.findUnique({
-        where: { email }
+        where: { email },
+        select: {
+          id: true,
+          email: true,
+          password: true,
+          name: true,
+          userType: true,
+          phone: true,
+          emailNotifications: true,
+          smsNotifications: true,
+          isActive: true,
+          createdAt: true,
+          updatedAt: true
+        }
       });
 
       let userType: 'ADMIN' | 'USER' | 'HEALTHCARE' | 'EMS' = 'ADMIN';
@@ -62,7 +75,19 @@ export class AuthService {
         // Try Hospital database (Healthcare users)
         const hospitalDB = databaseManager.getHospitalDB();
         const hospitalUser = await hospitalDB.healthcareUser.findUnique({
-          where: { email }
+          where: { email },
+          select: {
+            id: true,
+            email: true,
+            password: true,
+            name: true,
+            phone: true,
+            isActive: true,
+            createdAt: true,
+            updatedAt: true,
+            facilityName: true,
+            facilityType: true
+          }
         });
         if (hospitalUser) {
           userType = 'HEALTHCARE';
@@ -73,7 +98,7 @@ export class AuthService {
             password: hospitalUser.password,
             name: hospitalUser.name,
             userType: 'HEALTHCARE',
-            phone: (hospitalUser as any).phone || null,
+            phone: hospitalUser.phone || null,
             emailNotifications: true,
             smsNotifications: false,
             isActive: hospitalUser.isActive,
@@ -87,7 +112,19 @@ export class AuthService {
         // Try EMS database (EMS users)
         const emsDB = databaseManager.getEMSDB();
         const emsUser = await emsDB.eMSUser.findUnique({
-          where: { email }
+          where: { email },
+          select: {
+            id: true,
+            email: true,
+            password: true,
+            name: true,
+            phone: true,
+            isActive: true,
+            createdAt: true,
+            updatedAt: true,
+            agencyName: true,
+            agencyId: true
+          }
         });
         if (emsUser) {
           userType = 'EMS';
@@ -98,7 +135,7 @@ export class AuthService {
             password: emsUser.password,
             name: emsUser.name,
             userType: 'EMS',
-            phone: (emsUser as any).phone || null,
+            phone: emsUser.phone || null,
             emailNotifications: true,
             smsNotifications: false,
             isActive: emsUser.isActive,

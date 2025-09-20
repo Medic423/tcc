@@ -26,16 +26,19 @@ model HospitalUser {
 }
 
 model HealthcareUser {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  password     String
-  name         String
-  facilityName String
-  facilityType String   // HOSPITAL, CLINIC, URGENT_CARE, etc.
-  isActive     Boolean  @default(true)
-  userType     String   @default("HEALTHCARE") // HEALTHCARE, ADMIN
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id               String   @id @default(cuid())
+  email            String   @unique
+  password         String
+  name             String
+  phone            String?
+  facilityName     String
+  facilityType     String   // HOSPITAL, CLINIC, URGENT_CARE, etc.
+  emailNotifications Boolean @default(true)
+  smsNotifications Boolean  @default(false)
+  isActive         Boolean  @default(true)
+  userType         String   @default("HEALTHCARE") // HEALTHCARE, ADMIN
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   // Relations
   transportRequests TransportRequest[] @relation("HealthcareTransportRequests")

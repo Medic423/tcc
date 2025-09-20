@@ -10,16 +10,19 @@ datasource db {
 }
 
 model EMSUser {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  password     String
-  name         String
-  agencyName   String
-  agencyId     String?  // Reference to EMSAgency
-  isActive     Boolean  @default(true)
-  userType     String   @default("EMS") // EMS, ADMIN
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id               String   @id @default(cuid())
+  email            String   @unique
+  password         String
+  name             String
+  phone            String?
+  agencyName       String
+  agencyId         String?  // Reference to EMSAgency
+  emailNotifications Boolean @default(true)
+  smsNotifications Boolean  @default(false)
+  isActive         Boolean  @default(true)
+  userType         String   @default("EMS") // EMS, ADMIN
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   // Relations
   agency           EMSAgency? @relation(fields: [agencyId], references: [id])
