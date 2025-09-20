@@ -240,7 +240,7 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          status: 'CANCELLED'
+          status: 'DECLINED'
         }),
       });
 
