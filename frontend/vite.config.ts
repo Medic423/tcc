@@ -30,6 +30,9 @@ export default defineConfig(({ command, mode }) => {
             ui: ['lucide-react', 'recharts']
           }
         }
+      },
+      commonjsOptions: {
+        include: [/node_modules/]
       }
     },
     define: {
