@@ -1,40 +1,113 @@
 import axios from 'axios';
 
+// Environment configuration
+const ENVIRONMENT = import.meta.env.VITE_ENVIRONMENT || 'development';
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
-console.log('TCC_DEBUG: API_BASE_URL is set to:', API_BASE_URL);
+const DEBUG = import.meta.env.VITE_DEBUG === 'true';
+const LOG_LEVEL = import.meta.env.VITE_LOG_LEVEL || 'info';
 
-// Create axios instance
+// Environment detection
+const isDevelopment = ENVIRONMENT === 'development';
+const isProduction = ENVIRONMENT === 'production';
+
+// Logging utility
+const log = (level: string, message: string, data?: any) => {
+  if (DEBUG || level === 'error') {
+    console.log(`[TCC-${level.toUpperCase()}] ${message}`, data || '');
+  }
+};
+
+log('info', 'API Configuration:', {
+  environment: ENVIRONMENT,
+  apiUrl: API_BASE_URL,
+  debug: DEBUG,
+  logLevel: LOG_LEVEL
+});
+
+// Create axios instance with environment-specific configuration
 const api = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
+  timeout: isProduction ? 10000 : 30000, // Shorter timeout in production
   headers: {
     'Content-Type': 'application/json',
+    'X-Environment': ENVIRONMENT,
+    'X-Client-Version': '1.0.0'
   },
 });
 
-// Request interceptor to add auth token
+// Add retry logic for production (using axios-retry would be needed for this)
+// For now, we'll handle retries in the interceptors
+if (isProduction) {
+  // Production-specific configuration
+  api.defaults.timeout = 10000;
+}
+
+// Request interceptor to add auth token and logging
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    
+    // Log request in development
+    if (isDevelopment) {
+      log('debug', `API Request: ${config.method?.toUpperCase()} ${config.url}`, {
+        baseURL: config.baseURL,
+        headers: config.headers,
+        data: config.data
+      });
+    }
+    
     return config;
   },
   (error) => {
+    log('error', 'Request interceptor error:', error);
     return Promise.reject(error);
   }
 );
 
-// Response interceptor to handle auth errors
+// Response interceptor to handle auth errors and logging
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Log successful responses in development
+    if (isDevelopment) {
+      log('debug', `API Response: ${response.status} ${response.config.url}`, {
+        status: response.status,
+        data: response.data
+      });
+    }
+    return response;
+  },
   (error) => {
-    if (error.response?.status === 401) {
+    const status = error.response?.status;
+    const url = error.config?.url;
+    
+    // Log error details
+    log('error', `API Error: ${status} ${url}`, {
+      status,
+      message: error.message,
+      response: error.response?.data
+    });
+    
+    // Handle specific error cases
+    if (status === 401) {
+      log('warn', 'Authentication failed, redirecting to login');
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       window.location.href = '/login';
+    } else if (status === 403) {
+      log('warn', 'Access forbidden');
+      // Could redirect to unauthorized page or show error message
+    } else if (status >= 500) {
+      log('error', 'Server error occurred');
+      // Could show user-friendly error message
+    } else if (!error.response) {
+      log('error', 'Network error - no response from server');
+      // Could show network error message
     }
+    
     return Promise.reject(error);
   }
 );
@@ -42,8 +115,7 @@ api.interceptors.response.use(
 // Auth API
 export const authAPI = {
   login: (credentials: { email: string; password: string }) => {
-    console.log('TCC_DEBUG: API login called with URL:', API_BASE_URL + '/api/auth/login');
-    console.log('TCC_DEBUG: API login called with credentials:', credentials);
+    log('info', 'Auth login attempt', { email: credentials.email });
     return api.post('/api/auth/login', credentials);
   },
   
@@ -235,6 +307,28 @@ export const emsAnalyticsAPI = {
   
   getPerformance: () =>
     api.get('/api/ems/analytics/performance'),
+};
+
+// Environment utilities
+export const envUtils = {
+  isDevelopment: () => isDevelopment,
+  isProduction: () => isProduction,
+  getEnvironment: () => ENVIRONMENT,
+  getApiUrl: () => API_BASE_URL,
+  isDebugEnabled: () => DEBUG,
+  getLogLevel: () => LOG_LEVEL
+};
+
+// Health check function
+export const healthCheck = async () => {
+  try {
+    const response = await api.get('/health');
+    log('info', 'Health check successful', response.data);
+    return { status: 'healthy', data: response.data };
+  } catch (error) {
+    log('error', 'Health check failed', error);
+    return { status: 'unhealthy', error };
+  }
 };
 
 export default api;

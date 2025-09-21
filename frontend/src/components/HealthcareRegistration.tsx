@@ -3,10 +3,7 @@ import {
   Building2, 
   ArrowLeft, 
   CheckCircle,
-  XCircle,
-  Mail,
-  Phone,
-  MapPin
+  XCircle
 } from 'lucide-react';
 
 interface HealthcareRegistrationProps {
@@ -34,7 +31,7 @@ const HealthcareRegistration: React.FC<HealthcareRegistrationProps> = ({ onBack,
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [geocoding, setGeocoding] = useState(false);
+  // const [geocoding, setGeocoding] = useState(false);
 
   const facilityTypes = [
     'Hospital',
@@ -57,45 +54,45 @@ const HealthcareRegistration: React.FC<HealthcareRegistrationProps> = ({ onBack,
   ];
 
   // Geocoding function using OpenStreetMap Nominatim API (free)
-  const geocodeAddress = async () => {
-    if (!formData.address || !formData.city || !formData.state || !formData.zipCode) {
-      setError('Please fill in address, city, state, and ZIP code before looking up coordinates');
-      return;
-    }
+  // const geocodeAddress = async () => {
+  //   if (!formData.address || !formData.city || !formData.state || !formData.zipCode) {
+  //     setError('Please fill in address, city, state, and ZIP code before looking up coordinates');
+  //     return;
+  //   }
 
-    setGeocoding(true);
-    setError(null);
+  //   setGeocoding(true);
+  //   setError(null);
 
-    try {
-      const fullAddress = `${formData.address}, ${formData.city}, ${formData.state} ${formData.zipCode}`;
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(fullAddress)}&limit=1`
-      );
+  //   try {
+  //     const fullAddress = `${formData.address}, ${formData.city}, ${formData.state} ${formData.zipCode}`;
+  //     const response = await fetch(
+  //       `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(fullAddress)}&limit=1`
+  //     );
       
-      if (!response.ok) {
-        throw new Error('Geocoding service unavailable');
-      }
+  //     if (!response.ok) {
+  //       throw new Error('Geocoding service unavailable');
+  //     }
 
-      const data = await response.json();
+  //     const data = await response.json();
       
-      if (data && data.length > 0) {
-        const result = data[0];
-        setFormData(prev => ({
-          ...prev,
-          latitude: result.lat,
-          longitude: result.lon
-        }));
-        setError(null);
-      } else {
-        setError('Address not found. Please enter coordinates manually.');
-      }
-    } catch (err) {
-      console.error('Geocoding error:', err);
-      setError('Failed to lookup coordinates. Please enter them manually.');
-    } finally {
-      setGeocoding(false);
-    }
-  };
+  //     if (data && data.length > 0) {
+  //       const result = data[0];
+  //       setFormData(prev => ({
+  //         ...prev,
+  //         latitude: result.lat,
+  //         longitude: result.lon
+  //       }));
+  //       setError(null);
+  //     } else {
+  //       setError('Address not found. Please enter coordinates manually.');
+  //     }
+  //   } catch (err) {
+  //     console.error('Geocoding error:', err);
+  //     setError('Failed to lookup coordinates. Please enter them manually.');
+  //   } finally {
+  //     setGeocoding(false);
+  //   }
+  // };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;

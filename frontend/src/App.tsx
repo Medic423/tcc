@@ -9,7 +9,9 @@ import HealthcareRegistration from './components/HealthcareRegistration';
 import EMSRegistration from './components/EMSRegistration';
 import HealthcareLogin from './components/HealthcareLogin';
 import EMSLogin from './components/EMSLogin';
+import DevDebugPanel from './components/DevDebugPanel';
 import { authAPI } from './services/api';
+import { devUtils } from './utils/environment';
 
 interface User {
   id: string;
@@ -54,21 +56,21 @@ function AppContent() {
   }, []);
 
   const handleLogin = (userData: User, token: string) => {
-    console.log('TCC_DEBUG: handleLogin called with userData:', userData);
-    console.log('TCC_DEBUG: handleLogin called with token:', token ? 'present' : 'missing');
+    devUtils.log('handleLogin called with userData:', userData);
+    devUtils.log('handleLogin called with token:', token ? 'present' : 'missing');
     
     setUser(userData);
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(userData));
     
-    console.log('TCC_DEBUG: User state set, localStorage updated');
+    devUtils.log('User state set, localStorage updated');
     
     // Only redirect for ADMIN/USER types, healthcare/EMS show their dashboards directly
     if (userData.userType === 'ADMIN' || userData.userType === 'USER') {
-      console.log('TCC_DEBUG: Redirecting to dashboard for admin/user');
+      devUtils.log('Redirecting to dashboard for admin/user');
       window.location.href = '/dashboard';
     } else {
-      console.log('TCC_DEBUG: No redirect needed for healthcare/EMS - component should re-render');
+      devUtils.log('No redirect needed for healthcare/EMS - component should re-render');
     }
     // No redirect needed for healthcare/EMS - component re-renders with new user state
   };
@@ -113,7 +115,7 @@ function AppContent() {
     setCurrentView('public');
   };
 
-  console.log('TCC_DEBUG: App render - user:', user, 'loading:', loading);
+  devUtils.log('App render - user:', { user, loading });
 
   if (loading) {
     return (
@@ -189,6 +191,8 @@ function AppContent() {
                 onLogin={handleLogin}
               />
             )}
+            {/* Development Debug Panel - only shows in development */}
+            <DevDebugPanel />
           </>
         } />
       </Routes>

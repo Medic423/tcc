@@ -4,10 +4,7 @@ import {
   ArrowLeft, 
   CheckCircle,
   XCircle,
-  Mail,
-  Phone,
-  MapPin,
-  Clock
+  MapPin
 } from 'lucide-react';
 
 interface EMSRegistrationProps {
