@@ -127,7 +127,7 @@ export const getApiEndpoint = (endpoint: string) => {
 // Environment validation
 export const validateEnvironment = () => {
   const requiredVars = ['VITE_API_URL', 'VITE_ENVIRONMENT'];
-  const missing = requiredVars.filter(varName => !import.meta.env[varName]);
+  const missing = requiredVars.filter(varName => !(import.meta.env as any)[varName]);
   
   if (missing.length > 0) {
     devUtils.warn(`Missing environment variables: ${missing.join(', ')}`);

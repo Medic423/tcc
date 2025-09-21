@@ -20,9 +20,17 @@ export default defineConfig(({ command, mode }) => {
     },
     build: {
       outDir: 'dist',
-      sourcemap: false,
+      sourcemap: mode === 'development',
       minify: 'esbuild',
-      target: 'es2015'
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            vendor: ['react', 'react-dom'],
+            router: ['react-router-dom'],
+            ui: ['lucide-react', 'recharts']
+          }
+        }
+      }
     },
     define: {
       __APP_ENV__: JSON.stringify(env.VITE_ENVIRONMENT || 'development')
