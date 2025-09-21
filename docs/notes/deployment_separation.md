@@ -10,6 +10,48 @@ This guide outlines the proper procedure to maintain complete separation between
 - **Maintains stable production** while allowing experimental development
 - **Prevents the 6-hour restoration nightmare** you just experienced
 
+## 🛡️ **Dev Site Safety System (IMPLEMENTED)**
+
+### **Safety Guards Implemented**
+1. **Automatic Dev Site Monitoring** (`scripts/dev-site-monitor.sh`)
+   - Checks dev site health every 10 seconds
+   - Automatically restarts if it goes down
+   - Logs all events to `dev-monitor.log`
+   - Alerts after 3 consecutive failures
+
+2. **Production Work Safety Script** (`scripts/production-work.sh`)
+   - Creates automatic backups before any work
+   - Starts monitoring during production work
+   - Provides restore functionality
+   - Status checking and emergency procedures
+
+3. **Safety Rules Document** (`DEV_SAFETY_RULES.md`)
+   - Clear guidelines for safe production work
+   - Emergency procedures
+   - What to do and what NOT to do
+
+### **Usage Commands**
+```bash
+# Start production work with safety monitoring
+./scripts/production-work.sh start
+
+# Check safety status
+./scripts/production-work.sh status
+
+# Stop production work
+./scripts/production-work.sh stop
+
+# Emergency restore
+./scripts/production-work.sh restore <backup_name>
+```
+
+### **Safety Features**
+- ✅ **Background Process Management** - No terminal takeover
+- ✅ **Automatic Backups** - Before any production work
+- ✅ **Health Monitoring** - Continuous dev site monitoring
+- ✅ **Emergency Restore** - Quick rollback capability
+- ✅ **Quiet Operation** - Minimal terminal noise
+
 ---
 
 ## 📋 **Pre-Production Reconnection Checklist**

@@ -29,18 +29,7 @@ export default defineConfig(({ command, mode }) => {
             router: ['react-router-dom'],
             ui: ['lucide-react', 'recharts']
           }
-        },
-        external: [],
-        onwarn(warning, warn) {
-          // Suppress specific warnings that are not critical
-          if (warning.code === 'UNRESOLVED_IMPORT') {
-            return;
-          }
-          warn(warning);
         }
-      },
-      commonjsOptions: {
-        include: [/node_modules/]
       }
     },
     define: {

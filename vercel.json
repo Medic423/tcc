@@ -1,0 +1,25 @@
+{
+  "buildCommand": "cd frontend && npm run build",
+  "outputDirectory": "frontend/dist",
+  "installCommand": "cd frontend && npm install",
+  "framework": "vite",
+  "build": {
+    "env": {
+      "NODE_VERSION": "18",
+      "VITE_ENVIRONMENT": "production",
+      "VITE_DEBUG": "false",
+      "VITE_LOG_LEVEL": "error",
+      "VITE_ENABLE_DEBUG_PANEL": "false",
+      "VITE_ENABLE_MOCK_DATA": "false",
+      "VITE_ENABLE_ANALYTICS": "true",
+      "VITE_DEV_TOOLS": "false",
+      "VITE_HOT_RELOAD": "false",
+      "VITE_ENABLE_PERFORMANCE_MONITORING": "true",
+      "VITE_ENABLE_ERROR_REPORTING": "true"
+    }
+  },
+  "env": {
+    "VITE_API_URL": "https://your-backend-domain.com",
+    "VITE_CORS_ORIGIN": "https://your-frontend-domain.vercel.app"
+  }
+}

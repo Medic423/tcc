@@ -1,0 +1,44 @@
+services:
+  # TCC Backend API Service
+  - type: web
+    name: tcc-backend
+    env: node
+    plan: starter
+    region: oregon
+    buildCommand: cd backend && npm install && npm run build:prod
+    startCommand: cd backend && npm start
+    rootDir: backend
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5001
+      - key: JWT_SECRET
+        generateValue: true
+      - key: FRONTEND_URL
+        value: https://tcc-new-project-iq5e73fdv-chuck-ferrells-projects.vercel.app
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: 587
+      - key: SMTP_USER
+        value: your-email@gmail.com
+      - key: SMTP_PASS
+        value: your-app-password
+      - key: TWILIO_ACCOUNT_SID
+        value: ""
+      - key: TWILIO_AUTH_TOKEN
+        value: ""
+      - key: TWILIO_PHONE_NUMBER
+        value: ""
+      - key: GOOGLE_MAPS_API_KEY
+        value: ""
+    healthCheckPath: /health
+
+databases:
+  # TCC Production Database
+  - name: tcc-database
+    databaseName: tcc_production_db
+    user: tcc_production_db_user
+    plan: starter
+    region: oregon
