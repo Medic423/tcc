@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { 
   Clock, 
   MapPin, 
-  User, 
   Search, 
   Filter, 
   Calendar,
@@ -50,15 +49,6 @@ interface Trip {
   };
 }
 
-interface TripHistoryData {
-  trips: Trip[];
-  pagination: {
-    total: number;
-    limit: number;
-    offset: number;
-    hasMore: boolean;
-  };
-}
 
 const TripHistory: React.FC = () => {
   const [trips, setTrips] = useState<Trip[]>([]);
@@ -365,8 +355,8 @@ const TripHistory: React.FC = () => {
                   <div className="flex items-center text-sm text-gray-600">
                     <Clock className="h-4 w-4 mr-2 text-gray-400" />
                     <div>
-                      <p>Response: {formatDuration(trip.responseTimeMinutes)}</p>
-                      <p>Duration: {formatDuration(trip.tripDurationMinutes)}</p>
+                      <p>Response: {formatDuration(trip.responseTimeMinutes || 0)}</p>
+                      <p>Duration: {formatDuration(trip.tripDurationMinutes || 0)}</p>
                     </div>
                   </div>
                 </div>
@@ -376,13 +366,13 @@ const TripHistory: React.FC = () => {
                   {trip.distanceMiles && !isNaN(Number(trip.distanceMiles)) && (
                     <div className="flex items-center">
                       <MapPin className="h-4 w-4 mr-1 text-gray-400" />
-                      <span>{Number(trip.distanceMiles).toFixed(1)} miles</span>
+                      <span>{Number(trip.distanceMiles || 0).toFixed(1)} miles</span>
                     </div>
                   )}
                   {trip.tripCost && !isNaN(Number(trip.tripCost)) && (
                     <div className="flex items-center">
                       <DollarSign className="h-4 w-4 mr-1 text-gray-400" />
-                      <span>${Number(trip.tripCost).toFixed(2)}</span>
+                      <span>${Number(trip.tripCost || 0).toFixed(2)}</span>
                     </div>
                   )}
                   <div className="flex items-center">

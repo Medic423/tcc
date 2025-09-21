@@ -202,16 +202,7 @@ const EMSRegistration: React.FC<EMSRegistrationProps> = ({ onBack, onSuccess }) 
         password: formData.password,
         name: formData.contactName,
         agencyName: formData.agencyName,
-        serviceType: formData.serviceType,
-        address: formData.address,
-        city: formData.city,
-        state: formData.state,
-        zipCode: formData.zipCode,
-        phone: formData.phone,
-        latitude: formData.latitude,
-        longitude: formData.longitude,
-        capabilities: formData.capabilities,
-        operatingHours: formData.operatingHours
+        serviceType: formData.serviceType
       });
       
       setSuccess(true);
@@ -277,125 +268,113 @@ const EMSRegistration: React.FC<EMSRegistrationProps> = ({ onBack, onSuccess }) 
             </div>
           )}
 
-          <div className="space-y-4">
-            {/* Agency Name */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Agency Name *
-              </label>
-              <input
-                type="text"
-                name="agencyName"
-                required
-                value={formData.agencyName}
-                onChange={handleInputChange}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
-                placeholder="Enter agency name"
-              />
+          <div className="space-y-8">
+            {/* Agency Information */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Agency Name *
+                </label>
+                <input
+                  type="text"
+                  name="agencyName"
+                  required
+                  value={formData.agencyName}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-base"
+                  placeholder="Enter agency name"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Service Type *
+                </label>
+                <select
+                  name="serviceType"
+                  required
+                  value={formData.serviceType}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-base"
+                >
+                  <option value="">Select service type</option>
+                  {serviceTypes.map(type => (
+                    <option key={type} value={type}>{type}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
-            {/* Service Type */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Service Type *
-              </label>
-              <select
-                name="serviceType"
-                required
-                value={formData.serviceType}
-                onChange={handleInputChange}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
-              >
-                <option value="">Select service type</option>
-                {serviceTypes.map(type => (
-                  <option key={type} value={type}>{type}</option>
-                ))}
-              </select>
-            </div>
+            {/* Contact Information */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Contact Person Name *
+                </label>
+                <input
+                  type="text"
+                  name="contactName"
+                  required
+                  value={formData.contactName}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-base"
+                  placeholder="Enter contact person name"
+                />
+              </div>
 
-            {/* Contact Name */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Contact Person Name *
-              </label>
-              <input
-                type="text"
-                name="contactName"
-                required
-                value={formData.contactName}
-                onChange={handleInputChange}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
-                placeholder="Enter contact person name"
-              />
-            </div>
-
-            {/* Email */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Email Address *
-              </label>
-              <div className="mt-1 relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-400" />
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Email Address *
+                </label>
                 <input
                   type="email"
                   name="email"
                   required
                   value={formData.email}
                   onChange={handleInputChange}
-                  className="block w-full pl-10 border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-base"
                   placeholder="Enter email address"
                 />
               </div>
             </div>
 
-            {/* Phone */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Phone Number *
-              </label>
-              <div className="mt-1 relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Phone className="h-5 w-5 text-gray-400" />
-                </div>
+            {/* Phone and Address */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Phone Number *
+                </label>
                 <input
                   type="tel"
                   name="phone"
                   required
                   value={formData.phone}
                   onChange={handleInputChange}
-                  className="block w-full pl-10 border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-base"
                   placeholder="Enter phone number"
                 />
               </div>
-            </div>
 
-            {/* Address */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Street Address *
-              </label>
-              <div className="mt-1 relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <MapPin className="h-5 w-5 text-gray-400" />
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Street Address *
+                </label>
                 <input
                   type="text"
                   name="address"
                   required
                   value={formData.address}
                   onChange={handleInputChange}
-                  className="block w-full pl-10 border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-base"
                   placeholder="Enter street address"
                 />
               </div>
             </div>
 
-            {/* City, State, ZIP */}
-            <div className="grid grid-cols-3 gap-4">
+            {/* Location Details */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   City *
                 </label>
                 <input
@@ -404,12 +383,12 @@ const EMSRegistration: React.FC<EMSRegistrationProps> = ({ onBack, onSuccess }) 
                   required
                   value={formData.city}
                   onChange={handleInputChange}
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-base"
                   placeholder="City"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   State *
                 </label>
                 <select
@@ -417,7 +396,7 @@ const EMSRegistration: React.FC<EMSRegistrationProps> = ({ onBack, onSuccess }) 
                   required
                   value={formData.state}
                   onChange={handleInputChange}
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-base"
                 >
                   <option value="">State</option>
                   {states.map(state => (
@@ -426,7 +405,7 @@ const EMSRegistration: React.FC<EMSRegistrationProps> = ({ onBack, onSuccess }) 
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   ZIP *
                 </label>
                 <input
@@ -435,122 +414,104 @@ const EMSRegistration: React.FC<EMSRegistrationProps> = ({ onBack, onSuccess }) 
                   required
                   value={formData.zipCode}
                   onChange={handleInputChange}
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-base"
                   placeholder="ZIP"
                 />
               </div>
-            </div>
-
-
-            {/* Location Coordinates */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <div className="flex items-center mb-3">
-                <MapPin className="h-5 w-5 text-blue-600 mr-2" />
-                <h3 className="text-sm font-medium text-blue-800">Location Coordinates</h3>
-              </div>
-              <p className="text-sm text-blue-700 mb-4">
-                Location coordinates are required for distance calculations and agency matching. You can either lookup coordinates automatically or enter them manually.
-              </p>
-              
-              <div className="space-y-4">
-                {/* Geocoding Button */}
-                <div>
-                  <button
-                    type="button"
-                    onClick={geocodeAddress}
-                    disabled={geocoding || !formData.address?.trim() || !formData.city?.trim() || !formData.state?.trim() || !formData.zipCode?.trim()}
-                    className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
-                      geocoding || !formData.address?.trim() || !formData.city?.trim() || !formData.state?.trim() || !formData.zipCode?.trim()
-                        ? 'bg-gray-400 text-gray-700 cursor-not-allowed'
-                        : 'bg-blue-600 text-white hover:bg-blue-700'
-                    }`}
-                  >
-                    {geocoding ? (
-                      <>
-                        <div className="animate-spin -ml-1 mr-3 h-4 w-4 text-white">
-                          <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
-                        </div>
-                        Looking up...
-                      </>
-                    ) : (
-                      <>
-                        <MapPin className="h-4 w-4 mr-2" />
-                        Lookup Coordinates
-                      </>
-                    )}
-                  </button>
-                  {(geocoding || !formData.address?.trim() || !formData.city?.trim() || !formData.state?.trim() || !formData.zipCode?.trim()) ? (
-                    <p className="text-xs text-red-500 mt-1">
-                      {geocoding ? 'Looking up coordinates...' : 
-                       `Please fill in: ${[
-                         !formData.address?.trim() && 'Address',
-                         !formData.city?.trim() && 'City',
-                         !formData.state?.trim() && 'State',
-                         !formData.zipCode?.trim() && 'ZIP Code'
-                       ].filter(Boolean).join(', ')}`}
-                    </p>
+              <div className="flex items-end">
+                <button
+                  type="button"
+                  onClick={geocodeAddress}
+                  disabled={geocoding || !formData.address?.trim() || !formData.city?.trim() || !formData.state?.trim() || !formData.zipCode?.trim()}
+                  className={`w-full px-4 py-3 border border-transparent text-sm font-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
+                    geocoding || !formData.address?.trim() || !formData.city?.trim() || !formData.state?.trim() || !formData.zipCode?.trim()
+                      ? 'bg-gray-400 text-gray-700 cursor-not-allowed'
+                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                  }`}
+                >
+                  {geocoding ? (
+                    <>
+                      <div className="animate-spin -ml-1 mr-2 h-4 w-4 text-white">
+                        <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+                      </div>
+                      Looking up...
+                    </>
                   ) : (
-                    <p className="text-xs text-gray-500 mt-1">
-                      Click to automatically find coordinates from your address
-                    </p>
+                    <>
+                      <MapPin className="h-4 w-4 mr-2" />
+                      Lookup Coordinates
+                    </>
                   )}
-                </div>
-
-                {/* Manual Coordinate Entry */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Latitude
-                    </label>
-                    <input
-                      type="number"
-                      step="any"
-                      name="latitude"
-                      value={formData.latitude}
-                      onChange={handleInputChange}
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
-                      placeholder="e.g., 40.1234"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Longitude
-                    </label>
-                    <input
-                      type="number"
-                      step="any"
-                      name="longitude"
-                      value={formData.longitude}
-                      onChange={handleInputChange}
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
-                      placeholder="e.g., -78.5678"
-                    />
-                  </div>
-                </div>
-                
-                {formData.latitude && formData.longitude && (
-                  <div className="text-sm text-green-600 bg-green-50 border border-green-200 rounded p-2">
-                    ✓ Coordinates set: {formData.latitude}, {formData.longitude}
-                  </div>
-                )}
+                </button>
               </div>
             </div>
+
+            {/* Error message for coordinates */}
+            {(geocoding || !formData.address?.trim() || !formData.city?.trim() || !formData.state?.trim() || !formData.zipCode?.trim()) && (
+              <p className="text-sm text-red-600">
+                {geocoding ? 'Looking up coordinates...' : 
+                 `Please fill in: ${[
+                   !formData.address?.trim() && 'Address',
+                   !formData.city?.trim() && 'City',
+                   !formData.state?.trim() && 'State',
+                   !formData.zipCode?.trim() && 'ZIP Code'
+                 ].filter(Boolean).join(', ')}`}
+              </p>
+            )}
+
+            {/* Coordinates */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Latitude
+                </label>
+                <input
+                  type="number"
+                  step="any"
+                  name="latitude"
+                  value={formData.latitude}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-base"
+                  placeholder="e.g., 40.1234"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Longitude
+                </label>
+                <input
+                  type="number"
+                  step="any"
+                  name="longitude"
+                  value={formData.longitude}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-base"
+                  placeholder="e.g., -78.5678"
+                />
+              </div>
+            </div>
+            
+            {formData.latitude && formData.longitude && (
+              <div className="text-sm text-green-600 bg-green-50 border border-green-200 rounded-lg p-3">
+                ✓ Coordinates set: {formData.latitude}, {formData.longitude}
+              </div>
+            )}
 
             {/* Service Capabilities */}
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-gray-700 mb-3">
                 Service Capabilities * (Select all that apply)
               </label>
-              <div className="mt-2 grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {capabilities.map(capability => (
-                  <label key={capability} className="flex items-center">
+                  <label key={capability} className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
                     <input
                       type="checkbox"
                       checked={formData.capabilities.includes(capability)}
                       onChange={() => handleCapabilityChange(capability)}
-                      className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                     />
-                    <span className="ml-2 text-sm text-gray-700">{capability}</span>
+                    <span className="ml-3 text-sm font-medium text-gray-700">{capability}</span>
                   </label>
                 ))}
               </div>
@@ -558,76 +519,67 @@ const EMSRegistration: React.FC<EMSRegistrationProps> = ({ onBack, onSuccess }) 
 
             {/* Transport Availability */}
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-gray-700 mb-3">
                 Transport Availability (Optional)
               </label>
-              <div className="mt-1 grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-xs text-gray-500">Start Time</label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Clock className="h-4 w-4 text-gray-400" />
-                    </div>
-                    <input
-                      type="time"
-                      name="operatingHours.start"
-                      value={formData.operatingHours.start}
-                      onChange={handleInputChange}
-                      className="block w-full pl-10 border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
-                    />
-                  </div>
+                  <label className="block text-sm font-medium text-gray-500 mb-2">Start Time</label>
+                  <input
+                    type="time"
+                    name="operatingHours.start"
+                    value={formData.operatingHours.start}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-base"
+                  />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500">End Time</label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Clock className="h-4 w-4 text-gray-400" />
-                    </div>
-                    <input
-                      type="time"
-                      name="operatingHours.end"
-                      value={formData.operatingHours.end}
-                      onChange={handleInputChange}
-                      className="block w-full pl-10 border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
-                    />
-                  </div>
+                  <label className="block text-sm font-medium text-gray-500 mb-2">End Time</label>
+                  <input
+                    type="time"
+                    name="operatingHours.end"
+                    value={formData.operatingHours.end}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-base"
+                  />
                 </div>
               </div>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-sm text-gray-500 mt-2">
                 Leave blank for 24/7 availability. Specify hours only if you have restrictions (e.g., "Monday-Friday 6 AM - 6 PM")
               </p>
             </div>
 
-            {/* Password */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Password *
-              </label>
-              <input
-                type="password"
-                name="password"
-                required
-                value={formData.password}
-                onChange={handleInputChange}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
-                placeholder="Enter password (min 8 characters)"
-              />
-            </div>
+            {/* Password Fields */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Password *
+                </label>
+                <input
+                  type="password"
+                  name="password"
+                  required
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-base"
+                  placeholder="Enter password (min 8 characters)"
+                />
+              </div>
 
-            {/* Confirm Password */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Confirm Password *
-              </label>
-              <input
-                type="password"
-                name="confirmPassword"
-                required
-                value={formData.confirmPassword}
-                onChange={handleInputChange}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
-                placeholder="Confirm password"
-              />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Confirm Password *
+                </label>
+                <input
+                  type="password"
+                  name="confirmPassword"
+                  required
+                  value={formData.confirmPassword}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-base"
+                  placeholder="Confirm password"
+                />
+              </div>
             </div>
           </div>
 

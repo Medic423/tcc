@@ -7,18 +7,13 @@ import {
   Truck,
   MapPin,
   Clock,
-  Calendar,
   Download,
   Share2,
   X
 } from 'lucide-react';
 import { 
-  LineChart, 
-  Line, 
   AreaChart, 
   Area, 
-  BarChart, 
-  Bar, 
   PieChart as RechartsPieChart, 
   Pie,
   Cell, 
@@ -26,7 +21,6 @@ import {
   YAxis, 
   CartesianGrid, 
   Tooltip, 
-  Legend, 
   ResponsiveContainer 
 } from 'recharts';
 
@@ -73,11 +67,6 @@ const FinancialSummaryReport: React.FC<FinancialSummaryReportProps> = ({
     return 'text-red-600';
   };
 
-  const getProfitMarginBgColor = (margin: number) => {
-    if (margin >= 20) return 'bg-green-100';
-    if (margin >= 10) return 'bg-yellow-100';
-    return 'bg-red-100';
-  };
 
   // Generate sample trend data for visualization
   const generateTrendData = () => {
@@ -249,12 +238,12 @@ const FinancialSummaryReport: React.FC<FinancialSummaryReportProps> = ({
               <AreaChart data={trendData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
-                <YAxis tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`} />
+                <YAxis tickFormatter={(value: number) => `$${(value / 1000).toFixed(0)}k`} />
                 <Tooltip 
                   formatter={(value: number) => [formatCurrency(value), '']}
                   labelFormatter={(label) => `Month: ${label}`}
                 />
-                <Legend />
+                {/* Legend removed due to TypeScript compatibility issues */}
                 <Area 
                   type="monotone" 
                   dataKey="revenue" 
@@ -289,7 +278,7 @@ const FinancialSummaryReport: React.FC<FinancialSummaryReportProps> = ({
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    label={({ name, percent }: { name: string; percent: number }) => `${name} ${(percent * 100).toFixed(0)}%`}
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="value"

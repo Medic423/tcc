@@ -2,16 +2,13 @@ import React, { useState, useEffect } from 'react';
 import {
   Navigation,
   Settings,
-  TrendingUp,
   Clock,
   MapPin,
   DollarSign,
   RefreshCw,
   CheckCircle,
   AlertCircle,
-  BarChart3,
-  Target,
-  Zap
+  Target
 } from 'lucide-react';
 import optimizationApi from '../services/optimizationApi';
 import {
@@ -21,7 +18,6 @@ import {
   BackhaulAnalysisResponse,
   RevenueAnalyticsResponse,
   PerformanceMetricsResponse,
-  OptimizationWeights,
   OptimizationSettings
 } from '../types/optimization';
 

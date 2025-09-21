@@ -5,21 +5,14 @@ import {
   Filter, 
   Download, 
   RefreshCw, 
-  Eye, 
-  Edit, 
   X, 
   CheckCircle, 
   Clock, 
-  AlertCircle,
   Truck,
   MapPin,
-  Calendar,
-  User,
   ChevronDown,
   ChevronUp,
-  Plus,
   Phone,
-  Mail,
   ChevronRight
 } from 'lucide-react';
 import { tripsAPI } from '../services/api';
@@ -57,6 +50,18 @@ interface Trip {
       name: string;
     };
   };
+  // Additional properties that are used in the code
+  requestTimestamp?: string;
+  transferRequestTime?: string;
+  acceptedTimestamp?: string;
+  emsArrivalTime?: string;
+  pickupTimestamp?: string;
+  actualStartTime?: string;
+  actualEndTime?: string;
+  completionTimestamp?: string;
+  distanceMiles?: number;
+  estimatedTripTimeMinutes?: number;
+  tripCost?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -76,7 +81,7 @@ interface TripTimelineEvent {
 }
 
 // Trip Card Component
-const TripCard: React.FC<{ trip: Trip; user: User }> = ({ trip, user }) => {
+const TripCard: React.FC<{ trip: Trip }> = ({ trip }) => {
   const [expanded, setExpanded] = useState(false);
   const [timeline, setTimeline] = useState<TripTimelineEvent[]>([]);
 
@@ -182,22 +187,6 @@ const TripCard: React.FC<{ trip: Trip; user: User }> = ({ trip, user }) => {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'COMPLETED':
-        return 'bg-green-100 text-green-800';
-      case 'CANCELLED':
-        return 'bg-red-100 text-red-800';
-      case 'IN_PROGRESS':
-        return 'bg-blue-100 text-blue-800';
-      case 'PENDING':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'ACCEPTED':
-        return 'bg-purple-100 text-purple-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -364,7 +353,6 @@ const TripsView: React.FC<TripsViewProps> = ({ user }) => {
   const [trips, setTrips] = useState<Trip[]>([]);
   const [filteredTrips, setFilteredTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   
   // Filter states
@@ -377,10 +365,10 @@ const TripsView: React.FC<TripsViewProps> = ({ user }) => {
   
   // UI states
   const [showFilters, setShowFilters] = useState(false);
-  const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
+  const [selectedTrip] = useState<Trip | null>(null);
   const [showTripModal, setShowTripModal] = useState(false);
-  const [sortField, setSortField] = useState<keyof Trip>('createdAt');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [sortField] = useState<keyof Trip>('createdAt');
+  const [sortDirection] = useState<'asc' | 'desc'>('desc');
 
   // Fetch trips data
   const fetchTrips = async () => {
@@ -392,10 +380,10 @@ const TripsView: React.FC<TripsViewProps> = ({ user }) => {
         setFilteredTrips(response.data.data);
         setLastRefresh(new Date());
       } else {
-        setError(response.data.error || 'Failed to fetch trips');
+        console.error('Failed to fetch trips:', response.data.error);
       }
     } catch (error: any) {
-      setError(error.response?.data?.error || 'Failed to fetch trips');
+      console.error('Failed to fetch trips:', error.response?.data?.error || error.message);
     } finally {
       setLoading(false);
     }
@@ -477,6 +465,10 @@ const TripsView: React.FC<TripsViewProps> = ({ user }) => {
       const aVal = a[sortField];
       const bVal = b[sortField];
       
+      if (aVal == null && bVal == null) return 0;
+      if (aVal == null) return sortDirection === 'asc' ? 1 : -1;
+      if (bVal == null) return sortDirection === 'asc' ? -1 : 1;
+      
       if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
       if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
       return 0;
@@ -485,15 +477,6 @@ const TripsView: React.FC<TripsViewProps> = ({ user }) => {
     setFilteredTrips(filtered);
   }, [trips, searchTerm, statusFilter, priorityFilter, transportFilter, dateFilter, hospitalFilter, sortField, sortDirection, user]);
 
-  // Handle sort
-  const handleSort = (field: keyof Trip) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDirection('asc');
-    }
-  };
 
   // Get status badge
   const getStatusBadge = (status: string) => {
@@ -595,11 +578,6 @@ const TripsView: React.FC<TripsViewProps> = ({ user }) => {
     window.URL.revokeObjectURL(url);
   };
 
-  // View trip details
-  const viewTripDetails = (trip: Trip) => {
-    setSelectedTrip(trip);
-    setShowTripModal(true);
-  };
 
   if (loading) {
     return (
@@ -915,7 +893,7 @@ const TripsView: React.FC<TripsViewProps> = ({ user }) => {
       {/* Trip Cards */}
       <div className="space-y-4">
         {filteredTrips.map((trip) => (
-          <TripCard key={trip.id} trip={trip} user={user} />
+          <TripCard key={trip.id} trip={trip} />
         ))}
 
         {filteredTrips.length === 0 && (

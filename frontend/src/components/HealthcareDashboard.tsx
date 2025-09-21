@@ -4,7 +4,6 @@ import {
   Plus, 
   Clock, 
   CheckCircle, 
-  AlertCircle,
   AlertTriangle,
   User,
   LogOut,
@@ -42,7 +41,12 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
       status: 'PENDING',
       requestTime: '2025-09-07 10:30 AM',
       priority: 'MEDIUM',
-      urgencyLevel: 'Urgent'
+      urgencyLevel: 'Urgent',
+      pickupLocation: {
+        name: 'Room 101',
+        floor: '1',
+        room: '101'
+      }
     },
     {
       id: '2',
@@ -52,7 +56,12 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
       status: 'ACCEPTED',
       requestTime: '2025-09-07 09:15 AM',
       priority: 'HIGH',
-      urgencyLevel: 'Emergent'
+      urgencyLevel: 'Emergent',
+      pickupLocation: {
+        name: 'ICU Room 205',
+        floor: '2',
+        room: '205'
+      }
     },
     {
       id: '3',
@@ -62,7 +71,12 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
       status: 'IN_PROGRESS',
       requestTime: '2025-09-07 08:45 AM',
       priority: 'HIGH',
-      urgencyLevel: 'Emergent'
+      urgencyLevel: 'Emergent',
+      pickupLocation: {
+        name: 'Emergency Bay 3',
+        floor: '1',
+        room: 'E3'
+      }
     },
     {
       id: '4',
@@ -72,7 +86,12 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
       status: 'COMPLETED',
       requestTime: '2025-09-07 07:30 AM',
       priority: 'LOW',
-      urgencyLevel: 'Routine'
+      urgencyLevel: 'Routine',
+      pickupLocation: {
+        name: 'Ward 3',
+        floor: '3',
+        room: '301'
+      }
     }
   ]);
   const [editingTrip, setEditingTrip] = useState<any>(null);
@@ -289,14 +308,6 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
     }
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'HIGH': return 'text-red-600 bg-red-100';
-      case 'MEDIUM': return 'text-yellow-600 bg-yellow-100';
-      case 'LOW': return 'text-green-600 bg-green-100';
-      default: return 'text-gray-600 bg-gray-100';
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">

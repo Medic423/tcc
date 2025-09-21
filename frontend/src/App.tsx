@@ -175,7 +175,7 @@ function AppContent() {
               />
             )}
             {currentView === 'login' && (
-              <Login onLogin={handleLogin} />
+              <Login onLogin={handleLogin} onBack={handleBackToPublic} />
             )}
             {currentView === 'healthcare-login' && (
               <HealthcareLogin 

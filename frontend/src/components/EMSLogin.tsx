@@ -139,12 +139,14 @@ const EMSLogin: React.FC<EMSLoginProps> = ({ onBack, onLogin }) => {
           </div>
 
           <div className="text-center">
-            <div className="text-sm text-gray-600">
-              <p className="font-medium">Demo Credentials:</p>
-              <p><strong>Email:</strong> fferguson@movalleyems.com</p>
-              <p><strong>Password:</strong> password123</p>
-            </div>
+            <button
+              onClick={onBack}
+              className="text-sm text-gray-600 hover:text-gray-800 transition-colors duration-200"
+            >
+              Return to the Login Page
+            </button>
           </div>
+
         </form>
       </div>
     </div>

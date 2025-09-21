@@ -9,23 +9,9 @@ import {
   Menu,
   X,
   DollarSign,
-  Navigation,
   ChevronDown,
-  Plus,
-  Activity,
-  TrendingUp,
-  FileText,
   Users,
   Settings,
-  Database,
-  AlertCircle,
-  CheckCircle,
-  BarChart2,
-  PieChart,
-  DollarSign as DollarIcon,
-  CreditCard,
-  UserPlus,
-  Shield,
   Bell as BellIcon,
   HardDrive
 } from 'lucide-react';
@@ -61,7 +47,7 @@ interface TCCDashboardProps {
 }
 
 const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [, ] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const location = useLocation();
@@ -88,7 +74,7 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
     ];
 
     // Additional features
-    const additionalFeatures = [
+    const additionalFeatures: any[] = [
       // Notifications moved to Settings dropdown
     ];
 
@@ -145,17 +131,9 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
   }, [activeDropdown]);
 
   // Flatten all navigation items for current page detection
-  const allNavItems = [
-    ...navigation.coreOperations,
-    ...navigation.analysisReporting,
-    ...navigation.administration,
-    ...navigation.additionalFeatures
-  ];
+  // Navigation items consolidated for dropdown handling
 
-  const currentPage = allNavItems.find(item => 
-    location.pathname === item.href || 
-    (item.href !== '/dashboard' && location.pathname.startsWith(item.href))
-  )?.name || 'Dashboard';
+  // Current page tracking removed to fix unused variable
 
   // Dropdown Menu Component
   const DropdownMenu = ({ menuKey, menu }: { menuKey: string; menu: any }) => {
@@ -253,7 +231,7 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
                   (item.href !== '/dashboard' && location.pathname.startsWith(item.href));
                 
                 // Use dropdown for items that have dropdowns, otherwise use regular link
-                if (item.hasDropdown) {
+                if ((item as any).hasDropdown) {
                   const menuKey = item.name.toLowerCase();
                   const menu = dropdownMenus[menuKey as keyof typeof dropdownMenus];
                   return (
@@ -429,7 +407,7 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
                     (item.href !== '/dashboard' && location.pathname.startsWith(item.href));
                   
                   // Use dropdown for items that have dropdowns, otherwise use regular link
-                  if (item.hasDropdown) {
+                  if ((item as any).hasDropdown) {
                     const menuKey = item.name.toLowerCase();
                     return (
                       <DropdownMenu 

@@ -10,9 +10,10 @@ interface User {
 
 interface LoginProps {
   onLogin: (user: User, token: string) => void;
+  onBack?: () => void;
 }
 
-const Login: React.FC<LoginProps> = ({ onLogin }) => {
+const Login: React.FC<LoginProps> = ({ onLogin, onBack }) => {
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -128,13 +129,17 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             </button>
           </div>
 
-          <div className="text-center">
-            <div className="text-sm text-gray-600">
-              <p className="font-medium">Demo Credentials:</p>
-              <p><strong>Admin:</strong> admin@tcc.com / admin123</p>
-              <p><strong>User:</strong> user@tcc.com / admin123</p>
+          {onBack && (
+            <div className="text-center">
+              <button
+                onClick={onBack}
+                className="text-sm text-gray-600 hover:text-gray-800 transition-colors duration-200"
+              >
+                Return to the Login Page
+              </button>
             </div>
-          </div>
+          )}
+
         </form>
       </div>
     </div>

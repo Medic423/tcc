@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart3, TrendingUp, Activity, DollarSign, Settings } from 'lucide-react';
-import RevenueOptimizationPanel from './RevenueOptimizationPanel';
 import RevenueSettings from './RevenueSettings';
 import { emsAnalyticsAPI } from '../services/api';
 

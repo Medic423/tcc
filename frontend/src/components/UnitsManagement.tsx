@@ -3,8 +3,6 @@ import {
   Plus, 
   Edit, 
   Trash2, 
-  MapPin, 
-  Clock, 
   CheckCircle, 
   AlertCircle,
   Truck,
@@ -12,9 +10,7 @@ import {
   BarChart3,
   Filter,
   Search,
-  RefreshCw,
-  Eye,
-  MoreVertical
+  RefreshCw
 } from 'lucide-react';
 import {
   Unit,
@@ -39,7 +35,7 @@ interface UnitsManagementProps {
   };
 }
 
-const UnitsManagement: React.FC<UnitsManagementProps> = ({ user }) => {
+const UnitsManagement: React.FC<UnitsManagementProps> = () => {
   const [units, setUnits] = useState<Unit[]>([]);
   const [analytics, setAnalytics] = useState<UnitAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
@@ -213,36 +209,6 @@ const UnitsManagement: React.FC<UnitsManagementProps> = ({ user }) => {
     }
   };
 
-  // Handle status update
-  const handleStatusUpdate = async (unitId: string, newStatus: UnitStatus) => {
-    try {
-      const token = localStorage.getItem('token');
-      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
-      
-      const response = await fetch(`${API_BASE_URL}/api/units/${unitId}/status`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        },
-        body: JSON.stringify({ status: newStatus })
-      });
-
-      const data = await response.json();
-      
-      if (data.success) {
-        await fetchUnits();
-        await fetchAnalytics();
-      } else {
-        throw new Error(data.error || 'Failed to update status');
-      }
-    } catch (error: any) {
-      console.error('Error updating status:', error);
-      setError(error.message);
-    }
-  };
 
   // Reset form
   const resetForm = () => {

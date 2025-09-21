@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { DollarSign, Save, RefreshCw, Calculator, Users, Truck, Clock, MapPin, CreditCard, Settings, Route, Target, Zap, BarChart3, TrendingUp, TrendingDown, PieChart, Activity, DollarSign as DollarIcon } from 'lucide-react';
+import { Save, RefreshCw, Calculator, Users, Truck, Clock, MapPin, CreditCard, Settings, Route, Target, Zap, BarChart3, TrendingUp, PieChart, Activity, DollarSign as DollarIcon } from 'lucide-react';
 
 interface RevenueSettings {
   baseRates: {
@@ -376,7 +376,7 @@ const RevenueSettings: React.FC = () => {
     backhaulOpportunities: []
   });
 
-  const [loading, setLoading] = useState(false);
+  const [loading] = useState(false);
   const [saved, setSaved] = useState(false);
   const [optimizationLoading, setOptimizationLoading] = useState(false);
 
@@ -386,7 +386,7 @@ const RevenueSettings: React.FC = () => {
   const [tripCostBreakdowns, setTripCostBreakdowns] = useState<TripCostBreakdown[]>([]);
   const [costAnalysisLoading, setCostAnalysisLoading] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState('month');
-  const [selectedDateRange, setSelectedDateRange] = useState<{ start: string; end: string }>({
+  const [selectedDateRange] = useState<{ start: string; end: string }>({
     start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     end: new Date().toISOString().split('T')[0]
   });
@@ -579,10 +579,6 @@ const RevenueSettings: React.FC = () => {
       setOptimizationLoading(true);
       
       // Mock optimization preview data based on current settings
-      const mockUnits = [
-        { id: 'unit1', currentLocation: { lat: 40.7128, lng: -74.0060 } },
-        { id: 'unit2', currentLocation: { lat: 40.7589, lng: -73.9851 } }
-      ];
       
       const mockRequests = [
         { 
@@ -639,13 +635,16 @@ const RevenueSettings: React.FC = () => {
   };
 
   const updateSetting = (category: keyof RevenueSettings, field: string, value: number) => {
-    setSettings(prev => ({
-      ...prev,
-      [category]: {
-        ...prev[category],
-        [field]: value
-      }
-    }));
+    setSettings(prev => {
+      const currentCategory = prev[category] as Record<string, any>;
+      return {
+        ...prev,
+        [category]: {
+          ...currentCategory,
+          [field]: value
+        }
+      };
+    });
   };
 
   const loadCostAnalysisData = async () => {

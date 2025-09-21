@@ -5,9 +5,7 @@ import {
   X,
   ChevronRight,
   ChevronLeft,
-  QrCode,
   MapPin,
-  Clock,
   User,
   Stethoscope,
   Truck
@@ -187,7 +185,8 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
         urgency: urgencyRes.data.data || [],
         insurance: insuranceRes.data.data || [],
         facilities: facilitiesRes.data || [],
-        agencies: []
+        agencies: [],
+        pickupLocations: []
       });
     } catch (error) {
       console.error('Error loading form options:', error);
@@ -793,7 +792,6 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {console.log('TCC_DEBUG: Rendering agencies:', formOptions.agencies)}
                   {formOptions.agencies.length === 0 ? (
                     <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                       <div className="flex items-center">

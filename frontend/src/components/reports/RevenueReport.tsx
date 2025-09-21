@@ -1,10 +1,8 @@
 import React from 'react';
 import { 
   DollarSign, 
-  TrendingUp, 
   BarChart3, 
   Truck,
-  Star,
   Download,
   Share2,
   X
@@ -19,7 +17,6 @@ import {
   YAxis, 
   CartesianGrid, 
   Tooltip, 
-  Legend, 
   ResponsiveContainer 
 } from 'recharts';
 
@@ -218,9 +215,9 @@ const RevenueReport: React.FC<RevenueReportProps> = ({
               <BarChart data={transportLevelData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="level" />
-                <YAxis tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`} />
+                <YAxis tickFormatter={(value: number) => `$${(value / 1000).toFixed(0)}k`} />
                 <Tooltip formatter={(value: number) => [formatCurrency(value), 'Revenue']} />
-                <Legend />
+                {/* Legend removed due to TypeScript compatibility issues */}
                 <Bar dataKey="revenue" fill="#10b981" name="Revenue" />
                 <Bar dataKey="cost" fill="#ef4444" name="Cost" />
                 <Bar dataKey="profit" fill="#3b82f6" name="Profit" />
@@ -237,9 +234,9 @@ const RevenueReport: React.FC<RevenueReportProps> = ({
               <BarChart data={priorityData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="priority" />
-                <YAxis tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`} />
+                <YAxis tickFormatter={(value: number) => `$${(value / 1000).toFixed(0)}k`} />
                 <Tooltip formatter={(value: number) => [formatCurrency(value), 'Revenue']} />
-                <Legend />
+                {/* Legend removed due to TypeScript compatibility issues */}
                 <Bar dataKey="revenue" fill="#10b981" name="Revenue" />
                 <Bar dataKey="cost" fill="#ef4444" name="Cost" />
                 <Bar dataKey="profit" fill="#3b82f6" name="Profit" />
@@ -260,7 +257,7 @@ const RevenueReport: React.FC<RevenueReportProps> = ({
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    label={({ name, percent }: { name: string; percent: number }) => `${name} ${(percent * 100).toFixed(0)}%`}
                     outerRadius={80}
                     fill="#8884d8"
                     dataKey="value"
@@ -285,7 +282,7 @@ const RevenueReport: React.FC<RevenueReportProps> = ({
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    label={({ name, percent }: { name: string; percent: number }) => `${name} ${(percent * 100).toFixed(0)}%`}
                     outerRadius={80}
                     fill="#8884d8"
                     dataKey="value"
