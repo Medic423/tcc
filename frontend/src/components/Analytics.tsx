@@ -219,15 +219,15 @@ const Analytics: React.FC = () => {
                     <div className="space-y-3">
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600">BLS</span>
-                        <span className="text-sm font-medium text-gray-900">{tripStats.tripsByLevel.BLS}</span>
+                        <span className="text-sm font-medium text-gray-900">{tripStats.tripsByLevel?.BLS || 0}</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600">ALS</span>
-                        <span className="text-sm font-medium text-gray-900">{tripStats.tripsByLevel.ALS}</span>
+                        <span className="text-sm font-medium text-gray-900">{tripStats.tripsByLevel?.ALS || 0}</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600">CCT</span>
-                        <span className="text-sm font-medium text-gray-900">{tripStats.tripsByLevel.CCT}</span>
+                        <span className="text-sm font-medium text-gray-900">{tripStats.tripsByLevel?.CCT || 0}</span>
                       </div>
                     </div>
                   </div>
@@ -237,19 +237,19 @@ const Analytics: React.FC = () => {
                     <div className="space-y-3">
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600">Low</span>
-                        <span className="text-sm font-medium text-gray-900">{tripStats.tripsByPriority.LOW}</span>
+                        <span className="text-sm font-medium text-gray-900">{tripStats.tripsByPriority?.LOW || 0}</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600">Medium</span>
-                        <span className="text-sm font-medium text-gray-900">{tripStats.tripsByPriority.MEDIUM}</span>
+                        <span className="text-sm font-medium text-gray-900">{tripStats.tripsByPriority?.MEDIUM || 0}</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600">High</span>
-                        <span className="text-sm font-medium text-gray-900">{tripStats.tripsByPriority.HIGH}</span>
+                        <span className="text-sm font-medium text-gray-900">{tripStats.tripsByPriority?.HIGH || 0}</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600">Urgent</span>
-                        <span className="text-sm font-medium text-gray-900">{tripStats.tripsByPriority.URGENT}</span>
+                        <span className="text-sm font-medium text-gray-900">{tripStats.tripsByPriority?.URGENT || 0}</span>
                       </div>
                     </div>
                   </div>

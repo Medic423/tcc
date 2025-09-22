@@ -1246,10 +1246,16 @@ export default function handler(req, res) {
           inProgress: 12,
           completed: 136
         },
-        tripsByType: {
+        tripsByLevel: {
           BLS: 89,
           ALS: 45,
-          CriticalCare: 22
+          CCT: 22
+        },
+        tripsByPriority: {
+          LOW: 34,
+          MEDIUM: 67,
+          HIGH: 42,
+          URGENT: 13
         },
         averageTripDuration: 45.2,
         averageDistance: 12.8,
