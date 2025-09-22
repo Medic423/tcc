@@ -113,7 +113,6 @@ const TCCRouteOptimizer: React.FC = () => {
     try {
       console.log('TCC_DEBUG: Loading system-wide units for TCC optimization');
       const token = localStorage.getItem('token');
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://vercel-api-eta-nine.vercel.app';
       
       if (!token) {
         throw new Error('No authentication token found');
@@ -147,7 +146,6 @@ const TCCRouteOptimizer: React.FC = () => {
     try {
       console.log('TCC_DEBUG: Loading system-wide pending requests for TCC optimization');
       const token = localStorage.getItem('token');
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://vercel-api-eta-nine.vercel.app';
       
       if (!token) {
         throw new Error('No authentication token found');
@@ -277,7 +275,6 @@ const TCCRouteOptimizer: React.FC = () => {
     try {
       console.log('TCC_DEBUG: Starting return trip analysis...');
       const token = localStorage.getItem('token');
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://vercel-api-eta-nine.vercel.app';
       
       if (!token) {
         throw new Error('No authentication token found');

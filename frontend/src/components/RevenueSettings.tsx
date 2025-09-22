@@ -2023,9 +2023,6 @@ const RevenueSettings: React.FC = () => {
                 onClick={async ()=>{
                   try{
                     setOptimizationLoading(true);
-                    const token = localStorage.getItem('token');
-                    const baseUrl = import.meta.env.VITE_BACKEND_URL || 'https://vercel-api-eta-nine.vercel.app';
-                    const authHeaders: any = token ? { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
 
                     // Resolve unitIds
                     let unitIds: string[] = whatIfUnitIds.split(',').map(s=>s.trim()).filter(Boolean);

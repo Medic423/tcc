@@ -7,8 +7,6 @@ import {
   AlertCircle,
   User,
   LogOut,
-  Bell,
-  Navigation,
   Settings,
   BarChart3
 } from 'lucide-react';

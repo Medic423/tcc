@@ -55,7 +55,6 @@ const TCCUnitsManagement: React.FC = () => {
   const [selectedAgency, setSelectedAgency] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://vercel-api-eta-nine.vercel.app';
 
   useEffect(() => {
     fetchData();

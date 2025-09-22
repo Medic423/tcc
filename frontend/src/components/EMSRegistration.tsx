@@ -221,16 +221,7 @@ const EMSRegistration: React.FC<EMSRegistrationProps> = ({ onBack, onSuccess }) 
         password: formData.password,
         name: formData.contactName,
         agencyName: formData.agencyName,
-        address: formData.address,
-        city: formData.city,
-        state: formData.state,
-        zipCode: formData.zipCode,
-        phone: formData.phone,
-        latitude: formData.latitude,
-        longitude: formData.longitude,
-        serviceArea: formData.serviceArea,
-        capabilities: formData.capabilities,
-        operatingHours: formData.operatingHours
+        serviceType: 'EMS'
       });
       
       setSuccess(true);

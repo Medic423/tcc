@@ -7,13 +7,9 @@ import {
   PieChart, 
   FileText, 
   Download,
-  Calendar,
-  Filter,
   RefreshCw,
   AlertCircle,
-  CheckCircle,
   Clock,
-  Users,
   Truck,
   MapPin,
   Share2,
@@ -25,8 +21,6 @@ import {
   Line, 
   AreaChart, 
   Area, 
-  BarChart, 
-  Bar, 
   PieChart as RechartsPieChart, 
   Pie,
   Cell, 
@@ -162,7 +156,7 @@ const FinancialDashboard: React.FC = () => {
   
   // Filter states
   const [selectedPeriod, setSelectedPeriod] = useState('month');
-  const [selectedDateRange, setSelectedDateRange] = useState<{ start: string; end: string }>({
+  const [selectedDateRange] = useState<{ start: string; end: string }>({
     start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     end: new Date().toISOString().split('T')[0]
   });
@@ -819,7 +813,7 @@ const FinancialDashboard: React.FC = () => {
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value: number) => [formatCurrency(value), 'Cost']} />
+                  <Tooltip formatter={(value: unknown) => [formatCurrency(value as number), 'Cost']} />
                 </RechartsPieChart>
               </ResponsiveContainer>
             </div>

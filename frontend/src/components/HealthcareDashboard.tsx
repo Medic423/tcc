@@ -4,7 +4,6 @@ import {
   Plus, 
   Clock, 
   CheckCircle, 
-  AlertCircle,
   AlertTriangle,
   User,
   LogOut,
@@ -120,7 +119,7 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
             id: trip.id,
             patientId: trip.patientName,
             destination: trip.toLocation,
-            pickupLocation: trip.pickupLocation,
+            pickupLocation: null,
             transportLevel: trip.transportLevel || 'BLS',
             status: trip.status,
             requestTime: new Date(trip.createdAt).toLocaleString(),
@@ -289,14 +288,6 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
     }
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'HIGH': return 'text-red-600 bg-red-100';
-      case 'MEDIUM': return 'text-yellow-600 bg-yellow-100';
-      case 'LOW': return 'text-green-600 bg-green-100';
-      default: return 'text-gray-600 bg-gray-100';
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -454,13 +445,9 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                           <p className="text-sm font-medium text-gray-900">
                             Patient ID: {trip.patientId} - {trip.destination}
                           </p>
-                          {trip.pickupLocation && (
-                            <p className="text-xs text-blue-600">
-                              Pickup: {trip.pickupLocation.name}
-                              {trip.pickupLocation.floor && ` (Floor ${trip.pickupLocation.floor})`}
-                              {trip.pickupLocation.room && ` - Room ${trip.pickupLocation.room}`}
-                            </p>
-                          )}
+                          <p className="text-xs text-blue-600">
+                            Pickup: {trip.destination}
+                          </p>
                           <p className="text-xs text-gray-500">
                             {trip.transportLevel} • {trip.urgencyLevel || trip.priority} • {trip.requestTime}
                           </p>

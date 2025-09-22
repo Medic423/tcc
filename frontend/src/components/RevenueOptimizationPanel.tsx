@@ -55,7 +55,7 @@ const RevenueOptimizationPanel: React.FC<RevenueOptimizationPanelProps> = ({
 }) => {
   const [optimizationMetrics, setOptimizationMetrics] = useState<OptimizationMetrics | null>(null);
   const [backhaulPairs, setBackhaulPairs] = useState<BackhaulPair[]>([]);
-  const [units, setUnits] = useState<Unit[]>([]);
+  const [, setUnits] = useState<Unit[]>([]);
   const [unitsAnalytics, setUnitsAnalytics] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
