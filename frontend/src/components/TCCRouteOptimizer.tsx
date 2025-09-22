@@ -1,17 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import api from '../services/api';
 import {
   Navigation,
   Settings,
-  TrendingUp,
   Clock,
   MapPin,
   DollarSign,
   RefreshCw,
   CheckCircle,
   AlertCircle,
-  BarChart3,
-  Target,
-  Zap
+  Target
 } from 'lucide-react';
 import optimizationApi from '../services/optimizationApi';
 import {
@@ -21,7 +19,6 @@ import {
   BackhaulAnalysisResponse,
   RevenueAnalyticsResponse,
   PerformanceMetricsResponse,
-  OptimizationWeights,
   OptimizationSettings
 } from '../types/optimization';
 
@@ -116,26 +113,19 @@ const TCCRouteOptimizer: React.FC = () => {
     try {
       console.log('TCC_DEBUG: Loading system-wide units for TCC optimization');
       const token = localStorage.getItem('token');
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://vercel-api-eta-nine.vercel.app';
       
       if (!token) {
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch(`${API_BASE_URL}/api/tcc/units`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        }
-      });
+      const response = await api.get('/api/tcc/units');
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch units: ${response.statusText}`);
+      if (!response.data?.success) {
+        throw new Error(`Failed to fetch units: ${response.data?.message || 'Unknown error'}`);
       }
 
-      const data = await response.json();
+      const data = response.data;
       console.log('TCC_DEBUG: Units API response:', data);
       
       if (data.success) {
@@ -157,27 +147,20 @@ const TCCRouteOptimizer: React.FC = () => {
     try {
       console.log('TCC_DEBUG: Loading system-wide pending requests for TCC optimization');
       const token = localStorage.getItem('token');
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://vercel-api-eta-nine.vercel.app';
       
       if (!token) {
         throw new Error('No authentication token found');
       }
 
       // For now, we'll load trips that are pending as transport requests
-      const response = await fetch(`${API_BASE_URL}/api/trips?status=PENDING`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        }
-      });
+      const response = await api.get('/api/trips?status=PENDING');
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch pending requests: ${response.statusText}`);
+      if (!response.data?.success) {
+        throw new Error(`Failed to fetch pending requests: ${response.data?.message || 'Unknown error'}`);
       }
 
-      const data = await response.json();
+      const data = response.data;
       console.log('TCC_DEBUG: Pending requests API response:', data);
       
       if (data.success) {
@@ -294,26 +277,19 @@ const TCCRouteOptimizer: React.FC = () => {
     try {
       console.log('TCC_DEBUG: Starting return trip analysis...');
       const token = localStorage.getItem('token');
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://vercel-api-eta-nine.vercel.app';
       
       if (!token) {
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch(`${API_BASE_URL}/api/optimize/return-trips`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        }
-      });
+      const response = await api.get('/api/optimize/return-trips');
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch return trips: ${response.statusText}`);
+      if (!response.data?.success) {
+        throw new Error(`Failed to fetch return trips: ${response.data?.message || 'Unknown error'}`);
       }
 
-      const data = await response.json();
+      const data = response.data;
       console.log('TCC_DEBUG: Return trips response:', data);
       
       if (data.success) {

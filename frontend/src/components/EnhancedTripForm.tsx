@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import api from '../services/api';
 import { 
   CheckCircle, 
   AlertCircle, 
   X,
   ChevronRight,
   ChevronLeft,
-  QrCode,
   MapPin,
-  Clock,
   User,
   Stethoscope,
   Truck
@@ -173,11 +172,7 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
         tripsAPI.getOptions.transportLevel(),
         tripsAPI.getOptions.urgency(),
         tripsAPI.getOptions.insurance(),
-        fetch('/api/tcc/facilities', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          },
-        }).then(res => res.json())
+        api.get('/api/tcc/facilities').then(res => res.data)
       ]);
 
       setFormOptions({
@@ -187,7 +182,8 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
         urgency: urgencyRes.data.data || [],
         insurance: insuranceRes.data.data || [],
         facilities: facilitiesRes.data || [],
-        agencies: []
+        agencies: [],
+        pickupLocations: []
       });
     } catch (error) {
       console.error('Error loading form options:', error);
@@ -211,14 +207,10 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
   const loadPickupLocationsForHospital = async (hospitalId: string) => {
     try {
       setLoadingPickupLocations(true);
-      const response = await fetch(`/api/tcc/pickup-locations/hospital/${hospitalId}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
+      const response = await api.get(`/api/tcc/pickup-locations/hospital/${hospitalId}`);
       
-      if (response.ok) {
-        const data = await response.json();
+      if (response.data?.success) {
+        const data = response.data;
         if (data.success) {
           setFormOptions(prev => ({
             ...prev,
@@ -793,7 +785,6 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {console.log('TCC_DEBUG: Rendering agencies:', formOptions.agencies)}
                   {formOptions.agencies.length === 0 ? (
                     <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                       <div className="flex items-center">

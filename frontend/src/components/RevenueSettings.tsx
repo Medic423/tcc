@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { DollarSign, Save, RefreshCw, Calculator, Users, Truck, Clock, MapPin, CreditCard, Settings, Route, Target, Zap, BarChart3, TrendingUp, TrendingDown, PieChart, Activity, DollarSign as DollarIcon } from 'lucide-react';
+import { Save, RefreshCw, Calculator, Users, Truck, Clock, MapPin, CreditCard, Settings, Route, Target, Zap, BarChart3, TrendingUp, PieChart, Activity, DollarSign as DollarIcon } from 'lucide-react';
+import api from '../services/api';
 
 interface RevenueSettings {
   baseRates: {
@@ -376,7 +377,7 @@ const RevenueSettings: React.FC = () => {
     backhaulOpportunities: []
   });
 
-  const [loading, setLoading] = useState(false);
+  const [loading] = useState(false);
   const [saved, setSaved] = useState(false);
   const [optimizationLoading, setOptimizationLoading] = useState(false);
 
@@ -386,7 +387,7 @@ const RevenueSettings: React.FC = () => {
   const [tripCostBreakdowns, setTripCostBreakdowns] = useState<TripCostBreakdown[]>([]);
   const [costAnalysisLoading, setCostAnalysisLoading] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState('month');
-  const [selectedDateRange, setSelectedDateRange] = useState<{ start: string; end: string }>({
+  const [selectedDateRange] = useState<{ start: string; end: string }>({
     start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     end: new Date().toISOString().split('T')[0]
   });
@@ -433,7 +434,7 @@ const RevenueSettings: React.FC = () => {
     }
 
     // Use token in URL for EventSource authentication
-    const url = `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001'}/api/optimize/stream?token=${encodeURIComponent(token)}`;
+    const url = `${import.meta.env.VITE_BACKEND_URL || 'https://vercel-api-eta-nine.vercel.app'}/api/optimize/stream?token=${encodeURIComponent(token)}`;
     console.log('Creating EventSource connection to:', url);
     const es = new EventSource(url);
     eventSourceRef.current = es;
@@ -579,10 +580,6 @@ const RevenueSettings: React.FC = () => {
       setOptimizationLoading(true);
       
       // Mock optimization preview data based on current settings
-      const mockUnits = [
-        { id: 'unit1', currentLocation: { lat: 40.7128, lng: -74.0060 } },
-        { id: 'unit2', currentLocation: { lat: 40.7589, lng: -73.9851 } }
-      ];
       
       const mockRequests = [
         { 
@@ -639,13 +636,16 @@ const RevenueSettings: React.FC = () => {
   };
 
   const updateSetting = (category: keyof RevenueSettings, field: string, value: number) => {
-    setSettings(prev => ({
-      ...prev,
-      [category]: {
-        ...prev[category],
-        [field]: value
-      }
-    }));
+    setSettings(prev => {
+      const currentCategory = prev[category] as Record<string, any>;
+      return {
+        ...prev,
+        [category]: {
+          ...currentCategory,
+          [field]: value
+        }
+      };
+    });
   };
 
   const loadCostAnalysisData = async () => {
@@ -665,35 +665,25 @@ const RevenueSettings: React.FC = () => {
       }
       
       // Load cost analysis summary
-      const summaryResponse = await fetch(`http://localhost:5001/api/tcc/analytics/cost-analysis?startDate=${selectedDateRange.start}&endDate=${selectedDateRange.end}`, {
-        headers
-      });
+      const summaryResponse = await api.get(`/api/tcc/analytics/cost-analysis?startDate=${selectedDateRange.start}&endDate=${selectedDateRange.end}`);
       console.log('Summary response status:', summaryResponse.status);
-      if (summaryResponse.ok) {
-        const summaryData = await summaryResponse.json();
-        console.log('Summary data received:', summaryData);
-        setCostAnalysisSummary(summaryData.data);
+      if (summaryResponse.data?.success) {
+        console.log('Summary data received:', summaryResponse.data);
+        setCostAnalysisSummary(summaryResponse.data.data);
       } else {
-        const errorData = await summaryResponse.json();
-        console.error('Summary response error:', errorData);
+        console.error('Summary response error:', summaryResponse.data);
       }
 
       // Load profitability analysis
-      const profitabilityResponse = await fetch(`http://localhost:5001/api/tcc/analytics/profitability?period=${selectedPeriod}`, {
-        headers
-      });
-      if (profitabilityResponse.ok) {
-        const profitabilityData = await profitabilityResponse.json();
-        setProfitabilityAnalysis(profitabilityData.data);
+      const profitabilityResponse = await api.get(`/api/tcc/analytics/profitability?period=${selectedPeriod}`);
+      if (profitabilityResponse.data?.success) {
+        setProfitabilityAnalysis(profitabilityResponse.data.data);
       }
 
       // Load trip cost breakdowns
-      const breakdownsResponse = await fetch(`http://localhost:5001/api/tcc/analytics/cost-breakdowns?limit=50`, {
-        headers
-      });
-      if (breakdownsResponse.ok) {
-        const breakdownsData = await breakdownsResponse.json();
-        setTripCostBreakdowns(breakdownsData.data);
+      const breakdownsResponse = await api.get(`/api/tcc/analytics/cost-breakdowns?limit=50`);
+      if (breakdownsResponse.data?.success) {
+        setTripCostBreakdowns(breakdownsResponse.data.data);
       }
     } catch (error) {
       console.error('Error loading cost analysis data:', error);
@@ -746,23 +736,18 @@ const RevenueSettings: React.FC = () => {
         headers['Authorization'] = `Bearer ${token}`;
       }
       
-      const response = await fetch('http://localhost:5001/api/tcc/analytics/cost-breakdown', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
+      const response = await api.post('/api/tcc/analytics/cost-breakdown', {
           tripId: `sample-trip-${Date.now()}`,
           breakdownData: sampleBreakdown
-        })
-      });
+        });
 
-      if (response.ok) {
+      if (response.data?.success) {
         console.log('Sample cost breakdown created successfully');
         // Reload cost analysis data
         await loadCostAnalysisData();
       } else {
-        const errorData = await response.json();
-        console.error('Error creating sample cost breakdown:', errorData);
-        alert(`Error creating sample data: ${errorData.error || 'Unknown error'}`);
+        console.error('Error creating sample cost breakdown:', response.data);
+        alert(`Error creating sample data: ${response.data?.error || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('Error creating sample cost breakdown:', error);
@@ -2039,15 +2024,15 @@ const RevenueSettings: React.FC = () => {
                   try{
                     setOptimizationLoading(true);
                     const token = localStorage.getItem('token');
-                    const baseUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001';
+                    const baseUrl = import.meta.env.VITE_BACKEND_URL || 'https://vercel-api-eta-nine.vercel.app';
                     const authHeaders: any = token ? { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
 
                     // Resolve unitIds
                     let unitIds: string[] = whatIfUnitIds.split(',').map(s=>s.trim()).filter(Boolean);
                     if (unitIds.length === 0) {
                       try {
-                        const r = await fetch(`${baseUrl}/api/units`, { headers: authHeaders });
-                        const j = await r.json();
+                        const r = await api.get('/api/units');
+                        const j = r.data;
                         unitIds = (j?.data || []).slice(0,3).map((u:any)=>u.id);
                       } catch {}
                     }
@@ -2056,8 +2041,8 @@ const RevenueSettings: React.FC = () => {
                     let requestIds: string[] = whatIfRequestIds.split(',').map(s=>s.trim()).filter(Boolean);
                     if (requestIds.length === 0) {
                       try {
-                        const r = await fetch(`${baseUrl}/api/trips?status=PENDING`, { headers: authHeaders });
-                        const j = await r.json();
+                        const r = await api.get('/api/trips?status=PENDING');
+                        const j = r.data;
                         requestIds = (j?.data || []).slice(0,5).map((t:any)=>t.id);
                       } catch {}
                     }
@@ -2065,12 +2050,13 @@ const RevenueSettings: React.FC = () => {
                     const scenarioSettings = { ...settings.routeOptimization };
                     const baseSettings = { ...settings.routeOptimization };
 
-                    const resp = await fetch(`${baseUrl}/api/optimize/what-if`, {
-                      method: 'POST',
-                      headers: authHeaders,
-                      body: JSON.stringify({ unitIds, requestIds, scenarioSettings, baseSettings })
+                    const resp = await api.post('/api/optimize/what-if', {
+                      unitIds, 
+                      requestIds, 
+                      scenarioSettings, 
+                      baseSettings
                     });
-                    const data = await resp.json();
+                    const data = resp.data;
                     setWhatIfResult(data?.data || null);
                   } finally { setOptimizationLoading(false); }
                 }}
