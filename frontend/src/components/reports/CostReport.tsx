@@ -140,18 +140,19 @@ const CostReport: React.FC<CostReportProps> = ({
   };
 
   // Filter trip breakdowns
-  const filteredTrips = data.tripCostBreakdowns.filter(trip => {
+  const tripBreakdowns = Array.isArray(data.tripCostBreakdowns) ? data.tripCostBreakdowns : [];
+  const filteredTrips = tripBreakdowns.filter(trip => {
     if (selectedTransportLevel !== 'all' && trip.transportLevel !== selectedTransportLevel) return false;
     if (selectedPriority !== 'all' && trip.priorityLevel !== selectedPriority) return false;
     return true;
   });
 
   // Calculate cost breakdown totals
-  const totalCrewLabor = filteredTrips.reduce((sum, trip) => sum + trip.crewLaborCost, 0);
-  const totalVehicle = filteredTrips.reduce((sum, trip) => sum + trip.vehicleCost, 0);
-  const totalFuel = filteredTrips.reduce((sum, trip) => sum + trip.fuelCost, 0);
-  const totalMaintenance = filteredTrips.reduce((sum, trip) => sum + trip.maintenanceCost, 0);
-  const totalOverhead = filteredTrips.reduce((sum, trip) => sum + trip.overheadCost, 0);
+  const totalCrewLabor = filteredTrips.reduce((sum, trip) => sum + (trip.crewLaborCost || 0), 0);
+  const totalVehicle = filteredTrips.reduce((sum, trip) => sum + (trip.vehicleCost || 0), 0);
+  const totalFuel = filteredTrips.reduce((sum, trip) => sum + (trip.fuelCost || 0), 0);
+  const totalMaintenance = filteredTrips.reduce((sum, trip) => sum + (trip.maintenanceCost || 0), 0);
+  const totalOverhead = filteredTrips.reduce((sum, trip) => sum + (trip.overheadCost || 0), 0);
 
   const costBreakdownData = [
     { name: 'Crew Labor', value: totalCrewLabor, color: '#8884d8' },
@@ -163,11 +164,12 @@ const CostReport: React.FC<CostReportProps> = ({
 
   // Cost per transport level
   const transportLevelCosts = filteredTrips.reduce((acc, trip) => {
-    if (!acc[trip.transportLevel]) {
-      acc[trip.transportLevel] = { totalCost: 0, tripCount: 0, averageCost: 0 };
+    const level = trip.transportLevel || 'Unknown';
+    if (!acc[level]) {
+      acc[level] = { totalCost: 0, tripCount: 0, averageCost: 0 };
     }
-    acc[trip.transportLevel].totalCost += trip.totalCost;
-    acc[trip.transportLevel].tripCount += 1;
+    acc[level].totalCost += (trip.totalCost || 0);
+    acc[level].tripCount += 1;
     return acc;
   }, {} as Record<string, { totalCost: number; tripCount: number; averageCost: number }>);
 
@@ -184,22 +186,23 @@ const CostReport: React.FC<CostReportProps> = ({
 
   // Cost trends over time (last 10 trips)
   const recentTrips = filteredTrips
+    .filter(trip => trip.calculatedAt) // Only include trips with calculatedAt
     .sort((a, b) => new Date(b.calculatedAt).getTime() - new Date(a.calculatedAt).getTime())
     .slice(0, 10)
     .reverse();
 
   const costTrendData = recentTrips.map((trip, index) => ({
     trip: `Trip ${index + 1}`,
-    totalCost: trip.totalCost,
-    crewLabor: trip.crewLaborCost,
-    vehicle: trip.vehicleCost,
-    fuel: trip.fuelCost,
-    maintenance: trip.maintenanceCost,
-    overhead: trip.overheadCost
+    totalCost: trip.totalCost || 0,
+    crewLabor: trip.crewLaborCost || 0,
+    vehicle: trip.vehicleCost || 0,
+    fuel: trip.fuelCost || 0,
+    maintenance: trip.maintenanceCost || 0,
+    overhead: trip.overheadCost || 0
   }));
 
-  const uniqueTransportLevels = [...new Set(data.tripCostBreakdowns.map(trip => trip.transportLevel))];
-  const uniquePriorities = [...new Set(data.tripCostBreakdowns.map(trip => trip.priorityLevel))];
+  const uniqueTransportLevels = [...new Set(tripBreakdowns.map(trip => trip.transportLevel).filter(Boolean))];
+  const uniquePriorities = [...new Set(tripBreakdowns.map(trip => trip.priorityLevel).filter(Boolean))];
 
   return (
     <div className="bg-white rounded-lg shadow-lg border border-gray-200">

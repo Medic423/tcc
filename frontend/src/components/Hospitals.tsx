@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Building2, Plus, Edit, Trash2, CheckCircle, XCircle, Clock } from 'lucide-react';
+import api from '../services/api';
 
 interface Hospital {
   id: string;
@@ -35,20 +36,8 @@ const Hospitals: React.FC = () => {
   const fetchHospitals = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/tcc/hospitals', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch hospitals');
-      }
-
-      const data = await response.json();
-      setHospitals(data.data || []);
+      const response = await api.get('/api/tcc/hospitals');
+      setHospitals(response.data.data || []);
     } catch (err: any) {
       setError(err.message);
       console.error('Error fetching hospitals:', err);
@@ -59,20 +48,8 @@ const Hospitals: React.FC = () => {
 
   const handleApprove = async (hospitalId: string) => {
     try {
-      const response = await fetch(`/api/tcc/hospitals/${hospitalId}/approve`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to approve hospital');
-      }
-
-      const data = await response.json();
-      console.log('Hospital approved:', data);
+      const response = await api.put(`/api/tcc/hospitals/${hospitalId}/approve`);
+      console.log('Hospital approved:', response.data);
       
       // Refresh the hospitals list
       await fetchHospitals();
@@ -84,20 +61,8 @@ const Hospitals: React.FC = () => {
 
   const handleReject = async (hospitalId: string) => {
     try {
-      const response = await fetch(`/api/tcc/hospitals/${hospitalId}/reject`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to reject hospital');
-      }
-
-      const data = await response.json();
-      console.log('Hospital rejected:', data);
+      const response = await api.put(`/api/tcc/hospitals/${hospitalId}/reject`);
+      console.log('Hospital rejected:', response.data);
       
       // Refresh the hospitals list
       await fetchHospitals();
@@ -205,18 +170,7 @@ const Hospitals: React.FC = () => {
     setEditError(null);
 
     try {
-      const response = await fetch(`/api/tcc/hospitals/${editingHospital.id}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(editFormData),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update hospital');
-      }
+      const response = await api.put(`/api/tcc/hospitals/${editingHospital.id}`, editFormData);
 
       // Refresh the hospitals list
       await fetchHospitals();
@@ -240,20 +194,8 @@ const Hospitals: React.FC = () => {
     }
 
     try {
-      const response = await fetch(`/api/tcc/hospitals/${hospitalId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete hospital');
-      }
-
-      const data = await response.json();
-      console.log('Hospital deleted:', data);
+      const response = await api.delete(`/api/tcc/hospitals/${hospitalId}`);
+      console.log('Hospital deleted:', response.data);
       
       // Refresh the hospitals list
       await fetchHospitals();

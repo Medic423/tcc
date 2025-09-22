@@ -17,6 +17,7 @@ export default function handler(req, res) {
     'https://frontend-1snhqmn1s-chuck-ferrells-projects.vercel.app',
     'https://frontend-csyqeue6b-chuck-ferrells-projects.vercel.app',
     'https://frontend-oqzka4274-chuck-ferrells-projects.vercel.app', // Latest frontend URL with enhanced trips endpoints
+    'https://frontend-4xr2iebdp-chuck-ferrells-projects.vercel.app', // Latest frontend URL with financial endpoints
     'http://localhost:3000',
     'http://localhost:3001',
     'http://localhost:3002',
@@ -659,7 +660,7 @@ export default function handler(req, res) {
   }
 
   // TCC Cost Analysis endpoint
-  if (req.method === 'GET' && req.url === '/api/tcc/analytics/cost-analysis') {
+  if (req.method === 'GET' && req.url.startsWith('/api/tcc/analytics/cost-analysis')) {
     res.status(200).json({
       success: true,
       data: {
@@ -690,7 +691,7 @@ export default function handler(req, res) {
   }
 
   // TCC Profitability Analysis endpoint
-  if (req.method === 'GET' && req.url === '/api/tcc/analytics/profitability') {
+  if (req.method === 'GET' && req.url.startsWith('/api/tcc/analytics/profitability')) {
     res.status(200).json({
       success: true,
       data: {

@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://vercel-bqfo02a73-chuck-ferrells-projects.vercel.app';
+const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '' : 'https://vercel-bqfo02a73-chuck-ferrells-projects.vercel.app');
 console.log('TCC_DEBUG: API_BASE_URL is set to:', API_BASE_URL);
 
 // Create axios instance
@@ -154,14 +154,10 @@ export const analyticsAPI = {
   
   // Financial Analytics
   getCostAnalysis: (startDate?: string, endDate?: string) =>
-    api.get('/api/tcc/analytics/cost-analysis', { 
-      params: { startDate, endDate } 
-    }),
+    api.get('/api/tcc/analytics/cost-analysis'),
   
   getProfitability: (period?: string) =>
-    api.get('/api/tcc/analytics/profitability', { 
-      params: { period } 
-    }),
+    api.get('/api/tcc/analytics/profitability'),
   
   getTripCostBreakdowns: (tripId?: string, limit?: number) =>
     api.get('/api/tcc/analytics/cost-breakdowns', { 
