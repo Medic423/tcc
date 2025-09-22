@@ -18,6 +18,9 @@ export default function handler(req, res) {
     'https://frontend-csyqeue6b-chuck-ferrells-projects.vercel.app',
     'https://frontend-oqzka4274-chuck-ferrells-projects.vercel.app', // Latest frontend URL with enhanced trips endpoints
     'https://frontend-4xr2iebdp-chuck-ferrells-projects.vercel.app', // Latest frontend URL with financial endpoints
+    'https://frontend-iv7b6gffd-chuck-ferrells-projects.vercel.app', // Latest frontend URL with hospitals fix
+    'https://frontend-esef2a1vo-chuck-ferrells-projects.vercel.app', // Latest frontend URL with working backend
+    'https://frontend-cp81j4etk-chuck-ferrells-projects.vercel.app', // Latest frontend URL with cost analysis fix
     'http://localhost:3000',
     'http://localhost:3001',
     'http://localhost:3002',

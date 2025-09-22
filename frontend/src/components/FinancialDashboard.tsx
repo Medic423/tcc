@@ -142,6 +142,7 @@ interface GeneratedReport {
 }
 
 const FinancialDashboard: React.FC = () => {
+  console.log('TCC_DEBUG: FinancialDashboard - Component rendering');
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -282,7 +283,7 @@ const FinancialDashboard: React.FC = () => {
       totalCost: costAnalysis.totalCost,
       averageCostPerMile: costAnalysis.averageCostPerMile,
       costCenterBreakdown: costAnalysis.costCenterBreakdown,
-      tripCostBreakdowns: tripCostBreakdowns.slice(0, 50), // Limit to 50 most recent
+      tripCostBreakdowns: (tripCostBreakdowns?.breakdowns || tripCostBreakdowns || []).slice(0, 50), // Limit to 50 most recent
       generatedAt: new Date().toISOString()
     };
 
@@ -315,7 +316,7 @@ const FinancialDashboard: React.FC = () => {
     const exportData = {
       costAnalysis,
       profitabilityAnalysis,
-      tripCostBreakdowns: tripCostBreakdowns.slice(0, 100), // Limit to 100 most recent
+      tripCostBreakdowns: (tripCostBreakdowns?.breakdowns || tripCostBreakdowns || []).slice(0, 100), // Limit to 100 most recent
       exportDate: new Date().toISOString()
     };
 
@@ -565,7 +566,10 @@ const FinancialDashboard: React.FC = () => {
           {tabs.map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => {
+                console.log('TCC_DEBUG: FinancialDashboard - Tab clicked:', tab.id);
+                setActiveTab(tab.id);
+              }}
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
                 activeTab === tab.id
                   ? 'border-blue-500 text-blue-600'
@@ -791,6 +795,9 @@ const FinancialDashboard: React.FC = () => {
 
       {activeTab === 'costs' && (
         <div className="space-y-6">
+          {console.log('TCC_DEBUG: FinancialDashboard - Rendering Cost Analysis tab')}
+          {console.log('TCC_DEBUG: FinancialDashboard - costAnalysis data:', costAnalysis)}
+          {console.log('TCC_DEBUG: FinancialDashboard - tripCostBreakdowns:', tripCostBreakdowns)}
           <h2 className="text-xl font-semibold text-gray-900">Cost Analysis</h2>
           
           {/* Cost Breakdown Chart */}
@@ -836,7 +843,7 @@ const FinancialDashboard: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {tripCostBreakdowns.slice(0, 10).map((breakdown) => (
+                  {(tripCostBreakdowns?.breakdowns || tripCostBreakdowns || []).slice(0, 10).map((breakdown) => (
                     <tr key={breakdown.id}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         {breakdown.tripId.substring(0, 8)}...

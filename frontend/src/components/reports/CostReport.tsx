@@ -139,13 +139,45 @@ const CostReport: React.FC<CostReportProps> = ({
     }
   };
 
-  // Filter trip breakdowns
-  const tripBreakdowns = Array.isArray(data.tripCostBreakdowns) ? data.tripCostBreakdowns : [];
+  // Early return if data is not available
+  console.log('TCC_DEBUG: CostReport - Component render, data:', data);
+  console.log('TCC_DEBUG: CostReport - data.tripCostBreakdowns:', data?.tripCostBreakdowns);
+  console.log('TCC_DEBUG: CostReport - typeof data.tripCostBreakdowns:', typeof data?.tripCostBreakdowns);
+  console.log('TCC_DEBUG: CostReport - Array.isArray(data.tripCostBreakdowns):', Array.isArray(data?.tripCostBreakdowns));
+
+  if (!data || (!data.tripCostBreakdowns && !data.tripCostBreakdowns?.breakdowns)) {
+    console.log('TCC_DEBUG: CostReport - Early return due to missing data');
+    return (
+      <div className="p-6">
+        <div className="text-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-500">Loading cost analysis data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Filter trip breakdowns - handle both array and object formats
+  let tripBreakdowns = [];
+  if (Array.isArray(data.tripCostBreakdowns)) {
+    tripBreakdowns = data.tripCostBreakdowns;
+  } else if (data.tripCostBreakdowns && Array.isArray(data.tripCostBreakdowns.breakdowns)) {
+    tripBreakdowns = data.tripCostBreakdowns.breakdowns;
+  } else {
+    tripBreakdowns = [];
+  }
+  console.log('TCC_DEBUG: CostReport - tripBreakdowns after Array.isArray check:', tripBreakdowns);
+  console.log('TCC_DEBUG: CostReport - tripBreakdowns.length:', tripBreakdowns.length);
+  
   const filteredTrips = tripBreakdowns.filter(trip => {
     if (selectedTransportLevel !== 'all' && trip.transportLevel !== selectedTransportLevel) return false;
     if (selectedPriority !== 'all' && trip.priorityLevel !== selectedPriority) return false;
     return true;
   });
+  console.log('TCC_DEBUG: CostReport - filteredTrips after filter:', filteredTrips);
+  console.log('TCC_DEBUG: CostReport - filteredTrips.length:', filteredTrips.length);
+  console.log('TCC_DEBUG: CostReport - typeof filteredTrips:', typeof filteredTrips);
+  console.log('TCC_DEBUG: CostReport - Array.isArray(filteredTrips):', Array.isArray(filteredTrips));
 
   // Calculate cost breakdown totals
   const totalCrewLabor = filteredTrips.reduce((sum, trip) => sum + (trip.crewLaborCost || 0), 0);
@@ -185,11 +217,16 @@ const CostReport: React.FC<CostReportProps> = ({
   }));
 
   // Cost trends over time (last 10 trips)
-  const recentTrips = filteredTrips
-    .filter(trip => trip.calculatedAt) // Only include trips with calculatedAt
-    .sort((a, b) => new Date(b.calculatedAt).getTime() - new Date(a.calculatedAt).getTime())
-    .slice(0, 10)
-    .reverse();
+  console.log('TCC_DEBUG: CostReport - About to filter recentTrips, filteredTrips:', filteredTrips);
+  const tripsWithDates = filteredTrips.filter(trip => trip.calculatedAt);
+  console.log('TCC_DEBUG: CostReport - tripsWithDates after filter:', tripsWithDates);
+  const sortedTrips = tripsWithDates.sort((a, b) => new Date(b.calculatedAt).getTime() - new Date(a.calculatedAt).getTime());
+  console.log('TCC_DEBUG: CostReport - sortedTrips after sort:', sortedTrips);
+  console.log('TCC_DEBUG: CostReport - About to call slice on sortedTrips, typeof:', typeof sortedTrips, 'Array.isArray:', Array.isArray(sortedTrips));
+  const slicedTrips = sortedTrips.slice(0, 10);
+  console.log('TCC_DEBUG: CostReport - slicedTrips after slice:', slicedTrips);
+  const recentTrips = slicedTrips.reverse();
+  console.log('TCC_DEBUG: CostReport - recentTrips after reverse:', recentTrips);
 
   const costTrendData = recentTrips.map((trip, index) => ({
     trip: `Trip ${index + 1}`,
@@ -437,7 +474,12 @@ const CostReport: React.FC<CostReportProps> = ({
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredTrips.slice(0, 10).map((trip) => (
+                {(() => {
+                  console.log('TCC_DEBUG: CostReport - About to slice filteredTrips for table, filteredTrips:', filteredTrips);
+                  console.log('TCC_DEBUG: CostReport - typeof filteredTrips for table:', typeof filteredTrips, 'Array.isArray:', Array.isArray(filteredTrips));
+                  const tableTrips = filteredTrips.slice(0, 10);
+                  console.log('TCC_DEBUG: CostReport - tableTrips after slice:', tableTrips);
+                  return tableTrips.map((trip) => (
                   <tr key={trip.id}>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       {trip.tripId.substring(0, 8)}...
@@ -460,7 +502,8 @@ const CostReport: React.FC<CostReportProps> = ({
                       {new Date(trip.calculatedAt).toLocaleDateString()}
                     </td>
                   </tr>
-                ))}
+                  ));
+                })()}
               </tbody>
             </table>
           </div>
