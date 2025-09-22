@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://vercel-bqfo02a73-chuck-ferrells-projects.vercel.app';
 console.log('TCC_DEBUG: API_BASE_URL is set to:', API_BASE_URL);
 
 // Create axios instance
