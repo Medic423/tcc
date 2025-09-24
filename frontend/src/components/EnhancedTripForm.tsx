@@ -367,9 +367,12 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
     }
   };
 
-  const handleNext = () => {
+  const handleNext = (e?: React.MouseEvent) => {
+    e?.preventDefault(); // Prevent any form submission
+    console.log('TCC_DEBUG: handleNext called, current step:', currentStep, 'total steps:', steps.length);
     if (currentStep < steps.length) {
       setCurrentStep(currentStep + 1);
+      console.log('TCC_DEBUG: Advanced to step:', currentStep + 1);
     }
   };
 
@@ -381,6 +384,14 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('TCC_DEBUG: handleSubmit called, current step:', currentStep);
+    
+    // Only allow submission on the final step
+    if (currentStep < steps.length) {
+      console.log('TCC_DEBUG: Submission blocked - not on final step');
+      return;
+    }
+    
     setLoading(true);
     setError(null);
 
