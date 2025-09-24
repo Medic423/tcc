@@ -72,6 +72,10 @@ interface PickupLocation {
     id: string;
     name: string;
   };
+  hospitals?: {  // Backend returns 'hospitals' (plural)
+    id: string;
+    name: string;
+  };
 }
 
 interface FormOptions {
@@ -310,9 +314,28 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
       
       if (response.data?.success && Array.isArray(response.data.data)) {
         console.log('TCC_DEBUG: Setting pickup locations:', response.data.data.length, 'locations');
+        
+        // Transform the data to ensure it matches our interface
+        const transformedLocations = response.data.data.map((location: any) => ({
+          id: location.id || `pickup-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          hospitalId: location.hospitalId || '',
+          name: location.name || 'Unnamed Location',
+          description: location.description || '',
+          contactPhone: location.contactPhone || '',
+          contactEmail: location.contactEmail || '',
+          floor: location.floor || '',
+          room: location.room || '',
+          isActive: location.isActive !== undefined ? location.isActive : true,
+          createdAt: location.createdAt || new Date().toISOString(),
+          updatedAt: location.updatedAt || new Date().toISOString(),
+          hospital: location.hospital || location.hospitals || null, // Handle both singular and plural
+          hospitals: location.hospitals || location.hospital || null
+        }));
+        
+        console.log('TCC_DEBUG: Transformed pickup locations:', transformedLocations);
         setFormOptions(prev => ({
           ...prev,
-          pickupLocations: response.data.data
+          pickupLocations: transformedLocations
         }));
       } else {
         console.warn('TCC_DEBUG: Invalid pickup locations response structure:', response.data);
@@ -617,34 +640,59 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Pickup Location *
                 </label>
-                <select
-                  name="pickupLocationId"
-                  value={formData.pickupLocationId}
-                  onChange={handleChange}
-                  required
-                  disabled={loadingPickupLocations}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                >
-                  <option value="">
-                    {loadingPickupLocations ? 'Loading pickup locations...' : 'Select pickup location'}
-                  </option>
-                  {formOptions.pickupLocations && formOptions.pickupLocations.length > 0 ? (
-                    formOptions.pickupLocations.map((location) => {
-                      console.log('TCC_DEBUG: Rendering pickup location option:', location);
-                      return (
-                        <option key={location.id} value={location.id}>
-                          {location.name} {location.floor && `(${location.floor})`}
+                {(() => {
+                  try {
+                    return (
+                      <select
+                        name="pickupLocationId"
+                        value={formData.pickupLocationId}
+                        onChange={handleChange}
+                        required
+                        disabled={loadingPickupLocations}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      >
+                        <option value="">
+                          {loadingPickupLocations ? 'Loading pickup locations...' : 'Select pickup location'}
                         </option>
-                      );
-                    })
-                  ) : (
-                    !loadingPickupLocations && formData.fromLocation && (
-                      <option value="" disabled>
-                        No pickup locations available for this facility
-                      </option>
-                    )
-                  )}
-                </select>
+                        {formOptions.pickupLocations && formOptions.pickupLocations.length > 0 ? (
+                          formOptions.pickupLocations.map((location) => {
+                            try {
+                              console.log('TCC_DEBUG: Rendering pickup location option:', location);
+                              
+                              // Ensure location has required properties
+                              if (!location || !location.id || !location.name) {
+                                console.warn('TCC_DEBUG: Invalid pickup location data:', location);
+                                return null;
+                              }
+                              
+                              return (
+                                <option key={location.id} value={location.id}>
+                                  {location.name} {location.floor && `(${location.floor})`}
+                                </option>
+                              );
+                            } catch (error) {
+                              console.error('TCC_DEBUG: Error rendering pickup location option:', error, location);
+                              return null;
+                            }
+                          }).filter(Boolean) // Remove null entries
+                        ) : (
+                          !loadingPickupLocations && formData.fromLocation && (
+                            <option value="" disabled>
+                              No pickup locations available for this facility
+                            </option>
+                          )
+                        )}
+                      </select>
+                    );
+                  } catch (error) {
+                    console.error('TCC_DEBUG: Error rendering pickup location select:', error);
+                    return (
+                      <div className="w-full px-3 py-2 border border-red-300 rounded-md bg-red-50 text-red-700">
+                        Error loading pickup locations. Please refresh the page.
+                      </div>
+                    );
+                  }
+                })()}
                 {formData.pickupLocationId && formOptions.pickupLocations && (
                   <div className="mt-2 text-sm text-gray-600">
                     {(() => {
