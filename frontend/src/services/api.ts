@@ -4,6 +4,8 @@ import axios from 'axios';
 const ENV_NAME = import.meta.env.MODE || (import.meta.env.DEV ? 'development' : 'production');
 const EXPLICIT_API_URL = import.meta.env.VITE_API_URL as string | undefined;
 const DEFAULT_DEV_URL = 'http://localhost:5001';
+// NOTE: Prefer setting VITE_API_URL in env. This fallback should point to the
+// stable production API domain. Updated to latest deploy for now.
 const DEFAULT_PROD_URL = 'https://vercel-bqfo02a73-chuck-ferrells-projects.vercel.app';
 
 let API_BASE_URL = EXPLICIT_API_URL || (import.meta.env.DEV ? DEFAULT_DEV_URL : DEFAULT_PROD_URL);
@@ -25,7 +27,7 @@ const api = axios.create({
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
-    'X-TCC-Env': ENV_NAME,
+    // NOTE: Do NOT set custom headers by default to avoid CORS issues
   },
 });
 
@@ -35,6 +37,20 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  // Only include X-TCC-Env for same-origin requests; never on auth endpoints
+  try {
+    const apiOrigin = new URL(API_BASE_URL).origin;
+    const pageOrigin = typeof window !== 'undefined' ? window.location.origin : apiOrigin;
+    const isSameOrigin = apiOrigin === pageOrigin;
+    const urlPath = (config.url || '').toString();
+    const isAuthRoute = urlPath.startsWith('/api/auth/');
+    if (!isAuthRoute && isSameOrigin) {
+      (config.headers as any)['X-TCC-Env'] = ENV_NAME;
+    } else {
+      // Ensure we do not send this header cross-origin or to auth routes
+      if ((config.headers as any)['X-TCC-Env']) delete (config.headers as any)['X-TCC-Env'];
+    }
+  } catch {}
   try {
     const url = (config.baseURL || '') + (config.url || '');
     if (url.includes('/api/tcc/agencies') || url.includes('/api/tcc/analytics') || url.includes('/api/dropdown-options')) {

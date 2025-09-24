@@ -1,47 +1,25 @@
 // Simple TCC Backend API for Vercel
 export default function handler(req, res) {
   // Set CORS headers - Allow specific origins for production
-  const allowedOrigins = [
-    'https://traccems.com',
-    'https://frontend-a9vym5ias-chuck-ferrells-projects.vercel.app',
-    'https://frontend-1419nswch-chuck-ferrells-projects.vercel.app',
-    'https://frontend-f4xv77dag-chuck-ferrells-projects.vercel.app',
-    'https://frontend-vzhord984-chuck-ferrells-projects.vercel.app',
-    'https://frontend-i9kw0pl8v-chuck-ferrells-projects.vercel.app',
-    'https://frontend-eu6mgu6w2-chuck-ferrells-projects.vercel.app',
-    'https://frontend-k9s4i52zp-chuck-ferrells-projects.vercel.app',
-    'https://frontend-mm5z91yvo-chuck-ferrells-projects.vercel.app',
-    'https://frontend-fm9aeatz6-chuck-ferrells-projects.vercel.app',
-    'https://frontend-9gec38p8d-chuck-ferrells-projects.vercel.app',
-    'https://frontend-l4dn8uf0n-chuck-ferrells-projects.vercel.app',
-    'https://frontend-1snhqmn1s-chuck-ferrells-projects.vercel.app',
-    'https://frontend-csyqeue6b-chuck-ferrells-projects.vercel.app',
-    'https://frontend-oqzka4274-chuck-ferrells-projects.vercel.app', // Latest frontend URL with enhanced trips endpoints
-    'https://frontend-4xr2iebdp-chuck-ferrells-projects.vercel.app', // Latest frontend URL with financial endpoints
-    'https://frontend-iv7b6gffd-chuck-ferrells-projects.vercel.app', // Latest frontend URL with hospitals fix
-    'https://frontend-esef2a1vo-chuck-ferrells-projects.vercel.app', // Latest frontend URL with working backend
-    'https://frontend-cp81j4etk-chuck-ferrells-projects.vercel.app', // Latest frontend URL with cost analysis fix
-    'https://frontend-dc7ysfvqg-chuck-ferrells-projects.vercel.app', // Latest frontend URL with user management fix
-    'https://frontend-25ikiilhb-chuck-ferrells-projects.vercel.app', // Latest frontend URL with user management fix
-    'http://localhost:3000',
-    'http://localhost:3001',
-    'http://localhost:3002',
-    'http://localhost:3003'
-  ];
-  
-  const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
+  const origin = req.headers.origin || '';
+  const isAllowed =
+    origin.endsWith('.vercel.app') ||
+    origin === 'https://traccems.com' ||
+    origin === 'https://www.traccems.com' ||
+    origin.startsWith('http://localhost:');
+
+  if (origin) {
+    res.setHeader('Access-Control-Allow-Origin', isAllowed ? origin : '*');
+  }
+  if (isAllowed) {
     res.setHeader('Access-Control-Allow-Credentials', 'true');
-  } else {
-    // For unknown origins, don't set credentials
-    res.setHeader('Access-Control-Allow-Origin', '*');
   }
   
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Client-Version, X-Environment, Cache-Control, Pragma');
+  // Allow X-TCC-Env to avoid preflight failures when older clients send it
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Client-Version, X-Environment, X-TCC-Env, Cache-Control, Pragma');
 
-  // Handle preflight requests
+  // Handle preflight requests EARLY for any path
   if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
@@ -402,6 +380,64 @@ export default function handler(req, res) {
         }
       ]
     });
+    return;
+  }
+
+  // Dropdown Options: categories
+  if (req.method === 'GET' && req.url === '/api/dropdown-options') {
+    res.status(200).json({
+      success: true,
+      data: [
+        { key: 'insurance', label: 'Insurance Providers' },
+        { key: 'diagnosis', label: 'Diagnosis' },
+        { key: 'mobility', label: 'Mobility' },
+        { key: 'transport-level', label: 'Transport Level' },
+        { key: 'urgency', label: 'Urgency' }
+      ]
+    });
+    return;
+  }
+
+  // Dropdown Options: items by category
+  if (req.method === 'GET' && req.url.startsWith('/api/dropdown-options/')) {
+    const category = req.url.split('/api/dropdown-options/')[1];
+    const data = {
+      insurance: [
+        { id: 'ins-001', value: 'Aetna' },
+        { id: 'ins-002', value: 'Blue Cross' },
+        { id: 'ins-003', value: 'Cigna' },
+        { id: 'ins-004', value: 'Medicare' },
+        { id: 'ins-005', value: 'Medicaid' }
+      ],
+      diagnosis: [
+        { id: 'diag-001', value: 'Cardiac' },
+        { id: 'diag-002', value: 'Orthopedic' },
+        { id: 'diag-003', value: 'Neurological' }
+      ],
+      mobility: [
+        { id: 'mob-001', value: 'Ambulatory' },
+        { id: 'mob-002', value: 'Wheelchair' },
+        { id: 'mob-003', value: 'Stretcher' }
+      ],
+      'transport-level': [
+        { id: 'lvl-001', value: 'BLS' },
+        { id: 'lvl-002', value: 'ALS' },
+        { id: 'lvl-003', value: 'Critical Care' }
+      ],
+      urgency: [
+        { id: 'urg-001', value: 'LOW' },
+        { id: 'urg-002', value: 'MEDIUM' },
+        { id: 'urg-003', value: 'HIGH' },
+        { id: 'urg-004', value: 'URGENT' }
+      ]
+    };
+
+    const items = data[category] || [];
+    if (!items.length) {
+      res.status(404).json({ success: false, message: 'Category not found', data: [] });
+    } else {
+      res.status(200).json({ success: true, data: items });
+    }
     return;
   }
 
