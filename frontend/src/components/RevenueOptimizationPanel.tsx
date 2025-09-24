@@ -6,6 +6,8 @@ import {
   Target, 
   BarChart3
 } from 'lucide-react';
+import api from '../services/api';
+import { asNumber, toFixed, toPercentage, toCurrency } from '../utils/numberUtils';
 
 interface OptimizationMetrics {
   totalRevenue: number;
@@ -68,64 +70,44 @@ const RevenueOptimizationPanel: React.FC<RevenueOptimizationPanelProps> = ({
       setLoading(true);
       
       // Load revenue analytics
-      const revenueResponse = await fetch('/api/optimize/revenue?timeframe=24h');
-      if (revenueResponse.ok) {
-        const revenueData = await revenueResponse.json();
-        if (revenueData.success) {
-          setOptimizationMetrics({
-            totalRevenue: revenueData.data.totalRevenue || 0,
-            revenuePerHour: revenueData.data.revenuePerHour || 0,
-            loadedMileRatio: revenueData.data.loadedMileRatio || 0,
-            backhaulPairs: 0, // Will be updated from backhaul data
-            averageEfficiency: 0.75, // Mock data
-            potentialRevenueIncrease: 0, // Will be calculated
-            totalTrips: revenueData.data.totalTrips || 0,
-            averageRevenuePerTrip: revenueData.data.averageRevenuePerTrip || 0,
-            totalMiles: revenueData.data.totalMiles || 0,
-            loadedMiles: revenueData.data.loadedMiles || 0,
-          });
-        }
+      const revenueResponse = await api.get('/api/optimize/revenue?timeframe=24h');
+      if (revenueResponse.data.success) {
+        setOptimizationMetrics({
+          totalRevenue: asNumber(revenueResponse.data.data.totalRevenue, 0),
+          revenuePerHour: asNumber(revenueResponse.data.data.revenuePerHour, 0),
+          loadedMileRatio: asNumber(revenueResponse.data.data.loadedMileRatio, 0),
+          backhaulPairs: 0, // Will be updated from backhaul data
+          averageEfficiency: 0.75, // Mock data
+          potentialRevenueIncrease: 0, // Will be calculated
+          totalTrips: asNumber(revenueResponse.data.data.totalTrips, 0),
+          averageRevenuePerTrip: asNumber(revenueResponse.data.data.averageRevenuePerTrip, 0),
+          totalMiles: asNumber(revenueResponse.data.data.totalMiles, 0),
+          loadedMiles: asNumber(revenueResponse.data.data.loadedMiles, 0),
+        });
       }
 
       // Load backhaul opportunities
-      const backhaulResponse = await fetch('/api/optimize/backhaul');
-      if (backhaulResponse.ok) {
-        const backhaulData = await backhaulResponse.json();
-        if (backhaulData.success) {
-          setBackhaulPairs(backhaulData.data.pairs || []);
-          // Update metrics with backhaul data
-          setOptimizationMetrics(prev => prev ? {
-            ...prev,
-            backhaulPairs: backhaulData.data.pairs?.length || 0,
-            potentialRevenueIncrease: backhaulData.data.pairs?.reduce((sum: number, pair: any) => sum + (pair.revenueBonus || 0), 0) || 0
-          } : null);
-        }
+      const backhaulResponse = await api.get('/api/optimize/backhaul');
+      if (backhaulResponse.data.success) {
+        setBackhaulPairs(backhaulResponse.data.data.pairs || []);
+        // Update metrics with backhaul data
+        setOptimizationMetrics(prev => prev ? {
+          ...prev,
+          backhaulPairs: backhaulResponse.data.data.pairs?.length || 0,
+          potentialRevenueIncrease: backhaulResponse.data.data.pairs?.reduce((sum: number, pair: any) => sum + asNumber(pair.revenueBonus, 0), 0) || 0
+        } : null);
       }
 
       // Load units data
-      const token = localStorage.getItem('token');
-      if (token) {
-        const headers = {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        };
+      const unitsResponse = await api.get('/api/units');
+      if (unitsResponse.data.success) {
+        setUnits(unitsResponse.data.data || []);
+      }
 
-        const unitsResponse = await fetch('/api/units', { headers });
-        if (unitsResponse.ok) {
-          const unitsData = await unitsResponse.json();
-          if (unitsData.success) {
-            setUnits(unitsData.data || []);
-          }
-        }
-
-        // Load units analytics
-        const unitsAnalyticsResponse = await fetch('/api/units/analytics', { headers });
-        if (unitsAnalyticsResponse.ok) {
-          const analyticsData = await unitsAnalyticsResponse.json();
-          if (analyticsData.success) {
-            setUnitsAnalytics(analyticsData.data);
-          }
-        }
+      // Load units analytics
+      const unitsAnalyticsResponse = await api.get('/api/units/analytics');
+      if (unitsAnalyticsResponse.data.success) {
+        setUnitsAnalytics(unitsAnalyticsResponse.data.data);
       }
 
     } catch (error) {
@@ -173,15 +155,15 @@ const RevenueOptimizationPanel: React.FC<RevenueOptimizationPanelProps> = ({
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-600">Total Revenue:</span>
-                <span className="text-lg font-semibold text-gray-900">${optimizationMetrics.totalRevenue.toFixed(2)}</span>
+                <span className="text-lg font-semibold text-gray-900">{toCurrency(optimizationMetrics.totalRevenue)}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-600">Revenue/Hour:</span>
-                <span className="text-sm font-medium text-gray-900">${optimizationMetrics.revenuePerHour.toFixed(2)}</span>
+                <span className="text-sm font-medium text-gray-900">{toCurrency(optimizationMetrics.revenuePerHour)}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-600">Loaded Mile Ratio:</span>
-                <span className="text-sm font-medium text-gray-900">{(optimizationMetrics.loadedMileRatio * 100).toFixed(1)}%</span>
+                <span className="text-sm font-medium text-gray-900">{toPercentage(optimizationMetrics.loadedMileRatio)}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-600">Total Trips:</span>
@@ -189,7 +171,7 @@ const RevenueOptimizationPanel: React.FC<RevenueOptimizationPanelProps> = ({
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-600">Avg Revenue/Trip:</span>
-                <span className="text-sm font-medium text-gray-900">${optimizationMetrics.averageRevenuePerTrip.toFixed(2)}</span>
+                <span className="text-sm font-medium text-gray-900">{toCurrency(optimizationMetrics.averageRevenuePerTrip)}</span>
               </div>
             </div>
           )}
@@ -209,19 +191,19 @@ const RevenueOptimizationPanel: React.FC<RevenueOptimizationPanelProps> = ({
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-600">Avg Efficiency:</span>
-                <span className="text-sm font-medium text-gray-900">{(optimizationMetrics.averageEfficiency * 100).toFixed(1)}%</span>
+                <span className="text-sm font-medium text-gray-900">{toPercentage(optimizationMetrics.averageEfficiency)}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-600">Potential Increase:</span>
-                <span className="text-sm font-medium text-green-600">+${optimizationMetrics.potentialRevenueIncrease.toFixed(2)}</span>
+                <span className="text-sm font-medium text-green-600">+{toCurrency(optimizationMetrics.potentialRevenueIncrease)}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-600">Total Miles:</span>
-                <span className="text-sm font-medium text-gray-900">{optimizationMetrics.totalMiles.toFixed(1)} mi</span>
+                <span className="text-sm font-medium text-gray-900">{toFixed(optimizationMetrics.totalMiles, 1)} mi</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-600">Loaded Miles:</span>
-                <span className="text-sm font-medium text-gray-900">{optimizationMetrics.loadedMiles.toFixed(1)} mi</span>
+                <span className="text-sm font-medium text-gray-900">{toFixed(optimizationMetrics.loadedMiles, 1)} mi</span>
               </div>
             </div>
           )}
@@ -275,10 +257,10 @@ const RevenueOptimizationPanel: React.FC<RevenueOptimizationPanelProps> = ({
                     <Link className="h-5 w-5 text-blue-600" />
                     <span className="text-sm font-medium text-gray-900">Pair #{index + 1}</span>
                     <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                      Efficiency: {(pair.efficiency * 100).toFixed(1)}%
+                      Efficiency: {toPercentage(pair.efficiency)}
                     </span>
                   </div>
-                  <span className="text-sm font-semibold text-green-600">+${pair.revenueBonus.toFixed(2)} bonus</span>
+                  <span className="text-sm font-semibold text-green-600">+{toCurrency(pair.revenueBonus)} bonus</span>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
                   <div className="bg-white rounded p-3">
@@ -295,7 +277,7 @@ const RevenueOptimizationPanel: React.FC<RevenueOptimizationPanelProps> = ({
                   </div>
                 </div>
                 <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
-                  <span>Distance: {pair.distance.toFixed(1)} mi</span>
+                  <span>Distance: {toFixed(pair.distance, 1)} mi</span>
                   <span>Time Window: {pair.timeWindow} min</span>
                 </div>
               </div>
@@ -313,13 +295,13 @@ const RevenueOptimizationPanel: React.FC<RevenueOptimizationPanelProps> = ({
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="text-center">
             <div className="text-2xl font-bold text-gray-900">
-              {optimizationMetrics ? (optimizationMetrics.loadedMileRatio * 100).toFixed(1) : '0.0'}%
+              {optimizationMetrics ? toPercentage(optimizationMetrics.loadedMileRatio) : '0.0%'}
             </div>
             <div className="text-sm text-gray-600">Loaded Mile Ratio</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-gray-900">
-              ${optimizationMetrics ? optimizationMetrics.revenuePerHour.toFixed(0) : '0'}/hr
+              {optimizationMetrics ? toCurrency(optimizationMetrics.revenuePerHour, 0) : '$0'}/hr
             </div>
             <div className="text-sm text-gray-600">Revenue per Hour</div>
           </div>

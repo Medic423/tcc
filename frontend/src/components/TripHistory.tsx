@@ -15,6 +15,8 @@ import {
   DollarSign,
   Activity
 } from 'lucide-react';
+import api from '../services/api';
+import { asNumber, toFixed, toCurrency } from '../utils/numberUtils';
 
 interface TripTimelineEvent {
   event: string;
@@ -97,18 +99,13 @@ const TripHistory: React.FC = () => {
         ...(filters.search && { search: filters.search })
       });
 
-      const response = await fetch(`/api/trips/history?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await api.get(`/api/trips/history?${params}`);
 
-      if (!response.ok) {
+      if (response.status !== 200) {
         throw new Error('Failed to fetch trip history');
       }
 
-      const data = await response.json();
+      const data = response.data;
       
       if (data.success) {
         const newTrips = data.data.trips;
@@ -373,16 +370,16 @@ const TripHistory: React.FC = () => {
 
                 {/* Performance Metrics */}
                 <div className="mt-4 flex items-center space-x-6 text-sm text-gray-600">
-                  {trip.distanceMiles && !isNaN(Number(trip.distanceMiles)) && (
+                  {trip.distanceMiles && (
                     <div className="flex items-center">
                       <MapPin className="h-4 w-4 mr-1 text-gray-400" />
-                      <span>{Number(trip.distanceMiles).toFixed(1)} miles</span>
+                      <span>{toFixed(trip.distanceMiles, 1)} miles</span>
                     </div>
                   )}
-                  {trip.tripCost && !isNaN(Number(trip.tripCost)) && (
+                  {trip.tripCost && (
                     <div className="flex items-center">
                       <DollarSign className="h-4 w-4 mr-1 text-gray-400" />
-                      <span>${Number(trip.tripCost).toFixed(2)}</span>
+                      <span>{toCurrency(trip.tripCost)}</span>
                     </div>
                   )}
                   <div className="flex items-center">

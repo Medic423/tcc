@@ -13,6 +13,7 @@ import {
 import Notifications from './Notifications';
 import UnitsManagement from './UnitsManagement';
 import EMSAnalytics from './EMSAnalytics';
+import api from '../services/api';
 
 interface EMSDashboardProps {
   user: {
@@ -67,57 +68,43 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
     setLoading(true);
     try {
       // Load available trips (PENDING status)
-      const availableResponse = await fetch('/api/trips?status=PENDING', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
+      const availableResponse = await api.get('/api/trips?status=PENDING');
       
-      if (availableResponse.ok) {
-        const availableData = await availableResponse.json();
-        if (availableData.success && availableData.data) {
-          const transformedAvailable = availableData.data.map((trip: any) => ({
-            id: trip.id,
-            patientId: trip.patientId,
-            origin: trip.fromLocation,
-            destination: trip.toLocation,
-            pickupLocation: trip.pickupLocation,
-            transportLevel: trip.transportLevel || 'BLS',
-            priority: trip.urgencyLevel || trip.priority, // Use urgencyLevel if available, fallback to priority
-            distance: '12.5 miles', // Mock data
-            estimatedTime: '25 minutes', // Mock data
-            revenue: '$150', // Mock data
-            requestTime: new Date(trip.createdAt).toLocaleString(),
-            scheduledTime: trip.scheduledTime
-          }));
-          setAvailableTrips(transformedAvailable);
-        }
+      if (availableResponse.data.success && availableResponse.data.data) {
+        const transformedAvailable = availableResponse.data.data.map((trip: any) => ({
+          id: trip.id,
+          patientId: trip.patientId,
+          origin: trip.fromLocation,
+          destination: trip.toLocation,
+          pickupLocation: trip.pickupLocation,
+          transportLevel: trip.transportLevel || 'BLS',
+          priority: trip.urgencyLevel || trip.priority, // Use urgencyLevel if available, fallback to priority
+          distance: '12.5 miles', // Mock data
+          estimatedTime: '25 minutes', // Mock data
+          revenue: '$150', // Mock data
+          requestTime: new Date(trip.createdAt).toLocaleString(),
+          scheduledTime: trip.scheduledTime
+        }));
+        setAvailableTrips(transformedAvailable);
       }
 
       // Load accepted trips (ACCEPTED, IN_PROGRESS, COMPLETED status)
-      const acceptedResponse = await fetch('/api/trips?status=ACCEPTED,IN_PROGRESS,COMPLETED', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
+      const acceptedResponse = await api.get('/api/trips?status=ACCEPTED,IN_PROGRESS,COMPLETED');
       
-      if (acceptedResponse.ok) {
-        const acceptedData = await acceptedResponse.json();
-        if (acceptedData.success && acceptedData.data) {
-          const transformedAccepted = acceptedData.data.map((trip: any) => ({
-            id: trip.id,
-            patientId: trip.patientId,
-            origin: trip.fromLocation,
-            destination: trip.toLocation,
-            pickupLocation: trip.pickupLocation,
-            transportLevel: trip.transportLevel || 'BLS',
-            priority: trip.urgencyLevel || trip.priority, // Use urgencyLevel if available, fallback to priority
-            status: trip.status,
-            pickupTime: trip.actualStartTime ? new Date(trip.actualStartTime).toLocaleString() : 'Not started',
-            scheduledTime: trip.scheduledTime
-          }));
-          setAcceptedTrips(transformedAccepted);
-        }
+      if (acceptedResponse.data.success && acceptedResponse.data.data) {
+        const transformedAccepted = acceptedResponse.data.data.map((trip: any) => ({
+          id: trip.id,
+          patientId: trip.patientId,
+          origin: trip.fromLocation,
+          destination: trip.toLocation,
+          pickupLocation: trip.pickupLocation,
+          transportLevel: trip.transportLevel || 'BLS',
+          priority: trip.urgencyLevel || trip.priority, // Use urgencyLevel if available, fallback to priority
+          status: trip.status,
+          pickupTime: trip.actualStartTime ? new Date(trip.actualStartTime).toLocaleString() : 'Not started',
+          scheduledTime: trip.scheduledTime
+        }));
+        setAcceptedTrips(transformedAccepted);
       }
     } catch (error) {
       console.error('Error loading trips:', error);
@@ -150,26 +137,17 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
       console.log('TCC_DEBUG: Frontend sending EMS agency update:', settingsData);
       console.log('TCC_DEBUG: Frontend token:', localStorage.getItem('token'));
       
-      const response = await fetch('/api/auth/ems/agency/update', {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(settingsData),
-      });
+      const response = await api.put('/api/auth/ems/agency/update', settingsData);
 
       console.log('TCC_DEBUG: Frontend response status:', response.status);
-      console.log('TCC_DEBUG: Frontend response ok:', response.ok);
+      console.log('TCC_DEBUG: Frontend response ok:', response.status === 200);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.log('TCC_DEBUG: Frontend error response:', errorData);
-        throw new Error(errorData.error || 'Failed to update agency information');
+      if (response.status !== 200) {
+        console.log('TCC_DEBUG: Frontend error response:', response.data);
+        throw new Error(response.data?.error || 'Failed to update agency information');
       }
 
-      const responseData = await response.json();
-      console.log('TCC_DEBUG: Frontend success response:', responseData);
+      console.log('TCC_DEBUG: Frontend success response:', response.data);
 
       setSettingsSuccess(true);
       // Navigate back to available trips tab after successful save
@@ -204,24 +182,16 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
   const handleAcceptTrip = async (tripId: string) => {
     try {
       // Use new agency response system
-      const response = await fetch('/api/agency-responses', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          tripId: tripId,
-          agencyId: user.id, // Using user ID as agency ID for now
-          response: 'ACCEPTED',
-          responseNotes: 'Agency accepted this transport request',
-          estimatedArrival: new Date(Date.now() + 15 * 60 * 1000).toISOString() // 15 minutes from now
-        }),
+      const response = await api.post('/api/agency-responses', {
+        tripId: tripId,
+        agencyId: user.id, // Using user ID as agency ID for now
+        response: 'ACCEPTED',
+        responseNotes: 'Agency accepted this transport request',
+        estimatedArrival: new Date(Date.now() + 15 * 60 * 1000).toISOString() // 15 minutes from now
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to accept trip');
+      if (response.status !== 200) {
+        throw new Error(response.data?.error || 'Failed to accept trip');
       }
 
       // Reload trips to get updated data
@@ -235,23 +205,15 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
   const handleDeclineTrip = async (tripId: string) => {
     try {
       // Use new agency response system
-      const response = await fetch('/api/agency-responses', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          tripId: tripId,
-          agencyId: user.id, // Using user ID as agency ID for now
-          response: 'DECLINED',
-          responseNotes: 'Agency declined this transport request'
-        }),
+      const response = await api.post('/api/agency-responses', {
+        tripId: tripId,
+        agencyId: user.id, // Using user ID as agency ID for now
+        response: 'DECLINED',
+        responseNotes: 'Agency declined this transport request'
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to decline trip');
+      if (response.status !== 200) {
+        throw new Error(response.data?.error || 'Failed to decline trip');
       }
 
       // Reload trips to get updated data
@@ -264,22 +226,14 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
 
   const handleUpdateTripStatus = async (tripId: string, newStatus: string) => {
     try {
-      const response = await fetch(`/api/trips/${tripId}/status`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          status: newStatus,
-          ...(newStatus === 'IN_PROGRESS' && { pickupTimestamp: new Date().toISOString() }),
-          ...(newStatus === 'COMPLETED' && { completionTimestamp: new Date().toISOString() })
-        }),
+      const response = await api.put(`/api/trips/${tripId}/status`, {
+        status: newStatus,
+        ...(newStatus === 'IN_PROGRESS' && { pickupTimestamp: new Date().toISOString() }),
+        ...(newStatus === 'COMPLETED' && { completionTimestamp: new Date().toISOString() })
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update trip status');
+      if (response.status !== 200) {
+        throw new Error(response.data?.error || 'Failed to update trip status');
       }
 
       // Reload trips to get updated data
@@ -323,18 +277,10 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
         updateData.completionTimestamp = new Date().toISOString();
       }
 
-      const response = await fetch(`/api/trips/${tripId}/status`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(updateData),
-      });
+      const response = await api.put(`/api/trips/${tripId}/status`, updateData);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update trip');
+      if (response.status !== 200) {
+        throw new Error(response.data?.error || 'Failed to update trip');
       }
 
       // Reload trips to get updated data

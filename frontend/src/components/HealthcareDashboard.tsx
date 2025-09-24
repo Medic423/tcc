@@ -13,6 +13,7 @@ import {
 import Notifications from './Notifications';
 import EnhancedTripForm from './EnhancedTripForm';
 import HospitalSettings from './HospitalSettings';
+import { asNumber, toFixed, toPercentage } from '../utils/numberUtils';
 
 interface HealthcareDashboardProps {
   user: {
@@ -244,10 +245,12 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
   };
 
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+  // Add error boundary for render safety
+  try {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
@@ -785,6 +788,24 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
       )}
     </div>
   );
+  } catch (error) {
+    console.error('HealthcareDashboard render error:', error);
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Something went wrong</h2>
+          <p className="text-gray-600 mb-4">There was an error loading the healthcare dashboard.</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+          >
+            Reload Page
+          </button>
+        </div>
+      </div>
+    );
+  }
 };
 
 export default HealthcareDashboard;

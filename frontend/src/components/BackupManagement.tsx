@@ -10,6 +10,8 @@ import {
   CheckCircle,
   Clock
 } from 'lucide-react';
+import api from '../services/api';
+import { formatFileSize } from '../utils/numberUtils';
 
 interface BackupFile {
   filename: string;
@@ -32,15 +34,12 @@ const BackupManagement: React.FC = () => {
   const loadBackupHistory = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/backup/history', {
-        credentials: 'include'
-      });
-      const data = await response.json();
+      const response = await api.get('/api/backup/history');
       
-      if (data.success) {
-        setBackups(data.data);
+      if (response.data.success) {
+        setBackups(response.data.data);
       } else {
-        setMessage({ type: 'error', text: data.error || 'Failed to load backup history' });
+        setMessage({ type: 'error', text: response.data.error || 'Failed to load backup history' });
       }
     } catch (error) {
       console.error('Error loading backup history:', error);
@@ -55,17 +54,13 @@ const BackupManagement: React.FC = () => {
       setCreating(true);
       setMessage(null);
       
-      const response = await fetch('/api/backup/create', {
-        method: 'POST',
-        credentials: 'include'
-      });
-      const data = await response.json();
+      const response = await api.post('/api/backup/create');
       
-      if (data.success) {
+      if (response.data.success) {
         setMessage({ type: 'success', text: 'Backup created successfully!' });
         loadBackupHistory(); // Refresh the list
       } else {
-        setMessage({ type: 'error', text: data.error || 'Failed to create backup' });
+        setMessage({ type: 'error', text: response.data.error || 'Failed to create backup' });
       }
     } catch (error) {
       console.error('Error creating backup:', error);
@@ -77,12 +72,12 @@ const BackupManagement: React.FC = () => {
 
   const downloadBackup = async (filename: string) => {
     try {
-      const response = await fetch(`/api/backup/download/${filename}`, {
-        credentials: 'include'
+      const response = await api.get(`/api/backup/download/${filename}`, {
+        responseType: 'blob'
       });
       
-      if (response.ok) {
-        const blob = await response.blob();
+      if (response.status === 200) {
+        const blob = new Blob([response.data]);
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -106,17 +101,13 @@ const BackupManagement: React.FC = () => {
     }
 
     try {
-      const response = await fetch(`/api/backup/${filename}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
-      const data = await response.json();
+      const response = await api.delete(`/api/backup/${filename}`);
       
-      if (data.success) {
+      if (response.data.success) {
         setMessage({ type: 'success', text: 'Backup deleted successfully!' });
         loadBackupHistory(); // Refresh the list
       } else {
-        setMessage({ type: 'error', text: data.error || 'Failed to delete backup' });
+        setMessage({ type: 'error', text: response.data.error || 'Failed to delete backup' });
       }
     } catch (error) {
       console.error('Error deleting backup:', error);
@@ -124,13 +115,6 @@ const BackupManagement: React.FC = () => {
     }
   };
 
-  const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
 
   const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleString();
