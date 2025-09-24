@@ -207,11 +207,14 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
   const loadPickupLocationsForHospital = async (hospitalId: string) => {
     try {
       setLoadingPickupLocations(true);
+      console.log('TCC_DEBUG: Loading pickup locations for hospital:', hospitalId);
       const response = await api.get(`/api/tcc/pickup-locations/hospital/${hospitalId}`);
+      console.log('TCC_DEBUG: Pickup locations response:', response.data);
       
       if (response.data?.success) {
         const data = response.data;
         if (data.success) {
+          console.log('TCC_DEBUG: Setting pickup locations:', data.data);
           setFormOptions(prev => ({
             ...prev,
             pickupLocations: data.data || []
@@ -498,11 +501,14 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
                     {loadingPickupLocations ? 'Loading pickup locations...' : 'Select pickup location'}
                   </option>
                   {formOptions.pickupLocations && formOptions.pickupLocations.length > 0 ? (
-                    formOptions.pickupLocations.map((location) => (
-                      <option key={location.id} value={location.id}>
-                        {location.name} {location.floor && `(${location.floor})`}
-                      </option>
-                    ))
+                    formOptions.pickupLocations.map((location) => {
+                      console.log('TCC_DEBUG: Rendering pickup location option:', location);
+                      return (
+                        <option key={location.id} value={location.id}>
+                          {location.name} {location.floor && `(${location.floor})`}
+                        </option>
+                      );
+                    })
                   ) : (
                     !loadingPickupLocations && formData.fromLocation && (
                       <option value="" disabled>
