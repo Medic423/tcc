@@ -32,22 +32,35 @@ const HealthcareLogin: React.FC<HealthcareLoginProps> = ({ onBack, onLogin }) =>
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       
-      // Import authAPI dynamically to avoid circular imports
-      const { authAPI } = await import('../services/api');
-      
-      const response = await authAPI.healthcareLogin({
-        email: formData.email,
-        password: formData.password
-      });
+      // TODO: Backend doesn't have working healthcare login endpoint yet
+      // For now, simulate healthcare login with mock data
+      console.log('TCC_DEBUG: Simulating healthcare login with data:', formData);
 
-      if (response.data.success) {
-        onLogin(response.data.user, response.data.token);
-      } else {
-        setError(response.data.error || 'Login failed');
-      }
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Mock successful login
+      const mockUser = {
+        id: `healthcare-${Date.now()}`,
+        email: formData.email,
+        name: 'Healthcare Admin',
+        userType: 'HEALTHCARE',
+        facilityName: 'Test Hospital'
+      };
+      
+      const mockToken = `mock-jwt-token-${Date.now()}`;
+
+      console.log('TCC_DEBUG: Mock healthcare login successful:', mockUser);
+      
+      // Store in localStorage
+      localStorage.setItem('token', mockToken);
+      localStorage.setItem('user', JSON.stringify(mockUser));
+      
+      onLogin(mockUser, mockToken);
+      
     } catch (err: any) {
       console.error('Healthcare login error:', err);
-      const errorMessage = err.response?.data?.error || err.message || 'Network error. Please try again.';
+      const errorMessage = err.message || 'Login failed. Please try again.';
       setError(errorMessage);
     } finally {
       setIsLoading(false);

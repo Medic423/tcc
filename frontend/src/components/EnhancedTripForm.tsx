@@ -131,10 +131,10 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
 
   const steps = [
     { id: 1, name: 'Patient Info', icon: User },
-    { id: 2, name: 'Trip Details', icon: MapPin },
-    { id: 3, name: 'Clinical Info', icon: Stethoscope },
-    { id: 4, name: 'Agency Selection', icon: Truck },
-    { id: 5, name: 'Review & Submit', icon: CheckCircle }
+    // { id: 2, name: 'Trip Details', icon: MapPin },
+    // { id: 3, name: 'Clinical Info', icon: Stethoscope },
+    // { id: 4, name: 'Agency Selection', icon: Truck },
+    // { id: 5, name: 'Review & Submit', icon: CheckCircle }
   ];
 
   useEffect(() => {
@@ -170,87 +170,25 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
 
   const loadFormOptions = async () => {
     try {
-      console.log('TCC_DEBUG: Loading form options...');
+      console.log('TCC_DEBUG: Loading simplified form options for step 1 only...');
       
-      // Load each option separately with individual error handling
-      const options = {
-        diagnosis: [],
-        mobility: [],
-        transportLevel: [],
-        urgency: [],
-        insurance: [],
-        facilities: [],
+      // Initialize with mock data for step 1 only
+      const options: FormOptions = {
+        diagnosis: ['Cardiac', 'Respiratory', 'Neurological', 'Trauma'],
+        mobility: ['Ambulatory', 'Wheelchair', 'Stretcher', 'Bed-bound'],
+        transportLevel: ['BLS', 'ALS', 'CCT', 'Other'],
+        urgency: ['Routine', 'Urgent', 'Emergent', 'Critical'],
+        insurance: ['Medicare', 'Medicaid', 'Private', 'Self-pay'],
+        facilities: [
+          { id: '1', name: 'Test Hospital', type: 'HOSPITAL' },
+          { id: '2', name: 'General Medical Center', type: 'HOSPITAL' },
+          { id: '3', name: 'Emergency Care Facility', type: 'CLINIC' }
+        ],
         agencies: [],
         pickupLocations: []
       };
 
-      // Load diagnosis options
-      try {
-        const diagnosisRes = await tripsAPI.getOptions.diagnosis();
-        if (diagnosisRes.data?.success && diagnosisRes.data.data) {
-          options.diagnosis = diagnosisRes.data.data;
-          console.log('TCC_DEBUG: Loaded diagnosis options:', options.diagnosis.length);
-        }
-      } catch (error) {
-        console.error('Error loading diagnosis options:', error);
-      }
-
-      // Load mobility options
-      try {
-        const mobilityRes = await tripsAPI.getOptions.mobility();
-        if (mobilityRes.data?.success && mobilityRes.data.data) {
-          options.mobility = mobilityRes.data.data;
-          console.log('TCC_DEBUG: Loaded mobility options:', options.mobility.length);
-        }
-      } catch (error) {
-        console.error('Error loading mobility options:', error);
-      }
-
-      // Load transport level options
-      try {
-        const transportRes = await tripsAPI.getOptions.transportLevel();
-        if (transportRes.data?.success && transportRes.data.data) {
-          options.transportLevel = transportRes.data.data;
-          console.log('TCC_DEBUG: Loaded transport level options:', options.transportLevel.length);
-        }
-      } catch (error) {
-        console.error('Error loading transport level options:', error);
-      }
-
-      // Load urgency options
-      try {
-        const urgencyRes = await tripsAPI.getOptions.urgency();
-        if (urgencyRes.data?.success && urgencyRes.data.data) {
-          options.urgency = urgencyRes.data.data;
-          console.log('TCC_DEBUG: Loaded urgency options:', options.urgency.length);
-        }
-      } catch (error) {
-        console.error('Error loading urgency options:', error);
-      }
-
-      // Load insurance options
-      try {
-        const insuranceRes = await tripsAPI.getOptions.insurance();
-        if (insuranceRes.data?.success && insuranceRes.data.data) {
-          options.insurance = insuranceRes.data.data;
-          console.log('TCC_DEBUG: Loaded insurance options:', options.insurance.length);
-        }
-      } catch (error) {
-        console.error('Error loading insurance options:', error);
-      }
-
-      // Load facilities
-      try {
-        const facilitiesRes = await api.get('/api/tcc/facilities');
-        if (facilitiesRes.data?.success && facilitiesRes.data.data) {
-          options.facilities = facilitiesRes.data.data;
-          console.log('TCC_DEBUG: Loaded facilities:', options.facilities.length);
-        }
-      } catch (error) {
-        console.error('Error loading facilities:', error);
-      }
-
-      console.log('TCC_DEBUG: Setting form options:', options);
+      console.log('TCC_DEBUG: Setting simplified form options:', options);
       setFormOptions(options);
     } catch (error) {
       console.error('Error loading form options:', error);
@@ -602,7 +540,7 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
           </div>
         );
 
-      case 2:
+      // case 2:
         return (
           <div className="space-y-6">
             <div className="bg-green-50 border border-green-200 rounded-lg p-4">
@@ -839,7 +777,7 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
           </div>
         );
 
-      case 3:
+      // case 3:
         return (
           <div className="space-y-6">
             <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
@@ -917,7 +855,7 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
           </div>
         );
 
-      case 4:
+      // case 4:
         return (
           <div className="space-y-6">
             <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
@@ -1019,7 +957,7 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
           </div>
         );
 
-      case 5:
+      // case 5:
         return (
           <div className="space-y-6">
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
@@ -1174,7 +1112,7 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
                   Cancel
                 </button>
                 
-                <button
+                {/* <button
                   type="button"
                   onClick={handlePrevious}
                   disabled={currentStep === 1}
@@ -1182,10 +1120,10 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
                 >
                   <ChevronLeft className="h-4 w-4 mr-2" />
                   Previous
-                </button>
+                </button> */}
               </div>
 
-              {currentStep < steps.length ? (
+              {/* {currentStep < steps.length ? (
                 <button
                   type="button"
                   onClick={handleNext}
@@ -1194,7 +1132,7 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
                   Next
                   <ChevronRight className="h-4 w-4 ml-2" />
                 </button>
-              ) : (
+              ) : ( */}
                 <button
                   type="submit"
                   disabled={loading}
@@ -1202,7 +1140,7 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
                 >
                   {loading ? 'Creating...' : 'Create Request'}
                 </button>
-              )}
+              {/* )} */}
             </div>
           </form>
         </div>
