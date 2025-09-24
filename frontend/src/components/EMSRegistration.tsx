@@ -204,14 +204,14 @@ const EMSRegistration: React.FC<EMSRegistrationProps> = ({ onBack, onSuccess }) 
         agencyName: formData.agencyName,
         serviceType: formData.serviceType,
         // address: formData.address, // Temporarily commented out
-        city: formData.city,
-        state: formData.state,
-        zipCode: formData.zipCode,
-        phone: formData.phone,
-        latitude: formData.latitude,
-        longitude: formData.longitude,
-        capabilities: formData.capabilities,
-        operatingHours: formData.operatingHours
+        // city: formData.city, // Temporarily commented out
+        // state: formData.state, // Temporarily commented out
+        // zipCode: formData.zipCode, // Temporarily commented out
+        // phone: formData.phone, // Temporarily commented out
+        // latitude: formData.latitude, // Temporarily commented out
+        // longitude: formData.longitude, // Temporarily commented out
+        // capabilities: formData.capabilities, // Temporarily commented out
+        // operatingHours: formData.operatingHours // Temporarily commented out
       });
       
       setSuccess(true);

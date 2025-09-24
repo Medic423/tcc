@@ -165,12 +165,12 @@ const HealthcareRegistration: React.FC<HealthcareRegistrationProps> = ({ onBack,
         facilityName: formData.facilityName,
         facilityType: formData.facilityType,
         // address: formData.address, // Temporarily commented out
-        city: formData.city,
-        state: formData.state,
-        zipCode: formData.zipCode,
-        phone: formData.phone,
-        latitude: formData.latitude,
-        longitude: formData.longitude
+        // city: formData.city, // Temporarily commented out
+        // state: formData.state, // Temporarily commented out
+        // zipCode: formData.zipCode, // Temporarily commented out
+        // phone: formData.phone, // Temporarily commented out
+        // latitude: formData.latitude, // Temporarily commented out
+        // longitude: formData.longitude // Temporarily commented out
       });
       
       setSuccess(true);
