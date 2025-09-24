@@ -6,7 +6,7 @@ const EXPLICIT_API_URL = import.meta.env.VITE_API_URL as string | undefined;
 const DEFAULT_DEV_URL = 'http://localhost:5001';
 // NOTE: Prefer setting VITE_API_URL in env. This fallback should point to the
 // stable production API domain. Updated to latest deploy for now.
-const DEFAULT_PROD_URL = 'https://vercel-bqfo02a73-chuck-ferrells-projects.vercel.app';
+const DEFAULT_PROD_URL = 'https://vercel-8b6rz6p9x-chuck-ferrells-projects.vercel.app';
 
 let API_BASE_URL = EXPLICIT_API_URL || (import.meta.env.DEV ? DEFAULT_DEV_URL : DEFAULT_PROD_URL);
 
