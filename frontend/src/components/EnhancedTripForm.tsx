@@ -131,7 +131,7 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
 
   const steps = [
     { id: 1, name: 'Patient Info', icon: User },
-    // { id: 2, name: 'Trip Details', icon: MapPin },
+    { id: 2, name: 'Trip Details', icon: MapPin },
     // { id: 3, name: 'Clinical Info', icon: Stethoscope },
     // { id: 4, name: 'Agency Selection', icon: Truck },
     // { id: 5, name: 'Review & Submit', icon: CheckCircle }
@@ -385,7 +385,7 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
     setError(null);
 
     try {
-      // Validate only step 1 required fields (Patient Info)
+      // Validate step 1 required fields (Patient Info)
       if (!formData.patientId || !formData.patientWeight) {
         throw new Error('Please fill in Patient ID and Patient Weight');
       }
@@ -396,8 +396,28 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
         throw new Error('Please enter a valid patient weight');
       }
 
-      // For step 1 only, we'll just show a success message
-      console.log('TCC_DEBUG: Step 1 validation passed:', formData);
+      // Validate step 2 required fields (Trip Details)
+      if (!formData.fromLocation || !formData.pickupLocationId || !formData.toLocation || !formData.scheduledTime || !formData.transportLevel || !formData.urgencyLevel) {
+        throw new Error('Please fill in all trip details: From Location, Pickup Location, To Location, Scheduled Time, Transport Level, and Urgency Level');
+      }
+
+      // Validate scheduled time is not in the past
+      if (new Date(formData.scheduledTime) < new Date()) {
+        throw new Error('Scheduled time cannot be in the past');
+      }
+
+      // Validate transport level
+      if (!['BLS', 'ALS', 'CCT', 'Other'].includes(formData.transportLevel)) {
+        throw new Error('Invalid transport level');
+      }
+
+      // Validate urgency level
+      if (!['Routine', 'Urgent', 'Emergent', 'Critical'].includes(formData.urgencyLevel)) {
+        throw new Error('Invalid urgency level');
+      }
+
+      // For steps 1-2, we'll just show a success message
+      console.log('TCC_DEBUG: Steps 1-2 validation passed:', formData);
       setSuccess(true);
       setTimeout(() => {
         onTripCreated();
@@ -546,7 +566,7 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
           </div>
         );
 
-      // case 2:
+      case 2:
         return (
           <div className="space-y-6">
             <div className="bg-green-50 border border-green-200 rounded-lg p-4">
@@ -1118,7 +1138,7 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
                   Cancel
                 </button>
                 
-                {/* <button
+                <button
                   type="button"
                   onClick={handlePrevious}
                   disabled={currentStep === 1}
@@ -1126,10 +1146,10 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
                 >
                   <ChevronLeft className="h-4 w-4 mr-2" />
                   Previous
-                </button> */}
+                </button>
               </div>
 
-              {/* {currentStep < steps.length ? (
+              {currentStep < steps.length ? (
                 <button
                   type="button"
                   onClick={handleNext}
@@ -1138,7 +1158,7 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
                   Next
                   <ChevronRight className="h-4 w-4 ml-2" />
                 </button>
-              ) : ( */}
+              ) : (
                 <button
                   type="submit"
                   disabled={loading}
@@ -1146,7 +1166,7 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
                 >
                   {loading ? 'Creating...' : 'Create Request'}
                 </button>
-              {/* )} */}
+              )}
             </div>
           </form>
         </div>
