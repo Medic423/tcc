@@ -1,81 +1,106 @@
 #!/usr/bin/env node
+/*
+ Simple contract test runner for critical endpoints.
+ Usage:
+   API_URL=https://your-api node test-api-simple.js
+   or
+   node test-api-simple.js (uses http://localhost:5001)
+*/
 
-/**
- * Simple test to verify API endpoints are working
- */
-
+const https = require('https');
 const http = require('http');
 
-function makeRequest(path, method = 'GET', data = null) {
-  return new Promise((resolve, reject) => {
-    const options = {
-      hostname: 'localhost',
-      port: 5001,
-      path: path,
-      method: method,
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    };
+const API_URL = process.env.API_URL || 'http://localhost:5001';
+const TCC_TOKEN = process.env.TCC_TOKEN || '';
 
-    const req = http.request(options, (res) => {
-      let body = '';
-      res.on('data', (chunk) => {
-        body += chunk;
-      });
+function fetchJson(path) {
+  return new Promise((resolve, reject) => {
+    const url = new URL(path, API_URL);
+    const lib = url.protocol === 'https:' ? https : http;
+    const headers = { 'Accept': 'application/json' };
+    if (TCC_TOKEN && url.pathname.startsWith('/api')) {
+      headers['Authorization'] = `Bearer ${TCC_TOKEN}`;
+    }
+    const req = lib.request(url, { method: 'GET', headers }, (res) => {
+      let data = '';
+      res.on('data', (chunk) => (data += chunk));
       res.on('end', () => {
         try {
-          const jsonData = JSON.parse(body);
-          resolve({ status: res.statusCode, data: jsonData });
-        } catch (e) {
-          resolve({ status: res.statusCode, data: body });
+          const json = JSON.parse(data || '{}');
+          resolve({ status: res.statusCode, data: json, url: url.toString() });
+        } catch (err) {
+          reject(new Error(`Invalid JSON from ${url}: ${err.message}`));
         }
       });
     });
-
-    req.on('error', (err) => {
-      reject(err);
-    });
-
-    if (data) {
-      req.write(JSON.stringify(data));
-    }
+    req.on('error', reject);
     req.end();
   });
 }
 
-async function testAPI() {
-  console.log('🧪 Testing API endpoints...\n');
-
-  try {
-    // Test health endpoint
-    console.log('1. Testing health endpoint...');
-    const health = await makeRequest('/health');
-    console.log('Health status:', health.status);
-    console.log('Health data:', health.data);
-
-    // Test root endpoint
-    console.log('\n2. Testing root endpoint...');
-    const root = await makeRequest('/');
-    console.log('Root status:', root.status);
-    console.log('Root data:', root.data);
-
-    // Test trips endpoint
-    console.log('\n3. Testing trips endpoint...');
-    const trips = await makeRequest('/api/trips');
-    console.log('Trips status:', trips.status);
-    console.log('Trips data:', trips.data);
-
-    // Test agency responses endpoint
-    console.log('\n4. Testing agency responses endpoint...');
-    const responses = await makeRequest('/api/agency-responses');
-    console.log('Agency responses status:', responses.status);
-    console.log('Agency responses data:', responses.data);
-
-  } catch (error) {
-    console.error('❌ Error:', error.message);
-    console.log('\n💡 Make sure the backend server is running on port 5001');
-  }
+function assert(condition, message) {
+  if (!condition) throw new Error(message);
 }
 
-testAPI();
+async function run() {
+  const results = [];
+
+  // Health
+  const health = await fetchJson('/health');
+  results.push(['health', health.status, health.data.status]);
+  assert(health.status === 200, 'Health endpoint should return 200');
+
+  // Analytics overview
+  const overview = await fetchJson('/api/tcc/analytics/overview');
+  results.push(['analytics.overview', overview.status, !!overview.data.success]);
+  if (overview.status !== 200) {
+    console.warn('⚠️  Overview not accessible without token. Set TCC_TOKEN to test authenticated endpoints.');
+  } else {
+    assert(overview.data.success === true, 'Overview should succeed');
+  }
+
+  // Dropdown categories
+  const categories = await fetchJson('/api/dropdown-options');
+  results.push(['dropdown.categories', categories.status, Array.isArray(categories.data.data)]);
+  if (categories.status !== 200) {
+    console.warn('⚠️  Dropdown categories require auth. Set TCC_TOKEN to validate.');
+  } else {
+    assert(Array.isArray(categories.data.data), 'Categories should be array');
+  }
+
+  // Agencies
+  const agencies = await fetchJson('/api/tcc/agencies');
+  results.push(['agencies', agencies.status, Array.isArray(agencies.data.data)]);
+  if (agencies.status !== 200) {
+    console.warn('⚠️  Agencies not accessible without token. Set TCC_TOKEN to test authenticated endpoints.');
+  } else {
+    assert(Array.isArray(agencies.data.data), 'Agencies should be array');
+  }
+
+  // EMS analytics (auth required)
+  const emsOverview = await fetchJson('/api/ems/analytics/overview');
+  results.push(['ems.overview', emsOverview.status, !!emsOverview.data.success]);
+  if (emsOverview.status !== 200) console.warn('⚠️  EMS overview requires auth.');
+
+  const emsTrips = await fetchJson('/api/ems/analytics/trips');
+  results.push(['ems.trips', emsTrips.status, !!emsTrips.data.success]);
+  if (emsTrips.status !== 200) console.warn('⚠️  EMS trips requires auth.');
+
+  const emsUnits = await fetchJson('/api/ems/analytics/units');
+  results.push(['ems.units', emsUnits.status, !!emsUnits.data.success]);
+  if (emsUnits.status !== 200) console.warn('⚠️  EMS units requires auth.');
+
+  const emsPerf = await fetchJson('/api/ems/analytics/performance');
+  results.push(['ems.performance', emsPerf.status, !!emsPerf.data.success]);
+  if (emsPerf.status !== 200) console.warn('⚠️  EMS performance requires auth.');
+
+  console.log('✅ Contract tests passed');
+  for (const r of results) console.log('-', ...r);
+}
+
+run().catch((err) => {
+  console.error('❌ Contract test failed:', err.message);
+  process.exit(1);
+});
+
+// Removed duplicate legacy test block

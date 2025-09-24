@@ -218,3 +218,16 @@ CREATE TABLE notification_log (
 5. Add frontend interfaces
 6. Conduct comprehensive testing
 7. Deploy to production with monitoring
+
+## Addendum: Feed Failure Alerts (UI + Email)
+
+- As part of the broader text/email implementation, we will add an automatic alerting path for backend feed health failures detected by the UI.
+- The TCC module System Overview now displays a banner when critical feeds fail (analytics overview, agencies, dropdown categories, hospitals). Once email is configured, the same detection will trigger an email (and optional SMS) to the site administrator.
+- Delivery flow:
+  - UI detects failing feed(s) → calls new backend endpoint `POST /api/notifications/alerts/feed-failure` with details.
+  - Backend sends email (and optionally SMS) to configured admin recipients using the notification service.
+  - Alerts are rate-limited (e.g., 1 per feed per hour) and logged to `notification_log`.
+- Environments:
+  - Dev: alerts can be routed to a sandbox mailbox/number.
+  - Prod: real admin recipients; follow escalation rules if failures persist.
+- This alerting work is included in the text/email feature scope and will be enabled after email configuration is complete.

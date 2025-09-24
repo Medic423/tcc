@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { analyticsAPI } from '../services/api';
+import api, { analyticsAPI } from '../services/api';
 import { Building2, Truck, MapPin, Activity } from 'lucide-react';
 
 interface SystemOverview {
@@ -17,6 +17,8 @@ const Overview: React.FC = () => {
   const [overview, setOverview] = useState<SystemOverview | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [feedWarnings, setFeedWarnings] = useState<string[]>([]);
+  const [showWarnings, setShowWarnings] = useState(true);
 
   useEffect(() => {
     const fetchOverview = async () => {
@@ -31,6 +33,32 @@ const Overview: React.FC = () => {
     };
 
     fetchOverview();
+
+    const checkFeeds = async () => {
+      const feeds: Array<{ path: string; label: string }> = [
+        { path: '/api/tcc/analytics/overview', label: 'Analytics Overview' },
+        { path: '/api/tcc/agencies', label: 'Agencies' },
+        { path: '/api/dropdown-options', label: 'Dropdown Categories' },
+        { path: '/api/tcc/hospitals', label: 'Hospitals' },
+      ];
+      const warnings: string[] = [];
+      await Promise.all(
+        feeds.map(async (f) => {
+          try {
+            const res = await api.get(f.path);
+            if (res.status !== 200 || res.data?.success === false) {
+              warnings.push(`${f.label}: ${res.status}`);
+            }
+          } catch (err: any) {
+            const code = err?.response?.status || 'ERR';
+            warnings.push(`${f.label}: ${code}`);
+          }
+        })
+      );
+      setFeedWarnings(warnings);
+    };
+
+    checkFeeds();
   }, []);
 
   if (loading) {
@@ -82,6 +110,21 @@ const Overview: React.FC = () => {
 
   return (
     <div>
+      {showWarnings && feedWarnings.length > 0 && (
+        <div className="mb-4 bg-red-50 border border-red-200 text-red-800 p-4 rounded">
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="font-semibold">Feed warnings detected</div>
+              <ul className="list-disc ml-5 mt-1 text-sm">
+                {feedWarnings.map((w, idx) => (
+                  <li key={idx}>{w}</li>
+                ))}
+              </ul>
+            </div>
+            <button onClick={() => setShowWarnings(false)} className="text-sm underline">Dismiss</button>
+          </div>
+        </div>
+      )}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">System Overview</h1>
         <p className="mt-1 text-sm text-gray-500">

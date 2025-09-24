@@ -15,7 +15,7 @@ import {
   Share2,
   X
 } from 'lucide-react';
-import { analyticsAPI } from '../services/api';
+import { analyticsAPI, tccAnalyticsAPI } from '../services/api';
 import { 
   LineChart, 
   Line, 
@@ -180,10 +180,15 @@ const FinancialDashboard: React.FC = () => {
       setLoading(true);
       setError(null);
       
+      console.log('TCC_DEBUG: FinancialDashboard.loadFinancialData() fetching analytics', {
+        period: selectedPeriod,
+        startDate: selectedDateRange.start,
+        endDate: selectedDateRange.end
+      });
       const [costAnalysisResponse, profitabilityResponse, breakdownsResponse] = await Promise.all([
-        analyticsAPI.getCostAnalysis(selectedDateRange.start, selectedDateRange.end),
-        analyticsAPI.getProfitability(selectedPeriod),
-        analyticsAPI.getTripCostBreakdowns()
+        analyticsAPI.getCostAnalysis({ startDate: selectedDateRange.start, endDate: selectedDateRange.end }),
+        analyticsAPI.getProfitability({ period: selectedPeriod }),
+        tccAnalyticsAPI.getCostBreakdowns({ limit: 50 })
       ]);
 
       if (costAnalysisResponse.data?.success) {

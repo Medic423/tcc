@@ -434,7 +434,7 @@ const RevenueSettings: React.FC = () => {
     }
 
     // Use token in URL for EventSource authentication
-    const url = `${import.meta.env.VITE_BACKEND_URL || 'https://vercel-api-eta-nine.vercel.app'}/api/optimize/stream?token=${encodeURIComponent(token)}`;
+    const url = `${import.meta.env.VITE_API_URL || 'https://vercel-bqfo02a73-chuck-ferrells-projects.vercel.app'}/api/optimize/stream?token=${encodeURIComponent(token)}`;
     console.log('Creating EventSource connection to:', url);
     const es = new EventSource(url);
     eventSourceRef.current = es;

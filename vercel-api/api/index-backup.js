@@ -1242,65 +1242,6 @@ export default function handler(req, res) {
     return;
   }
 
-  // Optimization stream endpoint (SSE)
-  if (req.method === 'GET' && req.url.startsWith('/api/optimize/stream')) {
-    const token = req.url.split('token=')[1]?.replace(/%40/g, '@');
-    
-    if (!token || !token.startsWith('vercel-jwt-token-')) {
-      res.status(401).json({
-        success: false,
-        message: 'Invalid token'
-      });
-      return;
-    }
-
-    // Set SSE headers
-    res.writeHead(200, {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive',
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Headers': 'Cache-Control'
-    });
-
-    // Send initial optimization data
-    res.write(`data: ${JSON.stringify({
-      type: 'optimization_update',
-      data: {
-        status: 'running',
-        progress: 0,
-        message: 'Starting route optimization...'
-      }
-    })}\n\n`);
-
-    // Send periodic updates
-    let progress = 0;
-    const interval = setInterval(() => {
-      progress += 10;
-      
-      if (progress <= 100) {
-        res.write(`data: ${JSON.stringify({
-          type: 'optimization_update',
-          data: {
-            status: progress === 100 ? 'completed' : 'running',
-            progress: progress,
-            message: progress === 100 ? 'Optimization completed!' : `Processing... ${progress}%`
-          }
-        })}\n\n`);
-      } else {
-        clearInterval(interval);
-        res.end();
-      }
-    }, 1000);
-
-    // Cleanup on client disconnect
-    req.on('close', () => {
-      clearInterval(interval);
-    });
-
-    return;
-  }
-
   // TCC Revenue Optimization endpoint
   if (req.method === 'POST' && req.url === '/api/tcc/optimize/revenue') {
     const { trips, pricing, constraints } = req.body;
@@ -1564,7 +1505,6 @@ export default function handler(req, res) {
       '/api/tcc/users',
       '/api/tcc/optimize/routes',
       '/api/tcc/optimize/revenue',
-      '/api/optimize/stream',
       '/api/tcc/pickup-locations',
       '/api/tcc/facilities',
       '/api/agency-responses',

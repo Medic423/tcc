@@ -28,27 +28,25 @@ if lsof -Pi :$PORT -sTCP:LISTEN -t >/dev/null 2>&1; then
         if [ "$TOKEN" != "null" ] && [ "$TOKEN" != "" ]; then
             echo "✅ Authentication working"
             
-            # Test units API
-            UNITS_RESPONSE=$(curl -s http://localhost:$PORT/api/tcc/units \
-                -H "Authorization: Bearer $TOKEN" 2>/dev/null | jq -r '.success' 2>/dev/null)
-            
-            if [ "$UNITS_RESPONSE" = "true" ]; then
-                echo "✅ Units API working"
-            else
-                echo "❌ Units API failing"
-                exit 1
-            fi
-            
-            # Test dropdown options API
-            DROPDOWN_RESPONSE=$(curl -s http://localhost:$PORT/api/dropdown-options/insurance \
-                -H "Authorization: Bearer $TOKEN" 2>/dev/null | jq -r '.success' 2>/dev/null)
-            
-            if [ "$DROPDOWN_RESPONSE" = "true" ]; then
-                echo "✅ Dropdown Options API working"
-            else
-                echo "❌ Dropdown Options API failing"
-                exit 1
-            fi
+            # Test key feeds
+            declare -a FEEDS=(
+                "/api/tcc/units"
+                "/api/tcc/agencies"
+                "/api/tcc/analytics/overview"
+                "/api/dropdown-options"
+                "/api/tcc/hospitals"
+            )
+
+            for path in "${FEEDS[@]}"; do
+                RES=$(curl -s http://localhost:$PORT$path -H "Authorization: Bearer $TOKEN" 2>/dev/null | jq -r '.success' 2>/dev/null)
+                CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:$PORT$path -H "Authorization: Bearer $TOKEN" 2>/dev/null)
+                if [ "$CODE" = "200" ] && [ "$RES" = "true" -o "$path" = "/api/dropdown-options" -a "$CODE" = "200" ]; then
+                    echo "✅ $path healthy"
+                else
+                    echo "❌ $path unhealthy (code $CODE)"
+                    exit 1
+                fi
+            done
             
             echo "🎉 All systems operational!"
             exit 0

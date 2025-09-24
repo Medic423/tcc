@@ -1,7 +1,23 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '' : 'https://vercel-bqfo02a73-chuck-ferrells-projects.vercel.app');
-console.log('TCC_DEBUG: API_BASE_URL is set to:', API_BASE_URL);
+// Environment hardening: require explicit API base URL, with safe dev fallback
+const ENV_NAME = import.meta.env.MODE || (import.meta.env.DEV ? 'development' : 'production');
+const EXPLICIT_API_URL = import.meta.env.VITE_API_URL as string | undefined;
+const DEFAULT_DEV_URL = 'http://localhost:5001';
+const DEFAULT_PROD_URL = 'https://vercel-bqfo02a73-chuck-ferrells-projects.vercel.app';
+
+let API_BASE_URL = EXPLICIT_API_URL || (import.meta.env.DEV ? DEFAULT_DEV_URL : DEFAULT_PROD_URL);
+
+// Guard against accidental cross-environment use
+try {
+  const isLocal = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+  if (isLocal && API_BASE_URL !== DEFAULT_DEV_URL) {
+    console.warn('TCC_WARN: Localhost detected but API_BASE_URL is not local. For safety using', DEFAULT_DEV_URL);
+    API_BASE_URL = DEFAULT_DEV_URL;
+  }
+} catch {}
+
+console.log('TCC_DEBUG: API_BASE_URL is set to:', API_BASE_URL, 'ENV:', ENV_NAME);
 
 // Create axios instance
 const api = axios.create({
@@ -9,30 +25,45 @@ const api = axios.create({
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
+    'X-TCC-Env': ENV_NAME,
   },
 });
 
 // Request interceptor to add auth token
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  try {
+    const url = (config.baseURL || '') + (config.url || '');
+    if (url.includes('/api/tcc/agencies') || url.includes('/api/tcc/analytics') || url.includes('/api/dropdown-options')) {
+      console.log('TCC_DEBUG: API request →', config.method?.toUpperCase(), url, 'params:', config.params, 'data:', config.data);
     }
-    return config;
+  } catch {}
+  return config;
+});
+
+// Response interceptor for error handling
+api.interceptors.response.use(
+  (response) => {
+    try {
+      const url = response.config?.baseURL + (response.config?.url || '');
+      if (url?.includes('/api/tcc/agencies') || url.includes('/api/tcc/analytics') || url.includes('/api/dropdown-options')) {
+        console.log('TCC_DEBUG: API response ←', response.status, url, 'data:', response.data);
+      }
+    } catch {}
+    return response;
   },
   (error) => {
-    return Promise.reject(error);
-  }
-);
-
-// Response interceptor to handle auth errors
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
+    try {
+      const url = (error.response?.config?.baseURL || '') + (error.response?.config?.url || '');
+      if (url.includes('/api/tcc/agencies') || url.includes('/api/tcc/analytics') || url.includes('/api/dropdown-options')) {
+        console.log('TCC_DEBUG: API error ✖', error.response?.status, url, 'data:', error.response?.data);
+      }
+    } catch {}
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
-      localStorage.removeItem('user');
       window.location.href = '/login';
     }
     return Promise.reject(error);
@@ -77,9 +108,6 @@ export const hospitalsAPI = {
   getAll: (params?: any) =>
     api.get('/api/tcc/hospitals', { params }),
   
-  getById: (id: string) =>
-    api.get(`/api/tcc/hospitals/${id}`),
-  
   create: (data: any) =>
     api.post('/api/tcc/hospitals', data),
   
@@ -88,18 +116,77 @@ export const hospitalsAPI = {
   
   delete: (id: string) =>
     api.delete(`/api/tcc/hospitals/${id}`),
-  
-  search: (query: string) =>
-    api.get('/api/tcc/hospitals/search', { params: { q: query } }),
 };
 
-// Agencies API
+// TCC Analytics API
+export const tccAnalyticsAPI = {
+  getOverview: () =>
+    api.get('/api/tcc/analytics/overview'),
+  
+  getTrips: () =>
+    api.get('/api/tcc/analytics/trips'),
+  
+  getCostAnalysis: (params?: any) =>
+    api.get('/api/tcc/analytics/cost-analysis', { params }),
+  
+  getProfitability: (params?: any) =>
+    api.get('/api/tcc/analytics/profitability', { params }),
+  
+  getCostBreakdowns: (params?: any) =>
+    api.get('/api/tcc/analytics/cost-breakdowns', { params }),
+};
+
+// Analytics API (legacy export for compatibility)
+export const analyticsAPI = {
+  getOverview: () =>
+    api.get('/api/tcc/analytics/overview'),
+  
+  getTrips: () =>
+    api.get('/api/tcc/analytics/trips'),
+  
+  getCostAnalysis: (params?: any) =>
+    api.get('/api/tcc/analytics/cost-analysis', { params }),
+  
+  getProfitability: (params?: any) =>
+    api.get('/api/tcc/analytics/profitability', { params }),
+};
+
+// Trips API (legacy export for compatibility)
+export const tripsAPI = {
+  getAll: (params?: any) =>
+    api.get('/api/trips', { params }),
+  
+  create: (data: any) =>
+    api.post('/api/trips', data),
+  
+  // Enhanced create used by EnhancedTripForm
+  createEnhanced: (data: any) =>
+    api.post('/api/trips/with-responses', data),
+  
+  update: (id: string, data: any) =>
+    api.put(`/api/trips/${id}`, data),
+  
+  delete: (id: string) =>
+    api.delete(`/api/trips/${id}`),
+
+  // Trip form option endpoints
+  getOptions: {
+    diagnosis: () => api.get('/api/trips/options/diagnosis'),
+    mobility: () => api.get('/api/trips/options/mobility'),
+    transportLevel: () => api.get('/api/trips/options/transport-level'),
+    urgency: () => api.get('/api/trips/options/urgency'),
+    insurance: () => api.get('/api/trips/options/insurance'),
+  },
+
+  // Agencies for facility within radius
+  getAgenciesForHospital: (hospitalId: string, radius: number) =>
+    api.get(`/api/trips/agencies/${encodeURIComponent(hospitalId)}`, { params: { radius } }),
+};
+
+// Agencies API (legacy export for compatibility)
 export const agenciesAPI = {
   getAll: (params?: any) =>
     api.get('/api/tcc/agencies', { params }),
-  
-  getById: (id: string) =>
-    api.get(`/api/tcc/agencies/${id}`),
   
   create: (data: any) =>
     api.post('/api/tcc/agencies', data),
@@ -107,23 +194,14 @@ export const agenciesAPI = {
   update: (id: string, data: any) =>
     api.put(`/api/tcc/agencies/${id}`, data),
   
-  updateAgency: (id: string, data: any) =>
-    api.put(`/api/tcc/agencies/${id}`, data),
-  
   delete: (id: string) =>
     api.delete(`/api/tcc/agencies/${id}`),
-  
-  search: (query: string) =>
-    api.get('/api/tcc/agencies/search', { params: { q: query } }),
 };
 
-// Facilities API
+// Facilities API (legacy export for compatibility)
 export const facilitiesAPI = {
   getAll: (params?: any) =>
     api.get('/api/tcc/facilities', { params }),
-  
-  getById: (id: string) =>
-    api.get(`/api/tcc/facilities/${id}`),
   
   create: (data: any) =>
     api.post('/api/tcc/facilities', data),
@@ -133,92 +211,9 @@ export const facilitiesAPI = {
   
   delete: (id: string) =>
     api.delete(`/api/tcc/facilities/${id}`),
-  
-  search: (query: string) =>
-    api.get('/api/tcc/facilities/search', { params: { q: query } }),
 };
 
-// Analytics API
-export const analyticsAPI = {
-  getOverview: () =>
-    api.get('/api/tcc/analytics/overview'),
-  
-  getTrips: () =>
-    api.get('/api/tcc/analytics/trips'),
-  
-  getAgencies: () =>
-    api.get('/api/tcc/analytics/agencies'),
-  
-  getHospitals: () =>
-    api.get('/api/tcc/analytics/hospitals'),
-  
-  // Financial Analytics
-  getCostAnalysis: (startDate?: string, endDate?: string) =>
-    api.get('/api/tcc/analytics/cost-analysis'),
-  
-  getProfitability: (period?: string) =>
-    api.get('/api/tcc/analytics/profitability'),
-  
-  getTripCostBreakdowns: (tripId?: string, limit?: number) =>
-    api.get('/api/tcc/analytics/cost-breakdowns', { 
-      params: { tripId, limit } 
-    }),
-  
-  createTripCostBreakdown: (tripId: string, breakdownData: any) =>
-    api.post('/api/tcc/analytics/cost-breakdown', { tripId, breakdownData }),
-};
-
-// Trips API
-export const tripsAPI = {
-  create: (data: any) =>
-    api.post('/api/trips', data),
-  
-  createEnhanced: (data: any) =>
-    api.post('/api/trips/enhanced', data),
-  
-  getAll: (params?: any) =>
-    api.get('/api/trips', { params }),
-  
-  getById: (id: string) =>
-    api.get(`/api/trips/${id}`),
-  
-  updateStatus: (id: string, data: any) =>
-    api.put(`/api/trips/${id}/status`, data),
-  
-  getAvailableAgencies: () =>
-    api.get('/api/trips/agencies/available'),
-  
-  getAgenciesForHospital: (hospitalId: string, radius?: number) =>
-    api.get(`/api/trips/agencies/${hospitalId}`, { params: { radius } }),
-  
-  getOptions: {
-    diagnosis: () => api.get('/api/trips/options/diagnosis'),
-    mobility: () => api.get('/api/trips/options/mobility'),
-    transportLevel: () => api.get('/api/trips/options/transport-level'),
-    urgency: () => api.get('/api/trips/options/urgency'),
-    insurance: () => api.get('/api/trips/options/insurance'),
-  },
-};
-
-// Dropdown Options API
-export const dropdownOptionsAPI = {
-  getCategories: () =>
-    api.get('/api/dropdown-options'),
-  
-  getByCategory: (category: string) =>
-    api.get(`/api/dropdown-options/${category}`),
-  
-  create: (data: { category: string; value: string }) =>
-    api.post('/api/dropdown-options', data),
-  
-  update: (id: string, data: { value: string; isActive?: boolean }) =>
-    api.put(`/api/dropdown-options/${id}`, data),
-  
-  delete: (id: string) =>
-    api.delete(`/api/dropdown-options/${id}`),
-};
-
-// EMS Analytics API (Agency-specific)
+// EMS Analytics API (legacy export for compatibility)
 export const emsAnalyticsAPI = {
   getOverview: () =>
     api.get('/api/ems/analytics/overview'),
@@ -231,6 +226,37 @@ export const emsAnalyticsAPI = {
   
   getPerformance: () =>
     api.get('/api/ems/analytics/performance'),
+};
+
+// Dropdown Options API (legacy export for compatibility)
+export const dropdownOptionsAPI = {
+  // Categories list
+  getCategories: () =>
+    api.get('/api/dropdown-options'),
+
+  // Options by category
+  getByCategory: (category: string) =>
+    api.get(`/api/dropdown-options/${encodeURIComponent(category)}`),
+
+  // CRUD for options
+  create: (data: { category: string; value: string }) =>
+    api.post('/api/dropdown-options', data),
+
+  update: (id: string, data: { value: string }) =>
+    api.put(`/api/dropdown-options/${id}`, data),
+
+  delete: (id: string) =>
+    api.delete(`/api/dropdown-options/${id}`),
+};
+
+// Optimization API
+export const optimizationAPI = {
+  createStream: (token: string) => {
+    return new EventSource(`${API_BASE_URL}/api/optimize/stream?token=${encodeURIComponent(token)}`);
+  },
+  
+  getOptimizationData: () =>
+    api.get('/api/optimize/data'),
 };
 
 export default api;
