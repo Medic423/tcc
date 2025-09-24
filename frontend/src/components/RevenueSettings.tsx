@@ -408,6 +408,12 @@ const RevenueSettings: React.FC = () => {
   const [whatIfRequestIds, setWhatIfRequestIds] = useState<string>("");
   const [whatIfResult, setWhatIfResult] = useState<any>(null);
 
+  // Defensive number formatter to avoid runtime crashes on undefined/NaN
+  const asNumber = (value: any, fallback = 0): number => {
+    const n = typeof value === 'number' ? value : Number(value);
+    return Number.isFinite(n) ? n : fallback;
+  };
+
   // Load saved settings on mount
   useEffect(() => {
     loadSavedSettings();
@@ -1900,19 +1906,19 @@ const RevenueSettings: React.FC = () => {
               </div>
               <div className="p-3 bg-gray-50 rounded">
                 <div className="text-xs text-gray-500">Avg Response (min)</div>
-                <div className="text-lg font-semibold">{realtimeMetrics.averageResponseTime.toFixed(1)}</div>
+                <div className="text-lg font-semibold">{asNumber(realtimeMetrics.averageResponseTime).toFixed(1)}</div>
               </div>
               <div className="p-3 bg-gray-50 rounded">
                 <div className="text-xs text-gray-500">Avg Trip Time (min)</div>
-                <div className="text-lg font-semibold">{realtimeMetrics.averageTripTime.toFixed(1)}</div>
+                <div className="text-lg font-semibold">{asNumber(realtimeMetrics.averageTripTime).toFixed(1)}</div>
               </div>
               <div className="p-3 bg-gray-50 rounded">
                 <div className="text-xs text-gray-500">Revenue (est)</div>
-                <div className="text-lg font-semibold">${realtimeMetrics.totalRevenue.toFixed(2)}</div>
+                <div className="text-lg font-semibold">${asNumber(realtimeMetrics.totalRevenue).toFixed(2)}</div>
               </div>
               <div className="p-3 bg-gray-50 rounded">
                 <div className="text-xs text-gray-500">Efficiency</div>
-                <div className="text-lg font-semibold">{(realtimeMetrics.efficiency * 100).toFixed(0)}%</div>
+                <div className="text-lg font-semibold">{asNumber(realtimeMetrics.efficiency * 100).toFixed(0)}%</div>
               </div>
             </div>
             {realtimeMetrics.lastUpdated && (
@@ -2385,19 +2391,19 @@ const RevenueSettings: React.FC = () => {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                       <div className="text-sm font-medium text-green-800">Total Revenue</div>
-                      <div className="text-2xl font-bold text-green-900">${costAnalysisSummary.totalRevenue.toFixed(2)}</div>
+                      <div className="text-2xl font-bold text-green-900">${asNumber(costAnalysisSummary.totalRevenue).toFixed(2)}</div>
                     </div>
                     <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                       <div className="text-sm font-medium text-red-800">Total Cost</div>
-                      <div className="text-2xl font-bold text-red-900">${costAnalysisSummary.totalCost.toFixed(2)}</div>
+                      <div className="text-2xl font-bold text-red-900">${asNumber(costAnalysisSummary.totalCost).toFixed(2)}</div>
                     </div>
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                       <div className="text-sm font-medium text-blue-800">Gross Profit</div>
-                      <div className="text-2xl font-bold text-blue-900">${costAnalysisSummary.grossProfit.toFixed(2)}</div>
+                      <div className="text-2xl font-bold text-blue-900">${asNumber(costAnalysisSummary.grossProfit).toFixed(2)}</div>
                     </div>
                     <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
                       <div className="text-sm font-medium text-purple-800">Profit Margin</div>
-                      <div className="text-2xl font-bold text-purple-900">{costAnalysisSummary.averageProfitMargin.toFixed(1)}%</div>
+                      <div className="text-2xl font-bold text-purple-900">{asNumber(costAnalysisSummary.averageProfitMargin).toFixed(1)}%</div>
                     </div>
                   </div>
                 ) : (
@@ -2418,15 +2424,15 @@ const RevenueSettings: React.FC = () => {
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     <div className="text-center">
                       <div className="text-sm font-medium text-gray-600">Loaded Mile Ratio</div>
-                      <div className="text-xl font-bold text-gray-900">{(costAnalysisSummary.averageLoadedMileRatio * 100).toFixed(1)}%</div>
+                      <div className="text-xl font-bold text-gray-900">{asNumber(costAnalysisSummary.averageLoadedMileRatio * 100).toFixed(1)}%</div>
                     </div>
                     <div className="text-center">
                       <div className="text-sm font-medium text-gray-600">Revenue per Mile</div>
-                      <div className="text-xl font-bold text-gray-900">${costAnalysisSummary.averageRevenuePerMile.toFixed(2)}</div>
+                      <div className="text-xl font-bold text-gray-900">${asNumber(costAnalysisSummary.averageRevenuePerMile).toFixed(2)}</div>
                     </div>
                     <div className="text-center">
                       <div className="text-sm font-medium text-gray-600">Cost per Mile</div>
-                      <div className="text-xl font-bold text-gray-900">${costAnalysisSummary.averageCostPerMile.toFixed(2)}</div>
+                      <div className="text-xl font-bold text-gray-900">${asNumber(costAnalysisSummary.averageCostPerMile).toFixed(2)}</div>
                     </div>
                   </div>
                 ) : (
@@ -2448,19 +2454,19 @@ const RevenueSettings: React.FC = () => {
                     <div className="text-center">
                       <div className="text-sm font-medium text-gray-600">Revenue Growth</div>
                       <div className={`text-xl font-bold ${profitabilityAnalysis.revenueGrowth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {profitabilityAnalysis.revenueGrowth >= 0 ? '+' : ''}{profitabilityAnalysis.revenueGrowth.toFixed(1)}%
+                        {asNumber(profitabilityAnalysis.revenueGrowth) >= 0 ? '+' : ''}{asNumber(profitabilityAnalysis.revenueGrowth).toFixed(1)}%
                       </div>
                     </div>
                     <div className="text-center">
                       <div className="text-sm font-medium text-gray-600">Cost Growth</div>
                       <div className={`text-xl font-bold ${profitabilityAnalysis.costGrowth >= 0 ? 'text-red-600' : 'text-green-600'}`}>
-                        {profitabilityAnalysis.costGrowth >= 0 ? '+' : ''}{profitabilityAnalysis.costGrowth.toFixed(1)}%
+                        {asNumber(profitabilityAnalysis.costGrowth) >= 0 ? '+' : ''}{asNumber(profitabilityAnalysis.costGrowth).toFixed(1)}%
                       </div>
                     </div>
                     <div className="text-center">
                       <div className="text-sm font-medium text-gray-600">Profit Growth</div>
                       <div className={`text-xl font-bold ${profitabilityAnalysis.profitGrowth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {profitabilityAnalysis.profitGrowth >= 0 ? '+' : ''}{profitabilityAnalysis.profitGrowth.toFixed(1)}%
+                        {asNumber(profitabilityAnalysis.profitGrowth) >= 0 ? '+' : ''}{asNumber(profitabilityAnalysis.profitGrowth).toFixed(1)}%
                       </div>
                     </div>
                     <div className="text-center">

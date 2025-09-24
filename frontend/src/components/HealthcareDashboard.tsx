@@ -106,14 +106,9 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
 
   const loadTrips = async () => {
     try {
-      const response = await fetch('/api/trips', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.data) {
+      const response = await (await import('../services/api')).default.get('/api/trips');
+      const data = response.data;
+      if (data?.success && data.data) {
           // Transform API data to match component expectations
           const transformedTrips = data.data.map((trip: any) => ({
             id: trip.id,
@@ -127,7 +122,6 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
             urgencyLevel: trip.urgencyLevel
           }));
           setTrips(transformedTrips);
-        }
       }
     } catch (error) {
       console.error('Error loading trips:', error);
@@ -148,22 +142,11 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
     
     setUpdating(true);
     try {
-      const response = await fetch(`/api/trips/${editingTrip.id}/status`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          status: editFormData.status,
-          ...(editFormData.status === 'COMPLETED' && { completionTimestamp: new Date().toISOString() })
-        }),
+      const api = (await import('../services/api')).default;
+      await api.put(`/api/trips/${editingTrip.id}/status`, {
+        status: editFormData.status,
+        ...(editFormData.status === 'COMPLETED' && { completionTimestamp: new Date().toISOString() })
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update trip');
-      }
 
       // Reload trips to get updated data
       await loadTrips();
@@ -182,22 +165,11 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
     
     setUpdating(true);
     try {
-      const response = await fetch(`/api/trips/${tripId}/status`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          status: 'COMPLETED',
-          completionTimestamp: new Date().toISOString()
-        }),
+      const api = (await import('../services/api')).default;
+      await api.put(`/api/trips/${tripId}/status`, {
+        status: 'COMPLETED',
+        completionTimestamp: new Date().toISOString()
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to complete trip');
-      }
 
       // Reload trips to get updated data
       await loadTrips();
@@ -222,17 +194,11 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
     setLoadingResponses(true);
     try {
       const url = tripId ? `/api/agency-responses?tripId=${tripId}` : '/api/agency-responses';
-      const response = await fetch(url, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.data) {
-          setAgencyResponses(data.data);
-        }
+      const api = (await import('../services/api')).default;
+      const response = await api.get(url);
+      const data = response.data;
+      if (data?.success && data.data) {
+        setAgencyResponses(data.data);
       }
     } catch (error) {
       console.error('Error loading agency responses:', error);
@@ -243,22 +209,11 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
 
   const handleSelectAgency = async (tripId: string, agencyResponseId: string, reason?: string) => {
     try {
-      const response = await fetch(`/api/agency-responses/select/${tripId}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          agencyResponseId: agencyResponseId,
-          selectionNotes: reason || 'Selected by healthcare provider'
-        }),
+      const api = (await import('../services/api')).default;
+      await api.post(`/api/agency-responses/select/${tripId}`, {
+        agencyResponseId,
+        selectionNotes: reason || 'Selected by healthcare provider'
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to select agency');
-      }
 
       // Reload responses and trips
       await loadAgencyResponses(tripId);

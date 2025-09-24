@@ -1514,9 +1514,14 @@ export default function handler(req, res) {
     return;
   }
 
-  // TCC Cost Breakdowns endpoint
-  if (req.method === 'GET' && req.url === '/api/tcc/analytics/cost-breakdowns') {
-    const { limit = 50 } = req.query;
+  // TCC Cost Breakdowns endpoint (supports query params)
+  if (req.method === 'GET' && req.url.startsWith('/api/tcc/analytics/cost-breakdowns')) {
+    let limit = 50;
+    try {
+      const url = new URL(req.url, `http://${req.headers.host}`);
+      const parsed = parseInt(url.searchParams.get('limit'));
+      if (!Number.isNaN(parsed)) limit = parsed;
+    } catch {}
     res.status(200).json({
       success: true,
       data: {
@@ -1536,7 +1541,7 @@ export default function handler(req, res) {
           }
         ],
         total: 1,
-        limit: parseInt(limit)
+        limit
       }
     });
     return;

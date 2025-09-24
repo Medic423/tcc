@@ -68,25 +68,9 @@ const UnitsManagement: React.FC<UnitsManagementProps> = ({ user }) => {
     try {
       console.log('🔍 UnitsManagement: fetchUnits called');
       setLoading(true);
-      const token = localStorage.getItem('token');
-      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
-      console.log('🔍 UnitsManagement: API_BASE_URL:', API_BASE_URL);
-      console.log('🔍 UnitsManagement: token present:', !!token);
-      
-      const response = await fetch(`${API_BASE_URL}/api/units`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch units');
-      }
-
-      const data = await response.json();
+      const api = (await import('../services/api')).default;
+      const response = await api.get('/api/units', { headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' } });
+      const data = response.data;
       console.log('🔍 UnitsManagement: API response:', data);
       if (data.success) {
         console.log('🔍 UnitsManagement: Units count:', data.data?.length || 0);
@@ -105,23 +89,9 @@ const UnitsManagement: React.FC<UnitsManagementProps> = ({ user }) => {
   // Fetch analytics
   const fetchAnalytics = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
-      
-      const response = await fetch(`${API_BASE_URL}/api/units/analytics`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch analytics');
-      }
-
-      const data = await response.json();
+      const api = (await import('../services/api')).default;
+      const response = await api.get('/api/units/analytics', { headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' } });
+      const data = response.data;
       if (data.success) {
         setAnalytics(data.data);
       }
@@ -143,24 +113,11 @@ const UnitsManagement: React.FC<UnitsManagementProps> = ({ user }) => {
     setFormError(null);
 
     try {
-      const token = localStorage.getItem('token');
-      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
-      const url = selectedUnit ? `${API_BASE_URL}/api/units/${selectedUnit.id}` : `${API_BASE_URL}/api/units`;
-      const method = selectedUnit ? 'PUT' : 'POST';
-
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        },
-        body: JSON.stringify(formData)
-      });
-
-      const data = await response.json();
-      
+      const api = (await import('../services/api')).default;
+      const url = selectedUnit ? `/api/units/${selectedUnit.id}` : '/api/units';
+      const method = selectedUnit ? 'put' : 'post';
+      const response = await (api as any)[method](url, formData, { headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' } });
+      const data = response.data;
       if (data.success) {
         await fetchUnits();
         await fetchAnalytics();
@@ -186,21 +143,9 @@ const UnitsManagement: React.FC<UnitsManagementProps> = ({ user }) => {
     }
 
     try {
-      const token = localStorage.getItem('token');
-      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
-      
-      const response = await fetch(`${API_BASE_URL}/api/units/${unitId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        }
-      });
-
-      const data = await response.json();
-      
+      const api = (await import('../services/api')).default;
+      const response = await api.delete(`/api/units/${unitId}`);
+      const data = response.data;
       if (data.success) {
         await fetchUnits();
         await fetchAnalytics();

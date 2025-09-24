@@ -10,6 +10,7 @@ import EMSRegistration from './components/EMSRegistration';
 import HealthcareLogin from './components/HealthcareLogin';
 import EMSLogin from './components/EMSLogin';
 import { authAPI } from './services/api';
+import ErrorBoundary from './components/ErrorBoundary';
 
 interface User {
   id: string;
@@ -199,7 +200,9 @@ function AppContent() {
 function App() {
   return (
     <Router>
-      <AppContent />
+      <ErrorBoundary>
+        <AppContent />
+      </ErrorBoundary>
     </Router>
   );
 }

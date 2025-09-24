@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Bell, X, CheckCircle, AlertCircle, Info } from 'lucide-react';
+import api from '../services/api';
 
 interface Notification {
   id: string;
@@ -30,25 +31,18 @@ const Notifications: React.FC<NotificationsProps> = () => {
   const loadNotifications = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/notifications', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.data) {
-          const transformedNotifications = data.data.map((notif: any) => ({
-            id: notif.id,
-            type: notif.type || 'info',
-            title: notif.title || 'Notification',
-            message: notif.message || '',
-            timestamp: new Date(notif.createdAt),
-            read: notif.read || false
-          }));
-          setNotifications(transformedNotifications);
-        }
+      const response = await api.get('/api/notifications');
+      const data = response.data;
+      if (data?.success && Array.isArray(data.data)) {
+        const transformed = data.data.map((notif: any) => ({
+          id: notif.id,
+          type: notif.type || 'info',
+          title: notif.title || 'Notification',
+          message: notif.message || '',
+          timestamp: new Date(notif.createdAt || Date.now()),
+          read: !!notif.isRead || !!notif.read
+        }));
+        setNotifications(transformed);
       }
     } catch (error) {
       console.error('Error loading notifications:', error);
@@ -59,14 +53,8 @@ const Notifications: React.FC<NotificationsProps> = () => {
 
   const markAsRead = async (notificationId: string) => {
     try {
-      const response = await fetch(`/api/notifications/${notificationId}/read`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-
-      if (response.ok) {
+      const response = await api.put(`/api/notifications/${notificationId}/read`);
+      if (response.status === 200) {
         setNotifications(prev => 
           prev.map(notif => 
             notif.id === notificationId ? { ...notif, read: true } : notif
@@ -80,14 +68,8 @@ const Notifications: React.FC<NotificationsProps> = () => {
 
   const markAllAsRead = async () => {
     try {
-      const response = await fetch('/api/notifications/read-all', {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-
-      if (response.ok) {
+      const response = await api.put('/api/notifications/read-all');
+      if (response.status === 200) {
         setNotifications(prev => 
           prev.map(notif => ({ ...notif, read: true }))
         );
