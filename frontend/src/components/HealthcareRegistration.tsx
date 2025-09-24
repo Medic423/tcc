@@ -69,12 +69,19 @@ const HealthcareRegistration: React.FC<HealthcareRegistrationProps> = ({ onBack,
     const fullAddress = `${formData.address}, ${formData.city}, ${formData.state} ${formData.zipCode}`;
     console.log('TCC_DEBUG: Geocoding address:', fullAddress);
 
-    // Try multiple geocoding services
+    // Try multiple address variations and geocoding services
+    const addressVariations = [
+      fullAddress, // Original format
+      `${formData.address}, ${formData.city}, ${formData.state}`, // Without ZIP
+      `${formData.city}, ${formData.state}`, // Just city and state
+      `${formData.facilityName}, ${formData.city}, ${formData.state}`, // Use facility name
+    ];
+
     const geocodingServices = [
       // Service 1: OpenStreetMap Nominatim (free, no API key required)
       {
         name: 'OpenStreetMap Nominatim',
-        url: `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(fullAddress)}&limit=1&addressdetails=1`,
+        url: (address: string) => `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1&addressdetails=1`,
         headers: {
           'User-Agent': 'TCC-Healthcare-App/1.0'
         }
@@ -82,54 +89,59 @@ const HealthcareRegistration: React.FC<HealthcareRegistrationProps> = ({ onBack,
       // Service 2: Alternative format for Nominatim
       {
         name: 'OpenStreetMap Nominatim (alt)',
-        url: `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(fullAddress)}&format=json&limit=1&addressdetails=1&countrycodes=us`,
+        url: (address: string) => `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1&addressdetails=1&countrycodes=us`,
         headers: {
           'User-Agent': 'TCC-Healthcare-App/1.0'
         }
       }
     ];
 
-    for (const service of geocodingServices) {
-      try {
-        console.log(`TCC_DEBUG: Trying ${service.name}...`);
-        
-        const response = await fetch(service.url, {
-          method: 'GET',
-          headers: service.headers,
-          mode: 'cors'
-        });
-        
-        console.log(`TCC_DEBUG: ${service.name} response status:`, response.status);
-        
-        if (!response.ok) {
-          console.log(`TCC_DEBUG: ${service.name} failed with status:`, response.status);
+    // Try each address variation with each service
+    for (const addressVariation of addressVariations) {
+      console.log(`TCC_DEBUG: Trying address variation: "${addressVariation}"`);
+      
+      for (const service of geocodingServices) {
+        try {
+          console.log(`TCC_DEBUG: Trying ${service.name} with "${addressVariation}"...`);
+          
+          const response = await fetch(service.url(addressVariation), {
+            method: 'GET',
+            headers: service.headers,
+            mode: 'cors'
+          });
+          
+          console.log(`TCC_DEBUG: ${service.name} response status:`, response.status);
+          
+          if (!response.ok) {
+            console.log(`TCC_DEBUG: ${service.name} failed with status:`, response.status);
+            continue;
+          }
+
+          const data = await response.json();
+          console.log(`TCC_DEBUG: ${service.name} response data:`, data);
+          
+          if (data && data.length > 0) {
+            const result = data[0];
+            console.log(`TCC_DEBUG: ${service.name} result:`, result);
+            
+            if (result.lat && result.lon) {
+              setFormData(prev => ({
+                ...prev,
+                latitude: result.lat,
+                longitude: result.lon
+              }));
+              setError(null);
+              console.log('TCC_DEBUG: Coordinates set successfully:', result.lat, result.lon);
+              setGeocoding(false);
+              return;
+            }
+          }
+          
+          console.log(`TCC_DEBUG: ${service.name} returned no valid results for "${addressVariation}"`);
+        } catch (err) {
+          console.log(`TCC_DEBUG: ${service.name} error for "${addressVariation}":`, err);
           continue;
         }
-
-        const data = await response.json();
-        console.log(`TCC_DEBUG: ${service.name} response data:`, data);
-        
-        if (data && data.length > 0) {
-          const result = data[0];
-          console.log(`TCC_DEBUG: ${service.name} result:`, result);
-          
-          if (result.lat && result.lon) {
-            setFormData(prev => ({
-              ...prev,
-              latitude: result.lat,
-              longitude: result.lon
-            }));
-            setError(null);
-            console.log('TCC_DEBUG: Coordinates set successfully:', result.lat, result.lon);
-            setGeocoding(false);
-            return;
-          }
-        }
-        
-        console.log(`TCC_DEBUG: ${service.name} returned no valid results`);
-      } catch (err) {
-        console.log(`TCC_DEBUG: ${service.name} error:`, err);
-        continue;
       }
     }
 
@@ -463,7 +475,7 @@ const HealthcareRegistration: React.FC<HealthcareRegistrationProps> = ({ onBack,
                 </p>
                 <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 mb-4">
                   <p className="text-sm text-yellow-800">
-                    <strong>Tip:</strong> Try using a well-known address format like "123 Main St, City, State 12345" or "1600 Pennsylvania Ave NW, Washington, DC 20500"
+                    <strong>Tip:</strong> If the exact address doesn't work, try using just the facility name and city (e.g., "Hurley Medical Center, Flint, MI") or a well-known address format like "123 Main St, City, State 12345"
                   </p>
                 </div>
                 
