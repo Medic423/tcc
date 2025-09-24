@@ -416,12 +416,12 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
         throw new Error('Invalid urgency level');
       }
 
-      // For steps 1-2, we'll just show a success message
+      // For steps 1-2, we'll show a success message and then redirect
       console.log('TCC_DEBUG: Steps 1-2 validation passed:', formData);
       setSuccess(true);
       setTimeout(() => {
         onTripCreated();
-      }, 2000);
+      }, 3000); // Show success message for 3 seconds
       return;
 
       // TODO: Add validation for other steps when we uncomment them
@@ -1104,7 +1104,13 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
                 <CheckCircle className="h-5 w-5 text-green-400" />
                 <div className="ml-3">
                   <p className="text-sm font-medium text-green-800">
-                    Transport request created successfully!
+                    Transport request completed successfully!
+                  </p>
+                  <p className="text-sm text-green-700 mt-1">
+                    Patient: {formData.patientId} | From: {formData.fromLocation} | To: {formData.toLocation}
+                  </p>
+                  <p className="text-sm text-green-600 mt-1">
+                    Redirecting to dashboard in 3 seconds...
                   </p>
                 </div>
               </div>
