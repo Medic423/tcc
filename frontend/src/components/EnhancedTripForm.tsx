@@ -166,25 +166,88 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
 
   const loadFormOptions = async () => {
     try {
-      const [diagnosisRes, mobilityRes, transportRes, urgencyRes, insuranceRes, facilitiesRes] = await Promise.all([
-        tripsAPI.getOptions.diagnosis(),
-        tripsAPI.getOptions.mobility(),
-        tripsAPI.getOptions.transportLevel(),
-        tripsAPI.getOptions.urgency(),
-        tripsAPI.getOptions.insurance(),
-        api.get('/api/tcc/facilities').then(res => res.data)
-      ]);
-
-      setFormOptions({
-        diagnosis: diagnosisRes.data.data || [],
-        mobility: mobilityRes.data.data || [],
-        transportLevel: transportRes.data.data || [],
-        urgency: urgencyRes.data.data || [],
-        insurance: insuranceRes.data.data || [],
-        facilities: facilitiesRes.data || [],
+      console.log('TCC_DEBUG: Loading form options...');
+      
+      // Load each option separately with individual error handling
+      const options = {
+        diagnosis: [],
+        mobility: [],
+        transportLevel: [],
+        urgency: [],
+        insurance: [],
+        facilities: [],
         agencies: [],
         pickupLocations: []
-      });
+      };
+
+      // Load diagnosis options
+      try {
+        const diagnosisRes = await tripsAPI.getOptions.diagnosis();
+        if (diagnosisRes.data?.success && diagnosisRes.data.data) {
+          options.diagnosis = diagnosisRes.data.data;
+          console.log('TCC_DEBUG: Loaded diagnosis options:', options.diagnosis.length);
+        }
+      } catch (error) {
+        console.error('Error loading diagnosis options:', error);
+      }
+
+      // Load mobility options
+      try {
+        const mobilityRes = await tripsAPI.getOptions.mobility();
+        if (mobilityRes.data?.success && mobilityRes.data.data) {
+          options.mobility = mobilityRes.data.data;
+          console.log('TCC_DEBUG: Loaded mobility options:', options.mobility.length);
+        }
+      } catch (error) {
+        console.error('Error loading mobility options:', error);
+      }
+
+      // Load transport level options
+      try {
+        const transportRes = await tripsAPI.getOptions.transportLevel();
+        if (transportRes.data?.success && transportRes.data.data) {
+          options.transportLevel = transportRes.data.data;
+          console.log('TCC_DEBUG: Loaded transport level options:', options.transportLevel.length);
+        }
+      } catch (error) {
+        console.error('Error loading transport level options:', error);
+      }
+
+      // Load urgency options
+      try {
+        const urgencyRes = await tripsAPI.getOptions.urgency();
+        if (urgencyRes.data?.success && urgencyRes.data.data) {
+          options.urgency = urgencyRes.data.data;
+          console.log('TCC_DEBUG: Loaded urgency options:', options.urgency.length);
+        }
+      } catch (error) {
+        console.error('Error loading urgency options:', error);
+      }
+
+      // Load insurance options
+      try {
+        const insuranceRes = await tripsAPI.getOptions.insurance();
+        if (insuranceRes.data?.success && insuranceRes.data.data) {
+          options.insurance = insuranceRes.data.data;
+          console.log('TCC_DEBUG: Loaded insurance options:', options.insurance.length);
+        }
+      } catch (error) {
+        console.error('Error loading insurance options:', error);
+      }
+
+      // Load facilities
+      try {
+        const facilitiesRes = await api.get('/api/tcc/facilities');
+        if (facilitiesRes.data?.success && facilitiesRes.data.data) {
+          options.facilities = facilitiesRes.data.data;
+          console.log('TCC_DEBUG: Loaded facilities:', options.facilities.length);
+        }
+      } catch (error) {
+        console.error('Error loading facilities:', error);
+      }
+
+      console.log('TCC_DEBUG: Setting form options:', options);
+      setFormOptions(options);
     } catch (error) {
       console.error('Error loading form options:', error);
     }
@@ -193,14 +256,38 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
   const loadAgenciesForHospital = async (hospitalId: string) => {
     try {
       console.log('TCC_DEBUG: Loading agencies for hospital:', hospitalId, 'with radius:', formData.notificationRadius);
+      
+      if (!hospitalId) {
+        console.warn('TCC_DEBUG: No hospital ID provided for agencies');
+        setFormOptions(prev => ({
+          ...prev,
+          agencies: []
+        }));
+        return;
+      }
+
       const response = await tripsAPI.getAgenciesForHospital(hospitalId, formData.notificationRadius);
       console.log('TCC_DEBUG: Agencies response:', response.data);
-      setFormOptions(prev => ({
-        ...prev,
-        agencies: response.data.data || []
-      }));
+      
+      if (response.data?.success && Array.isArray(response.data.data)) {
+        console.log('TCC_DEBUG: Setting agencies:', response.data.data.length, 'agencies');
+        setFormOptions(prev => ({
+          ...prev,
+          agencies: response.data.data
+        }));
+      } else {
+        console.warn('TCC_DEBUG: Invalid agencies response structure:', response.data);
+        setFormOptions(prev => ({
+          ...prev,
+          agencies: []
+        }));
+      }
     } catch (error) {
       console.error('Error loading agencies:', error);
+      setFormOptions(prev => ({
+        ...prev,
+        agencies: []
+      }));
     }
   };
 
@@ -208,21 +295,38 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
     try {
       setLoadingPickupLocations(true);
       console.log('TCC_DEBUG: Loading pickup locations for hospital:', hospitalId);
+      
+      if (!hospitalId) {
+        console.warn('TCC_DEBUG: No hospital ID provided for pickup locations');
+        setFormOptions(prev => ({
+          ...prev,
+          pickupLocations: []
+        }));
+        return;
+      }
+
       const response = await api.get(`/api/tcc/pickup-locations/hospital/${hospitalId}`);
       console.log('TCC_DEBUG: Pickup locations response:', response.data);
       
-      if (response.data?.success) {
-        const data = response.data;
-        if (data.success) {
-          console.log('TCC_DEBUG: Setting pickup locations:', data.data);
-          setFormOptions(prev => ({
-            ...prev,
-            pickupLocations: data.data || []
-          }));
-        }
+      if (response.data?.success && Array.isArray(response.data.data)) {
+        console.log('TCC_DEBUG: Setting pickup locations:', response.data.data.length, 'locations');
+        setFormOptions(prev => ({
+          ...prev,
+          pickupLocations: response.data.data
+        }));
+      } else {
+        console.warn('TCC_DEBUG: Invalid pickup locations response structure:', response.data);
+        setFormOptions(prev => ({
+          ...prev,
+          pickupLocations: []
+        }));
       }
     } catch (error) {
       console.error('Error loading pickup locations:', error);
+      setFormOptions(prev => ({
+        ...prev,
+        pickupLocations: []
+      }));
     } finally {
       setLoadingPickupLocations(false);
     }
@@ -320,6 +424,28 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
     setError(null);
 
     try {
+      // Validate required fields
+      if (!formData.fromLocation || !formData.toLocation || !formData.transportLevel || !formData.urgencyLevel) {
+        throw new Error('Please fill in all required fields');
+      }
+
+      // Validate transport level
+      if (!['BLS', 'ALS', 'CCT', 'Other'].includes(formData.transportLevel)) {
+        throw new Error('Invalid transport level');
+      }
+
+      // Validate urgency level
+      if (!['Routine', 'Urgent', 'Emergent'].includes(formData.urgencyLevel)) {
+        throw new Error('Invalid urgency level');
+      }
+
+      // Validate scheduled time
+      if (formData.scheduledTime && new Date(formData.scheduledTime) < new Date()) {
+        throw new Error('Scheduled time cannot be in the past');
+      }
+
+      console.log('TCC_DEBUG: Submitting trip data:', formData);
+
       const tripData = {
         ...formData,
         patientWeight: formData.patientWeight ? parseFloat(formData.patientWeight) : null,
@@ -328,17 +454,19 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
       };
 
       const response = await tripsAPI.createEnhanced(tripData);
+      console.log('TCC_DEBUG: Trip creation response:', response.data);
 
-      if (response.data.success) {
+      if (response.data?.success) {
         setSuccess(true);
         setTimeout(() => {
           setSuccess(false);
           onTripCreated();
         }, 2000);
       } else {
-        throw new Error(response.data.error || 'Failed to create transport request');
+        throw new Error(response.data?.error || 'Failed to create transport request');
       }
     } catch (error: any) {
+      console.error('TCC_DEBUG: Trip creation error:', error);
       setError(error.response?.data?.error || error.message || 'Failed to create transport request');
     } finally {
       setLoading(false);
