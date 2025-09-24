@@ -14,13 +14,19 @@ export const authenticateAdmin = async (
     const authHeader = req.headers.authorization;
     let token: string | undefined;
 
+    console.log('TCC_DEBUG: authenticateAdmin - authHeader:', authHeader);
+    console.log('TCC_DEBUG: authenticateAdmin - cookies:', (req as any).cookies);
+
     if (authHeader && authHeader.startsWith('Bearer ')) {
       token = authHeader.substring(7);
+      console.log('TCC_DEBUG: authenticateAdmin - token from header:', token ? token.substring(0, 20) + '...' : 'none');
     } else if ((req as any).cookies && (req as any).cookies.tcc_token) {
       token = (req as any).cookies.tcc_token;
+      console.log('TCC_DEBUG: authenticateAdmin - token from cookie:', token ? token.substring(0, 20) + '...' : 'none');
     }
     
     if (!token) {
+      console.log('TCC_DEBUG: authenticateAdmin - no token found');
       return res.status(401).json({
         success: false,
         error: 'Access token required'

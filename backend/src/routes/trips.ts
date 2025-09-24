@@ -180,7 +180,7 @@ router.post('/enhanced', async (req, res) => {
  * GET /api/trips
  * Get all transport requests with optional filtering
  */
-router.get('/', async (req, res) => {
+router.get('/', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
   try {
     console.log('TCC_DEBUG: Get trips request with query:', req.query);
     
@@ -218,7 +218,7 @@ router.get('/', async (req, res) => {
  * GET /api/trips/history
  * Get trip history with timeline and filtering
  */
-router.get('/history', async (req, res) => {
+router.get('/history', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
   try {
     console.log('TCC_DEBUG: Get trip history request with query:', req.query);
     
@@ -267,7 +267,7 @@ router.get('/history', async (req, res) => {
  * GET /api/trips/:id
  * Get a single transport request by ID
  */
-router.get('/:id', async (req, res) => {
+router.get('/:id', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
   try {
     console.log('TCC_DEBUG: Get trip by ID request:', req.params.id);
     
@@ -560,7 +560,7 @@ router.post('/test-sms', authenticateAdmin, async (req: AuthenticatedRequest, re
  * GET /api/trips/agencies/:hospitalId
  * Get agencies within distance for a hospital
  */
-router.get('/agencies/:hospitalId', async (req, res) => {
+router.get('/agencies/:hospitalId', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
   try {
     const { hospitalId } = req.params;
     const { radius = 100 } = req.query;
