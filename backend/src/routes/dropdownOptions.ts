@@ -160,7 +160,7 @@ router.get('/', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
 
     res.json({
       success: true,
-      data: categories.map(c => c.category),
+      data: categories.map((c: any) => c.category),
       message: 'Categories retrieved successfully'
     });
   } catch (error) {

@@ -843,7 +843,7 @@ export class TripService {
       
       return {
         success: true,
-        data: options.map(option => option.value),
+        data: options.map((option: any) => option.value),
         message: 'Insurance options retrieved successfully'
       };
     } catch (error) {

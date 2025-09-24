@@ -1,12 +1,10 @@
 import { PrismaClient as CenterPrismaClient } from '@prisma/client';
-import { PrismaClient as EMSPrismaClient } from '@prisma/ems';
-import { PrismaClient as HospitalPrismaClient } from '@prisma/hospital';
 
 class DatabaseManager {
   private static instance: DatabaseManager;
   private prisma: CenterPrismaClient;
-  private emsPrisma: EMSPrismaClient;
-  private hospitalPrisma: HospitalPrismaClient;
+  private emsPrisma: CenterPrismaClient;
+  private hospitalPrisma: CenterPrismaClient;
   private connectionRetries = 0;
   private maxRetries = 5;
   private retryDelay = 2000; // 2 seconds
@@ -23,7 +21,7 @@ class DatabaseManager {
       errorFormat: 'pretty',
     });
 
-    this.emsPrisma = new EMSPrismaClient({
+    this.emsPrisma = new CenterPrismaClient({
       datasources: {
         db: {
           url: process.env.DATABASE_URL_EMS
@@ -33,7 +31,7 @@ class DatabaseManager {
       errorFormat: 'pretty',
     });
 
-    this.hospitalPrisma = new HospitalPrismaClient({
+    this.hospitalPrisma = new CenterPrismaClient({
       datasources: {
         db: {
           url: process.env.DATABASE_URL_HOSPITAL
@@ -61,11 +59,11 @@ class DatabaseManager {
     return this.prisma;
   }
 
-  public getEMSDB(): EMSPrismaClient {
+  public getEMSDB(): CenterPrismaClient {
     return this.emsPrisma;
   }
 
-  public getHospitalDB(): HospitalPrismaClient {
+  public getHospitalDB(): CenterPrismaClient {
     return this.hospitalPrisma;
   }
 
