@@ -18,7 +18,6 @@ interface EMSRegistrationProps {
 const EMSRegistration: React.FC<EMSRegistrationProps> = ({ onBack, onSuccess }) => {
   const [formData, setFormData] = useState({
     agencyName: '',
-    serviceType: '',
     contactName: '',
     email: '',
     phone: '',
@@ -28,6 +27,7 @@ const EMSRegistration: React.FC<EMSRegistrationProps> = ({ onBack, onSuccess }) 
     zipCode: '',
     latitude: '',
     longitude: '',
+    serviceArea: [] as string[],
     capabilities: [] as string[],
     operatingHours: {
       start: '',
@@ -42,13 +42,17 @@ const EMSRegistration: React.FC<EMSRegistrationProps> = ({ onBack, onSuccess }) 
   const [success, setSuccess] = useState(false);
   const [geocoding, setGeocoding] = useState(false);
 
-  const serviceTypes = [
-    'EMS',
-    'Wheelchair Van',
+  const serviceAreas = [
+    'Emergency Medical Services',
     'Non-Emergency Medical Transport',
+    'Wheelchair Transport',
+    'Critical Care Transport',
+    'Neonatal Transport',
+    'Pediatric Transport',
+    'Bariatric Transport',
     'Air Ambulance',
     'Ground Ambulance',
-    'Other'
+    'Specialized Medical Transport'
   ];
 
   const capabilities = [
@@ -138,6 +142,15 @@ const EMSRegistration: React.FC<EMSRegistrationProps> = ({ onBack, onSuccess }) 
     }));
   };
 
+  const handleServiceAreaChange = (serviceArea: string) => {
+    setFormData(prev => ({
+      ...prev,
+      serviceArea: prev.serviceArea.includes(serviceArea)
+        ? prev.serviceArea.filter(s => s !== serviceArea)
+        : [...prev.serviceArea, serviceArea]
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -152,6 +165,12 @@ const EMSRegistration: React.FC<EMSRegistrationProps> = ({ onBack, onSuccess }) 
 
     if (formData.password.length < 8) {
       setError('Password must be at least 8 characters long');
+      setLoading(false);
+      return;
+    }
+
+    if (formData.serviceArea.length === 0) {
+      setError('Please select at least one service area');
       setLoading(false);
       return;
     }
@@ -202,16 +221,7 @@ const EMSRegistration: React.FC<EMSRegistrationProps> = ({ onBack, onSuccess }) 
         password: formData.password,
         name: formData.contactName,
         agencyName: formData.agencyName,
-        serviceType: formData.serviceType,
-        // address: formData.address, // Temporarily commented out
-        // city: formData.city, // Temporarily commented out
-        // state: formData.state, // Temporarily commented out
-        // zipCode: formData.zipCode, // Temporarily commented out
-        // phone: formData.phone, // Temporarily commented out
-        // latitude: formData.latitude, // Temporarily commented out
-        // longitude: formData.longitude, // Temporarily commented out
-        // capabilities: formData.capabilities, // Temporarily commented out
-        // operatingHours: formData.operatingHours // Temporarily commented out
+        serviceType: 'EMS'
       });
       
       setSuccess(true);
@@ -250,9 +260,9 @@ const EMSRegistration: React.FC<EMSRegistrationProps> = ({ onBack, onSuccess }) 
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div className="text-center">
+    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto">
+        <div className="text-center mb-8">
           <div className="mx-auto h-16 w-16 bg-orange-600 rounded-full flex items-center justify-center">
             <Truck className="h-8 w-8 text-white" />
           </div>
@@ -264,182 +274,194 @@ const EMSRegistration: React.FC<EMSRegistrationProps> = ({ onBack, onSuccess }) 
           </p>
         </div>
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {/* Error Message */}
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-md p-4">
-              <div className="flex">
-                <XCircle className="h-5 w-5 text-red-400" />
-                <div className="ml-3">
-                  <p className="text-sm font-medium text-red-800">{error}</p>
-                </div>
+        {/* Error Message */}
+        {error && (
+          <div className="mb-6 bg-red-50 border border-red-200 rounded-md p-4">
+            <div className="flex">
+              <XCircle className="h-5 w-5 text-red-400" />
+              <div className="ml-3">
+                <p className="text-sm font-medium text-red-800">{error}</p>
               </div>
             </div>
-          )}
+          </div>
+        )}
 
-          <div className="space-y-4">
-            {/* Agency Name */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Agency Name *
-              </label>
-              <input
-                type="text"
-                name="agencyName"
-                required
-                value={formData.agencyName}
-                onChange={handleInputChange}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
-                placeholder="Enter agency name"
-              />
-            </div>
-
-            {/* Service Type */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Service Type *
-              </label>
-              <select
-                name="serviceType"
-                required
-                value={formData.serviceType}
-                onChange={handleInputChange}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
-              >
-                <option value="">Select service type</option>
-                {serviceTypes.map(type => (
-                  <option key={type} value={type}>{type}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Contact Name */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Contact Person Name *
-              </label>
-              <input
-                type="text"
-                name="contactName"
-                required
-                value={formData.contactName}
-                onChange={handleInputChange}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
-                placeholder="Enter contact person name"
-              />
-            </div>
-
-            {/* Email */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Email Address *
-              </label>
-              <div className="mt-1 relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-400" />
+        <div className="bg-white shadow rounded-lg">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h3 className="text-lg font-medium text-gray-900">EMS Agency Information</h3>
+            <p className="mt-1 text-sm text-gray-500">
+              Enter your EMS agency details to create an account
+            </p>
+          </div>
+          <div className="px-6 py-6">
+            <form className="space-y-6" onSubmit={handleSubmit}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label htmlFor="agencyName" className="block text-sm font-medium text-gray-700 mb-2">
+                    Agency Name *
+                  </label>
+                  <input
+                    type="text"
+                    id="agencyName"
+                    name="agencyName"
+                    required
+                    value={formData.agencyName}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    placeholder="Enter agency name"
+                  />
                 </div>
-                <input
-                  type="email"
-                  name="email"
-                  required
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  className="block w-full pl-10 border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
-                  placeholder="Enter email address"
-                />
-              </div>
-            </div>
-
-            {/* Phone */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Phone Number *
-              </label>
-              <div className="mt-1 relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Phone className="h-5 w-5 text-gray-400" />
+                <div>
+                  <label htmlFor="contactName" className="block text-sm font-medium text-gray-700 mb-2">
+                    Contact Person Name *
+                  </label>
+                  <input
+                    type="text"
+                    id="contactName"
+                    name="contactName"
+                    required
+                    value={formData.contactName}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    placeholder="Enter contact person name"
+                  />
                 </div>
-                <input
-                  type="tel"
-                  name="phone"
-                  required
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                  className="block w-full pl-10 border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
-                  placeholder="Enter phone number"
-                />
               </div>
-            </div>
 
-            {/* Address */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Street Address *
-              </label>
-              <div className="mt-1 relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <MapPin className="h-5 w-5 text-gray-400" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                    Email Address *
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Mail className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      required
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      className="w-full pl-10 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      placeholder="Enter email address"
+                    />
+                  </div>
                 </div>
-                <input
-                  type="text"
-                  name="address"
-                  required
-                  value={formData.address}
-                  onChange={handleInputChange}
-                  className="block w-full pl-10 border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
-                  placeholder="Enter street address"
-                />
+                <div>
+                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
+                    Phone Number *
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Phone className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input
+                      type="tel"
+                      id="phone"
+                      name="phone"
+                      required
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      className="w-full pl-10 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      placeholder="Enter phone number"
+                    />
+                  </div>
+                </div>
               </div>
-            </div>
 
-            {/* City, State, ZIP */}
-            <div className="grid grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  City *
+                <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-2">
+                  Street Address *
                 </label>
-                <input
-                  type="text"
-                  name="city"
-                  required
-                  value={formData.city}
-                  onChange={handleInputChange}
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
-                  placeholder="City"
-                />
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <MapPin className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    id="address"
+                    name="address"
+                    required
+                    value={formData.address}
+                    onChange={handleInputChange}
+                    className="w-full pl-10 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    placeholder="Enter street address"
+                  />
+                </div>
               </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                  <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-2">
+                    City *
+                  </label>
+                  <input
+                    type="text"
+                    id="city"
+                    name="city"
+                    required
+                    value={formData.city}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    placeholder="City"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-2">
+                    State *
+                  </label>
+                  <select
+                    id="state"
+                    name="state"
+                    required
+                    value={formData.state}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  >
+                    <option value="">State</option>
+                    {states.map(state => (
+                      <option key={state} value={state}>{state}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="zipCode" className="block text-sm font-medium text-gray-700 mb-2">
+                    ZIP Code *
+                  </label>
+                  <input
+                    type="text"
+                    id="zipCode"
+                    name="zipCode"
+                    required
+                    value={formData.zipCode}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    placeholder="ZIP Code"
+                  />
+                </div>
+              </div>
+
+              {/* Service Areas */}
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  State *
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Service Areas * (Select all that apply)
                 </label>
-                <select
-                  name="state"
-                  required
-                  value={formData.state}
-                  onChange={handleInputChange}
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
-                >
-                  <option value="">State</option>
-                  {states.map(state => (
-                    <option key={state} value={state}>{state}</option>
+                <div className="grid grid-cols-2 gap-2">
+                  {serviceAreas.map(area => (
+                    <label key={area} className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={formData.serviceArea.includes(area)}
+                        onChange={() => handleServiceAreaChange(area)}
+                        className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+                      />
+                      <span className="ml-2 text-sm text-gray-700">{area}</span>
+                    </label>
                   ))}
-                </select>
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  ZIP *
-                </label>
-                <input
-                  type="text"
-                  name="zipCode"
-                  required
-                  value={formData.zipCode}
-                  onChange={handleInputChange}
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
-                  placeholder="ZIP"
-                />
-              </div>
-            </div>
 
 
             {/* Location Coordinates */}
@@ -536,124 +558,122 @@ const EMSRegistration: React.FC<EMSRegistrationProps> = ({ onBack, onSuccess }) 
               </div>
             </div>
 
-            {/* Service Capabilities */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Service Capabilities * (Select all that apply)
-              </label>
-              <div className="mt-2 grid grid-cols-2 gap-2">
-                {capabilities.map(capability => (
-                  <label key={capability} className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={formData.capabilities.includes(capability)}
-                      onChange={() => handleCapabilityChange(capability)}
-                      className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
-                    />
-                    <span className="ml-2 text-sm text-gray-700">{capability}</span>
+              {/* Service Capabilities */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Service Capabilities * (Select all that apply)
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {capabilities.map(capability => (
+                    <label key={capability} className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={formData.capabilities.includes(capability)}
+                        onChange={() => handleCapabilityChange(capability)}
+                        className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+                      />
+                      <span className="ml-2 text-sm text-gray-700">{capability}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Transport Availability */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Transport Availability (Optional)
+                </label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="operatingHoursStart" className="block text-xs text-gray-500 mb-1">Start Time</label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Clock className="h-4 w-4 text-gray-400" />
+                      </div>
+                      <input
+                        type="time"
+                        id="operatingHoursStart"
+                        name="operatingHours.start"
+                        value={formData.operatingHours.start}
+                        onChange={handleInputChange}
+                        className="w-full pl-10 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label htmlFor="operatingHoursEnd" className="block text-xs text-gray-500 mb-1">End Time</label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Clock className="h-4 w-4 text-gray-400" />
+                      </div>
+                      <input
+                        type="time"
+                        id="operatingHoursEnd"
+                        name="operatingHours.end"
+                        value={formData.operatingHours.end}
+                        onChange={handleInputChange}
+                        className="w-full pl-10 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Leave blank for 24/7 availability. Specify hours only if you have restrictions (e.g., "Monday-Friday 6 AM - 6 PM")
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                    Password *
                   </label>
-                ))}
-              </div>
-            </div>
-
-            {/* Transport Availability */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Transport Availability (Optional)
-              </label>
-              <div className="mt-1 grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs text-gray-500">Start Time</label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Clock className="h-4 w-4 text-gray-400" />
-                    </div>
-                    <input
-                      type="time"
-                      name="operatingHours.start"
-                      value={formData.operatingHours.start}
-                      onChange={handleInputChange}
-                      className="block w-full pl-10 border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
-                    />
-                  </div>
+                  <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    required
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    placeholder="Enter password (min 8 characters)"
+                  />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500">End Time</label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Clock className="h-4 w-4 text-gray-400" />
-                    </div>
-                    <input
-                      type="time"
-                      name="operatingHours.end"
-                      value={formData.operatingHours.end}
-                      onChange={handleInputChange}
-                      className="block w-full pl-10 border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
-                    />
-                  </div>
+                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
+                    Confirm Password *
+                  </label>
+                  <input
+                    type="password"
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    required
+                    value={formData.confirmPassword}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    placeholder="Confirm password"
+                  />
                 </div>
               </div>
-              <p className="text-xs text-gray-500 mt-1">
-                Leave blank for 24/7 availability. Specify hours only if you have restrictions (e.g., "Monday-Friday 6 AM - 6 PM")
-              </p>
-            </div>
-
-            {/* Password */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Password *
-              </label>
-              <input
-                type="password"
-                name="password"
-                required
-                value={formData.password}
-                onChange={handleInputChange}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
-                placeholder="Enter password (min 8 characters)"
-              />
-            </div>
-
-            {/* Confirm Password */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Confirm Password *
-              </label>
-              <input
-                type="password"
-                name="confirmPassword"
-                required
-                value={formData.confirmPassword}
-                onChange={handleInputChange}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
-                placeholder="Confirm password"
-              />
-            </div>
+              <div className="flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={onBack}
+                  className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+                >
+                  <ArrowLeft className="h-4 w-4 mr-1 inline" />
+                  Back to Login Selection
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? 'Creating Account...' : 'Create Account'}
+                </button>
+              </div>
+            </form>
           </div>
-
-          {/* Submit Button */}
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Creating Account...' : 'Create Account'}
-            </button>
-          </div>
-
-          {/* Back Button */}
-          <div className="text-center">
-            <button
-              type="button"
-              onClick={onBack}
-              className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-700"
-            >
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              Back to Login Selection
-            </button>
-          </div>
-        </form>
+        </div>
       </div>
     </div>
   );

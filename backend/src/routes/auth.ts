@@ -40,6 +40,14 @@ router.post('/login', async (req, res) => {
     }
 
     console.log('TCC_DEBUG: Login successful, user ID in token:', result.user?.id);
+    // Set HttpOnly cookie for SSE/cookie-based auth
+    res.cookie('tcc_token', result.token, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 24 * 60 * 60 * 1000
+    });
+
     res.json({
       success: true,
       message: 'Login successful',
@@ -393,7 +401,7 @@ router.post('/ems/register', async (req, res) => {
       password, 
       name, 
       agencyName, 
-      serviceType, 
+      serviceArea, 
       address, 
       city, 
       state, 
@@ -405,10 +413,10 @@ router.post('/ems/register', async (req, res) => {
       operatingHours 
     } = req.body;
 
-    if (!email || !password || !name || !agencyName || !serviceType) {
+    if (!email || !password || !name || !agencyName) {
       return res.status(400).json({
         success: false,
-        error: 'Email, password, name, agencyName, and serviceType are required'
+        error: 'Email, password, name, and agencyName are required'
       });
     }
 
@@ -463,7 +471,9 @@ router.post('/ems/register', async (req, res) => {
         city: city || 'City to be provided',
         state: state || 'State to be provided',
         zipCode: zipCode || '00000',
+        serviceArea: serviceArea || [],
         capabilities: capabilities || [],
+        operatingHours: operatingHours || null,
         latitude: latitude ? parseFloat(latitude) : null,
         longitude: longitude ? parseFloat(longitude) : null,
         isActive: true, // Auto-approve new EMS registrations
@@ -669,6 +679,14 @@ router.post('/ems/login', async (req, res) => {
       { expiresIn: '24h' }
     );
 
+    // Set HttpOnly cookie
+    res.cookie('tcc_token', token, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 24 * 60 * 60 * 1000
+    });
+
     res.json({
       success: true,
       message: 'Login successful',
@@ -748,6 +766,14 @@ router.post('/healthcare/login', async (req, res) => {
       process.env.JWT_SECRET || 'fallback-secret',
       { expiresIn: '24h' }
     );
+
+    // Set HttpOnly cookie
+    res.cookie('tcc_token', token, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 24 * 60 * 60 * 1000
+    });
 
     res.json({
       success: true,

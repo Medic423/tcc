@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import api from '../services/api';
 import { 
   CheckCircle, 
   AlertCircle, 
   X,
   ChevronRight,
   ChevronLeft,
-  QrCode,
   MapPin,
-  Clock,
   User,
   Stethoscope,
   Truck
@@ -32,10 +31,12 @@ interface FormData {
   patientId: string;
   patientWeight: string;
   specialNeeds: string;
+  insuranceCompany: string;
   generateQRCode: boolean;
   
   // Trip Details
   fromLocation: string;
+  pickupLocationId: string;
   toLocation: string;
   scheduledTime: string;
   transportLevel: string;
@@ -55,13 +56,33 @@ interface FormData {
   notes: string;
 }
 
+interface PickupLocation {
+  id: string;
+  hospitalId: string;
+  name: string;
+  description?: string;
+  contactPhone?: string;
+  contactEmail?: string;
+  floor?: string;
+  room?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  hospital?: {
+    id: string;
+    name: string;
+  };
+}
+
 interface FormOptions {
   diagnosis: string[];
   mobility: string[];
   transportLevel: string[];
   urgency: string[];
+  insurance: string[];
   facilities: any[];
   agencies: any[];
+  pickupLocations: PickupLocation[];
 }
 
 const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated, onCancel }) => {
@@ -74,18 +95,22 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
     mobility: [],
     transportLevel: [],
     urgency: [],
+    insurance: [],
     facilities: [],
-    agencies: []
+    agencies: [],
+    pickupLocations: []
   });
 
   const [formData, setFormData] = useState<FormData>({
     patientId: '',
     patientWeight: '',
     specialNeeds: '',
+    insuranceCompany: '',
     generateQRCode: false,
     fromLocation: user.facilityName || '',
+    pickupLocationId: '',
     toLocation: '',
-    scheduledTime: '',
+    scheduledTime: new Date().toISOString().slice(0, 16), // Default to current time in datetime-local format
     transportLevel: 'BLS',
     urgencyLevel: 'Routine',
     diagnosis: '',
@@ -98,29 +123,56 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
   });
 
   const [destinationMode, setDestinationMode] = useState<'select' | 'manual'>('select');
+  const [loadingPickupLocations, setLoadingPickupLocations] = useState(false);
 
   const steps = [
     { id: 1, name: 'Patient Info', icon: User },
     { id: 2, name: 'Trip Details', icon: MapPin },
-    { id: 3, name: 'Clinical Info', icon: Stethoscope }
+    { id: 3, name: 'Clinical Info', icon: Stethoscope },
+    { id: 4, name: 'Agency Selection', icon: Truck },
+    { id: 5, name: 'Review & Submit', icon: CheckCircle }
   ];
 
   useEffect(() => {
     loadFormOptions();
   }, []);
 
+  // Load pickup locations when fromLocation is set (including pre-selected facility)
+  useEffect(() => {
+    if (formData.fromLocation && formOptions.facilities.length > 0) {
+      const selectedFacility = formOptions.facilities.find(f => f.name === formData.fromLocation);
+      if (selectedFacility) {
+        loadPickupLocationsForHospital(selectedFacility.id);
+      }
+    }
+  }, [formData.fromLocation, formOptions.facilities]);
+
+  // Load agencies when reaching step 4 (Agency Selection)
+  useEffect(() => {
+    console.log('TCC_DEBUG: Agency loading useEffect triggered', {
+      currentStep,
+      fromLocation: formData.fromLocation,
+      facilitiesCount: formOptions.facilities.length
+    });
+    
+    if (currentStep === 4 && formData.fromLocation && formOptions.facilities.length > 0) {
+      const selectedFacility = formOptions.facilities.find(f => f.name === formData.fromLocation);
+      console.log('TCC_DEBUG: Selected facility:', selectedFacility);
+      if (selectedFacility) {
+        loadAgenciesForHospital(selectedFacility.id);
+      }
+    }
+  }, [currentStep, formData.fromLocation, formOptions.facilities]);
+
   const loadFormOptions = async () => {
     try {
-      const [diagnosisRes, mobilityRes, transportRes, urgencyRes, facilitiesRes] = await Promise.all([
+      const [diagnosisRes, mobilityRes, transportRes, urgencyRes, insuranceRes, facilitiesRes] = await Promise.all([
         tripsAPI.getOptions.diagnosis(),
         tripsAPI.getOptions.mobility(),
         tripsAPI.getOptions.transportLevel(),
         tripsAPI.getOptions.urgency(),
-        fetch('/api/tcc/facilities', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          },
-        }).then(res => res.json())
+        tripsAPI.getOptions.insurance(),
+        api.get('/api/tcc/facilities').then(res => res.data)
       ]);
 
       setFormOptions({
@@ -128,8 +180,10 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
         mobility: mobilityRes.data.data || [],
         transportLevel: transportRes.data.data || [],
         urgency: urgencyRes.data.data || [],
+        insurance: insuranceRes.data.data || [],
         facilities: facilitiesRes.data || [],
-        agencies: []
+        agencies: [],
+        pickupLocations: []
       });
     } catch (error) {
       console.error('Error loading form options:', error);
@@ -138,7 +192,9 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
 
   const loadAgenciesForHospital = async (hospitalId: string) => {
     try {
+      console.log('TCC_DEBUG: Loading agencies for hospital:', hospitalId, 'with radius:', formData.notificationRadius);
       const response = await tripsAPI.getAgenciesForHospital(hospitalId, formData.notificationRadius);
+      console.log('TCC_DEBUG: Agencies response:', response.data);
       setFormOptions(prev => ({
         ...prev,
         agencies: response.data.data || []
@@ -148,12 +204,51 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
     }
   };
 
+  const loadPickupLocationsForHospital = async (hospitalId: string) => {
+    try {
+      setLoadingPickupLocations(true);
+      const response = await api.get(`/api/tcc/pickup-locations/hospital/${hospitalId}`);
+      
+      if (response.data?.success) {
+        const data = response.data;
+        if (data.success) {
+          setFormOptions(prev => ({
+            ...prev,
+            pickupLocations: data.data || []
+          }));
+        }
+      }
+    } catch (error) {
+      console.error('Error loading pickup locations:', error);
+    } finally {
+      setLoadingPickupLocations(false);
+    }
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
     }));
+
+    // Load pickup locations when fromLocation changes
+    if (name === 'fromLocation' && value) {
+      const selectedFacility = formOptions.facilities.find(f => f.name === value);
+      if (selectedFacility) {
+        loadPickupLocationsForHospital(selectedFacility.id);
+      } else {
+        // Clear pickup locations if facility not found
+        setFormOptions(prev => ({
+          ...prev,
+          pickupLocations: []
+        }));
+        setFormData(prev => ({
+          ...prev,
+          pickupLocationId: ''
+        }));
+      }
+    }
 
     // Load agencies when destination changes (only for selected facilities)
     if (name === 'toLocation' && value && destinationMode === 'select') {
@@ -218,56 +313,10 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('TCC_DEBUG: handleSubmit called, current step:', currentStep);
-    
-    // Only allow submission on the final step
-    if (currentStep < steps.length) {
-      console.log('TCC_DEBUG: Submission blocked - not on final step');
-      return;
-    }
-    
     setLoading(true);
     setError(null);
 
     try {
-      // Validate step 1 required fields (Patient Info)
-      if (!formData.patientId || !formData.patientWeight) {
-        throw new Error('Please fill in Patient ID and Patient Weight');
-      }
-
-      // Validate patient weight is a number
-      const weight = parseFloat(formData.patientWeight);
-      if (isNaN(weight) || weight <= 0) {
-        throw new Error('Please enter a valid patient weight');
-      }
-
-      // Validate step 2 required fields (Trip Details)
-      if (!formData.fromLocation || !formData.pickupLocationId || !formData.toLocation || !formData.scheduledTime || !formData.transportLevel || !formData.urgencyLevel) {
-        throw new Error('Please fill in all trip details: From Location, Pickup Location, To Location, Scheduled Time, Transport Level, and Urgency Level');
-      }
-
-      // Validate scheduled time is not in the past
-      if (new Date(formData.scheduledTime) < new Date()) {
-        throw new Error('Scheduled time cannot be in the past');
-      }
-
-      // Validate transport level
-      if (!['BLS', 'ALS', 'CCT', 'Other'].includes(formData.transportLevel)) {
-        throw new Error('Invalid transport level');
-      }
-
-      // Validate urgency level
-      if (!['Routine', 'Urgent', 'Emergent', 'Critical'].includes(formData.urgencyLevel)) {
-        throw new Error('Invalid urgency level');
-      }
-
-      // Validate step 3 required fields (Clinical Info)
-      if (!formData.diagnosis || !formData.mobilityLevel) {
-        throw new Error('Please fill in Diagnosis and Mobility Level');
-      }
-
-      console.log('TCC_DEBUG: All validation passed, submitting trip data:', formData);
-
       const tripData = {
         ...formData,
         patientWeight: formData.patientWeight ? parseFloat(formData.patientWeight) : null,
@@ -276,74 +325,15 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
       };
 
       const response = await tripsAPI.createEnhanced(tripData);
-      console.log('TCC_DEBUG: Trip creation response:', response.data);
 
       if (response.data.success) {
         setSuccess(true);
         setTimeout(() => {
+          setSuccess(false);
           onTripCreated();
-        }, 3000); // Show success message for 3 seconds
+        }, 2000);
       } else {
         throw new Error(response.data.error || 'Failed to create transport request');
-      }
-      if (isNaN(weight) || weight <= 0) {
-        throw new Error('Please enter a valid patient weight');
-      }
-
-      // Validate step 2 required fields (Trip Details)
-      if (!formData.fromLocation || !formData.pickupLocationId || !formData.toLocation || !formData.scheduledTime || !formData.transportLevel || !formData.urgencyLevel) {
-        throw new Error('Please fill in all trip details: From Location, Pickup Location, To Location, Scheduled Time, Transport Level, and Urgency Level');
-      }
-
-      // Validate scheduled time is not in the past
-      if (new Date(formData.scheduledTime) < new Date()) {
-        throw new Error('Scheduled time cannot be in the past');
-      }
-
-      // Validate transport level
-      if (!['BLS', 'ALS', 'CCT', 'Other'].includes(formData.transportLevel)) {
-        throw new Error('Invalid transport level');
-      }
-
-      // Validate urgency level
-      if (!['Routine', 'Urgent', 'Emergent', 'Critical'].includes(formData.urgencyLevel)) {
-        throw new Error('Invalid urgency level');
-      }
-
-      // Validate step 3 required fields (Clinical Info)
-      if (!formData.diagnosis || !formData.mobilityLevel) {
-        throw new Error('Please fill in Diagnosis and Mobility Level');
-      }
-
-      // Validate step 4 required fields (Agency Selection)
-      if (formData.selectedAgencies.length === 0) {
-        throw new Error('Please select at least one EMS agency');
-      }
-
-      // Validate notification radius
-      if (formData.notificationRadius < 10 || formData.notificationRadius > 200) {
-        throw new Error('Notification radius must be between 10 and 200 miles');
-      }
-
-      console.log('TCC_DEBUG: All validation passed, submitting trip data:', formData);
-
-      const tripData = {
-        ...formData,
-        patientWeight: formData.patientWeight ? parseFloat(formData.patientWeight) : null,
-        notificationRadius: formData.notificationRadius || 100,
-        scheduledTime: formData.scheduledTime || new Date().toISOString()
-      };
-
-      const response = await tripsAPI.createEnhanced(tripData);
-      console.log('TCC_DEBUG: Trip creation response:', response.data);
-
-      if (response.data?.success) {
-        setSuccess(true);
-        setTimeout(() => {
-          onTripCreated();
-        }, 3000); // Show success message for 3 seconds
-      } else {
-        throw new Error(response.data?.error || 'Failed to create transport request');
       }
     } catch (error: any) {
       setError(error.response?.data?.error || error.message || 'Failed to create transport request');
@@ -394,34 +384,56 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Patient Weight (lbs)
+                  Patient Weight (kgs)
                 </label>
                 <input
                   type="number"
                   name="patientWeight"
                   value={formData.patientWeight}
                   onChange={handleChange}
+                  min="0"
+                  step="0.1"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Enter weight in pounds"
+                  placeholder="Enter weight in kilograms"
                 />
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Special Needs
-              </label>
-              <textarea
-                name="specialNeeds"
-                value={formData.specialNeeds}
-                onChange={handleChange}
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Describe any special needs or requirements"
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Insurance Company
+                </label>
+                <select
+                  name="insuranceCompany"
+                  value={formData.insuranceCompany}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">Select insurance company</option>
+                  {formOptions.insurance.map((insurance) => (
+                    <option key={insurance} value={insurance}>{insurance}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Special Needs
+                </label>
+                <input
+                  type="text"
+                  name="specialNeeds"
+                  value={formData.specialNeeds}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Enter special needs"
+                />
+              </div>
             </div>
 
-            <div className="flex items-center">
+            {/* QR Code generation temporarily disabled for first version */}
+            {/* <div className="flex items-center">
               <input
                 type="checkbox"
                 name="generateQRCode"
@@ -432,7 +444,7 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
               <label className="ml-2 block text-sm text-gray-900">
                 Generate QR Code for patient tracking
               </label>
-            </div>
+            </div> */}
           </div>
         );
 
@@ -454,17 +466,75 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   From Location *
                 </label>
-                <input
-                  type="text"
+                <select
                   name="fromLocation"
                   value={formData.fromLocation}
                   onChange={handleChange}
                   required
                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-                  placeholder="Origin facility"
-                />
+                >
+                  <option value="">Select origin facility</option>
+                  {formOptions.facilities.map((facility) => (
+                    <option key={facility.id} value={facility.name}>
+                      {facility.name} - {facility.type}
+                    </option>
+                  ))}
+                </select>
               </div>
 
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Pickup Location *
+                </label>
+                <select
+                  name="pickupLocationId"
+                  value={formData.pickupLocationId}
+                  onChange={handleChange}
+                  required
+                  disabled={loadingPickupLocations}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                >
+                  <option value="">
+                    {loadingPickupLocations ? 'Loading pickup locations...' : 'Select pickup location'}
+                  </option>
+                  {formOptions.pickupLocations && formOptions.pickupLocations.length > 0 ? (
+                    formOptions.pickupLocations.map((location) => (
+                      <option key={location.id} value={location.id}>
+                        {location.name} {location.floor && `(${location.floor})`}
+                      </option>
+                    ))
+                  ) : (
+                    !loadingPickupLocations && formData.fromLocation && (
+                      <option value="" disabled>
+                        No pickup locations available for this facility
+                      </option>
+                    )
+                  )}
+                </select>
+                {formData.pickupLocationId && formOptions.pickupLocations && (
+                  <div className="mt-2 text-sm text-gray-600">
+                    {(() => {
+                      const selectedLocation = formOptions.pickupLocations.find(loc => loc.id === formData.pickupLocationId);
+                      return selectedLocation ? (
+                        <div>
+                          {selectedLocation.contactPhone && (
+                            <p><strong>Contact:</strong> {selectedLocation.contactPhone}</p>
+                          )}
+                          {selectedLocation.contactEmail && (
+                            <p><strong>Email:</strong> {selectedLocation.contactEmail}</p>
+                          )}
+                          {selectedLocation.room && (
+                            <p><strong>Room:</strong> {selectedLocation.room}</p>
+                          )}
+                        </div>
+                      ) : null;
+                    })()}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   To Location *
@@ -662,20 +732,6 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
                 </label>
               </div>
             </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Additional Notes
-              </label>
-              <textarea
-                name="notes"
-                value={formData.notes}
-                onChange={handleChange}
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500"
-                placeholder="Enter any additional clinical notes or special instructions"
-              />
-            </div>
           </div>
         );
 
@@ -712,59 +768,69 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
                 Available Agencies
               </label>
               
-              {destinationMode === 'manual' ? (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              {!formData.fromLocation ? (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                   <div className="flex items-center">
                     <div className="flex-shrink-0">
-                      <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                      <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                       </svg>
                     </div>
                     <div className="ml-3">
-                      <p className="text-sm text-blue-700">
-                        <strong>Manual Destination Selected:</strong> Agency selection is not available for manually entered destinations. 
-                        The transport request will be broadcast to all available agencies in the region.
+                      <p className="text-sm text-yellow-700">
+                        <strong>No Origin Hospital Selected:</strong> Please select an origin hospital in step 2 to load available agencies.
                       </p>
                     </div>
                   </div>
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {formOptions.agencies.length > 0 ? (
-                  formOptions.agencies.map((agency) => (
-                    <div
-                      key={agency.id}
-                      className={`border rounded-lg p-4 cursor-pointer transition-colors ${
-                        formData.selectedAgencies.includes(agency.id)
-                          ? 'border-orange-500 bg-orange-50'
-                          : 'border-gray-200 hover:border-orange-300'
-                      }`}
-                      onClick={() => handleAgencyToggle(agency.id)}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h4 className="font-medium text-gray-900">{agency.name}</h4>
-                          <p className="text-sm text-gray-500">{agency.serviceType}</p>
-                          <p className="text-xs text-gray-400">
-                            {agency.availableUnits || 0}/{agency.totalUnits || 0} units available
-                          </p>
+                  {formOptions.agencies.length === 0 ? (
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0">
+                          <svg className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                          </svg>
                         </div>
-                        <div className="flex items-center">
-                          <input
-                            type="checkbox"
-                            checked={formData.selectedAgencies.includes(agency.id)}
-                            onChange={() => {}}
-                            className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
-                          />
+                        <div className="ml-3">
+                          <p className="text-sm text-gray-600">
+                            <strong>Loading agencies...</strong> Please wait while we find available EMS agencies in your area.
+                          </p>
                         </div>
                       </div>
                     </div>
-                  ))
-                ) : (
-                  <p className="text-gray-500 text-center py-4">
-                    No agencies available within the specified radius.
-                  </p>
-                )}
+                  ) : (
+                    formOptions.agencies.map((agency) => (
+                      <div
+                        key={agency.id}
+                        className={`border rounded-lg p-4 cursor-pointer transition-colors ${
+                          formData.selectedAgencies.includes(agency.id)
+                            ? 'border-orange-500 bg-orange-50'
+                            : 'border-gray-200 hover:border-orange-300'
+                        }`}
+                        onClick={() => handleAgencyToggle(agency.id)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="font-medium text-gray-900">{agency.name}</h4>
+                            <p className="text-sm text-gray-500">{agency.serviceType}</p>
+                            <p className="text-xs text-gray-400">
+                              {agency.availableUnits || 0}/{agency.totalUnits || 0} units available
+                            </p>
+                          </div>
+                          <div className="flex items-center">
+                            <input
+                              type="checkbox"
+                              checked={formData.selectedAgencies.includes(agency.id)}
+                              onChange={() => {}}
+                              className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               )}
             </div>
@@ -789,14 +855,21 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
                 <div className="bg-white border rounded-lg p-4">
                   <h4 className="font-medium text-gray-900 mb-2">Patient Information</h4>
                   <p className="text-sm text-gray-600">ID: {formData.patientId}</p>
-                  {formData.patientWeight && <p className="text-sm text-gray-600">Weight: {formData.patientWeight} lbs</p>}
+                  {formData.patientWeight && <p className="text-sm text-gray-600">Weight: {formData.patientWeight} kgs</p>}
+                  {formData.insuranceCompany && <p className="text-sm text-gray-600">Insurance: {formData.insuranceCompany}</p>}
                   {formData.specialNeeds && <p className="text-sm text-gray-600">Special Needs: {formData.specialNeeds}</p>}
-                  {formData.generateQRCode && <p className="text-sm text-blue-600">QR Code: Generated</p>}
+                  {/* {formData.generateQRCode && <p className="text-sm text-blue-600">QR Code: Generated</p>} */}
                 </div>
 
                 <div className="bg-white border rounded-lg p-4">
                   <h4 className="font-medium text-gray-900 mb-2">Trip Details</h4>
                   <p className="text-sm text-gray-600">From: {formData.fromLocation}</p>
+                  {formData.pickupLocationId && formOptions.pickupLocations && (() => {
+                    const selectedLocation = formOptions.pickupLocations.find(loc => loc.id === formData.pickupLocationId);
+                    return selectedLocation ? (
+                      <p className="text-sm text-gray-600">Pickup: {selectedLocation.name} {selectedLocation.floor && `(${selectedLocation.floor})`}</p>
+                    ) : null;
+                  })()}
                   <p className="text-sm text-gray-600">To: {formData.toLocation}</p>
                   <p className="text-sm text-gray-600">Level: {formData.transportLevel}</p>
                   <p className="text-sm text-gray-600">Urgency: {formData.urgencyLevel}</p>

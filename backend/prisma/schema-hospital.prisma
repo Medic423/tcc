@@ -26,16 +26,19 @@ model HospitalUser {
 }
 
 model HealthcareUser {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  password     String
-  name         String
-  facilityName String
-  facilityType String   // HOSPITAL, CLINIC, URGENT_CARE, etc.
-  isActive     Boolean  @default(true)
-  userType     String   @default("HEALTHCARE") // HEALTHCARE, ADMIN
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id               String   @id @default(cuid())
+  email            String   @unique
+  password         String
+  name             String
+  phone            String?
+  facilityName     String
+  facilityType     String   // HOSPITAL, CLINIC, URGENT_CARE, etc.
+  emailNotifications Boolean @default(true)
+  smsNotifications Boolean  @default(false)
+  isActive         Boolean  @default(true)
+  userType         String   @default("HEALTHCARE") // HEALTHCARE, ADMIN
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   // Relations
   transportRequests TransportRequest[] @relation("HealthcareTransportRequests")
@@ -125,4 +128,16 @@ model TransportRequest {
   createdByHealthcare   HealthcareUser? @relation("HealthcareTransportRequests", fields: [healthcareCreatedById], references: [id])
 
   @@map("transport_requests")
+}
+
+model DropdownOption {
+  id          String   @id @default(cuid())
+  category    String   // 'insurance', 'diagnosis', 'mobility', etc.
+  value       String   // The actual option value
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([category, value])
+  @@map("dropdown_options")
 }

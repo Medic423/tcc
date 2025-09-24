@@ -83,6 +83,37 @@ router.post('/', async (req, res) => {
 });
 
 /**
+ * GET /api/tcc/hospitals/search
+ * Search hospitals
+ */
+router.get('/search', async (req, res) => {
+  try {
+    const { q } = req.query;
+
+    if (!q || typeof q !== 'string') {
+      return res.status(400).json({
+        success: false,
+        error: 'Search query is required'
+      });
+    }
+
+    const hospitals = await hospitalService.searchHospitals(q);
+
+    res.json({
+      success: true,
+      data: hospitals
+    });
+
+  } catch (error) {
+    console.error('Search hospitals error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to search hospitals'
+    });
+  }
+});
+
+/**
  * GET /api/tcc/hospitals/:id
  * Get hospital by ID
  */
@@ -157,37 +188,6 @@ router.delete('/:id', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to delete hospital'
-    });
-  }
-});
-
-/**
- * GET /api/tcc/hospitals/search
- * Search hospitals
- */
-router.get('/search', async (req, res) => {
-  try {
-    const { q } = req.query;
-
-    if (!q || typeof q !== 'string') {
-      return res.status(400).json({
-        success: false,
-        error: 'Search query is required'
-      });
-    }
-
-    const hospitals = await hospitalService.searchHospitals(q);
-
-    res.json({
-      success: true,
-      data: hospitals
-    });
-
-  } catch (error) {
-    console.error('Search hospitals error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to search hospitals'
     });
   }
 });

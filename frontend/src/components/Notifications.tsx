@@ -18,7 +18,7 @@ interface NotificationsProps {
   };
 }
 
-const Notifications: React.FC<NotificationsProps> = ({ user }) => {
+const Notifications: React.FC<NotificationsProps> = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -110,18 +110,6 @@ const Notifications: React.FC<NotificationsProps> = ({ user }) => {
     }
   };
 
-  const getNotificationColor = (type: string) => {
-    switch (type) {
-      case 'success':
-        return 'bg-green-50 border-green-200';
-      case 'error':
-        return 'bg-red-50 border-red-200';
-      case 'warning':
-        return 'bg-yellow-50 border-yellow-200';
-      default:
-        return 'bg-blue-50 border-blue-200';
-    }
-  };
 
   const unreadCount = notifications.filter(n => !n.read).length;
 

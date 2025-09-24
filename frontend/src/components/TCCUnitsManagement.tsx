@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import api from '../services/api';
 
 interface Unit {
   id: string;
@@ -54,7 +55,6 @@ const TCCUnitsManagement: React.FC = () => {
   const [selectedAgency, setSelectedAgency] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001';
 
   useEffect(() => {
     fetchData();
@@ -71,20 +71,13 @@ const TCCUnitsManagement: React.FC = () => {
       }
 
       // Fetch agencies first
-      const agenciesResponse = await fetch(`${API_BASE_URL}/api/tcc/agencies`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        }
-      });
+      const agenciesResponse = await api.get('/api/tcc/agencies');
 
-      if (!agenciesResponse.ok) {
-        throw new Error(`Failed to fetch agencies: ${agenciesResponse.statusText}`);
+      if (!agenciesResponse.data?.success) {
+        throw new Error(`Failed to fetch agencies: ${agenciesResponse.data?.message || 'Unknown error'}`);
       }
 
-      const agenciesData = await agenciesResponse.json();
+      const agenciesData = agenciesResponse.data;
       console.log('🔍 TCCUnitsManagement: Agencies response:', agenciesData);
       
       if (agenciesData.success) {
@@ -92,20 +85,13 @@ const TCCUnitsManagement: React.FC = () => {
       }
 
       // Fetch units from all agencies
-      const unitsResponse = await fetch(`${API_BASE_URL}/api/tcc/units`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        }
-      });
+      const unitsResponse = await api.get('/api/tcc/units');
 
-      if (!unitsResponse.ok) {
-        throw new Error(`Failed to fetch units: ${unitsResponse.statusText}`);
+      if (!unitsResponse.data?.success) {
+        throw new Error(`Failed to fetch units: ${unitsResponse.data?.message || 'Unknown error'}`);
       }
 
-      const unitsData = await unitsResponse.json();
+      const unitsData = unitsResponse.data;
       console.log('🔍 TCCUnitsManagement: Units response:', unitsData);
       
       if (unitsData.success) {

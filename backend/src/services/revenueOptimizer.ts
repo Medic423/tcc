@@ -37,6 +37,11 @@ export interface TransportRequest {
     lat: number;
     lng: number;
   };
+  // Insurance and pricing fields
+  insuranceCompany?: string;
+  insurancePayRate?: number;
+  perMileRate?: number;
+  distanceMiles?: number;
 }
 
 export interface BackhaulPair {
@@ -109,6 +114,27 @@ export class RevenueOptimizer {
    * Calculate base revenue for a transport request
    */
   calculateRevenue(request: TransportRequest): number {
+    // If insurance-specific pricing is available, use it
+    if (request.insurancePayRate && request.perMileRate && request.distanceMiles) {
+      const baseRevenue = request.insurancePayRate;
+      const mileageRevenue = request.perMileRate * request.distanceMiles;
+      
+      // Priority multipliers still apply
+      const priorityMultipliers = {
+        'LOW': 1.0,
+        'MEDIUM': 1.1,
+        'HIGH': 1.25,
+        'URGENT': 1.5
+      };
+      const priorityMultiplier = priorityMultipliers[request.priority as keyof typeof priorityMultipliers] || 1.0;
+      
+      // Special requirements surcharge
+      const specialSurcharge = request.specialRequirements ? 50.0 : 0.0;
+      
+      return (baseRevenue + mileageRevenue + specialSurcharge) * priorityMultiplier * this.weights.baseRevenue;
+    }
+    
+    // Fallback to standard rates if insurance pricing not available
     const baseRates = {
       'BLS': 150.0,
       'ALS': 250.0,
@@ -168,6 +194,11 @@ export class RevenueOptimizer {
    * Calculate overtime risk penalty
    */
   calculateOvertimeRisk(unit: Unit, request: TransportRequest, currentTime: Date): number {
+    // If no shift end time is available, assume no overtime risk
+    if (!unit.shiftEnd) {
+      return 0;
+    }
+    
     const estimatedTripTime = this.calculateTripTime(request);
     const estimatedCompletionTime = new Date(currentTime.getTime() + (estimatedTripTime * 60000));
     

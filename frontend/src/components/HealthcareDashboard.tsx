@@ -4,7 +4,7 @@ import {
   Plus, 
   Clock, 
   CheckCircle, 
-  AlertCircle,
+  AlertTriangle,
   User,
   LogOut,
   Bell,
@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import Notifications from './Notifications';
 import EnhancedTripForm from './EnhancedTripForm';
+import HospitalSettings from './HospitalSettings';
 
 interface HealthcareDashboardProps {
   user: {
@@ -27,7 +28,10 @@ interface HealthcareDashboardProps {
 
 
 const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogout }) => {
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('create');
+  const [agencyResponses, setAgencyResponses] = useState<any[]>([]);
+  const [selectedTrip, setSelectedTrip] = useState<any>(null);
+  const [loadingResponses, setLoadingResponses] = useState(false);
   const [trips, setTrips] = useState([
     {
       id: '1',
@@ -36,7 +40,8 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
       transportLevel: 'BLS',
       status: 'PENDING',
       requestTime: '2025-09-07 10:30 AM',
-      priority: 'MEDIUM'
+      priority: 'MEDIUM',
+      urgencyLevel: 'Urgent'
     },
     {
       id: '2',
@@ -45,14 +50,59 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
       transportLevel: 'ALS',
       status: 'ACCEPTED',
       requestTime: '2025-09-07 09:15 AM',
-      priority: 'HIGH'
+      priority: 'HIGH',
+      urgencyLevel: 'Emergent'
+    },
+    {
+      id: '3',
+      patientId: 'P003',
+      destination: 'Emergency Room',
+      transportLevel: 'CCT',
+      status: 'IN_PROGRESS',
+      requestTime: '2025-09-07 08:45 AM',
+      priority: 'HIGH',
+      urgencyLevel: 'Emergent'
+    },
+    {
+      id: '4',
+      patientId: 'P004',
+      destination: 'Outpatient Clinic',
+      transportLevel: 'BLS',
+      status: 'COMPLETED',
+      requestTime: '2025-09-07 07:30 AM',
+      priority: 'LOW',
+      urgencyLevel: 'Routine'
     }
   ]);
+  const [editingTrip, setEditingTrip] = useState<any>(null);
+  const [editFormData, setEditFormData] = useState<any>({});
+  const [updating, setUpdating] = useState(false);
 
   // Load trips from API
   useEffect(() => {
     loadTrips();
   }, []);
+
+  // Load agency responses when responses tab is active
+  useEffect(() => {
+    if (activeTab === 'responses') {
+      loadAgencyResponses();
+    }
+  }, [activeTab]);
+
+  // Function to get urgency level styling
+  const getUrgencyLevelStyle = (urgencyLevel: string) => {
+    switch (urgencyLevel) {
+      case 'Routine':
+        return 'text-black bg-transparent';
+      case 'Urgent':
+        return 'text-black bg-orange-200';
+      case 'Emergent':
+        return 'text-black bg-red-200';
+      default:
+        return 'text-black bg-transparent';
+    }
+  };
 
   const loadTrips = async () => {
     try {
@@ -69,10 +119,12 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
             id: trip.id,
             patientId: trip.patientName,
             destination: trip.toLocation,
-            transportLevel: 'BLS', // Default since not in current schema
+            pickupLocation: null,
+            transportLevel: trip.transportLevel || 'BLS',
             status: trip.status,
             requestTime: new Date(trip.createdAt).toLocaleString(),
-            priority: trip.priority
+            priority: trip.priority,
+            urgencyLevel: trip.urgencyLevel
           }));
           setTrips(transformedTrips);
         }
@@ -82,20 +134,82 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
     }
   };
 
+  const handleEditTrip = (trip: any) => {
+    setEditingTrip(trip);
+    setEditFormData({
+      status: trip.status,
+      transportLevel: trip.transportLevel,
+      urgencyLevel: trip.urgencyLevel || trip.priority
+    });
+  };
+
+  const handleUpdateTrip = async () => {
+    if (!editingTrip) return;
+    
+    setUpdating(true);
+    try {
+      const response = await fetch(`/api/trips/${editingTrip.id}/status`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          status: editFormData.status,
+          ...(editFormData.status === 'COMPLETED' && { completionTimestamp: new Date().toISOString() })
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update trip');
+      }
+
+      // Reload trips to get updated data
+      await loadTrips();
+      setEditingTrip(null);
+      setEditFormData({});
+    } catch (error: any) {
+      console.error('Error updating trip:', error);
+      alert(error.message || 'Failed to update trip');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleCompleteTrip = async (tripId: string) => {
+    if (!confirm('Are you sure you want to mark this trip as completed?')) return;
+    
+    setUpdating(true);
+    try {
+      const response = await fetch(`/api/trips/${tripId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          status: 'COMPLETED',
+          completionTimestamp: new Date().toISOString()
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to complete trip');
+      }
+
+      // Reload trips to get updated data
+      await loadTrips();
+    } catch (error: any) {
+      console.error('Error completing trip:', error);
+      alert(error.message || 'Failed to complete trip');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   // Settings state
-  const [settingsData, setSettingsData] = useState({
-    facilityName: user.facilityName || '',
-    facilityType: user.facilityType || '',
-    email: user.email || '',
-    phone: '',
-    address: '',
-    city: '',
-    state: '',
-    zipCode: ''
-  });
-  const [settingsLoading, setSettingsLoading] = useState(false);
-  const [settingsError, setSettingsError] = useState<string | null>(null);
-  const [settingsSuccess, setSettingsSuccess] = useState(false);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -103,70 +217,65 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
     onLogout();
   };
 
-  const handleSettingsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setSettingsData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+  // Agency Response Management Functions
+  const loadAgencyResponses = async (tripId?: string) => {
+    setLoadingResponses(true);
+    try {
+      const url = tripId ? `/api/agency-responses?tripId=${tripId}` : '/api/agency-responses';
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data) {
+          setAgencyResponses(data.data);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading agency responses:', error);
+    } finally {
+      setLoadingResponses(false);
+    }
   };
 
-  const handleSettingsSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSettingsLoading(true);
-    setSettingsError(null);
-
+  const handleSelectAgency = async (tripId: string, agencyResponseId: string, reason?: string) => {
     try {
-      console.log('TCC_DEBUG: Frontend sending facility update:', settingsData);
-      console.log('TCC_DEBUG: Frontend token:', localStorage.getItem('token'));
-      
-      const response = await fetch('/api/auth/healthcare/facility/update', {
-        method: 'PUT',
+      const response = await fetch(`/api/agency-responses/select/${tripId}`, {
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(settingsData),
+        body: JSON.stringify({
+          agencyResponseId: agencyResponseId,
+          selectionNotes: reason || 'Selected by healthcare provider'
+        }),
       });
-
-      console.log('TCC_DEBUG: Frontend response status:', response.status);
-      console.log('TCC_DEBUG: Frontend response ok:', response.ok);
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.log('TCC_DEBUG: Frontend error response:', errorData);
-        throw new Error(errorData.error || 'Failed to update facility information');
+        throw new Error(errorData.error || 'Failed to select agency');
       }
 
-      const responseData = await response.json();
-      console.log('TCC_DEBUG: Frontend success response:', responseData);
-
-      setSettingsSuccess(true);
-      // Navigate back to overview tab after successful save
-      setActiveTab('overview');
-      setTimeout(() => setSettingsSuccess(false), 3000);
+      // Reload responses and trips
+      await loadAgencyResponses(tripId);
+      await loadTrips();
     } catch (error: any) {
-      console.error('TCC_DEBUG: Frontend error updating facility:', error);
-      setSettingsError(error.message || 'Failed to update facility information');
-    } finally {
-      setSettingsLoading(false);
+      console.error('Error selecting agency:', error);
+      alert(error.message || 'Failed to select agency');
     }
   };
 
-  const handleSettingsCancel = () => {
-    setSettingsData({
-      facilityName: user.facilityName || '',
-      facilityType: user.facilityType || '',
-      email: user.email || '',
-      phone: '',
-      address: '',
-      city: '',
-      state: '',
-      zipCode: ''
-    });
-    setSettingsError(null);
-    // Navigate back to overview tab
-    setActiveTab('overview');
+  const handleViewResponses = (trip: any) => {
+    // Switch to Agency Responses tab
+    setActiveTab('responses');
+    // Set the selected trip for context
+    setSelectedTrip(trip);
+    // Load responses for this specific trip
+    loadAgencyResponses(trip.id);
   };
 
   const getStatusColor = (status: string) => {
@@ -179,14 +288,6 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
     }
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'HIGH': return 'text-red-600 bg-red-100';
-      case 'MEDIUM': return 'text-yellow-600 bg-yellow-100';
-      case 'LOW': return 'text-green-600 bg-green-100';
-      default: return 'text-gray-600 bg-gray-100';
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -231,10 +332,10 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <nav className="flex space-x-8">
             {[
-              { id: 'overview', name: 'Overview', icon: Building2 },
               { id: 'trips', name: 'Transport Requests', icon: Clock },
+              { id: 'responses', name: 'Agency Responses', icon: Bell },
               { id: 'create', name: 'Create Request', icon: Plus },
-              { id: 'settings', name: 'Settings', icon: User }
+              { id: 'hospital-settings', name: 'Hospital Settings', icon: Building2 }
             ].map((tab) => {
               const Icon = tab.icon;
               return (
@@ -258,153 +359,141 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {activeTab === 'overview' && (
+        {activeTab === 'trips' && (
           <div className="space-y-6">
+            {/* Summary Tiles */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-white p-6 rounded-lg shadow">
-                <div className="flex items-center">
-                  <Clock className="h-8 w-8 text-yellow-600" />
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-500">Pending Requests</p>
-                    <p className="text-2xl font-semibold text-gray-900">
-                      {trips.filter(trip => trip.status === 'PENDING').length}
-                    </p>
+              <div className="bg-white overflow-hidden shadow rounded-lg">
+                <div className="p-5">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0">
+                      <div className="p-3 rounded-md bg-yellow-500">
+                        <Clock className="h-6 w-6 text-white" />
+                      </div>
+                    </div>
+                    <div className="ml-5 w-0 flex-1">
+                      <dl>
+                        <dt className="text-sm font-medium text-gray-500 truncate">
+                          Pending Requests
+                        </dt>
+                        <dd className="text-lg font-medium text-gray-900">
+                          {trips.filter(trip => trip.status === 'PENDING').length}
+                        </dd>
+                      </dl>
+                    </div>
                   </div>
                 </div>
               </div>
-              
-              <div className="bg-white p-6 rounded-lg shadow">
-                <div className="flex items-center">
-                  <CheckCircle className="h-8 w-8 text-green-600" />
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-500">Completed Today</p>
-                    <p className="text-2xl font-semibold text-gray-900">
-                      {trips.filter(trip => trip.status === 'COMPLETED').length}
-                    </p>
+
+              <div className="bg-white overflow-hidden shadow rounded-lg">
+                <div className="p-5">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0">
+                      <div className="p-3 rounded-md bg-green-500">
+                        <CheckCircle className="h-6 w-6 text-white" />
+                      </div>
+                    </div>
+                    <div className="ml-5 w-0 flex-1">
+                      <dl>
+                        <dt className="text-sm font-medium text-gray-500 truncate">
+                          Completed Today
+                        </dt>
+                        <dd className="text-lg font-medium text-gray-900">
+                          {trips.filter(trip => trip.status === 'COMPLETED').length}
+                        </dd>
+                      </dl>
+                    </div>
                   </div>
                 </div>
               </div>
-              
-              <div className="bg-white p-6 rounded-lg shadow">
-                <div className="flex items-center">
-                  <AlertCircle className="h-8 w-8 text-red-600" />
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-500">High Priority</p>
-                    <p className="text-2xl font-semibold text-gray-900">
-                      {trips.filter(trip => trip.priority === 'HIGH' || trip.priority === 'CRITICAL').length}
-                    </p>
+
+              <div className="bg-white overflow-hidden shadow rounded-lg">
+                <div className="p-5">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0">
+                      <div className="p-3 rounded-md bg-red-500">
+                        <AlertTriangle className="h-6 w-6 text-white" />
+                      </div>
+                    </div>
+                    <div className="ml-5 w-0 flex-1">
+                      <dl>
+                        <dt className="text-sm font-medium text-gray-500 truncate">
+                          High Priority
+                        </dt>
+                        <dd className="text-lg font-medium text-gray-900">
+                          {trips.filter(trip => trip.urgencyLevel === 'Emergent' || trip.priority === 'HIGH').length}
+                        </dd>
+                      </dl>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
+            {/* Transport Requests List */}
             <div className="bg-white rounded-lg shadow">
               <div className="px-6 py-4 border-b border-gray-200">
-                <h3 className="text-lg font-medium text-gray-900">Recent Activity</h3>
+                <h3 className="text-lg font-medium text-gray-900">Transport Requests</h3>
               </div>
               <div className="p-6">
-                {trips.length > 0 ? (
-                  <div className="space-y-4">
-                    {trips.slice(0, 5).map((trip) => (
-                      <div key={trip.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                        <div className="flex items-center space-x-4">
-                          <div className={`w-3 h-3 rounded-full ${
-                            trip.status === 'PENDING' ? 'bg-yellow-400' :
-                            trip.status === 'ACCEPTED' ? 'bg-green-400' :
-                            trip.status === 'IN_PROGRESS' ? 'bg-blue-400' :
-                            trip.status === 'COMPLETED' ? 'bg-gray-400' : 'bg-gray-400'
-                          }`}></div>
-                          <div>
-                            <p className="text-sm font-medium text-gray-900">
-                              Patient {trip.patientId} - {trip.destination}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {trip.transportLevel} • {trip.priority} Priority • {trip.requestTime}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(trip.status)}`}>
-                            {trip.status}
-                          </span>
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(trip.priority)}`}>
-                            {trip.priority}
-                          </span>
+              {trips.length > 0 ? (
+                <div className="space-y-4">
+                  {trips.map((trip) => (
+                    <div key={trip.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                      <div className="flex items-center space-x-4">
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">
+                            Patient ID: {trip.patientId} - {trip.destination}
+                          </p>
+                          <p className="text-xs text-blue-600">
+                            Pickup: {trip.destination}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {trip.transportLevel} • {trip.urgencyLevel || trip.priority} • {trip.requestTime}
+                          </p>
                         </div>
                       </div>
-                    ))}
-                    {trips.length > 5 && (
-                      <p className="text-sm text-gray-500 text-center">
-                        Showing 5 of {trips.length} recent requests
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-gray-500">No recent transport requests found.</p>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'trips' && (
-          <div className="bg-white rounded-lg shadow">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">Transport Requests</h3>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Patient ID
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Destination
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Level
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Priority
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Request Time
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {trips.map((trip) => (
-                    <tr key={trip.id}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {trip.patientId}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {trip.destination}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {trip.transportLevel}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center space-x-2">
                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(trip.status)}`}>
                           {trip.status}
                         </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(trip.priority)}`}>
-                          {trip.priority}
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getUrgencyLevelStyle(trip.urgencyLevel || trip.priority)}`}>
+                          {trip.urgencyLevel || trip.priority}
                         </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {trip.requestTime}
-                      </td>
-                    </tr>
+                        <div className="flex space-x-2 ml-4">
+                          <button
+                            onClick={() => handleViewResponses(trip)}
+                            className="text-purple-600 hover:text-purple-900 text-xs px-2 py-1 rounded hover:bg-purple-50"
+                          >
+                            View Responses
+                          </button>
+                          <button
+                            onClick={() => handleEditTrip(trip)}
+                            className="text-blue-600 hover:text-blue-900 text-xs px-2 py-1 rounded hover:bg-blue-50"
+                            disabled={updating}
+                          >
+                            Edit
+                          </button>
+                          {trip.status !== 'COMPLETED' && (
+                            <button
+                              onClick={() => handleCompleteTrip(trip.id)}
+                              className="text-green-600 hover:text-green-900 text-xs px-2 py-1 rounded hover:bg-green-50"
+                              disabled={updating}
+                            >
+                              Complete
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   ))}
-                </tbody>
-              </table>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">No transport requests found</p>
+                </div>
+              )}
+              </div>
             </div>
           </div>
         )}
@@ -426,142 +515,319 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
           </div>
         )}
 
-        {activeTab === 'settings' && (
-          <div className="bg-white rounded-lg shadow">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">Settings</h3>
+        {activeTab === 'responses' && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-gray-900">Agency Responses</h2>
+              <button
+                onClick={() => loadAgencyResponses()}
+                disabled={loadingResponses}
+                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loadingResponses ? 'Loading...' : 'Refresh Responses'}
+              </button>
             </div>
-            <div className="p-6">
-              {settingsSuccess && (
-                <div className="mb-4 bg-green-50 border border-green-200 rounded-md p-4">
-                  <div className="flex">
-                    <CheckCircle className="h-5 w-5 text-green-400" />
-                    <div className="ml-3">
-                      <p className="text-sm font-medium text-green-800">
-                        Facility information updated successfully!
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-              
-              {settingsError && (
-                <div className="mb-4 bg-red-50 border border-red-200 rounded-md p-4">
-                  <div className="flex">
-                    <AlertCircle className="h-5 w-5 text-red-400" />
-                    <div className="ml-3">
-                      <p className="text-sm font-medium text-red-800">
-                        {settingsError}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
 
-              <form onSubmit={handleSettingsSubmit} className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Facility Name</label>
-                  <input
-                    type="text"
-                    value={settingsData.facilityName}
-                    onChange={handleSettingsChange}
-                    name="facilityName"
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Facility Type</label>
-                  <input
-                    type="text"
-                    value={settingsData.facilityType}
-                    onChange={handleSettingsChange}
-                    name="facilityType"
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Contact Email</label>
-                  <input
-                    type="email"
-                    value={settingsData.email}
-                    onChange={handleSettingsChange}
-                    name="email"
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Phone Number</label>
-                  <input
-                    type="tel"
-                    value={settingsData.phone || ''}
-                    onChange={handleSettingsChange}
-                    name="phone"
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Address</label>
-                  <input
-                    type="text"
-                    value={settingsData.address || ''}
-                    onChange={handleSettingsChange}
-                    name="address"
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-                  />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">City</label>
-                    <input
-                      type="text"
-                      value={settingsData.city || ''}
-                      onChange={handleSettingsChange}
-                      name="city"
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">State</label>
-                    <input
-                      type="text"
-                      value={settingsData.state || ''}
-                      onChange={handleSettingsChange}
-                      name="state"
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-                    />
+            {/* Response Summary */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="bg-white overflow-hidden shadow rounded-lg">
+                <div className="p-5">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0">
+                      <div className="p-3 rounded-md bg-blue-500">
+                        <Bell className="h-6 w-6 text-white" />
+                      </div>
+                    </div>
+                    <div className="ml-5 w-0 flex-1">
+                      <dl>
+                        <dt className="text-sm font-medium text-gray-500 truncate">
+                          Total Responses
+                        </dt>
+                        <dd className="text-lg font-medium text-gray-900">
+                          {agencyResponses.length}
+                        </dd>
+                      </dl>
+                    </div>
                   </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Zip Code</label>
-                  <input
-                    type="text"
-                    value={settingsData.zipCode || ''}
-                    onChange={handleSettingsChange}
-                    name="zipCode"
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-                  />
+              </div>
+
+              <div className="bg-white overflow-hidden shadow rounded-lg">
+                <div className="p-5">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0">
+                      <div className="p-3 rounded-md bg-green-500">
+                        <CheckCircle className="h-6 w-6 text-white" />
+                      </div>
+                    </div>
+                    <div className="ml-5 w-0 flex-1">
+                      <dl>
+                        <dt className="text-sm font-medium text-gray-500 truncate">
+                          Accepted
+                        </dt>
+                        <dd className="text-lg font-medium text-gray-900">
+                          {agencyResponses.filter(r => r.response === 'ACCEPTED').length}
+                        </dd>
+                      </dl>
+                    </div>
+                  </div>
                 </div>
+              </div>
+
+              <div className="bg-white overflow-hidden shadow rounded-lg">
+                <div className="p-5">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0">
+                      <div className="p-3 rounded-md bg-red-500">
+                        <X className="h-6 w-6 text-white" />
+                      </div>
+                    </div>
+                    <div className="ml-5 w-0 flex-1">
+                      <dl>
+                        <dt className="text-sm font-medium text-gray-500 truncate">
+                          Declined
+                        </dt>
+                        <dd className="text-lg font-medium text-gray-900">
+                          {agencyResponses.filter(r => r.response === 'DECLINED').length}
+                        </dd>
+                      </dl>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white overflow-hidden shadow rounded-lg">
+                <div className="p-5">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0">
+                      <div className="p-3 rounded-md bg-yellow-500">
+                        <Clock className="h-6 w-6 text-white" />
+                      </div>
+                    </div>
+                    <div className="ml-5 w-0 flex-1">
+                      <dl>
+                        <dt className="text-sm font-medium text-gray-500 truncate">
+                          Selected
+                        </dt>
+                        <dd className="text-lg font-medium text-gray-900">
+                          {agencyResponses.filter(r => r.isSelected).length}
+                        </dd>
+                      </dl>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Selected Trip Header */}
+            {selectedTrip && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-medium text-blue-900">
+                      Viewing Responses for: {selectedTrip.patientId}
+                    </h3>
+                    <p className="text-sm text-blue-700">
+                      {selectedTrip.fromLocation} → {selectedTrip.toLocation} • {selectedTrip.transportLevel} • {selectedTrip.urgencyLevel || selectedTrip.priority}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setSelectedTrip(null);
+                      loadAgencyResponses(); // Load all responses
+                    }}
+                    className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                  >
+                    View All Responses
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Response List */}
+            <div className="bg-white shadow overflow-hidden sm:rounded-md">
+              <div className="px-4 py-5 sm:px-6">
+                <h3 className="text-lg leading-6 font-medium text-gray-900">
+                  {selectedTrip ? 'Agency Response Details' : 'All Agency Responses'}
+                </h3>
+                <p className="mt-1 max-w-2xl text-sm text-gray-500">
+                  {selectedTrip 
+                    ? `View and manage agency responses for this transport request`
+                    : 'View and manage agency responses for all transport requests'
+                  }
+                </p>
+              </div>
+              <ul className="divide-y divide-gray-200">
+                {loadingResponses ? (
+                  <li className="px-4 py-5 sm:px-6">
+                    <div className="text-center text-gray-500">
+                      <div className="flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600 mr-2"></div>
+                        Loading agency responses...
+                      </div>
+                    </div>
+                  </li>
+                ) : agencyResponses.length === 0 ? (
+                  <li className="px-4 py-5 sm:px-6">
+                    <div className="text-center text-gray-500">
+                      No agency responses found. Create a transport request to see responses.
+                    </div>
+                  </li>
+                ) : (
+                  agencyResponses.map((response) => (
+                    <li key={response.id} className="px-4 py-5 sm:px-6">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          <div className="flex-shrink-0">
+                            <div className={`p-2 rounded-md ${
+                              response.response === 'ACCEPTED' ? 'bg-green-100' : 
+                              response.response === 'DECLINED' ? 'bg-red-100' : 'bg-gray-100'
+                            }`}>
+                              {response.response === 'ACCEPTED' ? (
+                                <CheckCircle className="h-5 w-5 text-green-600" />
+                              ) : response.response === 'DECLINED' ? (
+                                <X className="h-5 w-5 text-red-600" />
+                              ) : (
+                                <Clock className="h-5 w-5 text-gray-600" />
+                              )}
+                            </div>
+                          </div>
+                          <div className="ml-4">
+                            <div className="flex items-center">
+                              <p className="text-sm font-medium text-gray-900">
+                                Agency {response.agencyId}
+                              </p>
+                              {response.isSelected && (
+                                <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                  Selected
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-sm text-gray-500">
+                              Trip ID: {response.tripId}
+                            </p>
+                            {response.responseNotes && (
+                              <p className="text-sm text-gray-600 mt-1">
+                                {response.responseNotes}
+                              </p>
+                            )}
+                            {response.estimatedArrival && (
+                              <p className="text-sm text-gray-500 mt-1">
+                                ETA: {new Date(response.estimatedArrival).toLocaleString()}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            response.response === 'ACCEPTED' ? 'bg-green-100 text-green-800' :
+                            response.response === 'DECLINED' ? 'bg-red-100 text-red-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {response.response}
+                          </span>
+                          {response.response === 'ACCEPTED' && !response.isSelected && (
+                            <button
+                              onClick={() => handleSelectAgency(response.tripId, response.id)}
+                              className="px-3 py-1 bg-green-600 text-white text-xs rounded-md hover:bg-green-700"
+                            >
+                              Select Agency
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </li>
+                  ))
+                )}
+              </ul>
+            </div>
+          </div>
+        )}
+
+
+        {activeTab === 'hospital-settings' && (
+          <HospitalSettings />
+        )}
+      </main>
+
+      {/* Edit Trip Modal */}
+      {editingTrip && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Edit Trip Details</h3>
+              <form onSubmit={(e) => { e.preventDefault(); handleUpdateTrip(); }}>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Status
+                  </label>
+                  <select
+                    value={editFormData.status}
+                    onChange={(e) => setEditFormData({...editFormData, status: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                  >
+                    <option value="PENDING">Pending</option>
+                    <option value="ACCEPTED">Accepted</option>
+                    <option value="IN_PROGRESS">In Progress</option>
+                    <option value="COMPLETED">Completed</option>
+                    <option value="CANCELLED">Cancelled</option>
+                  </select>
+                </div>
+
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Transport Level
+                  </label>
+                  <select
+                    value={editFormData.transportLevel}
+                    onChange={(e) => setEditFormData({...editFormData, transportLevel: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                  >
+                    <option value="BLS">BLS - Basic Life Support</option>
+                    <option value="ALS">ALS - Advanced Life Support</option>
+                    <option value="CCT">CCT - Critical Care Transport</option>
+                  </select>
+                </div>
+
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Urgency Level
+                  </label>
+                  <select
+                    value={editFormData.urgencyLevel}
+                    onChange={(e) => setEditFormData({...editFormData, urgencyLevel: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                  >
+                    <option value="Routine">Routine</option>
+                    <option value="Urgent">Urgent</option>
+                    <option value="Emergent">Emergent</option>
+                  </select>
+                </div>
+
                 <div className="flex justify-end space-x-3">
                   <button
                     type="button"
-                    onClick={handleSettingsCancel}
-                    className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                    onClick={() => {
+                      setEditingTrip(null);
+                      setEditFormData({});
+                    }}
+                    className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    disabled={settingsLoading}
-                    className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
+                    disabled={updating}
+                    className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 disabled:opacity-50"
                   >
-                    {settingsLoading ? 'Saving...' : 'Save Changes'}
+                    {updating ? 'Updating...' : 'Update Trip'}
                   </button>
                 </div>
               </form>
             </div>
           </div>
-        )}
-      </main>
+        </div>
+      )}
     </div>
   );
 };

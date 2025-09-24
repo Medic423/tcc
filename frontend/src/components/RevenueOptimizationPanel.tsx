@@ -55,7 +55,8 @@ const RevenueOptimizationPanel: React.FC<RevenueOptimizationPanelProps> = ({
 }) => {
   const [optimizationMetrics, setOptimizationMetrics] = useState<OptimizationMetrics | null>(null);
   const [backhaulPairs, setBackhaulPairs] = useState<BackhaulPair[]>([]);
-  const [units, setUnits] = useState<Unit[]>([]);
+  const [, setUnits] = useState<Unit[]>([]);
+  const [unitsAnalytics, setUnitsAnalytics] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -101,13 +102,31 @@ const RevenueOptimizationPanel: React.FC<RevenueOptimizationPanelProps> = ({
         }
       }
 
-      // Load units data (mock for now)
-      setUnits([
-        { id: '1', unitNumber: 'A-101', type: 'AMBULANCE', status: 'AVAILABLE', capabilities: ['BLS', 'ALS'], currentLocation: null, shiftStart: '08:00', shiftEnd: '20:00' },
-        { id: '2', unitNumber: 'A-102', type: 'AMBULANCE', status: 'ON_CALL', capabilities: ['BLS'], currentLocation: null, shiftStart: '08:00', shiftEnd: '20:00' },
-        { id: '3', unitNumber: 'A-103', type: 'AMBULANCE', status: 'AVAILABLE', capabilities: ['BLS', 'ALS', 'CCT'], currentLocation: null, shiftStart: '08:00', shiftEnd: '20:00' },
-        { id: '4', unitNumber: 'V-201', type: 'WHEELCHAIR_VAN', status: 'AVAILABLE', capabilities: ['BLS'], currentLocation: null, shiftStart: '08:00', shiftEnd: '20:00' },
-      ]);
+      // Load units data
+      const token = localStorage.getItem('token');
+      if (token) {
+        const headers = {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        };
+
+        const unitsResponse = await fetch('/api/units', { headers });
+        if (unitsResponse.ok) {
+          const unitsData = await unitsResponse.json();
+          if (unitsData.success) {
+            setUnits(unitsData.data || []);
+          }
+        }
+
+        // Load units analytics
+        const unitsAnalyticsResponse = await fetch('/api/units/analytics', { headers });
+        if (unitsAnalyticsResponse.ok) {
+          const analyticsData = await unitsAnalyticsResponse.json();
+          if (analyticsData.success) {
+            setUnitsAnalytics(analyticsData.data);
+          }
+        }
+      }
 
     } catch (error) {
       console.error('Error loading optimization data:', error);
@@ -218,23 +237,23 @@ const RevenueOptimizationPanel: React.FC<RevenueOptimizationPanelProps> = ({
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-600">Available Units:</span>
-                <span className="text-lg font-semibold text-green-600">{units.filter(u => u.status === 'AVAILABLE').length}</span>
+                <span className="text-lg font-semibold text-green-600">{unitsAnalytics?.availableUnits || 0}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">On Call:</span>
-                <span className="text-sm font-medium text-yellow-600">{units.filter(u => u.status === 'ON_CALL').length}</span>
+                <span className="text-sm text-gray-600">Committed Units:</span>
+                <span className="text-sm font-medium text-yellow-600">{unitsAnalytics?.committedUnits || 0}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-600">Total Units:</span>
-                <span className="text-sm font-medium text-gray-900">{units.length}</span>
+                <span className="text-sm font-medium text-gray-900">{unitsAnalytics?.totalUnits || 0}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">BLS Capable:</span>
-                <span className="text-sm font-medium text-gray-900">{units.filter(u => u.capabilities.includes('BLS')).length}</span>
+                <span className="text-sm text-gray-600">Out of Service:</span>
+                <span className="text-sm font-medium text-red-600">{unitsAnalytics?.outOfServiceUnits || 0}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">ALS Capable:</span>
-                <span className="text-sm font-medium text-gray-900">{units.filter(u => u.capabilities.includes('ALS')).length}</span>
+                <span className="text-sm text-gray-600">Efficiency:</span>
+                <span className="text-sm font-medium text-gray-900">{unitsAnalytics?.efficiency ? `${(unitsAnalytics.efficiency * 100).toFixed(1)}%` : '0%'}</span>
               </div>
             </div>
           </div>

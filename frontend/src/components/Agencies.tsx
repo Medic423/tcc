@@ -38,6 +38,7 @@ interface Agency {
 
 
 const Agencies: React.FC = () => {
+  console.log('TCC_DEBUG: Agencies component mounted/rendered');
   const [agencies, setAgencies] = useState<Agency[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -62,13 +63,17 @@ const Agencies: React.FC = () => {
 
 
   useEffect(() => {
+    console.log('TCC_DEBUG: Agencies.useEffect() initial load');
     loadAgencies();
   }, []);
 
   const loadAgencies = async () => {
     try {
       setLoading(true);
+      console.log('TCC_DEBUG: Agencies.loadAgencies(): calling agenciesAPI.getAll');
       const response = await agenciesAPI.getAll();
+      console.log('TCC_DEBUG: Agencies.loadAgencies(): response status', response.status);
+      console.log('TCC_DEBUG: Agencies.loadAgencies(): response data', response.data);
       if (response.data.success) {
         // Transform the data to match the expected structure
         const transformedAgencies = response.data.data.map((agency: any) => ({
@@ -87,12 +92,13 @@ const Agencies: React.FC = () => {
           pricingStructure: agency.contactInfo?.pricingStructure || null,
           status: agency.contactInfo?.status || 'ACTIVE',
         }));
+        console.log('TCC_DEBUG: Agencies.loadAgencies(): transformed count', transformedAgencies.length);
         setAgencies(transformedAgencies);
       } else {
         setError('Failed to load agencies');
       }
     } catch (err) {
-      console.error('Error loading agencies:', err);
+      console.error('TCC_DEBUG: Agencies.loadAgencies(): error', err);
       setError('Failed to load agencies');
     } finally {
       setLoading(false);
@@ -132,7 +138,7 @@ const Agencies: React.FC = () => {
     setEditError(null);
 
     try {
-      const response = await agenciesAPI.updateAgency(editingAgency.id, editFormData);
+      const response = await agenciesAPI.update(editingAgency.id, editFormData);
       if (response.data.success) {
         // Update the agencies list
         setAgencies(agencies.map(agency => 

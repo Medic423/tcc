@@ -13,6 +13,7 @@ router.get('/', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
     console.log('🔍 TCC Units API: req.user:', req.user);
     
     const emsDB = databaseManager.getEMSDB();
+    console.log('🔍 TCC Units API: emsDB obtained:', !!emsDB);
     
     // Get all units from all agencies
     const units = await emsDB.unit.findMany({
@@ -32,10 +33,13 @@ router.get('/', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
     });
 
   } catch (error) {
-    console.error('Error fetching TCC units:', error);
+    console.error('🔍 TCC Units API: Error details:', error);
+    console.error('🔍 TCC Units API: Error message:', error instanceof Error ? error.message : String(error));
+    console.error('🔍 TCC Units API: Error stack:', error instanceof Error ? error.stack : 'No stack trace');
     res.status(500).json({
       success: false,
-      error: 'Failed to fetch units'
+      error: 'Failed to retrieve units',
+      details: error instanceof Error ? error.message : String(error)
     });
   }
 });

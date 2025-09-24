@@ -1,6 +1,6 @@
 import express from 'express';
 import { UnitService, UnitFormData, UnitStatusUpdate } from '../services/unitService';
-import { authenticateToken, AuthenticatedRequest } from '../middleware/authenticateAdmin';
+import { authenticateAdmin, AuthenticatedRequest } from '../middleware/authenticateAdmin';
 
 const router = express.Router();
 const unitService = new UnitService();
@@ -9,7 +9,7 @@ const unitService = new UnitService();
  * GET /api/units
  * Get all units for the authenticated agency
  */
-router.get('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
+router.get('/', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
   try {
     const agencyId = req.user?.id; // Assuming user ID is the agency ID for EMS users
     console.log('🔍 Units API: req.user:', req.user);
@@ -42,7 +42,7 @@ router.get('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
  * GET /api/units/available
  * Get available units for optimization
  */
-router.get('/available', authenticateToken, async (req: AuthenticatedRequest, res) => {
+router.get('/available', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
   try {
     const agencyId = req.user?.id;
     
@@ -72,7 +72,7 @@ router.get('/available', authenticateToken, async (req: AuthenticatedRequest, re
  * GET /api/units/analytics
  * Get unit analytics for the agency
  */
-router.get('/analytics', authenticateToken, async (req: AuthenticatedRequest, res) => {
+router.get('/analytics', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
   try {
     const agencyId = req.user?.id;
     
@@ -102,7 +102,7 @@ router.get('/analytics', authenticateToken, async (req: AuthenticatedRequest, re
  * GET /api/units/:id
  * Get a specific unit by ID
  */
-router.get('/:id', authenticateToken, async (req: AuthenticatedRequest, res) => {
+router.get('/:id', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
   try {
     const { id } = req.params;
     const unit = await unitService.getUnitById(id);
@@ -131,7 +131,7 @@ router.get('/:id', authenticateToken, async (req: AuthenticatedRequest, res) => 
  * POST /api/units
  * Create a new unit
  */
-router.post('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
+router.post('/', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
   try {
     const agencyId = req.user?.id;
     
@@ -171,7 +171,7 @@ router.post('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
  * PUT /api/units/:id
  * Update unit details
  */
-router.put('/:id', authenticateToken, async (req: AuthenticatedRequest, res) => {
+router.put('/:id', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
   try {
     const { id } = req.params;
     const unitData: Partial<UnitFormData> = req.body;
@@ -195,7 +195,7 @@ router.put('/:id', authenticateToken, async (req: AuthenticatedRequest, res) => 
  * PUT /api/units/:id/status
  * Update unit status
  */
-router.put('/:id/status', authenticateToken, async (req: AuthenticatedRequest, res) => {
+router.put('/:id/status', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
   try {
     const { id } = req.params;
     const statusUpdate: UnitStatusUpdate = req.body;
@@ -226,7 +226,7 @@ router.put('/:id/status', authenticateToken, async (req: AuthenticatedRequest, r
  * POST /api/units/:id/assign-trip
  * Assign trip to unit
  */
-router.post('/:id/assign-trip', authenticateToken, async (req: AuthenticatedRequest, res) => {
+router.post('/:id/assign-trip', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
   try {
     const { id } = req.params;
     const { tripId, tripDetails } = req.body;
@@ -257,7 +257,7 @@ router.post('/:id/assign-trip', authenticateToken, async (req: AuthenticatedRequ
  * POST /api/units/:id/complete-trip
  * Complete trip assignment
  */
-router.post('/:id/complete-trip', authenticateToken, async (req: AuthenticatedRequest, res) => {
+router.post('/:id/complete-trip', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
   try {
     const { id } = req.params;
     
@@ -280,7 +280,7 @@ router.post('/:id/complete-trip', authenticateToken, async (req: AuthenticatedRe
  * DELETE /api/units/:id
  * Deactivate unit (soft delete)
  */
-router.delete('/:id', authenticateToken, async (req: AuthenticatedRequest, res) => {
+router.delete('/:id', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
   try {
     const { id } = req.params;
     

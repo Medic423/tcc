@@ -7,13 +7,12 @@ import {
   AlertCircle,
   User,
   LogOut,
-  Bell,
-  Navigation,
-  Settings
+  Settings,
+  BarChart3
 } from 'lucide-react';
 import Notifications from './Notifications';
-import RouteOptimizer from './RouteOptimizer';
 import UnitsManagement from './UnitsManagement';
+import EMSAnalytics from './EMSAnalytics';
 
 interface EMSDashboardProps {
   user: {
@@ -27,7 +26,7 @@ interface EMSDashboardProps {
 }
 
 const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('available');
   
   // Settings state
   const [settingsData, setSettingsData] = useState({
@@ -50,6 +49,14 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
   const [acceptedTrips, setAcceptedTrips] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Editing state
+  const [editingTrip, setEditingTrip] = useState<string | null>(null);
+  const [editFormData, setEditFormData] = useState({
+    status: '',
+    pickupTime: ''
+  });
+  const [updating, setUpdating] = useState(false);
 
   // Load trips from API
   useEffect(() => {
@@ -74,8 +81,9 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
             patientId: trip.patientId,
             origin: trip.fromLocation,
             destination: trip.toLocation,
+            pickupLocation: trip.pickupLocation,
             transportLevel: trip.transportLevel || 'BLS',
-            priority: trip.priority,
+            priority: trip.urgencyLevel || trip.priority, // Use urgencyLevel if available, fallback to priority
             distance: '12.5 miles', // Mock data
             estimatedTime: '25 minutes', // Mock data
             revenue: '$150', // Mock data
@@ -101,8 +109,9 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
             patientId: trip.patientId,
             origin: trip.fromLocation,
             destination: trip.toLocation,
+            pickupLocation: trip.pickupLocation,
             transportLevel: trip.transportLevel || 'BLS',
-            priority: trip.priority,
+            priority: trip.urgencyLevel || trip.priority, // Use urgencyLevel if available, fallback to priority
             status: trip.status,
             pickupTime: trip.actualStartTime ? new Date(trip.actualStartTime).toLocaleString() : 'Not started',
             scheduledTime: trip.scheduledTime
@@ -163,8 +172,8 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
       console.log('TCC_DEBUG: Frontend success response:', responseData);
 
       setSettingsSuccess(true);
-      // Navigate back to overview tab after successful save
-      setActiveTab('overview');
+      // Navigate back to available trips tab after successful save
+      setActiveTab('available');
       setTimeout(() => setSettingsSuccess(false), 3000);
     } catch (error: any) {
       console.error('TCC_DEBUG: Frontend error updating agency:', error);
@@ -188,22 +197,25 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
     });
     setSettingsError(null);
     setSettingsSuccess(false);
-    // Navigate back to overview tab
-    setActiveTab('overview');
+    // Navigate back to available trips tab
+    setActiveTab('available');
   };
 
   const handleAcceptTrip = async (tripId: string) => {
     try {
-      const response = await fetch(`/api/trips/${tripId}/status`, {
-        method: 'PUT',
+      // Use new agency response system
+      const response = await fetch('/api/agency-responses', {
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          status: 'ACCEPTED',
-          assignedAgencyId: user.id, // Using user ID as agency ID for now
-          acceptedTimestamp: new Date().toISOString()
+          tripId: tripId,
+          agencyId: user.id, // Using user ID as agency ID for now
+          response: 'ACCEPTED',
+          responseNotes: 'Agency accepted this transport request',
+          estimatedArrival: new Date(Date.now() + 15 * 60 * 1000).toISOString() // 15 minutes from now
         }),
       });
 
@@ -222,14 +234,18 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
 
   const handleDeclineTrip = async (tripId: string) => {
     try {
-      const response = await fetch(`/api/trips/${tripId}/status`, {
-        method: 'PUT',
+      // Use new agency response system
+      const response = await fetch('/api/agency-responses', {
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          status: 'CANCELLED'
+          tripId: tripId,
+          agencyId: user.id, // Using user ID as agency ID for now
+          response: 'DECLINED',
+          responseNotes: 'Agency declined this transport request'
         }),
       });
 
@@ -274,11 +290,75 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
     }
   };
 
+  const handleEditTrip = (trip: any) => {
+    setEditingTrip(trip.id);
+    setEditFormData({
+      status: trip.status,
+      pickupTime: trip.pickupTime === 'Not started' ? '' : trip.pickupTime
+    });
+  };
+
+  const handleEditFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setEditFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSaveEdit = async (tripId: string) => {
+    setUpdating(true);
+    try {
+      const updateData: any = {
+        status: editFormData.status
+      };
+
+      // If pickup time is provided and status is IN_PROGRESS or COMPLETED, add pickup timestamp
+      if (editFormData.pickupTime && (editFormData.status === 'IN_PROGRESS' || editFormData.status === 'COMPLETED')) {
+        updateData.pickupTimestamp = new Date(editFormData.pickupTime).toISOString();
+      }
+
+      // If status is COMPLETED, add completion timestamp
+      if (editFormData.status === 'COMPLETED') {
+        updateData.completionTimestamp = new Date().toISOString();
+      }
+
+      const response = await fetch(`/api/trips/${tripId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updateData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update trip');
+      }
+
+      // Reload trips to get updated data
+      await loadTrips();
+      setEditingTrip(null);
+      setEditFormData({ status: '', pickupTime: '' });
+    } catch (error: any) {
+      console.error('Error updating trip:', error);
+      setError(error.message || 'Failed to update trip');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingTrip(null);
+    setEditFormData({ status: '', pickupTime: '' });
+  };
+
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'HIGH': return 'text-red-600 bg-red-100';
-      case 'MEDIUM': return 'text-yellow-600 bg-yellow-100';
-      case 'LOW': return 'text-green-600 bg-green-100';
+      case 'Emergent': return 'text-black bg-red-200';
+      case 'Urgent': return 'text-black bg-orange-200';
+      case 'Routine': return 'text-black bg-transparent';
       default: return 'text-gray-600 bg-gray-100';
     }
   };
@@ -334,11 +414,10 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <nav className="flex space-x-8">
             {[
-              { id: 'overview', name: 'Overview', icon: Truck },
               { id: 'available', name: 'Available Trips', icon: MapPin },
               { id: 'accepted', name: 'My Trips', icon: CheckCircle },
               { id: 'units', name: 'Units', icon: Settings },
-              { id: 'optimization', name: 'Route Optimization', icon: Navigation },
+              { id: 'analytics', name: 'Analytics', icon: BarChart3 },
               { id: 'settings', name: 'Settings', icon: User }
             ].map((tab) => {
               const Icon = tab.icon;
@@ -366,8 +445,23 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {activeTab === 'overview' && (
+
+        {activeTab === 'available' && (
           <div className="space-y-6">
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-md p-4">
+                <div className="flex">
+                  <AlertCircle className="h-5 w-5 text-red-400" />
+                  <div className="ml-3">
+                    <p className="text-sm font-medium text-red-800">
+                      {error}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Summary Tiles */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <div className="bg-white p-6 rounded-lg shadow">
                 <div className="flex items-center">
@@ -409,98 +503,6 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
                 </div>
               </div>
             </div>
-
-            <div className="bg-white rounded-lg shadow">
-              <div className="px-6 py-4 border-b border-gray-200">
-                <h3 className="text-lg font-medium text-gray-900">Recent Activity</h3>
-              </div>
-              <div className="p-6">
-                {(availableTrips.length > 0 || acceptedTrips.length > 0) ? (
-                  <div className="space-y-4">
-                    {/* Show recent available trips */}
-                    {availableTrips.slice(0, 3).map((trip) => (
-                      <div key={`available-${trip.id}`} className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
-                        <div className="flex items-center space-x-4">
-                          <div className="w-3 h-3 rounded-full bg-blue-400"></div>
-                          <div>
-                            <p className="text-sm font-medium text-gray-900">
-                              Available: {trip.patientId} - {trip.origin} to {trip.destination}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {trip.transportLevel} • {trip.priority} Priority • {trip.requestTime}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                            AVAILABLE
-                          </span>
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(trip.priority)}`}>
-                            {trip.priority}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                    
-                    {/* Show recent accepted trips */}
-                    {acceptedTrips.slice(0, 3).map((trip) => (
-                      <div key={`accepted-${trip.id}`} className="flex items-center justify-between p-4 bg-green-50 rounded-lg">
-                        <div className="flex items-center space-x-4">
-                          <div className={`w-3 h-3 rounded-full ${
-                            trip.status === 'ACCEPTED' ? 'bg-green-400' :
-                            trip.status === 'IN_PROGRESS' ? 'bg-blue-400' :
-                            trip.status === 'COMPLETED' ? 'bg-gray-400' : 'bg-gray-400'
-                          }`}></div>
-                          <div>
-                            <p className="text-sm font-medium text-gray-900">
-                              {trip.status === 'ACCEPTED' ? 'Accepted' : 
-                               trip.status === 'IN_PROGRESS' ? 'In Progress' : 
-                               trip.status === 'COMPLETED' ? 'Completed' : trip.status}: {trip.patientId} - {trip.origin} to {trip.destination}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {trip.transportLevel} • {trip.priority} Priority • {trip.requestTime}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(trip.status)}`}>
-                            {trip.status}
-                          </span>
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(trip.priority)}`}>
-                            {trip.priority}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                    
-                    {(availableTrips.length > 3 || acceptedTrips.length > 3) && (
-                      <p className="text-sm text-gray-500 text-center">
-                        Showing recent activity - {availableTrips.length + acceptedTrips.length} total trips
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-gray-500">No recent trip activity found.</p>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'available' && (
-          <div className="space-y-6">
-            {error && (
-              <div className="bg-red-50 border border-red-200 rounded-md p-4">
-                <div className="flex">
-                  <AlertCircle className="h-5 w-5 text-red-400" />
-                  <div className="ml-3">
-                    <p className="text-sm font-medium text-red-800">
-                      {error}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
             
             <div className="bg-white rounded-lg shadow">
               <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
@@ -516,54 +518,91 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
                   {loading ? 'Loading...' : 'Refresh'}
                 </button>
               </div>
-              <div className="divide-y divide-gray-200">
-                {availableTrips.map((trip) => (
-                  <div key={trip.id} className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-4">
-                          <div>
-                            <h4 className="text-lg font-medium text-gray-900">Patient {trip.patientId}</h4>
-                            <p className="text-sm text-gray-500">
-                              {trip.origin} → {trip.destination}
-                            </p>
-                          </div>
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(trip.priority)}`}>
-                            {trip.priority}
-                          </span>
-                        </div>
-                        <div className="mt-2 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
-                          <div>
-                            <span className="font-medium">Level:</span> {trip.transportLevel}
-                          </div>
-                          <div>
-                            <span className="font-medium">Distance:</span> {trip.distance}
-                          </div>
-                          <div>
-                            <span className="font-medium">Time:</span> {trip.estimatedTime}
-                          </div>
-                          <div>
-                            <span className="font-medium">Revenue:</span> {trip.revenue}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex space-x-2 ml-4">
-                        <button
-                          onClick={() => handleAcceptTrip(trip.id)}
-                          className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 text-sm font-medium"
-                        >
-                          Accept
-                        </button>
-                        <button
-                          onClick={() => handleDeclineTrip(trip.id)}
-                          className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 text-sm font-medium"
-                        >
-                          Decline
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Route</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pickup Location</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {availableTrips.map((trip) => (
+                      <React.Fragment key={trip.id}>
+                        <tr className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-gray-900">Patient {trip.patientId}</div>
+                            <div className="text-sm text-gray-500">{trip.requestTime}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">{trip.origin}</div>
+                            <div className="text-sm text-gray-500">→ {trip.destination}</div>
+                          </td>
+                          <td className="px-6 py-4">
+                            {trip.pickupLocation ? (
+                              <div className="text-sm">
+                                <div className="font-medium text-gray-900">{trip.pickupLocation.name}</div>
+                                {trip.pickupLocation.floor && (
+                                  <div className="text-gray-500">Floor: {trip.pickupLocation.floor}</div>
+                                )}
+                                {trip.pickupLocation.room && (
+                                  <div className="text-gray-500">Room: {trip.pickupLocation.room}</div>
+                                )}
+                                {(trip.pickupLocation.contactPhone || trip.pickupLocation.contactEmail) && (
+                                  <div className="text-xs text-blue-600 mt-1">
+                                    <div className="font-medium">Contact:</div>
+                                    {trip.pickupLocation.contactPhone && (
+                                      <div>{trip.pickupLocation.contactPhone}</div>
+                                    )}
+                                    {trip.pickupLocation.contactEmail && (
+                                      <div>{trip.pickupLocation.contactEmail}</div>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-sm text-gray-400 italic">No specific location</span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(trip.priority)}`}>
+                              {trip.priority}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={() => handleAcceptTrip(trip.id)}
+                                className="bg-green-600 text-white px-3 py-1 rounded-md hover:bg-green-700 text-xs font-medium"
+                              >
+                                Accept
+                              </button>
+                              <button
+                                onClick={() => handleDeclineTrip(trip.id)}
+                                className="bg-red-600 text-white px-3 py-1 rounded-md hover:bg-red-700 text-xs font-medium"
+                              >
+                                Decline
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td colSpan={5} className="px-6 py-2 bg-gray-50">
+                            <div className="grid grid-cols-4 gap-4 text-sm text-gray-600">
+                              <div><span className="font-medium">Level:</span> {trip.transportLevel}</div>
+                              <div><span className="font-medium">Distance:</span> {trip.distance}</div>
+                              <div><span className="font-medium">Time:</span> {trip.estimatedTime}</div>
+                              <div><span className="font-medium">Revenue:</span> {trip.revenue}</div>
+                            </div>
+                          </td>
+                        </tr>
+                      </React.Fragment>
+                    ))}
+                  </tbody>
+                </table>
                 {availableTrips.length === 0 && (
                   <div className="p-6 text-center text-gray-500">
                     No available transport requests at this time.
@@ -586,48 +625,138 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
                 {loading ? 'Loading...' : 'Refresh'}
               </button>
             </div>
-            <div className="divide-y divide-gray-200">
-              {acceptedTrips.map((trip) => (
-                <div key={trip.id} className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-4">
-                        <h4 className="text-lg font-medium text-gray-900">Patient {trip.patientId}</h4>
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(trip.status)}`}>
-                          {trip.status}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-500 mt-1">
-                        {trip.origin} → {trip.destination}
-                      </p>
-                      <div className="mt-2 text-sm text-gray-600">
-                        <span className="font-medium">Pickup Time:</span> {trip.pickupTime}
-                      </div>
-                    </div>
-                    <div className="ml-4 flex space-x-2">
-                      {trip.status === 'ACCEPTED' && (
-                        <button
-                          onClick={() => handleUpdateTripStatus(trip.id, 'IN_PROGRESS')}
-                          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 text-sm font-medium"
-                        >
-                          Start Trip
-                        </button>
-                      )}
-                      {trip.status === 'IN_PROGRESS' && (
-                        <button
-                          onClick={() => handleUpdateTripStatus(trip.id, 'COMPLETED')}
-                          className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 text-sm font-medium"
-                        >
-                          Complete Trip
-                        </button>
-                      )}
-                      {trip.status === 'COMPLETED' && (
-                        <span className="text-sm text-gray-500">Completed</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Route</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pickup Location</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pickup Time</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {acceptedTrips.map((trip) => (
+                    <tr key={trip.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">Patient {trip.patientId}</div>
+                        <div className="text-sm text-gray-500">{trip.requestTime}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">{trip.origin}</div>
+                        <div className="text-sm text-gray-500">→ {trip.destination}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        {trip.pickupLocation ? (
+                          <div className="text-sm">
+                            <div className="font-medium text-gray-900">{trip.pickupLocation.name}</div>
+                            {trip.pickupLocation.floor && (
+                              <div className="text-gray-500">Floor: {trip.pickupLocation.floor}</div>
+                            )}
+                            {trip.pickupLocation.room && (
+                              <div className="text-gray-500">Room: {trip.pickupLocation.room}</div>
+                            )}
+                            {(trip.pickupLocation.contactPhone || trip.pickupLocation.contactEmail) && (
+                              <div className="text-xs text-blue-600 mt-1">
+                                <div className="font-medium">Contact:</div>
+                                {trip.pickupLocation.contactPhone && (
+                                  <div>{trip.pickupLocation.contactPhone}</div>
+                                )}
+                                {trip.pickupLocation.contactEmail && (
+                                  <div>{trip.pickupLocation.contactEmail}</div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-sm text-gray-400 italic">No specific location</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {editingTrip === trip.id ? (
+                          <select
+                            name="status"
+                            value={editFormData.status}
+                            onChange={handleEditFormChange}
+                            className="text-xs border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            disabled={updating}
+                          >
+                            <option value="ACCEPTED">ACCEPTED</option>
+                            <option value="IN_PROGRESS">IN_PROGRESS</option>
+                            <option value="COMPLETED">COMPLETED</option>
+                            <option value="CANCELLED">CANCELLED</option>
+                          </select>
+                        ) : (
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(trip.status)}`}>
+                            {trip.status}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {editingTrip === trip.id ? (
+                          <input
+                            type="datetime-local"
+                            name="pickupTime"
+                            value={editFormData.pickupTime}
+                            onChange={handleEditFormChange}
+                            className="text-xs border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            disabled={updating}
+                          />
+                        ) : (
+                          <div className="text-sm text-gray-900">{trip.pickupTime}</div>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        {editingTrip === trip.id ? (
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => handleSaveEdit(trip.id)}
+                              disabled={updating}
+                              className="bg-green-600 text-white px-3 py-1 rounded-md hover:bg-green-700 text-xs font-medium disabled:opacity-50"
+                            >
+                              {updating ? 'Saving...' : 'Save'}
+                            </button>
+                            <button
+                              onClick={handleCancelEdit}
+                              disabled={updating}
+                              className="bg-gray-600 text-white px-3 py-1 rounded-md hover:bg-gray-700 text-xs font-medium disabled:opacity-50"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => handleEditTrip(trip)}
+                              className="bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700 text-xs font-medium"
+                            >
+                              Edit
+                            </button>
+                            {trip.status === 'ACCEPTED' && (
+                              <button
+                                onClick={() => handleUpdateTripStatus(trip.id, 'IN_PROGRESS')}
+                                className="bg-orange-600 text-white px-3 py-1 rounded-md hover:bg-orange-700 text-xs font-medium"
+                              >
+                                Start Trip
+                              </button>
+                            )}
+                            {trip.status === 'IN_PROGRESS' && (
+                              <button
+                                onClick={() => handleUpdateTripStatus(trip.id, 'COMPLETED')}
+                                className="bg-green-600 text-white px-3 py-1 rounded-md hover:bg-green-700 text-xs font-medium"
+                              >
+                                Complete Trip
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
               {acceptedTrips.length === 0 && (
                 <div className="p-6 text-center text-gray-500">
                   No accepted trips at this time.
@@ -637,9 +766,10 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
           </div>
         )}
 
-        {activeTab === 'optimization' && (
-          <RouteOptimizer user={user} />
+        {activeTab === 'analytics' && (
+          <EMSAnalytics user={user} />
         )}
+
 
         {activeTab === 'units' && (
           <>

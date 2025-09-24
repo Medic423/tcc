@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
 import { databaseManager } from './services/databaseManager';
+import cookieParser from 'cookie-parser';
 
 // Import routes
 import authRoutes from './routes/auth';
@@ -11,10 +12,16 @@ import agencyRoutes from './routes/agencies';
 import facilityRoutes from './routes/facilities';
 import analyticsRoutes from './routes/analytics';
 import tripRoutes from './routes/trips';
+import agencyResponseRoutes from './routes/agencyResponses';
 import optimizationRoutes from './routes/optimization';
-import notificationRoutes from './routes/notifications';
+// import notificationRoutes from './routes/notifications';
+// import adminNotificationRoutes from './routes/adminNotifications';
 import unitRoutes from './routes/units';
 import tccUnitRoutes from './routes/tccUnits';
+import dropdownOptionsRoutes from './routes/dropdownOptions';
+import pickupLocationRoutes from './routes/pickupLocations';
+import emsAnalyticsRoutes from './routes/emsAnalytics';
+import backupRoutes from './routes/backup';
 
 // Load environment variables
 dotenv.config();
@@ -28,6 +35,7 @@ app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:3000',
   credentials: true
 }));
+app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -71,14 +79,21 @@ app.get('/health', async (req, res) => {
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/trips', tripRoutes);
-app.use('/api/notifications', notificationRoutes);
+app.use('/api/agency-responses', agencyResponseRoutes);
+// Notification routes disabled - services not available
+// app.use('/api/notifications', notificationRoutes);
+// app.use('/api/admin/notifications', adminNotificationRoutes);
 app.use('/api/units', unitRoutes);
 app.use('/api/tcc/hospitals', hospitalRoutes);
 app.use('/api/tcc/agencies', agencyRoutes);
 app.use('/api/tcc/facilities', facilityRoutes);
 app.use('/api/tcc/analytics', analyticsRoutes);
 app.use('/api/tcc/units', tccUnitRoutes);
+app.use('/api/dropdown-options', dropdownOptionsRoutes);
+app.use('/api/tcc/pickup-locations', pickupLocationRoutes);
+app.use('/api/ems/analytics', emsAnalyticsRoutes);
 app.use('/api/optimize', optimizationRoutes);
+app.use('/api/backup', backupRoutes);
 
 // Test endpoints
 app.get('/api/test', (req, res) => {

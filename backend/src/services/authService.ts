@@ -39,31 +39,114 @@ export class AuthService {
       console.log('TCC_DEBUG: AuthService.login called with:', { email: credentials.email, password: credentials.password ? '***' : 'missing' });
       const { email, password } = credentials;
 
-      // First try Center database (Admin users)
+      // First try Center database (Admin and User types)
       const centerDB = databaseManager.getCenterDB();
       let user = await centerDB.centerUser.findUnique({
-        where: { email }
+        where: { email },
+        select: {
+          id: true,
+          email: true,
+          password: true,
+          name: true,
+          userType: true,
+          phone: true,
+          emailNotifications: true,
+          smsNotifications: true,
+          isActive: true,
+          createdAt: true,
+          updatedAt: true
+        }
       });
 
-      let userType: 'ADMIN' | 'HEALTHCARE' | 'EMS' = 'ADMIN';
+      let userType: 'ADMIN' | 'USER' | 'HEALTHCARE' | 'EMS' = 'ADMIN';
       let userData: User;
 
-      if (!user) {
+      if (user) {
+        // Use the actual userType from the Center database
+        userType = user.userType as 'ADMIN' | 'USER';
+        // Ensure the user object has the new fields
+        user = {
+          ...user,
+          phone: user.phone || null,
+          emailNotifications: user.emailNotifications || true,
+          smsNotifications: user.smsNotifications || false
+        };
+      } else {
         // Try Hospital database (Healthcare users)
         const hospitalDB = databaseManager.getHospitalDB();
-        user = await hospitalDB.healthcareUser.findUnique({
-          where: { email }
+        const hospitalUser = await hospitalDB.healthcareUser.findUnique({
+          where: { email },
+          select: {
+            id: true,
+            email: true,
+            password: true,
+            name: true,
+            phone: true,
+            emailNotifications: true,
+            smsNotifications: true,
+            isActive: true,
+            createdAt: true,
+            updatedAt: true,
+            facilityName: true,
+            facilityType: true
+          }
         });
-        userType = 'HEALTHCARE';
+        if (hospitalUser) {
+          userType = 'HEALTHCARE';
+          // Convert hospital user to center user format
+          user = {
+            id: hospitalUser.id,
+            email: hospitalUser.email,
+            password: hospitalUser.password,
+            name: hospitalUser.name,
+            userType: 'HEALTHCARE',
+            phone: hospitalUser.phone || null,
+            emailNotifications: hospitalUser.emailNotifications || true,
+            smsNotifications: hospitalUser.smsNotifications || false,
+            isActive: hospitalUser.isActive,
+            createdAt: hospitalUser.createdAt,
+            updatedAt: hospitalUser.updatedAt
+          };
+        }
       }
 
       if (!user) {
         // Try EMS database (EMS users)
         const emsDB = databaseManager.getEMSDB();
-        user = await emsDB.eMSUser.findUnique({
-          where: { email }
+        const emsUser = await emsDB.eMSUser.findUnique({
+          where: { email },
+          select: {
+            id: true,
+            email: true,
+            password: true,
+            name: true,
+            phone: true,
+            emailNotifications: true,
+            smsNotifications: true,
+            isActive: true,
+            createdAt: true,
+            updatedAt: true,
+            agencyName: true,
+            agencyId: true
+          }
         });
-        userType = 'EMS';
+        if (emsUser) {
+          userType = 'EMS';
+          // Convert EMS user to center user format
+          user = {
+            id: emsUser.id,
+            email: emsUser.email,
+            password: emsUser.password,
+            name: emsUser.name,
+            userType: 'EMS',
+            phone: emsUser.phone || null,
+            emailNotifications: emsUser.emailNotifications || true,
+            smsNotifications: emsUser.smsNotifications || false,
+            isActive: emsUser.isActive,
+            createdAt: emsUser.createdAt,
+            updatedAt: emsUser.updatedAt
+          };
+        }
       }
 
       console.log('TCC_DEBUG: User found in database:', user ? { id: user.id, email: user.email, name: user.name, isActive: user.isActive, userType } : 'null');
@@ -126,6 +209,13 @@ export class AuthService {
           email: user.email,
           name: user.name,
           userType: 'ADMIN'
+        };
+      } else if (userType === 'USER') {
+        userData = {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          userType: 'USER'
         };
       } else if (userType === 'HEALTHCARE') {
         userData = {

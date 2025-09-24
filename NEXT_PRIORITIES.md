@@ -1076,3 +1076,149 @@ This completes the core trip management foundation for the TCC platform!
 **🎉 Phase 4 is 100% complete! TCC Trips View successfully implemented.**
 
 **Next Action**: Begin Phase 5 - Advanced Features & Production Readiness to enhance the system with real-time updates, advanced analytics, and production optimization.
+
+---
+
+## 🔧 **TECHNICAL TROUBLESHOOTING GUIDE**
+
+**Date**: September 10, 2025  
+**Purpose**: Document common issues and solutions for future reference
+
+### **🚨 EMS Login Issues - RESOLVED (September 10, 2025)**
+
+**Problem**: EMS login failing with "Network Error" or 401 "Invalid credentials" errors
+
+**Root Causes Identified**:
+1. **Frontend Port Conflicts**: Multiple frontend processes running on different ports
+2. **Backend Mode Mismatch**: Production backend running instead of development
+3. **Credential Mismatch**: Frontend demo credentials don't match working backend credentials
+4. **Authentication Middleware**: Incorrect import names in units.ts
+
+**Solutions Implemented**:
+
+#### **1. Port Conflict Resolution**
+```bash
+# Kill all conflicting processes
+pkill -f "vite" && pkill -f "npm run dev" && pkill -f "node dist"
+
+# Start frontend cleanly
+cd /Users/scooper/Code/tcc-new-project/frontend && npm run dev
+# Ensure it runs on port 3000, not 3001
+```
+
+#### **2. Backend Mode Fix**
+```bash
+# Stop production backend
+pkill -f "node dist/production-index.js"
+
+# Start development backend
+cd /Users/scooper/Code/tcc-new-project/backend && npm run dev
+```
+
+#### **3. Credential Synchronization**
+**Issue**: Frontend showed `test@duncansvilleems.org` but backend expects `fferguson@movalleyems.com`
+
+**Fix**: Update `frontend/src/components/EMSLogin.tsx`:
+```typescript
+// OLD (incorrect)
+<p><strong>Email:</strong> test@duncansvilleems.org</p>
+<p><strong>Password:</strong> duncansville123</p>
+
+// NEW (correct)
+<p><strong>Email:</strong> fferguson@movalleyems.com</p>
+<p><strong>Password:</strong> password123</p>
+```
+
+#### **4. Authentication Middleware Fix**
+**Issue**: `units.ts` importing `authenticateToken` but middleware exports `authenticateAdmin`
+
+**Fix**: Update `backend/src/routes/units.ts`:
+```typescript
+// OLD (incorrect)
+import { authenticateToken, AuthenticatedRequest } from '../middleware/authenticateAdmin';
+
+// NEW (correct)
+import { authenticateAdmin, AuthenticatedRequest } from '../middleware/authenticateAdmin';
+
+// Also replace all instances of authenticateToken with authenticateAdmin
+```
+
+### **🔍 Diagnostic Commands**
+
+#### **Check Service Status**
+```bash
+# Check if services are running
+curl -s http://localhost:5001/health  # Backend health
+curl -s http://localhost:3000 | head -5  # Frontend status
+
+# Check running processes
+ps aux | grep -E "(node|npm|vite)" | grep -v grep
+```
+
+#### **Test API Endpoints**
+```bash
+# Test EMS login directly
+curl -X POST -H "Content-Type: application/json" \
+  -d '{"email":"fferguson@movalleyems.com","password":"password123"}' \
+  http://localhost:5001/api/auth/ems/login
+
+# Test through frontend proxy
+curl -X POST -H "Content-Type: application/json" \
+  -d '{"email":"fferguson@movalleyems.com","password":"password123"}' \
+  http://localhost:3000/api/auth/ems/login
+```
+
+#### **Check Database Connection**
+```bash
+# Test EMS database
+cd /Users/scooper/Code/tcc-new-project/backend && node -e "
+const { PrismaClient } = require('@prisma/ems');
+const prisma = new PrismaClient();
+prisma.eMSUser.findMany().then(users => {
+  console.log('EMS Users:', users.length);
+  console.log('Mountain Valley EMS user:', users.find(u => u.email === 'fferguson@movalleyems.com'));
+}).finally(() => prisma.\$disconnect());
+"
+```
+
+### **📋 Prevention Checklist**
+
+**Before Starting Development**:
+- [ ] Ensure only one frontend process running on port 3000
+- [ ] Verify backend is running in development mode (`npm run dev`)
+- [ ] Check that demo credentials match working backend credentials
+- [ ] Verify all authentication middleware imports are correct
+- [ ] Test login functionality before proceeding with other work
+
+**When Issues Occur**:
+1. **Check console logs** for specific error messages
+2. **Verify service status** with health check endpoints
+3. **Test API directly** to isolate frontend vs backend issues
+4. **Check credential consistency** between frontend and backend
+5. **Verify port usage** - no conflicts between services
+
+### **🎯 Key Files to Monitor**
+
+**Critical Files for EMS Login**:
+- `frontend/src/components/EMSLogin.tsx` - Demo credentials
+- `frontend/src/services/api.ts` - API configuration
+- `backend/src/routes/auth.ts` - EMS login endpoint
+- `backend/src/routes/units.ts` - Authentication middleware
+- `backend/src/middleware/authenticateAdmin.ts` - Middleware exports
+
+**Environment Configuration**:
+- Frontend: `http://localhost:3000` (Vite dev server)
+- Backend: `http://localhost:5001` (Node.js development)
+- Database: PostgreSQL with Prisma ORM
+
+### **✅ Success Indicators**
+
+**EMS Login Working When**:
+- [ ] Frontend loads on `http://localhost:3000`
+- [ ] Backend responds to `http://localhost:5001/health`
+- [ ] EMS login form shows correct demo credentials
+- [ ] Login succeeds with `fferguson@movalleyems.com` / `password123`
+- [ ] Units tab displays all 18 units after login
+- [ ] No console errors in browser developer tools
+
+**This troubleshooting guide should prevent similar issues in the future!** 🚀

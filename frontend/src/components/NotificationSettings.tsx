@@ -1,24 +1,29 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, Mail, Settings, CheckCircle, AlertCircle } from 'lucide-react';
+import { Bell, Mail, CheckCircle, AlertCircle } from 'lucide-react';
 import api from '../services/api';
 
 interface NotificationSettings {
   emailNotifications: boolean;
   smsNotifications: boolean;
-  newTripAlerts: boolean;
-  statusUpdates: boolean;
-  emailAddress: string;
-  phoneNumber: string;
+  phone: string;
+  notificationTypes: {
+    [key: string]: {
+      email: boolean;
+      sms: boolean;
+    };
+  };
 }
 
 const NotificationSettings: React.FC = () => {
   const [settings, setSettings] = useState<NotificationSettings>({
     emailNotifications: true,
-    smsNotifications: true,
-    newTripAlerts: true,
-    statusUpdates: true,
-    emailAddress: '',
-    phoneNumber: ''
+    smsNotifications: false,
+    phone: '',
+    notificationTypes: {
+      'trip_assignment': { email: true, sms: false },
+      'trip_status_update': { email: true, sms: false },
+      'trip_accepted': { email: true, sms: false }
+    }
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -38,14 +43,19 @@ const NotificationSettings: React.FC = () => {
 
   const fetchSettings = async () => {
     try {
-      const response = await api.get('/api/trips/notifications/settings');
+      const response = await api.get('/api/notifications/preferences');
       
       if (response.data.success) {
-        // Ensure emailAddress and phoneNumber are always strings, not null
+        const data = response.data.data;
         const settingsData = {
-          ...response.data.data,
-          emailAddress: response.data.data.emailAddress || '',
-          phoneNumber: response.data.data.phoneNumber || ''
+          emailNotifications: data.emailEnabled || true,
+          smsNotifications: data.smsEnabled || false,
+          phone: data.phone || '',
+          notificationTypes: data.notificationTypes || {
+            'trip_assignment': { email: true, sms: false },
+            'trip_status_update': { email: true, sms: false },
+            'trip_accepted': { email: true, sms: false }
+          }
         };
         console.log('TCC_DEBUG: Fetched settings for user:', settingsData);
         setSettings(settingsData);
@@ -66,7 +76,12 @@ const NotificationSettings: React.FC = () => {
     try {
       console.log('TCC_DEBUG: Sending settings to API:', settings);
       
-      const response = await api.put('/api/trips/notifications/settings', settings);
+      const response = await api.put('/api/notifications/preferences', {
+        emailNotifications: settings.emailNotifications,
+        smsNotifications: settings.smsNotifications,
+        phone: settings.phone,
+        notificationTypes: settings.notificationTypes
+      });
 
       console.log('TCC_DEBUG: API response status:', response.status);
       console.log('TCC_DEBUG: Settings saved successfully:', response.data);
@@ -103,7 +118,10 @@ const NotificationSettings: React.FC = () => {
     setMessage(null);
 
     try {
-      const response = await api.post('/api/trips/test-email');
+      const response = await api.post('/api/notifications/test-email', {
+        to: 'test@example.com',
+        template: 'newTripRequest'
+      });
 
       if (response.data.success) {
         setEmailTestStatus('success');
@@ -125,7 +143,10 @@ const NotificationSettings: React.FC = () => {
     setMessage(null);
 
     try {
-      const response = await api.post('/api/trips/test-sms');
+      const response = await api.post('/api/notifications/test-sms', {
+        to: settings.phone || '5551234567',
+        message: 'Test SMS from TCC notification system'
+      });
 
       if (response.data.success) {
         setSmsTestStatus('success');
@@ -150,6 +171,24 @@ const NotificationSettings: React.FC = () => {
         [key]: value
       };
       console.log('TCC_DEBUG: New settings after change:', newSettings);
+      return newSettings;
+    });
+  };
+
+  const handleNotificationTypeChange = (type: string, channel: 'email' | 'sms', enabled: boolean) => {
+    console.log('TCC_DEBUG: Notification type change:', { type, channel, enabled });
+    setSettings(prev => {
+      const newSettings = {
+        ...prev,
+        notificationTypes: {
+          ...prev.notificationTypes,
+          [type]: {
+            ...prev.notificationTypes[type],
+            [channel]: enabled
+          }
+        }
+      };
+      console.log('TCC_DEBUG: New notification types after change:', newSettings.notificationTypes);
       return newSettings;
     });
   };
@@ -240,24 +279,22 @@ const NotificationSettings: React.FC = () => {
               </label>
             </div>
 
-            {/* Email Address */}
-            {settings.emailNotifications && (
-              <div className="p-4 bg-blue-50 rounded-lg">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  value={settings.emailAddress}
-                  onChange={(e) => handleSettingChange('emailAddress', e.target.value)}
-                  placeholder="Enter your email address"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-                <p className="text-xs text-gray-600 mt-1">
-                  This email will receive notifications about transport requests
-                </p>
-              </div>
-            )}
+            {/* Phone Number */}
+            <div className="p-4 bg-blue-50 rounded-lg">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Phone Number
+              </label>
+              <input
+                type="tel"
+                value={settings.phone}
+                onChange={(e) => handleSettingChange('phone', e.target.value)}
+                placeholder="Enter your phone number (e.g., 5551234567)"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              <p className="text-xs text-gray-600 mt-1">
+                This phone number will receive SMS notifications
+              </p>
+            </div>
 
             {/* SMS Notifications Toggle */}
             <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
@@ -281,77 +318,117 @@ const NotificationSettings: React.FC = () => {
               </label>
             </div>
 
-            {/* Phone Number */}
-            {settings.smsNotifications && (
-              <div className="p-4 bg-green-50 rounded-lg">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Phone Number
-                </label>
-                <input
-                  type="tel"
-                  value={settings.phoneNumber}
-                  onChange={(e) => handleSettingChange('phoneNumber', e.target.value)}
-                  placeholder="Enter your phone number (e.g., +1234567890)"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                />
-                <p className="text-xs text-gray-600 mt-1">
-                  This phone number will receive SMS notifications for urgent transport requests
-                </p>
-              </div>
-            )}
-
-            {/* New Trip Alerts */}
-            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-              <div className="flex items-center">
-                <Bell className="h-5 w-5 text-gray-600 mr-3" />
-                <div>
-                  <h3 className="text-lg font-medium text-gray-900">New Trip Alerts</h3>
-                  <p className="text-sm text-gray-600">
-                    Get notified when new transport requests are created
-                  </p>
+            {/* Notification Types */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium text-gray-900">Notification Types</h3>
+              
+              {/* Trip Assignment Notifications */}
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <h4 className="text-md font-medium text-gray-900">Trip Assignment</h4>
+                    <p className="text-sm text-gray-600">Get notified when new transport requests are assigned</p>
+                  </div>
+                </div>
+                <div className="flex space-x-6">
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={settings.notificationTypes.trip_assignment?.email || false}
+                      onChange={(e) => handleNotificationTypeChange('trip_assignment', 'email', e.target.checked)}
+                      disabled={!settings.emailNotifications}
+                      className="mr-2"
+                    />
+                    <span className={`text-sm ${!settings.emailNotifications ? 'text-gray-400' : 'text-gray-700'}`}>
+                      Email
+                    </span>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={settings.notificationTypes.trip_assignment?.sms || false}
+                      onChange={(e) => handleNotificationTypeChange('trip_assignment', 'sms', e.target.checked)}
+                      disabled={!settings.smsNotifications}
+                      className="mr-2"
+                    />
+                    <span className={`text-sm ${!settings.smsNotifications ? 'text-gray-400' : 'text-gray-700'}`}>
+                      SMS
+                    </span>
+                  </label>
                 </div>
               </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={settings.newTripAlerts}
-                  onChange={(e) => handleSettingChange('newTripAlerts', e.target.checked)}
-                  className="sr-only peer"
-                  disabled={!settings.emailNotifications}
-                />
-                <div className={`w-11 h-6 rounded-full peer ${
-                  !settings.emailNotifications 
-                    ? 'bg-gray-100 cursor-not-allowed' 
-                    : 'bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300'
-                } peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600`}></div>
-              </label>
-            </div>
 
-            {/* Status Updates */}
-            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-              <div className="flex items-center">
-                <Settings className="h-5 w-5 text-gray-600 mr-3" />
-                <div>
-                  <h3 className="text-lg font-medium text-gray-900">Status Updates</h3>
-                  <p className="text-sm text-gray-600">
-                    Receive notifications when transport request status changes
-                  </p>
+              {/* Trip Status Update Notifications */}
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <h4 className="text-md font-medium text-gray-900">Trip Status Updates</h4>
+                    <p className="text-sm text-gray-600">Get notified when transport request status changes</p>
+                  </div>
+                </div>
+                <div className="flex space-x-6">
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={settings.notificationTypes.trip_status_update?.email || false}
+                      onChange={(e) => handleNotificationTypeChange('trip_status_update', 'email', e.target.checked)}
+                      disabled={!settings.emailNotifications}
+                      className="mr-2"
+                    />
+                    <span className={`text-sm ${!settings.emailNotifications ? 'text-gray-400' : 'text-gray-700'}`}>
+                      Email
+                    </span>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={settings.notificationTypes.trip_status_update?.sms || false}
+                      onChange={(e) => handleNotificationTypeChange('trip_status_update', 'sms', e.target.checked)}
+                      disabled={!settings.smsNotifications}
+                      className="mr-2"
+                    />
+                    <span className={`text-sm ${!settings.smsNotifications ? 'text-gray-400' : 'text-gray-700'}`}>
+                      SMS
+                    </span>
+                  </label>
                 </div>
               </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={settings.statusUpdates}
-                  onChange={(e) => handleSettingChange('statusUpdates', e.target.checked)}
-                  className="sr-only peer"
-                  disabled={!settings.emailNotifications}
-                />
-                <div className={`w-11 h-6 rounded-full peer ${
-                  !settings.emailNotifications 
-                    ? 'bg-gray-100 cursor-not-allowed' 
-                    : 'bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300'
-                } peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600`}></div>
-              </label>
+
+              {/* Trip Accepted Notifications */}
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <h4 className="text-md font-medium text-gray-900">Trip Accepted</h4>
+                    <p className="text-sm text-gray-600">Get notified when transport requests are accepted</p>
+                  </div>
+                </div>
+                <div className="flex space-x-6">
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={settings.notificationTypes.trip_accepted?.email || false}
+                      onChange={(e) => handleNotificationTypeChange('trip_accepted', 'email', e.target.checked)}
+                      disabled={!settings.emailNotifications}
+                      className="mr-2"
+                    />
+                    <span className={`text-sm ${!settings.emailNotifications ? 'text-gray-400' : 'text-gray-700'}`}>
+                      Email
+                    </span>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={settings.notificationTypes.trip_accepted?.sms || false}
+                      onChange={(e) => handleNotificationTypeChange('trip_accepted', 'sms', e.target.checked)}
+                      disabled={!settings.smsNotifications}
+                      className="mr-2"
+                    />
+                    <span className={`text-sm ${!settings.smsNotifications ? 'text-gray-400' : 'text-gray-700'}`}>
+                      SMS
+                    </span>
+                  </label>
+                </div>
+              </div>
             </div>
           </div>
 

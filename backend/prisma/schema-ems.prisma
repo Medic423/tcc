@@ -10,16 +10,19 @@ datasource db {
 }
 
 model EMSUser {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  password     String
-  name         String
-  agencyName   String
-  agencyId     String?  // Reference to EMSAgency
-  isActive     Boolean  @default(true)
-  userType     String   @default("EMS") // EMS, ADMIN
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id               String   @id @default(cuid())
+  email            String   @unique
+  password         String
+  name             String
+  phone            String?
+  agencyName       String
+  agencyId         String?  // Reference to EMSAgency
+  emailNotifications Boolean @default(true)
+  smsNotifications Boolean  @default(false)
+  isActive         Boolean  @default(true)
+  userType         String   @default("EMS") // EMS, ADMIN
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   // Relations
   agency           EMSAgency? @relation(fields: [agencyId], references: [id])
@@ -81,6 +84,30 @@ model Unit {
   averageResponseTime Float? // Average response time in minutes
   lastMaintenanceDate DateTime?
   
+  // Additional fields (Added per audit report)
+  maintenanceStatus       String?   @default("OPERATIONAL")  // Unit maintenance status
+  locationUpdateTimestamp DateTime?  // When location was last updated
+  performanceScore        Decimal?  @db.Decimal(5,2)         // Unit performance score
+  
+  // Crew Cost Management (Phase 1)
+  crewSize                Int?       // Number of crew members
+  crewComposition         Json?      // Array of crew roles and certifications
+  baseHourlyRate          Decimal?   @db.Decimal(8,2)  // Base crew cost per hour
+  overtimeMultiplier      Decimal?   @db.Decimal(3,2)  // Overtime rate multiplier
+  shiftLengthHours        Decimal?   @db.Decimal(4,2)   // Standard shift length
+  maxOvertimeHours        Decimal?   @db.Decimal(4,2)   // Maximum overtime allowed
+  
+  // Operational Costs
+  vehicleCostPerMile      Decimal?   @db.Decimal(6,2)   // Vehicle operational cost per mile
+  fuelCostPerMile         Decimal?   @db.Decimal(6,2)   // Fuel cost per mile
+  maintenanceCostPerMile  Decimal?   @db.Decimal(6,2)   // Maintenance cost per mile
+  
+  // Location & Staging
+  homeBaseLocation        Json?      // Home base coordinates
+  stagingLocations        Json?      // Array of staging locations
+  maxServiceRadius        Decimal?   @db.Decimal(6,2)   // Maximum service radius in miles
+  interceptCapability     Boolean    @default(false)    // Can perform intercepts
+  
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -88,6 +115,19 @@ model Unit {
   agency         EMSAgency? @relation(fields: [agencyId], references: [id])
 
   @@map("units")
+}
+
+model CrewRole {
+  id                String   @id @default(cuid())
+  roleName          String   // EMT, Paramedic, RN, CCT Specialist
+  certificationLevel String  // BLS, ALS, CCT, RN, etc.
+  hourlyRate        Decimal  @db.Decimal(8,2)
+  overtimeMultiplier Decimal @db.Decimal(3,2)
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@map("crew_roles")
 }
 
 model TransportRequest {
