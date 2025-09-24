@@ -385,47 +385,53 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
     setError(null);
 
     try {
-      // Validate required fields
-      if (!formData.fromLocation || !formData.toLocation || !formData.transportLevel || !formData.urgencyLevel) {
-        throw new Error('Please fill in all required fields');
+      // Validate only step 1 required fields (Patient Info)
+      if (!formData.patientId || !formData.patientWeight) {
+        throw new Error('Please fill in Patient ID and Patient Weight');
       }
 
-      // Validate transport level
-      if (!['BLS', 'ALS', 'CCT', 'Other'].includes(formData.transportLevel)) {
-        throw new Error('Invalid transport level');
+      // Validate patient weight is a number
+      const weight = parseFloat(formData.patientWeight);
+      if (isNaN(weight) || weight <= 0) {
+        throw new Error('Please enter a valid patient weight');
       }
 
-      // Validate urgency level
-      if (!['Routine', 'Urgent', 'Emergent'].includes(formData.urgencyLevel)) {
-        throw new Error('Invalid urgency level');
-      }
+      // For step 1 only, we'll just show a success message
+      console.log('TCC_DEBUG: Step 1 validation passed:', formData);
+      setSuccess(true);
+      setTimeout(() => {
+        onTripCreated();
+      }, 2000);
+      return;
 
+      // TODO: Add validation for other steps when we uncomment them
       // Validate scheduled time
-      if (formData.scheduledTime && new Date(formData.scheduledTime) < new Date()) {
-        throw new Error('Scheduled time cannot be in the past');
-      }
+      // if (formData.scheduledTime && new Date(formData.scheduledTime) < new Date()) {
+      //   throw new Error('Scheduled time cannot be in the past');
+      // }
 
-      console.log('TCC_DEBUG: Submitting trip data:', formData);
+      // TODO: Add trip submission logic when we uncomment other steps
+      // console.log('TCC_DEBUG: Submitting trip data:', formData);
 
-      const tripData = {
-        ...formData,
-        patientWeight: formData.patientWeight ? parseFloat(formData.patientWeight) : null,
-        notificationRadius: formData.notificationRadius || 100,
-        scheduledTime: formData.scheduledTime || new Date().toISOString()
-      };
+      // const tripData = {
+      //   ...formData,
+      //   patientWeight: formData.patientWeight ? parseFloat(formData.patientWeight) : null,
+      //   notificationRadius: formData.notificationRadius || 100,
+      //   scheduledTime: formData.scheduledTime || new Date().toISOString()
+      // };
 
-      const response = await tripsAPI.createEnhanced(tripData);
-      console.log('TCC_DEBUG: Trip creation response:', response.data);
+      // const response = await tripsAPI.createEnhanced(tripData);
+      // console.log('TCC_DEBUG: Trip creation response:', response.data);
 
-      if (response.data?.success) {
-        setSuccess(true);
-        setTimeout(() => {
-          setSuccess(false);
-          onTripCreated();
-        }, 2000);
-      } else {
-        throw new Error(response.data?.error || 'Failed to create transport request');
-      }
+      // if (response.data?.success) {
+      //   setSuccess(true);
+      //   setTimeout(() => {
+      //     setSuccess(false);
+      //     onTripCreated();
+      //   }, 2000);
+      // } else {
+      //   throw new Error(response.data?.error || 'Failed to create transport request');
+      // }
     } catch (error: any) {
       console.error('TCC_DEBUG: Trip creation error:', error);
       setError(error.response?.data?.error || error.message || 'Failed to create transport request');
