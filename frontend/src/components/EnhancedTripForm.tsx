@@ -32,10 +32,12 @@ interface FormData {
   patientId: string;
   patientWeight: string;
   specialNeeds: string;
+  insuranceCompany: string;
   generateQRCode: boolean;
   
   // Trip Details
   fromLocation: string;
+  pickupLocationId: string;
   toLocation: string;
   scheduledTime: string;
   transportLevel: string;
@@ -82,8 +84,10 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
     patientId: '',
     patientWeight: '',
     specialNeeds: '',
+    insuranceCompany: '',
     generateQRCode: false,
     fromLocation: user.facilityName || '',
+    pickupLocationId: '',
     toLocation: '',
     scheduledTime: '',
     transportLevel: 'BLS',
