@@ -132,7 +132,7 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
   const steps = [
     { id: 1, name: 'Patient Info', icon: User },
     { id: 2, name: 'Trip Details', icon: MapPin },
-    // { id: 3, name: 'Clinical Info', icon: Stethoscope },
+    { id: 3, name: 'Clinical Info', icon: Stethoscope },
     // { id: 4, name: 'Agency Selection', icon: Truck },
     // { id: 5, name: 'Review & Submit', icon: CheckCircle }
   ];
@@ -416,8 +416,8 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
         throw new Error('Invalid urgency level');
       }
 
-      // For steps 1-2, we'll show a success message and then redirect
-      console.log('TCC_DEBUG: Steps 1-2 validation passed:', formData);
+      // For steps 1-3, we'll show a success message and then redirect
+      console.log('TCC_DEBUG: Steps 1-3 validation passed:', formData);
       setSuccess(true);
       setTimeout(() => {
         onTripCreated();
@@ -803,7 +803,7 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
           </div>
         );
 
-      // case 3:
+      case 3:
         return (
           <div className="space-y-6">
             <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
