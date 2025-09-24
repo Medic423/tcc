@@ -345,7 +345,6 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
       } else {
         throw new Error(response.data?.error || 'Failed to create transport request');
       }
->>>>>>> Stashed changes
     } catch (error: any) {
       setError(error.response?.data?.error || error.message || 'Failed to create transport request');
     } finally {
