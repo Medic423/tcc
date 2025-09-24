@@ -164,7 +164,7 @@ const HealthcareRegistration: React.FC<HealthcareRegistrationProps> = ({ onBack,
         name: formData.contactName,
         facilityName: formData.facilityName,
         facilityType: formData.facilityType,
-        address: formData.address,
+        // address: formData.address, // Temporarily commented out
         city: formData.city,
         state: formData.state,
         zipCode: formData.zipCode,

@@ -203,7 +203,7 @@ const EMSRegistration: React.FC<EMSRegistrationProps> = ({ onBack, onSuccess }) 
         name: formData.contactName,
         agencyName: formData.agencyName,
         serviceType: formData.serviceType,
-        address: formData.address,
+        // address: formData.address, // Temporarily commented out
         city: formData.city,
         state: formData.state,
         zipCode: formData.zipCode,

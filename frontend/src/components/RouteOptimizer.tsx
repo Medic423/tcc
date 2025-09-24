@@ -688,7 +688,7 @@ const RouteOptimizer: React.FC<RouteOptimizerProps> = ({ user }) => {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-sm text-gray-600">Loaded Mile Ratio:</span>
-                        <span className="text-sm font-medium">{(revenueAnalytics.data?.loadedMileRatio * 100).toFixed(1)}%</span>
+                        <span className="text-sm font-medium">{((revenueAnalytics.data?.loadedMileRatio || 0) * 100).toFixed(1)}%</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-sm text-gray-600">Total Trips:</span>
@@ -717,7 +717,7 @@ const RouteOptimizer: React.FC<RouteOptimizerProps> = ({ user }) => {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-sm text-gray-600">Efficiency:</span>
-                        <span className="text-sm font-medium">{(performanceMetrics.data?.efficiency * 100).toFixed(1)}%</span>
+                        <span className="text-sm font-medium">{((performanceMetrics.data?.efficiency || 0) * 100).toFixed(1)}%</span>
                       </div>
                     </div>
                   </div>

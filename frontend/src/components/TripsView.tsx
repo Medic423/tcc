@@ -167,8 +167,8 @@ const TripsView: React.FC<TripsViewProps> = ({ user }) => {
       const aVal = a[sortField];
       const bVal = b[sortField];
       
-      if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
-      if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
+      if ((aVal || 0) < (bVal || 0)) return sortDirection === 'asc' ? -1 : 1;
+      if ((aVal || 0) > (bVal || 0)) return sortDirection === 'asc' ? 1 : -1;
       return 0;
     });
 
