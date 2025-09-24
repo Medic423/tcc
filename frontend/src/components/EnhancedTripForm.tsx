@@ -102,9 +102,7 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
   const steps = [
     { id: 1, name: 'Patient Info', icon: User },
     { id: 2, name: 'Trip Details', icon: MapPin },
-    { id: 3, name: 'Clinical Info', icon: Stethoscope },
-    { id: 4, name: 'Agency Selection', icon: Truck },
-    { id: 5, name: 'Review & Submit', icon: CheckCircle }
+    { id: 3, name: 'Clinical Info', icon: Stethoscope }
   ];
 
   useEffect(() => {
@@ -220,27 +218,134 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('TCC_DEBUG: handleSubmit called, current step:', currentStep);
+    
+    // Only allow submission on the final step
+    if (currentStep < steps.length) {
+      console.log('TCC_DEBUG: Submission blocked - not on final step');
+      return;
+    }
+    
     setLoading(true);
     setError(null);
 
     try {
+      // Validate step 1 required fields (Patient Info)
+      if (!formData.patientId || !formData.patientWeight) {
+        throw new Error('Please fill in Patient ID and Patient Weight');
+      }
+
+      // Validate patient weight is a number
+      const weight = parseFloat(formData.patientWeight);
+      if (isNaN(weight) || weight <= 0) {
+        throw new Error('Please enter a valid patient weight');
+      }
+
+      // Validate step 2 required fields (Trip Details)
+      if (!formData.fromLocation || !formData.pickupLocationId || !formData.toLocation || !formData.scheduledTime || !formData.transportLevel || !formData.urgencyLevel) {
+        throw new Error('Please fill in all trip details: From Location, Pickup Location, To Location, Scheduled Time, Transport Level, and Urgency Level');
+      }
+
+      // Validate scheduled time is not in the past
+      if (new Date(formData.scheduledTime) < new Date()) {
+        throw new Error('Scheduled time cannot be in the past');
+      }
+
+      // Validate transport level
+      if (!['BLS', 'ALS', 'CCT', 'Other'].includes(formData.transportLevel)) {
+        throw new Error('Invalid transport level');
+      }
+
+      // Validate urgency level
+      if (!['Routine', 'Urgent', 'Emergent', 'Critical'].includes(formData.urgencyLevel)) {
+        throw new Error('Invalid urgency level');
+      }
+
+      // Validate step 3 required fields (Clinical Info)
+      if (!formData.diagnosis || !formData.mobilityLevel) {
+        throw new Error('Please fill in Diagnosis and Mobility Level');
+      }
+
+      console.log('TCC_DEBUG: All validation passed, submitting trip data:', formData);
+
       const tripData = {
         ...formData,
         patientWeight: formData.patientWeight ? parseFloat(formData.patientWeight) : null,
-        notificationRadius: formData.notificationRadius || 100
+        notificationRadius: formData.notificationRadius || 100,
+        scheduledTime: formData.scheduledTime || new Date().toISOString()
       };
 
       const response = await tripsAPI.createEnhanced(tripData);
+      console.log('TCC_DEBUG: Trip creation response:', response.data);
 
       if (response.data.success) {
         setSuccess(true);
         setTimeout(() => {
-          setSuccess(false);
           onTripCreated();
-        }, 2000);
+        }, 3000); // Show success message for 3 seconds
       } else {
         throw new Error(response.data.error || 'Failed to create transport request');
       }
+      if (isNaN(weight) || weight <= 0) {
+        throw new Error('Please enter a valid patient weight');
+      }
+
+      // Validate step 2 required fields (Trip Details)
+      if (!formData.fromLocation || !formData.pickupLocationId || !formData.toLocation || !formData.scheduledTime || !formData.transportLevel || !formData.urgencyLevel) {
+        throw new Error('Please fill in all trip details: From Location, Pickup Location, To Location, Scheduled Time, Transport Level, and Urgency Level');
+      }
+
+      // Validate scheduled time is not in the past
+      if (new Date(formData.scheduledTime) < new Date()) {
+        throw new Error('Scheduled time cannot be in the past');
+      }
+
+      // Validate transport level
+      if (!['BLS', 'ALS', 'CCT', 'Other'].includes(formData.transportLevel)) {
+        throw new Error('Invalid transport level');
+      }
+
+      // Validate urgency level
+      if (!['Routine', 'Urgent', 'Emergent', 'Critical'].includes(formData.urgencyLevel)) {
+        throw new Error('Invalid urgency level');
+      }
+
+      // Validate step 3 required fields (Clinical Info)
+      if (!formData.diagnosis || !formData.mobilityLevel) {
+        throw new Error('Please fill in Diagnosis and Mobility Level');
+      }
+
+      // Validate step 4 required fields (Agency Selection)
+      if (formData.selectedAgencies.length === 0) {
+        throw new Error('Please select at least one EMS agency');
+      }
+
+      // Validate notification radius
+      if (formData.notificationRadius < 10 || formData.notificationRadius > 200) {
+        throw new Error('Notification radius must be between 10 and 200 miles');
+      }
+
+      console.log('TCC_DEBUG: All validation passed, submitting trip data:', formData);
+
+      const tripData = {
+        ...formData,
+        patientWeight: formData.patientWeight ? parseFloat(formData.patientWeight) : null,
+        notificationRadius: formData.notificationRadius || 100,
+        scheduledTime: formData.scheduledTime || new Date().toISOString()
+      };
+
+      const response = await tripsAPI.createEnhanced(tripData);
+      console.log('TCC_DEBUG: Trip creation response:', response.data);
+
+      if (response.data?.success) {
+        setSuccess(true);
+        setTimeout(() => {
+          onTripCreated();
+        }, 3000); // Show success message for 3 seconds
+      } else {
+        throw new Error(response.data?.error || 'Failed to create transport request');
+      }
+>>>>>>> Stashed changes
     } catch (error: any) {
       setError(error.response?.data?.error || error.message || 'Failed to create transport request');
     } finally {
@@ -557,6 +662,20 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
                   Continuous Monitoring Required
                 </label>
               </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Additional Notes
+              </label>
+              <textarea
+                name="notes"
+                value={formData.notes}
+                onChange={handleChange}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500"
+                placeholder="Enter any additional clinical notes or special instructions"
+              />
             </div>
           </div>
         );
