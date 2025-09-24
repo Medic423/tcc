@@ -1,9 +1,8 @@
 import express from 'express';
-import { UnitService, UnitFormData, UnitStatusUpdate } from '../services/unitService';
+import { unitService, UnitFormData, UnitStatusUpdate } from '../services/unitService';
 import { authenticateAdmin, AuthenticatedRequest } from '../middleware/authenticateAdmin';
 
 const router = express.Router();
-const unitService = new UnitService();
 
 /**
  * GET /api/units
@@ -34,6 +33,51 @@ router.get('/', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to retrieve units'
+    });
+  }
+});
+
+/**
+ * POST /api/units
+ * Create a new unit for the authenticated agency
+ */
+router.post('/', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
+  try {
+    const agencyId = req.user?.id;
+    console.log('🔍 Units API POST: req.user:', req.user);
+    console.log('🔍 Units API POST: agencyId:', agencyId);
+    console.log('🔍 Units API POST: body:', req.body);
+    
+    if (!agencyId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Agency ID not found'
+      });
+    }
+
+    const unitData: UnitFormData = req.body;
+    
+    // Validate required fields
+    if (!unitData.unitNumber || !unitData.type) {
+      return res.status(400).json({
+        success: false,
+        error: 'Unit number and type are required'
+      });
+    }
+
+    const unit = await unitService.createUnit(unitData, agencyId);
+    console.log('🔍 Units API POST: unit created:', unit);
+    
+    res.status(201).json({
+      success: true,
+      data: unit,
+      message: 'Unit created successfully'
+    });
+  } catch (error) {
+    console.error('Error creating unit:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to create unit'
     });
   }
 });
@@ -249,6 +293,88 @@ router.post('/:id/assign-trip', authenticateAdmin, async (req: AuthenticatedRequ
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to assign trip to unit'
+    });
+  }
+});
+
+/**
+ * PUT /api/units/:id
+ * Update a unit
+ */
+router.put('/:id', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
+  try {
+    const { id } = req.params;
+    const agencyId = req.user?.id;
+    console.log('🔍 Units API PUT: req.user:', req.user);
+    console.log('🔍 Units API PUT: agencyId:', agencyId);
+    console.log('🔍 Units API PUT: unitId:', id);
+    console.log('🔍 Units API PUT: body:', req.body);
+    
+    if (!agencyId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Agency ID not found'
+      });
+    }
+
+    const unitData: UnitFormData = req.body;
+    
+    // Validate required fields
+    if (!unitData.unitNumber || !unitData.type) {
+      return res.status(400).json({
+        success: false,
+        error: 'Unit number and type are required'
+      });
+    }
+
+    const unit = await unitService.updateUnit(id, unitData);
+    console.log('🔍 Units API PUT: unit updated:', unit);
+    
+    res.json({
+      success: true,
+      data: unit,
+      message: 'Unit updated successfully'
+    });
+  } catch (error) {
+    console.error('Error updating unit:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to update unit'
+    });
+  }
+});
+
+/**
+ * DELETE /api/units/:id
+ * Delete a unit
+ */
+router.delete('/:id', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
+  try {
+    const { id } = req.params;
+    const agencyId = req.user?.id;
+    console.log('🔍 Units API DELETE: req.user:', req.user);
+    console.log('🔍 Units API DELETE: agencyId:', agencyId);
+    console.log('🔍 Units API DELETE: unitId:', id);
+    
+    if (!agencyId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Agency ID not found'
+      });
+    }
+
+    await unitService.deleteUnit(id);
+    console.log('🔍 Units API DELETE: unit deleted');
+    
+    res.json({
+      success: true,
+      message: 'Unit deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting unit:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to delete unit'
     });
   }
 });
