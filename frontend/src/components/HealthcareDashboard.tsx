@@ -113,14 +113,14 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
           // Transform API data to match component expectations
           const transformedTrips = data.data.map((trip: any) => ({
             id: trip.id,
-            patientId: trip.patientName,
-            destination: trip.toLocation,
-            pickupLocation: null,
+            patientId: trip.patientId || trip.patientName || 'Unknown',
+            destination: trip.toLocation || 'Unknown',
+            pickupLocation: trip.pickup_locations || null,
             transportLevel: trip.transportLevel || 'BLS',
-            status: trip.status,
-            requestTime: new Date(trip.createdAt).toLocaleString(),
-            priority: trip.priority,
-            urgencyLevel: trip.urgencyLevel
+            status: trip.status || 'PENDING',
+            requestTime: trip.createdAt ? new Date(trip.createdAt).toLocaleString() : 'Unknown',
+            priority: trip.priority || 'MEDIUM',
+            urgencyLevel: trip.urgencyLevel || trip.priority || 'Routine'
           }));
           setTrips(transformedTrips);
       }
@@ -335,7 +335,7 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                           Pending Requests
                         </dt>
                         <dd className="text-lg font-medium text-gray-900">
-                          {trips.filter(trip => trip.status === 'PENDING').length}
+                          {trips.filter(trip => (trip.status || 'PENDING') === 'PENDING').length}
                         </dd>
                       </dl>
                     </div>
@@ -357,7 +357,7 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                           Completed Today
                         </dt>
                         <dd className="text-lg font-medium text-gray-900">
-                          {trips.filter(trip => trip.status === 'COMPLETED').length}
+                          {trips.filter(trip => (trip.status || 'PENDING') === 'COMPLETED').length}
                         </dd>
                       </dl>
                     </div>
@@ -379,7 +379,7 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                           High Priority
                         </dt>
                         <dd className="text-lg font-medium text-gray-900">
-                          {trips.filter(trip => trip.urgencyLevel === 'Emergent' || trip.priority === 'HIGH').length}
+                          {trips.filter(trip => (trip.urgencyLevel || trip.priority || 'Routine') === 'Emergent' || (trip.priority || 'MEDIUM') === 'HIGH').length}
                         </dd>
                       </dl>
                     </div>
@@ -401,22 +401,22 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                       <div className="flex items-center space-x-4">
                         <div>
                           <p className="text-sm font-medium text-gray-900">
-                            Patient ID: {trip.patientId} - {trip.destination}
+                            Patient ID: {trip.patientId || 'Unknown'} - {trip.destination || 'Unknown'}
                           </p>
                           <p className="text-xs text-blue-600">
-                            Pickup: {trip.destination}
+                            Pickup: {trip.destination || 'Unknown'}
                           </p>
                           <p className="text-xs text-gray-500">
-                            {trip.transportLevel} • {trip.urgencyLevel || trip.priority} • {trip.requestTime}
+                            {trip.transportLevel || 'BLS'} • {trip.urgencyLevel || trip.priority || 'Routine'} • {trip.requestTime || 'Unknown'}
                           </p>
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(trip.status)}`}>
-                          {trip.status}
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(trip.status || 'PENDING')}`}>
+                          {trip.status || 'PENDING'}
                         </span>
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getUrgencyLevelStyle(trip.urgencyLevel || trip.priority)}`}>
-                          {trip.urgencyLevel || trip.priority}
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getUrgencyLevelStyle(trip.urgencyLevel || trip.priority || 'Routine')}`}>
+                          {trip.urgencyLevel || trip.priority || 'Routine'}
                         </span>
                         <div className="flex space-x-2 ml-4">
                           <button
