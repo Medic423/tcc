@@ -102,7 +102,8 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
   const steps = [
     { id: 1, name: 'Patient Info', icon: User },
     { id: 2, name: 'Trip Details', icon: MapPin },
-    { id: 3, name: 'Clinical Info', icon: Stethoscope }
+    { id: 3, name: 'Clinical Info', icon: Stethoscope },
+    { id: 4, name: 'Agency Selection', icon: Truck }
   ];
 
   useEffect(() => {
