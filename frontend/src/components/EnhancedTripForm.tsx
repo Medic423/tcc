@@ -242,8 +242,8 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
       }
 
       // Validate step 2 required fields (Trip Details)
-      if (!formData.fromLocation || !formData.pickupLocationId || !formData.toLocation || !formData.scheduledTime || !formData.transportLevel || !formData.urgencyLevel) {
-        throw new Error('Please fill in all trip details: From Location, Pickup Location, To Location, Scheduled Time, Transport Level, and Urgency Level');
+      if (!formData.fromLocation || !formData.toLocation || !formData.scheduledTime || !formData.transportLevel || !formData.urgencyLevel) {
+        throw new Error('Please fill in all trip details: From Location, To Location, Scheduled Time, Transport Level, and Urgency Level');
       }
 
       // Validate scheduled time is not in the past
@@ -286,66 +286,7 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
       } else {
         throw new Error(response.data.error || 'Failed to create transport request');
       }
-      if (isNaN(weight) || weight <= 0) {
-        throw new Error('Please enter a valid patient weight');
-      }
-
-      // Validate step 2 required fields (Trip Details)
-      if (!formData.fromLocation || !formData.pickupLocationId || !formData.toLocation || !formData.scheduledTime || !formData.transportLevel || !formData.urgencyLevel) {
-        throw new Error('Please fill in all trip details: From Location, Pickup Location, To Location, Scheduled Time, Transport Level, and Urgency Level');
-      }
-
-      // Validate scheduled time is not in the past
-      if (new Date(formData.scheduledTime) < new Date()) {
-        throw new Error('Scheduled time cannot be in the past');
-      }
-
-      // Validate transport level
-      if (!['BLS', 'ALS', 'CCT', 'Other'].includes(formData.transportLevel)) {
-        throw new Error('Invalid transport level');
-      }
-
-      // Validate urgency level
-      if (!['Routine', 'Urgent', 'Emergent', 'Critical'].includes(formData.urgencyLevel)) {
-        throw new Error('Invalid urgency level');
-      }
-
-      // Validate step 3 required fields (Clinical Info)
-      if (!formData.diagnosis || !formData.mobilityLevel) {
-        throw new Error('Please fill in Diagnosis and Mobility Level');
-      }
-
-      // Validate step 4 required fields (Agency Selection)
-      if (formData.selectedAgencies.length === 0) {
-        throw new Error('Please select at least one EMS agency');
-      }
-
-      // Validate notification radius
-      if (formData.notificationRadius < 10 || formData.notificationRadius > 200) {
-        throw new Error('Notification radius must be between 10 and 200 miles');
-      }
-
-      console.log('TCC_DEBUG: All validation passed, submitting trip data:', formData);
-
-      const tripData = {
-        ...formData,
-        patientWeight: formData.patientWeight ? parseFloat(formData.patientWeight) : null,
-        notificationRadius: formData.notificationRadius || 100,
-        scheduledTime: formData.scheduledTime || new Date().toISOString()
-      };
-
-      const response = await tripsAPI.createEnhanced(tripData);
-      console.log('TCC_DEBUG: Trip creation response:', response.data);
-
-      if (response.data?.success) {
-        setSuccess(true);
-        setTimeout(() => {
-          onTripCreated();
-        }, 3000); // Show success message for 3 seconds
-      } else {
-        throw new Error(response.data?.error || 'Failed to create transport request');
-      }
->>>>>>> Stashed changes
+      // duplicate block removed
     } catch (error: any) {
       setError(error.response?.data?.error || error.message || 'Failed to create transport request');
     } finally {
