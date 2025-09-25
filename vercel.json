@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "buildCommand": "cd frontend && ROLLUP_SKIP_NODEJS_NATIVE=1 ROLLUP_USE_NODEJS_NATIVE=0 npm ci --include=optional && ROLLUP_SKIP_NODEJS_NATIVE=1 ROLLUP_USE_NODEJS_NATIVE=0 npm run build",
-  "outputDirectory": "frontend/dist",
-  "installCommand": "npm ci --include=optional",
+  "buildCommand": "echo 'Static site - no build needed'",
+  "outputDirectory": ".",
+  "installCommand": "echo 'Static site - no install needed'",
   "framework": null,
   "rewrites": [
     {
