@@ -336,10 +336,6 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
           try {
             onTripCreated();
           } catch {}
-          // Navigation fallback to show newly created request list
-          try {
-            window.location.href = '/';
-          } catch {}
         }, 2000);
       } else {
         throw new Error(response.data?.error || 'Failed to create transport request');

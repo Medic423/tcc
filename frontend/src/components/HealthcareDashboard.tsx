@@ -28,7 +28,7 @@ interface HealthcareDashboardProps {
 
 
 const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogout }) => {
-  const [activeTab, setActiveTab] = useState('create');
+  const [activeTab, setActiveTab] = useState<'trips' | 'responses' | 'create' | 'hospital-settings'>('create');
   const [agencyResponses, setAgencyResponses] = useState<any[]>([]);
   const [selectedTrip, setSelectedTrip] = useState<any>(null);
   const [loadingResponses, setLoadingResponses] = useState(false);
@@ -505,11 +505,11 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
               onTripCreated={() => {
                 // Refresh trips list and go to overview to see the new trip
                 loadTrips();
-                setActiveTab('overview');
+                setActiveTab('trips');
               }}
               onCancel={() => {
                 // Go back to overview tab when cancel is clicked
-                setActiveTab('overview');
+                setActiveTab('trips');
               }}
             />
           </div>
