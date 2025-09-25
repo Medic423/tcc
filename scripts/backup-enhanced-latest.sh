@@ -1,7 +1,9 @@
 #!/bin/bash
 
-# TCC Project Enhanced Backup Script
-# Backs up the project AND databases to external drive
+# TCC Enhanced Backup Script - Latest Version
+# This script includes ALL environment files and Vercel configuration
+# Created: 2025-09-25
+# Version: Enhanced with dev/prod separation
 
 PROJECT_DIR="/Users/scooper/Code/tcc-new-project"
 BACKUP_DIR="${1:-/Volumes/Acasis}/tcc-backups"
