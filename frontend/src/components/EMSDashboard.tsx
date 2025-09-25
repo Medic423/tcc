@@ -78,17 +78,17 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
         if (availableData.success && availableData.data) {
           const transformedAvailable = availableData.data.map((trip: any) => ({
             id: trip.id,
-            patientId: trip.patientId,
-            origin: trip.fromLocation,
-            destination: trip.toLocation,
+            patientId: trip.patientName, // Backend uses patientName, not patientId
+            origin: trip.pickupLocation, // Backend uses pickupLocation
+            destination: trip.dropoffLocation, // Backend uses dropoffLocation
             pickupLocation: trip.pickupLocation,
             transportLevel: trip.transportLevel || 'BLS',
             priority: trip.urgencyLevel || trip.priority, // Use urgencyLevel if available, fallback to priority
             distance: '12.5 miles', // Mock data
             estimatedTime: '25 minutes', // Mock data
             revenue: '$150', // Mock data
-            requestTime: new Date(trip.createdAt).toLocaleString(),
-            scheduledTime: trip.scheduledTime
+            requestTime: new Date(trip.requestedTime).toLocaleString(), // Backend uses requestedTime
+            scheduledTime: trip.requestedTime // Backend uses requestedTime
           }));
           setAvailableTrips(transformedAvailable);
         }
@@ -106,15 +106,15 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
         if (acceptedData.success && acceptedData.data) {
           const transformedAccepted = acceptedData.data.map((trip: any) => ({
             id: trip.id,
-            patientId: trip.patientId,
-            origin: trip.fromLocation,
-            destination: trip.toLocation,
+            patientId: trip.patientName, // Backend uses patientName, not patientId
+            origin: trip.pickupLocation, // Backend uses pickupLocation
+            destination: trip.dropoffLocation, // Backend uses dropoffLocation
             pickupLocation: trip.pickupLocation,
             transportLevel: trip.transportLevel || 'BLS',
             priority: trip.urgencyLevel || trip.priority, // Use urgencyLevel if available, fallback to priority
             status: trip.status,
             pickupTime: trip.actualStartTime ? new Date(trip.actualStartTime).toLocaleString() : 'Not started',
-            scheduledTime: trip.scheduledTime
+            scheduledTime: trip.requestedTime // Backend uses requestedTime
           }));
           setAcceptedTrips(transformedAccepted);
         }

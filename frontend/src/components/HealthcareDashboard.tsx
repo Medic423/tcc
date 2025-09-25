@@ -118,13 +118,13 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
           const transformedTrips = data.data.map((trip: any) => ({
             id: trip.id,
             patientId: trip.patientName,
-            destination: trip.toLocation,
-            pickupLocation: null,
+            destination: trip.dropoffLocation, // Backend uses dropoffLocation
+            pickupLocation: trip.pickupLocation,
             transportLevel: trip.transportLevel || 'BLS',
             status: trip.status,
-            requestTime: new Date(trip.createdAt).toLocaleString(),
+            requestTime: new Date(trip.requestedTime).toLocaleString(), // Backend uses requestedTime
             priority: trip.priority,
-            urgencyLevel: trip.urgencyLevel
+            urgencyLevel: trip.urgencyLevel || trip.priority // Fallback to priority if urgencyLevel not available
           }));
           setTrips(transformedTrips);
         }

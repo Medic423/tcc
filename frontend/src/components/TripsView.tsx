@@ -388,8 +388,19 @@ const TripsView: React.FC<TripsViewProps> = ({ user }) => {
       setLoading(true);
       const response = await tripsAPI.getAll();
       if (response.data.success) {
-        setTrips(response.data.data);
-        setFilteredTrips(response.data.data);
+        // Transform API data to match component expectations
+        const transformedTrips = response.data.data.map((trip: any) => ({
+          ...trip,
+          patientId: trip.patientName, // Backend uses patientName
+          fromLocation: trip.pickupLocation, // Backend uses pickupLocation
+          toLocation: trip.dropoffLocation, // Backend uses dropoffLocation
+          scheduledTime: trip.requestedTime, // Backend uses requestedTime
+          createdAt: trip.requestedTime, // Backend uses requestedTime
+          updatedAt: trip.requestedTime, // Backend uses requestedTime
+          urgencyLevel: trip.urgencyLevel || trip.priority // Fallback to priority
+        }));
+        setTrips(transformedTrips);
+        setFilteredTrips(transformedTrips);
         setLastRefresh(new Date());
       } else {
         setError(response.data.error || 'Failed to fetch trips');
