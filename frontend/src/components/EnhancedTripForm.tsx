@@ -313,6 +313,7 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('TCC_DEBUG: handleSubmit called, currentStep:', currentStep);
     setLoading(true);
     setError(null);
 
@@ -324,21 +325,25 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
         scheduledTime: formData.scheduledTime || new Date().toISOString()
       };
 
+      console.log('TCC_DEBUG: Submitting tripData:', tripData);
       const response = await tripsAPI.createEnhanced(tripData);
+      console.log('TCC_DEBUG: Trip creation response:', response.status, response.data);
 
-      if (response.data.success) {
+      if (response.data?.success) {
         setSuccess(true);
         setTimeout(() => {
           setSuccess(false);
           onTripCreated();
         }, 2000);
       } else {
-        throw new Error(response.data.error || 'Failed to create transport request');
+        throw new Error(response.data?.error || 'Failed to create transport request');
       }
     } catch (error: any) {
-      setError(error.response?.data?.error || error.message || 'Failed to create transport request');
+      console.error('TCC_DEBUG: handleSubmit error:', error);
+      setError(error?.response?.data?.error || error?.message || 'Failed to create transport request');
     } finally {
       setLoading(false);
+      console.log('TCC_DEBUG: handleSubmit finished');
     }
   };
 
