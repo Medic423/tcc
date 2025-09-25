@@ -197,6 +197,10 @@ export const tripsAPI = {
   // Agencies for facility within radius
   getAgenciesForHospital: (hospitalId: string, radius: number) =>
     api.get(`/api/trips/agencies/${encodeURIComponent(hospitalId)}`, { params: { radius } }),
+
+  // Pickup locations for a hospital (secured)
+  getPickupLocationsForHospital: (hospitalId: string) =>
+    api.get(`/api/tcc/pickup-locations/hospital/${encodeURIComponent(hospitalId)}`),
 };
 
 // Agencies API (legacy export for compatibility)

@@ -147,10 +147,30 @@ export class TripService {
         distanceMiles: revenueData.estimatedDistance,
       };
       
-      // Create trip in Center database
-      const centerTrip = await prisma.trip.create({
-        data: tripData,
-      });
+      // Create trip in Center database with detailed error logging
+      let centerTrip;
+      try {
+        centerTrip = await prisma.trip.create({
+          data: tripData,
+        });
+      } catch (prismaError: any) {
+        console.error('TCC_DEBUG: Prisma error creating enhanced trip in Center DB:', {
+          message: prismaError?.message,
+          code: prismaError?.code,
+          meta: prismaError?.meta,
+          stack: prismaError?.stack,
+          tripDataSnapshot: {
+            tripNumber: tripData.tripNumber,
+            fromLocation: tripData.fromLocation,
+            toLocation: tripData.toLocation,
+            scheduledTime: tripData.scheduledTime,
+            transportLevel: tripData.transportLevel,
+            urgencyLevel: tripData.urgencyLevel,
+            priority: tripData.priority,
+          }
+        });
+        throw prismaError;
+      }
       
       console.log('TCC_DEBUG: Enhanced trip created in Center DB:', centerTrip);
       
@@ -1584,9 +1604,29 @@ export class TripService {
       };
       
       // Create trip in Center database
-      const centerTrip = await prisma.trip.create({
-        data: tripData,
-      });
+      let centerTrip;
+      try {
+        centerTrip = await prisma.trip.create({
+          data: tripData,
+        });
+      } catch (prismaError: any) {
+        console.error('TCC_DEBUG: Prisma error creating trip with responses in Center DB:', {
+          message: prismaError?.message,
+          code: prismaError?.code,
+          meta: prismaError?.meta,
+          stack: prismaError?.stack,
+          tripDataSnapshot: {
+            tripNumber: tripData.tripNumber,
+            fromLocation: tripData.fromLocation,
+            toLocation: tripData.toLocation,
+            scheduledTime: tripData.scheduledTime,
+            transportLevel: tripData.transportLevel,
+            urgencyLevel: tripData.urgencyLevel,
+            priority: tripData.priority,
+          }
+        });
+        return { success: false, error: 'Failed to create trip with response handling (DB error)' };
+      }
       
       console.log('TCC_DEBUG: Trip with responses created in Center DB:', centerTrip);
       

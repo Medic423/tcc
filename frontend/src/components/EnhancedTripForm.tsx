@@ -207,7 +207,7 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
   const loadPickupLocationsForHospital = async (hospitalId: string) => {
     try {
       setLoadingPickupLocations(true);
-      const response = await api.get(`/api/tcc/pickup-locations/hospital/${hospitalId}`);
+      const response = await tripsAPI.getPickupLocationsForHospital(hospitalId);
       
       if (response.data?.success) {
         const data = response.data;
