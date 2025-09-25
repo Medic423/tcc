@@ -12,7 +12,7 @@
     "dev:clean": "pkill -f 'node|npm|vite|nodemon|ts-node' && sleep 3 && npm run dev",
     "dev:health": "./scripts/check-server-health.sh",
     "dev:safe": "npm run dev:health && npm run dev:clean",
-    "build": "npm run build --workspace=frontend && npm run build --workspace=backend",
+    "build": "npm run build --workspace=frontend && npm run build:prod --workspace=backend",
     "start": "npm run start --workspace=backend",
     "test": "npm run test --workspace=backend && npm run test --workspace=frontend",
     "contract:test:dev": "API_URL=http://localhost:5001 node test-api-simple.js",
