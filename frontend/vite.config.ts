@@ -12,9 +12,5 @@ export default defineConfig({
         changeOrigin: true
       }
     }
-  },
-  build: {
-    target: 'esnext',
-    minify: 'esbuild'
   }
 })

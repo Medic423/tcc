@@ -8,7 +8,7 @@
     "dev:clean": "pkill -f nodemon 2>/dev/null || true; pkill -f 'ts-node src/index.ts' 2>/dev/null || true; lsof -ti:5001 | xargs kill -9 2>/dev/null || true; sleep 2; npm run dev",
     "dev:health": "../scripts/check-server-health.sh",
     "dev:safe": "npm run dev:health && npm run dev:clean",
-    "build": "prisma generate && prisma generate --schema=prisma/schema-ems.prisma && prisma generate --schema=prisma/schema-hospital.prisma && tsc",
+    "build": "prisma generate && tsc",
     "build:prod": "prisma generate --schema=prisma/schema-production.prisma && tsc --project tsconfig.production.json",
     "start": "node dist/production-index.js",
     "start:prod": "node dist/production-index.js",
