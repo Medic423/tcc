@@ -7,7 +7,7 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://vercel-bqfo02a73-chuck-ferrells-projects.vercel.app/api/$1"
+      "destination": "https://vercel-92j3iiuiz-chuck-ferrells-projects.vercel.app/api/$1"
     },
     {
       "source": "/(.*)",
