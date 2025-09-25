@@ -12,5 +12,19 @@ export default defineConfig({
         changeOrigin: true
       }
     }
+  },
+  build: {
+    rollupOptions: {
+      // Force Rollup to use JS implementation instead of native binary
+      external: [],
+      output: {
+        manualChunks: undefined
+      }
+    }
+  },
+  define: {
+    // Force Rollup to skip native modules
+    'process.env.ROLLUP_SKIP_NODEJS_NATIVE': 'true',
+    'process.env.ROLLUP_USE_NODEJS_NATIVE': 'false'
   }
 })
