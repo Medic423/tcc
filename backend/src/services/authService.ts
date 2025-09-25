@@ -49,9 +49,6 @@ export class AuthService {
           password: true,
           name: true,
           userType: true,
-          phone: true,
-          emailNotifications: true,
-          smsNotifications: true,
           isActive: true,
           createdAt: true,
           updatedAt: true
@@ -64,13 +61,6 @@ export class AuthService {
       if (user) {
         // Use the actual userType from the Center database
         userType = user.userType as 'ADMIN' | 'USER';
-        // Ensure the user object has the new fields
-        user = {
-          ...user,
-          phone: user.phone || null,
-          emailNotifications: user.emailNotifications || true,
-          smsNotifications: user.smsNotifications || false
-        };
       } else {
         // Try Hospital database (Healthcare users)
         const hospitalDB = databaseManager.getHospitalDB();
@@ -81,9 +71,6 @@ export class AuthService {
             email: true,
             password: true,
             name: true,
-            phone: true,
-            emailNotifications: true,
-            smsNotifications: true,
             isActive: true,
             createdAt: true,
             updatedAt: true,
@@ -100,9 +87,6 @@ export class AuthService {
             password: hospitalUser.password,
             name: hospitalUser.name,
             userType: 'HEALTHCARE',
-            phone: hospitalUser.phone || null,
-            emailNotifications: hospitalUser.emailNotifications || true,
-            smsNotifications: hospitalUser.smsNotifications || false,
             isActive: hospitalUser.isActive,
             createdAt: hospitalUser.createdAt,
             updatedAt: hospitalUser.updatedAt
@@ -120,9 +104,6 @@ export class AuthService {
             email: true,
             password: true,
             name: true,
-            phone: true,
-            emailNotifications: true,
-            smsNotifications: true,
             isActive: true,
             createdAt: true,
             updatedAt: true,
@@ -139,9 +120,6 @@ export class AuthService {
             password: emsUser.password,
             name: emsUser.name,
             userType: 'EMS',
-            phone: emsUser.phone || null,
-            emailNotifications: emsUser.emailNotifications || true,
-            smsNotifications: emsUser.smsNotifications || false,
             isActive: emsUser.isActive,
             createdAt: emsUser.createdAt,
             updatedAt: emsUser.updatedAt
@@ -264,7 +242,16 @@ export class AuthService {
       if (decoded.userType === 'ADMIN' || decoded.userType === 'USER') {
         const centerDB = databaseManager.getCenterDB();
         const user = await centerDB.centerUser.findUnique({
-          where: { id: decoded.id }
+          where: { id: decoded.id },
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            userType: true,
+            isActive: true,
+            createdAt: true,
+            updatedAt: true
+          }
         });
 
         if (!user || !user.isActive) {
@@ -280,7 +267,17 @@ export class AuthService {
       } else if (decoded.userType === 'HEALTHCARE') {
         const hospitalDB = databaseManager.getHospitalDB();
         const user = await hospitalDB.healthcareUser.findUnique({
-          where: { id: decoded.id }
+          where: { id: decoded.id },
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            isActive: true,
+            facilityName: true,
+            facilityType: true,
+            createdAt: true,
+            updatedAt: true
+          }
         });
 
         if (!user || !user.isActive) {
@@ -299,7 +296,17 @@ export class AuthService {
         // For EMS users, decoded.id contains the agency ID, not the user ID
         // We need to find the user by email since that's what we have in the token
         const user = await emsDB.eMSUser.findUnique({
-          where: { email: decoded.email }
+          where: { email: decoded.email },
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            isActive: true,
+            agencyName: true,
+            agencyId: true,
+            createdAt: true,
+            updatedAt: true
+          }
         });
 
         if (!user || !user.isActive) {

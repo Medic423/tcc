@@ -3,9 +3,29 @@ import { PrismaClient as EMSPrismaClient } from '@prisma/ems';
 import { PrismaClient as HospitalPrismaClient } from '@prisma/hospital';
 import bcrypt from 'bcryptjs';
 
-const centerDB = new CenterPrismaClient();
-const emsDB = new EMSPrismaClient();
-const hospitalDB = new HospitalPrismaClient();
+const centerDB = new CenterPrismaClient({
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL_CENTER
+    }
+  }
+});
+
+const emsDB = new EMSPrismaClient({
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL_EMS
+    }
+  }
+});
+
+const hospitalDB = new HospitalPrismaClient({
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL_HOSPITAL
+    }
+  }
+});
 
 async function main() {
   console.log('🌱 Starting database seeding...');

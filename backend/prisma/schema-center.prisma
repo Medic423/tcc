@@ -152,6 +152,12 @@ model Trip {
   selectedAgencies  String[]  // Array of agency IDs for notifications
   notificationRadius Int?     // Distance radius for agency filtering (miles)
   
+  // Response Handling Fields
+  maxResponses      Int       @default(5)     // Maximum number of responses allowed
+  responseDeadline  DateTime?                 // Deadline for agency responses
+  responseStatus    String    @default("PENDING")  // Response status: PENDING, RESPONSES_RECEIVED, AGENCY_SELECTED
+  selectionMode     String    @default("SPECIFIC_AGENCIES")  // Selection mode: BROADCAST, SPECIFIC_AGENCIES
+  
   // Time Tracking
   transferRequestTime   DateTime?  // Auto-set when sent to agencies
   transferAcceptedTime  DateTime?  // Auto-set when agency responds, manually editable
