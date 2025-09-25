@@ -20,6 +20,7 @@ import Agencies from './Agencies';
 import HealthcarePortal from './HealthcarePortal';
 import EMSDashboard from './EMSDashboard';
 import NotificationSettings from './NotificationSettings';
+import { FEATURE_NOTIFICATIONS } from '../config';
 // AdminNotificationManagement removed - notification services not available in V1
 import UserManagement from './UserManagement';
 import BackupManagement from './BackupManagement';
@@ -103,7 +104,7 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
       icon: Settings,
       items: [
         { name: 'User Management', href: '/dashboard/settings', icon: Settings },
-        { name: 'Notifications', href: '/dashboard/settings/notifications', icon: BellIcon },
+        ...(FEATURE_NOTIFICATIONS ? [{ name: 'Notifications', href: '/dashboard/settings/notifications', icon: BellIcon }] : []),
         { name: 'Backup', href: '/dashboard/settings/backup', icon: Settings },
       ]
     }
@@ -517,7 +518,9 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
                 <Route path="/ems-dashboard" element={<EMSDashboard user={user} onLogout={onLogout} />} />
                 <Route path="/settings" element={<UserManagement />} />
                 <Route path="/settings/users" element={<UserManagement />} />
-                <Route path="/settings/notifications" element={<NotificationSettings />} />
+                {FEATURE_NOTIFICATIONS && (
+                  <Route path="/settings/notifications" element={<NotificationSettings />} />
+                )}
                 {/* Admin Notifications route removed - notification services not available in V1 */}
                 <Route path="/settings/backup" element={<BackupManagement />} />
                 <Route path="/financial" element={<FinancialDashboard />} />

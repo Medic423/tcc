@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Bell, Mail, CheckCircle, AlertCircle } from 'lucide-react';
 import api from '../services/api';
+import { FEATURE_NOTIFICATIONS } from '../config';
 
 interface NotificationSettings {
   emailNotifications: boolean;
@@ -33,6 +34,7 @@ const NotificationSettings: React.FC = () => {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
 
   useEffect(() => {
+    if (!FEATURE_NOTIFICATIONS) return;
     fetchSettings();
   }, []);
 
@@ -68,6 +70,7 @@ const NotificationSettings: React.FC = () => {
   };
 
   const saveSettings = async () => {
+    if (!FEATURE_NOTIFICATIONS) return;
     console.log('TCC_DEBUG: Save button clicked with settings:', settings);
     setSaving(true);
     setSaveStatus('saving');
@@ -114,6 +117,7 @@ const NotificationSettings: React.FC = () => {
   };
 
   const testEmailConnection = async () => {
+    if (!FEATURE_NOTIFICATIONS) return;
     setEmailTestStatus('testing');
     setMessage(null);
 
@@ -139,6 +143,7 @@ const NotificationSettings: React.FC = () => {
   };
 
   const testSMSConnection = async () => {
+    if (!FEATURE_NOTIFICATIONS) return;
     setSmsTestStatus('testing');
     setMessage(null);
 
@@ -202,6 +207,9 @@ const NotificationSettings: React.FC = () => {
     );
   }
 
+  if (!FEATURE_NOTIFICATIONS) {
+    return null;
+  }
   return (
     <div className="max-w-4xl mx-auto p-6">
       <style>

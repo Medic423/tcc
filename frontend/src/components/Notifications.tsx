@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { FEATURE_NOTIFICATIONS } from '../config';
 import { Bell, X, CheckCircle, AlertCircle, Info } from 'lucide-react';
 
 interface Notification {
@@ -24,6 +25,7 @@ const Notifications: React.FC<NotificationsProps> = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    if (!FEATURE_NOTIFICATIONS) return;
     loadNotifications();
   }, []);
 
@@ -58,6 +60,7 @@ const Notifications: React.FC<NotificationsProps> = () => {
   };
 
   const markAsRead = async (notificationId: string) => {
+    if (!FEATURE_NOTIFICATIONS) return;
     try {
       const response = await fetch(`/api/notifications/${notificationId}/read`, {
         method: 'PUT',
@@ -79,6 +82,7 @@ const Notifications: React.FC<NotificationsProps> = () => {
   };
 
   const markAllAsRead = async () => {
+    if (!FEATURE_NOTIFICATIONS) return;
     try {
       const response = await fetch('/api/notifications/read-all', {
         method: 'PUT',
@@ -113,6 +117,9 @@ const Notifications: React.FC<NotificationsProps> = () => {
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
+  if (!FEATURE_NOTIFICATIONS) {
+    return null;
+  }
   return (
     <div className="relative">
       <button
