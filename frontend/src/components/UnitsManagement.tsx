@@ -69,7 +69,8 @@ const UnitsManagement: React.FC<UnitsManagementProps> = ({ user }) => {
       console.log('🔍 UnitsManagement: fetchUnits called');
       setLoading(true);
       const token = localStorage.getItem('token');
-      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+      // Use the central API configuration instead of hardcoded URLs
+      const API_BASE_URL = '';
       console.log('🔍 UnitsManagement: API_BASE_URL:', API_BASE_URL);
       console.log('🔍 UnitsManagement: token present:', !!token);
       
@@ -106,7 +107,8 @@ const UnitsManagement: React.FC<UnitsManagementProps> = ({ user }) => {
   const fetchAnalytics = async () => {
     try {
       const token = localStorage.getItem('token');
-      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+      // Use the central API configuration instead of hardcoded URLs
+      const API_BASE_URL = '';
       
       const response = await fetch(`${API_BASE_URL}/api/units/analytics`, {
         headers: {
@@ -144,7 +146,8 @@ const UnitsManagement: React.FC<UnitsManagementProps> = ({ user }) => {
 
     try {
       const token = localStorage.getItem('token');
-      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+      // Use the central API configuration instead of hardcoded URLs
+      const API_BASE_URL = '';
       const url = selectedUnit ? `${API_BASE_URL}/api/units/${selectedUnit.id}` : `${API_BASE_URL}/api/units`;
       const method = selectedUnit ? 'PUT' : 'POST';
 
@@ -187,7 +190,8 @@ const UnitsManagement: React.FC<UnitsManagementProps> = ({ user }) => {
 
     try {
       const token = localStorage.getItem('token');
-      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+      // Use the central API configuration instead of hardcoded URLs
+      const API_BASE_URL = '';
       
       const response = await fetch(`${API_BASE_URL}/api/units/${unitId}`, {
         method: 'DELETE',
@@ -217,7 +221,8 @@ const UnitsManagement: React.FC<UnitsManagementProps> = ({ user }) => {
   const handleStatusUpdate = async (unitId: string, newStatus: UnitStatus) => {
     try {
       const token = localStorage.getItem('token');
-      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+      // Use the central API configuration instead of hardcoded URLs
+      const API_BASE_URL = '';
       
       const response = await fetch(`${API_BASE_URL}/api/units/${unitId}/status`, {
         method: 'PUT',

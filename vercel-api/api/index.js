@@ -1,18 +1,39 @@
 // Simple TCC Backend API for Vercel
 export default function handler(req, res) {
+  // Debug logging for CORS troubleshooting
+  console.log('🔍 API Request:', {
+    method: req.method,
+    url: req.url,
+    origin: req.headers.origin,
+    referer: req.headers.referer,
+    host: req.headers.host,
+    userAgent: req.headers['user-agent']
+  });
   // Set CORS headers - Allow specific origins for production
   const origin = req.headers.origin || '';
+  const referer = req.headers.referer || '';
+  const host = req.headers.host || '';
+  
+  // More robust origin checking for Vercel deployments
   const isAllowed =
     origin.endsWith('.vercel.app') ||
     origin === 'https://traccems.com' ||
     origin === 'https://www.traccems.com' ||
-    origin.startsWith('http://localhost:');
+    origin.startsWith('http://localhost:') ||
+    host.includes('.vercel.app') ||
+    referer.includes('.vercel.app');
 
-  if (origin) {
-    res.setHeader('Access-Control-Allow-Origin', isAllowed ? origin : '*');
-  }
-  if (isAllowed) {
+  // For same-origin requests (when proxied through Vercel rewrites), use the requesting origin
+  // For cross-origin requests, use specific origin or wildcard
+  if (origin && isAllowed) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Access-Control-Allow-Credentials', 'true');
+  } else if (origin) {
+    // For other origins, use the specific origin but don't allow credentials
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  } else {
+    // Fallback to wildcard for requests without origin
+    res.setHeader('Access-Control-Allow-Origin', '*');
   }
   
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');

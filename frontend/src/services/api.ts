@@ -22,6 +22,8 @@ try {
 } catch {}
 
 console.log('TCC_DEBUG: API_BASE_URL is set to:', API_BASE_URL, 'ENV:', ENV_NAME);
+console.log('TCC_DEBUG: EXPLICIT_API_URL:', EXPLICIT_API_URL);
+console.log('TCC_DEBUG: import.meta.env.DEV:', import.meta.env.DEV);
 
 // Create axios instance
 const api = axios.create({
