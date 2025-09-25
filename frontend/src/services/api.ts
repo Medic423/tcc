@@ -6,7 +6,7 @@ const EXPLICIT_API_URL = (import.meta.env.VITE_API_URL as string | undefined) ||
 const DEFAULT_DEV_URL = 'http://localhost:5001';
 // NOTE: Prefer setting VITE_API_URL in env. This fallback should point to the
 // stable production API domain. Updated to latest deploy for now.
-const DEFAULT_PROD_URL = 'https://traccems.com';
+const DEFAULT_PROD_URL = 'https://vercel-bqfo02a73-chuck-ferrells-projects.vercel.app';
 
 let API_BASE_URL = EXPLICIT_API_URL || (import.meta.env.DEV ? DEFAULT_DEV_URL : DEFAULT_PROD_URL);
 
@@ -24,8 +24,7 @@ console.log('TCC_DEBUG: API_BASE_URL is set to:', API_BASE_URL, 'ENV:', ENV_NAME
 // Create axios instance
 const api = axios.create({
   baseURL: API_BASE_URL,
-  // Use Authorization header (JWT) instead of cookies to avoid CORS credential restrictions
-  withCredentials: false,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
     // NOTE: Do NOT set custom headers by default to avoid CORS issues
