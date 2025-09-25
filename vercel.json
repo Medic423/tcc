@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "export ROLLUP_SKIP_NODEJS_NATIVE=1 ROLLUP_USE_NODEJS_NATIVE=0 npm_config_optional=false && npm run build",
+  "buildCommand": "export ROLLUP_SKIP_NODEJS_NATIVE=1 ROLLUP_USE_NODEJS_NATIVE=0 npm_config_optional=false && npm ci --include=optional && npm run build",
   "outputDirectory": "frontend/dist",
   "rewrites": [
     {
