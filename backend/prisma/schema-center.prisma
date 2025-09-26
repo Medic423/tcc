@@ -130,6 +130,7 @@ model Trip {
   // Trip Details
   fromLocation      String
   pickupLocationId  String?  // Reference to specific pickup location within hospital
+  customPickupLocation String? // Custom pickup location entered manually
   toLocation        String
   scheduledTime     DateTime
   transportLevel    String    // BLS, ALS, CCT, Other

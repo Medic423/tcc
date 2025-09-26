@@ -44,6 +44,7 @@ interface Trip {
   oxygenRequired: boolean;
   monitoringRequired: boolean;
   pickupLocationId?: string;
+  customPickupLocation?: string;
   pickupLocation?: {
     id: string;
     name: string;
@@ -269,6 +270,11 @@ const TripCard: React.FC<{
                   <div className="text-blue-600">{trip.pickupLocation.contactPhone}</div>
                   <div className="text-blue-600">{trip.pickupLocation.contactEmail}</div>
                 </div>
+              </div>
+            ) : trip.customPickupLocation ? (
+              <div>
+                <div className="font-bold text-gray-900">Custom Location</div>
+                <div className="text-sm text-gray-600">{trip.customPickupLocation}</div>
               </div>
             ) : (
               <span className="text-gray-400 italic">No specific location</span>
@@ -1390,23 +1396,50 @@ const TripsView: React.FC<TripsViewProps> = ({ user }) => {
                     Loading pickup locations...
                   </div>
                 ) : (
-                  <select
-                    value={editingTrip.pickupLocationId || ''}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    onChange={(e) => setEditingTrip({
-                      ...editingTrip,
-                      pickupLocationId: e.target.value || undefined
-                    })}
-                  >
-                    <option value="">Select a pickup location</option>
-                    {pickupLocations.map((location) => (
-                      <option key={location.id} value={location.id}>
-                        {location.name}
-                        {location.floor && ` - Floor ${location.floor}`}
-                        {location.room && `, Room ${location.room}`}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="space-y-2">
+                    <select
+                      value={editingTrip.pickupLocationId || ''}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      onChange={(e) => {
+                        if (e.target.value === 'custom') {
+                          setEditingTrip({
+                            ...editingTrip,
+                            pickupLocationId: 'custom',
+                            customPickupLocation: editingTrip.customPickupLocation || ''
+                          });
+                        } else {
+                          setEditingTrip({
+                            ...editingTrip,
+                            pickupLocationId: e.target.value || undefined,
+                            customPickupLocation: ''
+                          });
+                        }
+                      }}
+                    >
+                      <option value="">Select a pickup location</option>
+                      {pickupLocations.map((location) => (
+                        <option key={location.id} value={location.id}>
+                          {location.name}
+                          {location.floor && ` - Floor ${location.floor}`}
+                          {location.room && `, Room ${location.room}`}
+                        </option>
+                      ))}
+                      <option value="custom">Custom Location (Enter Manually)</option>
+                    </select>
+                    
+                    {editingTrip.pickupLocationId === 'custom' && (
+                      <input
+                        type="text"
+                        placeholder="Enter custom pickup location..."
+                        value={editingTrip.customPickupLocation || ''}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        onChange={(e) => setEditingTrip({
+                          ...editingTrip,
+                          customPickupLocation: e.target.value
+                        })}
+                      />
+                    )}
+                  </div>
                 )}
                 {editingTrip.pickupLocation && (
                   <div className="mt-2 p-3 bg-blue-50 rounded-md">
@@ -1428,6 +1461,12 @@ const TripsView: React.FC<TripsViewProps> = ({ user }) => {
                         <p className="text-xs text-gray-500"><span className="font-medium">Email:</span> {editingTrip.pickupLocation.contactEmail}</p>
                       )}
                     </div>
+                  </div>
+                )}
+                {editingTrip.pickupLocationId === 'custom' && editingTrip.customPickupLocation && (
+                  <div className="mt-2 p-3 bg-green-50 rounded-md">
+                    <p className="text-sm font-medium text-gray-900">Custom Location:</p>
+                    <p className="text-sm text-gray-600 mt-1">{editingTrip.customPickupLocation}</p>
                   </div>
                 )}
               </div>
@@ -1614,7 +1653,8 @@ const TripsView: React.FC<TripsViewProps> = ({ user }) => {
                       mobilityLevel: editingTrip.mobilityLevel,
                       oxygenRequired: editingTrip.oxygenRequired,
                       monitoringRequired: editingTrip.monitoringRequired,
-                      pickupLocationId: editingTrip.pickupLocationId,
+                      pickupLocationId: editingTrip.pickupLocationId === 'custom' ? undefined : editingTrip.pickupLocationId,
+                      customPickupLocation: editingTrip.pickupLocationId === 'custom' ? editingTrip.customPickupLocation : undefined,
                       fromLocation: editingTrip.fromLocation,
                       toLocation: editingTrip.toLocation
                     });
@@ -1638,7 +1678,9 @@ const TripsView: React.FC<TripsViewProps> = ({ user }) => {
                           id: updatedTrip.pickupLocation.hospital.id,
                           name: updatedTrip.pickupLocation.hospital.name
                         } : undefined
-                      } : undefined
+                      } : undefined,
+                      // Include custom pickup location if present
+                      customPickupLocation: updatedTrip.customPickupLocation
                     };
                     
                     // Update the trip in local state with the API response data
