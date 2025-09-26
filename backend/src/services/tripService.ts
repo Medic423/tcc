@@ -1872,6 +1872,11 @@ export class TripService {
         return { success: false, error: 'Trip not found' };
       }
 
+      // Delete agency responses first (due to foreign key constraint)
+      await prisma.agencyResponse.deleteMany({
+        where: { tripId: id }
+      });
+
       // Delete from center database
       await prisma.trip.delete({
         where: { id }

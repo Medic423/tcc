@@ -604,7 +604,14 @@ const TripsView: React.FC<TripsViewProps> = ({ user }) => {
 
   // Auto-refresh every 30 seconds
   useEffect(() => {
-    const interval = setInterval(fetchTrips, 30000);
+    const interval = setInterval(() => {
+      // Preserve scroll position during refresh
+      const scrollPosition = window.pageYOffset;
+      fetchTrips().then(() => {
+        // Restore scroll position after refresh
+        window.scrollTo(0, scrollPosition);
+      });
+    }, 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -1110,9 +1117,9 @@ const TripsView: React.FC<TripsViewProps> = ({ user }) => {
 
       {/* Trip Cards */}
       <div className="space-y-4">
-        {filteredTrips.map((trip) => (
+        {filteredTrips.map((trip, index) => (
           <TripCard 
-            key={trip.id} 
+            key={`${trip.id}-${trip.updatedAt}`} 
             trip={trip} 
             user={user} 
             onEditTrip={handleEditTrip}
@@ -1597,7 +1604,7 @@ const TripsView: React.FC<TripsViewProps> = ({ user }) => {
                     console.log('Saving trip changes:', editingTrip);
                     
                     // Update the trip via API
-                    await tripsAPI.update(editingTrip.id, {
+                    const response = await tripsAPI.update(editingTrip.id, {
                       status: editingTrip.status,
                       priority: editingTrip.priority,
                       transportLevel: editingTrip.transportLevel,
@@ -1612,15 +1619,37 @@ const TripsView: React.FC<TripsViewProps> = ({ user }) => {
                       toLocation: editingTrip.toLocation
                     });
                     
-                    // Update the trip in local state
+                    // Use the updated trip data from the API response
+                    const updatedTrip = response.data.data;
+                    
+                    // Transform the API response to match our frontend format
+                    const transformedTrip = {
+                      ...updatedTrip,
+                      // Transform pickup_locations to pickupLocation for frontend compatibility
+                      pickupLocation: updatedTrip.pickupLocation ? {
+                        id: updatedTrip.pickupLocation.id,
+                        name: updatedTrip.pickupLocation.name,
+                        description: updatedTrip.pickupLocation.description,
+                        contactPhone: updatedTrip.pickupLocation.contactPhone,
+                        contactEmail: updatedTrip.pickupLocation.contactEmail,
+                        floor: updatedTrip.pickupLocation.floor,
+                        room: updatedTrip.pickupLocation.room,
+                        hospital: updatedTrip.pickupLocation.hospital ? {
+                          id: updatedTrip.pickupLocation.hospital.id,
+                          name: updatedTrip.pickupLocation.hospital.name
+                        } : undefined
+                      } : undefined
+                    };
+                    
+                    // Update the trip in local state with the API response data
                     setTrips(prevTrips => 
                       prevTrips.map(t => 
-                        t.id === editingTrip.id ? editingTrip : t
+                        t.id === editingTrip.id ? transformedTrip : t
                       )
                     );
                     setFilteredTrips(prevTrips => 
                       prevTrips.map(t => 
-                        t.id === editingTrip.id ? editingTrip : t
+                        t.id === editingTrip.id ? transformedTrip : t
                       )
                     );
                     
