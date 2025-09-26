@@ -386,6 +386,50 @@ const TripsView: React.FC<TripsViewProps> = ({ user }) => {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [pickupLocations, setPickupLocations] = useState<any[]>([]);
   const [loadingPickupLocations, setLoadingPickupLocations] = useState(false);
+  const [hospitals, setHospitals] = useState<any[]>([]);
+  const [facilities, setFacilities] = useState<any[]>([]);
+  const [loadingLocations, setLoadingLocations] = useState(false);
+
+  // Fetch all locations (hospitals and facilities)
+  const fetchAllLocations = async () => {
+    try {
+      setLoadingLocations(true);
+      const [hospitalsResponse, facilitiesResponse] = await Promise.all([
+        fetch('/api/tcc/hospitals', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          },
+        }),
+        fetch('/api/tcc/facilities', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          },
+        })
+      ]);
+      
+      if (hospitalsResponse.ok) {
+        const hospitalsData = await hospitalsResponse.json();
+        setHospitals(hospitalsData.data || []);
+      } else {
+        console.error('Failed to fetch hospitals');
+        setHospitals([]);
+      }
+      
+      if (facilitiesResponse.ok) {
+        const facilitiesData = await facilitiesResponse.json();
+        setFacilities(facilitiesData.data || []);
+      } else {
+        console.error('Failed to fetch facilities');
+        setFacilities([]);
+      }
+    } catch (error) {
+      console.error('Error fetching locations:', error);
+      setHospitals([]);
+      setFacilities([]);
+    } finally {
+      setLoadingLocations(false);
+    }
+  };
 
   // Fetch pickup locations for a hospital
   const fetchPickupLocations = async (hospitalId: string) => {
@@ -417,10 +461,11 @@ const TripsView: React.FC<TripsViewProps> = ({ user }) => {
     setEditingTrip(trip);
     setEditModalOpen(true);
     
-    // Extract hospital ID from fromLocation or use a default
-    // For now, we'll use a simple approach - in a real app, you'd have hospital mapping
-    const hospitalId = '1'; // This should be determined from the trip's fromLocation
-    await fetchPickupLocations(hospitalId);
+    // Fetch all locations and pickup locations
+    await Promise.all([
+      fetchAllLocations(),
+      trip.hospitalId ? fetchPickupLocations(trip.hospitalId) : Promise.resolve()
+    ]);
   };
 
   const handleDeleteTrip = async (trip: Trip) => {
@@ -1261,23 +1306,63 @@ const TripsView: React.FC<TripsViewProps> = ({ user }) => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     From Location
                   </label>
-                  <input
-                    type="text"
-                    value={editingTrip.fromLocation}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    readOnly
-                  />
+                  {loadingLocations ? (
+                    <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500">
+                      Loading locations...
+                    </div>
+                  ) : (
+                    <select
+                      value={editingTrip.fromLocation}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      onChange={(e) => setEditingTrip({
+                        ...editingTrip,
+                        fromLocation: e.target.value
+                      })}
+                    >
+                      <option value="">Select from location</option>
+                      {hospitals.map((hospital) => (
+                        <option key={hospital.id} value={hospital.name}>
+                          {hospital.name} - {hospital.city}, {hospital.state}
+                        </option>
+                      ))}
+                      {facilities.map((facility) => (
+                        <option key={facility.id} value={facility.name}>
+                          {facility.name} - {facility.city}, {facility.state}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     To Location
                   </label>
-                  <input
-                    type="text"
-                    value={editingTrip.toLocation}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    readOnly
-                  />
+                  {loadingLocations ? (
+                    <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500">
+                      Loading locations...
+                    </div>
+                  ) : (
+                    <select
+                      value={editingTrip.toLocation}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      onChange={(e) => setEditingTrip({
+                        ...editingTrip,
+                        toLocation: e.target.value
+                      })}
+                    >
+                      <option value="">Select to location</option>
+                      {hospitals.map((hospital) => (
+                        <option key={hospital.id} value={hospital.name}>
+                          {hospital.name} - {hospital.city}, {hospital.state}
+                        </option>
+                      ))}
+                      {facilities.map((facility) => (
+                        <option key={facility.id} value={facility.name}>
+                          {facility.name} - {facility.city}, {facility.state}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 </div>
               </div>
 
@@ -1514,7 +1599,9 @@ const TripsView: React.FC<TripsViewProps> = ({ user }) => {
                       mobilityLevel: editingTrip.mobilityLevel,
                       oxygenRequired: editingTrip.oxygenRequired,
                       monitoringRequired: editingTrip.monitoringRequired,
-                      pickupLocationId: editingTrip.pickupLocationId
+                      pickupLocationId: editingTrip.pickupLocationId,
+                      fromLocation: editingTrip.fromLocation,
+                      toLocation: editingTrip.toLocation
                     });
                     
                     // Update the trip in local state
