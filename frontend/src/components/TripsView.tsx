@@ -224,10 +224,11 @@ const TripCard: React.FC<{
     <div className="bg-white shadow rounded-lg border">
       {/* Header Row */}
       <div className="bg-gray-50 px-6 py-3 border-b">
-        <div className="grid grid-cols-5 gap-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
+        <div className="grid grid-cols-6 gap-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
           <div>PATIENT</div>
           <div>ROUTE</div>
           <div>PICKUP LOCATION</div>
+          <div>SCHEDULED TIME</div>
           <div>PRIORITY</div>
           <div>ACTIONS</div>
         </div>
@@ -235,11 +236,10 @@ const TripCard: React.FC<{
 
       {/* Main Information Row */}
       <div className="px-6 py-4">
-        <div className="grid grid-cols-5 gap-4">
+        <div className="grid grid-cols-6 gap-4">
           {/* Patient Column */}
           <div>
             <div className="font-bold text-gray-900">{trip.patientId}</div>
-            <div className="text-sm text-gray-500">{formatDateTime(trip.scheduledTime)}</div>
           </div>
 
           {/* Route Column */}
@@ -279,6 +279,14 @@ const TripCard: React.FC<{
             ) : (
               <span className="text-gray-400 italic">No specific location</span>
             )}
+          </div>
+
+          {/* Scheduled Time Column */}
+          <div>
+            <div className="text-sm font-semibold text-blue-900 bg-blue-50 px-2 py-1 rounded-md border border-blue-200">
+              {formatDateTime(trip.scheduledTime)}
+            </div>
+            <div className="text-xs text-gray-500 mt-1">Scheduled</div>
           </div>
 
           {/* Priority Column */}

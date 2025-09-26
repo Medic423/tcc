@@ -335,6 +335,11 @@ router.put('/:id', async (req, res) => {
       });
     }
 
+    // Convert scheduledTime to Date object if provided
+    if (updateData.scheduledTime) {
+      updateData.scheduledTime = new Date(updateData.scheduledTime);
+    }
+
     const result = await tripService.updateTrip(id, updateData);
 
     if (!result.success) {
