@@ -1,5 +1,5 @@
 import express from 'express';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../../node_modules/.prisma/center';
 import fs from 'fs';
 import path from 'path';
 import { authenticateAdmin } from '../middleware/authenticateAdmin';

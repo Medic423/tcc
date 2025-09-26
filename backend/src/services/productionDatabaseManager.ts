@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../../node_modules/.prisma/center';
 
 // Production database manager for single database setup
 class ProductionDatabaseManager {

@@ -330,7 +330,7 @@ app.post('/api/agency-responses', (req, res) => {
       tripId: req.body.tripId,
       agencyId: req.body.agencyId,
       response: req.body.response,
-      responseTimestamp: new Date().toISOString(),
+      responseTime: new Date().toISOString(),
       responseNotes: req.body.responseNotes,
       estimatedArrival: req.body.estimatedArrival,
       isSelected: false,

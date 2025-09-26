@@ -1,5 +1,5 @@
 import nodemailer from 'nodemailer';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../../node_modules/.prisma/center';
 import enhancedSMSService from './enhancedSMSService';
 import twilioSMSService from './twilioSMSService';
 import sendGridEmailService from './sendGridEmailService';

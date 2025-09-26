@@ -111,6 +111,9 @@ model EMSAgency {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
+  // Relations
+  agencyResponses AgencyResponse[]
+
   @@map("ems_agencies")
 }
 
@@ -205,6 +208,7 @@ model Trip {
 
   // Relations
   pickupLocation    PickupLocation? @relation("PickupLocation", fields: [pickupLocationId], references: [id])
+  agencyResponses   AgencyResponse[]
 
   @@map("trips")
 }
@@ -402,4 +406,23 @@ model CostCenter {
   updatedAt             DateTime @updatedAt
   
   @@map("cost_centers")
+}
+
+model AgencyResponse {
+  id                String   @id @default(cuid())
+  tripId            String
+  agencyId          String
+  response          String   // ACCEPTED, DECLINED, PENDING
+  responseNotes     String?
+  estimatedArrival  DateTime?
+  responseTime      DateTime @default(now())
+  isSelected        Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  trip              Trip     @relation(fields: [tripId], references: [id])
+  agency            EMSAgency @relation(fields: [agencyId], references: [id])
+
+  @@map("agency_responses")
 }

@@ -8,7 +8,7 @@ export interface AgencyResponse {
   tripId: string;
   agencyId: string;
   response: 'ACCEPTED' | 'DECLINED' | 'PENDING';
-  responseTimestamp: Date;
+  responseTime: Date;
   responseNotes?: string;
   estimatedArrival?: Date;
   isSelected: boolean;

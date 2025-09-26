@@ -361,6 +361,38 @@ router.put('/:id/status', async (req, res) => {
 });
 
 /**
+ * DELETE /api/trips/:id
+ * Delete a trip
+ */
+router.delete('/:id', async (req, res) => {
+  try {
+    console.log('TCC_DEBUG: Delete trip request:', req.params.id);
+    
+    const { id } = req.params;
+    const result = await tripService.deleteTrip(id);
+
+    if (!result.success) {
+      return res.status(404).json({
+        success: false,
+        error: result.error
+      });
+    }
+
+    res.json({
+      success: true,
+      message: result.message
+    });
+
+  } catch (error) {
+    console.error('TCC_DEBUG: Delete trip error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+});
+
+/**
  * GET /api/trips/agencies/available
  * Get available EMS agencies for assignment
  */

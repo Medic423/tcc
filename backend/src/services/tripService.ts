@@ -2,6 +2,7 @@ import { databaseManager } from './databaseManager';
 import emailService from './emailService';
 import { PatientIdService, DIAGNOSIS_OPTIONS, MOBILITY_OPTIONS, TRANSPORT_LEVEL_OPTIONS, URGENCY_OPTIONS } from './patientIdService';
 import { DistanceService } from './distanceService';
+import { GeolocationService } from './geolocationService';
 import { 
   AgencyResponse, 
   CreateAgencyResponseRequest, 
@@ -106,6 +107,15 @@ export class TripService {
       const scheduledTime = new Date(data.scheduledTime);
       const transferRequestTime = new Date();
       
+      // Get GPS coordinates and calculate distance
+      const locationData = GeolocationService.getTripLocationData(
+        data.fromLocation, 
+        data.toLocation, 
+        data.transportLevel
+      );
+      
+      console.log('TCC_DEBUG: Location data calculated:', locationData);
+      
       // Calculate insurance-specific pricing
       const insurancePricing = this.calculateInsurancePricing(data.insuranceCompany, data.transportLevel);
       
@@ -138,13 +148,20 @@ export class TripService {
         priority: priority,
         notes: data.notes || null,
         assignedTo: null,
+        // GPS coordinates and distance data
+        originLatitude: locationData?.originLatitude || null,
+        originLongitude: locationData?.originLongitude || null,
+        destinationLatitude: locationData?.destinationLatitude || null,
+        destinationLongitude: locationData?.destinationLongitude || null,
+        distanceMiles: locationData?.distanceMiles || null,
+        estimatedTripTimeMinutes: locationData?.estimatedTripTimeMinutes || null,
+        
         // Insurance-specific pricing
         insurancePayRate: insurancePricing.payRate,
         perMileRate: insurancePricing.perMileRate,
         
         // Revenue and distance tracking
-        tripCost: revenueData.tripCost,
-        distanceMiles: revenueData.estimatedDistance,
+        tripCost: locationData?.tripCost || revenueData.tripCost,
       };
       
       // Create trip in Center database with detailed error logging
@@ -177,14 +194,47 @@ export class TripService {
       // Sync to EMS database
       try {
         const emsPrisma = databaseManager.getEMSDB();
+        // Create EMS-specific data object excluding fields that don't exist in EMS schema
+        const emsTripData = {
+          tripNumber: tripData.tripNumber,
+          patientId: tripData.patientId,
+          patientWeight: tripData.patientWeight,
+          specialNeeds: tripData.specialNeeds,
+          fromLocation: tripData.fromLocation,
+          pickupLocationId: tripData.pickupLocationId,
+          toLocation: tripData.toLocation,
+          scheduledTime: tripData.scheduledTime,
+          transportLevel: tripData.transportLevel,
+          urgencyLevel: tripData.urgencyLevel,
+          diagnosis: tripData.diagnosis,
+          mobilityLevel: tripData.mobilityLevel,
+          oxygenRequired: tripData.oxygenRequired,
+          monitoringRequired: tripData.monitoringRequired,
+          generateQRCode: tripData.generateQRCode,
+          qrCodeData: tripData.qrCodeData,
+          selectedAgencies: tripData.selectedAgencies,
+          notificationRadius: tripData.notificationRadius,
+          transferRequestTime: tripData.transferRequestTime,
+          status: tripData.status,
+          priority: tripData.priority,
+          notes: tripData.notes,
+          assignedTo: tripData.assignedTo,
+          originLatitude: tripData.originLatitude,
+          originLongitude: tripData.originLongitude,
+          destinationLatitude: tripData.destinationLatitude,
+          destinationLongitude: tripData.destinationLongitude,
+          distanceMiles: tripData.distanceMiles,
+          estimatedTripTimeMinutes: tripData.estimatedTripTimeMinutes,
+          insurancePayRate: tripData.insurancePayRate,
+          perMileRate: tripData.perMileRate,
+          tripCost: tripData.tripCost,
+          originFacilityId: null, // Will be populated from facility lookup
+          destinationFacilityId: null, // Will be populated from facility lookup
+          createdById: null, // Will be populated when EMS user accepts
+        };
+        
         await emsPrisma.transportRequest.create({
-          data: {
-            ...tripData,
-            // EMS-specific fields
-            originFacilityId: null, // Will be populated from facility lookup
-            destinationFacilityId: null, // Will be populated from facility lookup
-            createdById: null, // Will be populated when EMS user accepts
-          },
+          data: emsTripData,
         });
         console.log('TCC_DEBUG: Trip synced to EMS database');
       } catch (emsError) {
@@ -195,14 +245,47 @@ export class TripService {
       // Sync to Hospital database
       try {
         const hospitalPrisma = databaseManager.getHospitalDB();
+        // Create Hospital-specific data object excluding fields that don't exist in Hospital schema
+        const hospitalTripData = {
+          tripNumber: tripData.tripNumber,
+          patientId: tripData.patientId,
+          patientWeight: tripData.patientWeight,
+          specialNeeds: tripData.specialNeeds,
+          fromLocation: tripData.fromLocation,
+          pickupLocationId: tripData.pickupLocationId,
+          toLocation: tripData.toLocation,
+          scheduledTime: tripData.scheduledTime,
+          transportLevel: tripData.transportLevel,
+          urgencyLevel: tripData.urgencyLevel,
+          diagnosis: tripData.diagnosis,
+          mobilityLevel: tripData.mobilityLevel,
+          oxygenRequired: tripData.oxygenRequired,
+          monitoringRequired: tripData.monitoringRequired,
+          generateQRCode: tripData.generateQRCode,
+          qrCodeData: tripData.qrCodeData,
+          selectedAgencies: tripData.selectedAgencies,
+          notificationRadius: tripData.notificationRadius,
+          transferRequestTime: tripData.transferRequestTime,
+          status: tripData.status,
+          priority: tripData.priority,
+          notes: tripData.notes,
+          assignedTo: tripData.assignedTo,
+          originLatitude: tripData.originLatitude,
+          originLongitude: tripData.originLongitude,
+          destinationLatitude: tripData.destinationLatitude,
+          destinationLongitude: tripData.destinationLongitude,
+          distanceMiles: tripData.distanceMiles,
+          estimatedTripTimeMinutes: tripData.estimatedTripTimeMinutes,
+          insurancePayRate: tripData.insurancePayRate,
+          perMileRate: tripData.perMileRate,
+          tripCost: tripData.tripCost,
+          originFacilityId: null, // Will be populated from facility lookup
+          destinationFacilityId: null, // Will be populated from facility lookup
+          healthcareCreatedById: null, // Will be populated from healthcare user
+        };
+        
         await hospitalPrisma.transportRequest.create({
-          data: {
-            ...tripData,
-            // Hospital-specific fields
-            originFacilityId: null, // Will be populated from facility lookup
-            destinationFacilityId: null, // Will be populated from facility lookup
-            healthcareCreatedById: null, // Will be populated from healthcare user
-          },
+          data: hospitalTripData,
         });
         console.log('TCC_DEBUG: Trip synced to Hospital database');
       } catch (hospitalError) {
@@ -310,7 +393,7 @@ export class TripService {
       const trips = await prisma.trip.findMany({
         where,
         include: {
-          pickup_locations: {
+          pickupLocation: {
             select: {
               id: true,
               name: true,
@@ -319,7 +402,7 @@ export class TripService {
               contactEmail: true,
               floor: true,
               room: true,
-              hospitals: {
+              hospital: {
                 select: {
                   id: true,
                   name: true
@@ -351,7 +434,7 @@ export class TripService {
       const trip = await prisma.trip.findUnique({
         where: { id },
         include: {
-          pickup_locations: {
+          pickupLocation: {
             select: {
               id: true,
               name: true,
@@ -360,7 +443,7 @@ export class TripService {
               contactEmail: true,
               floor: true,
               room: true,
-              hospitals: {
+              hospital: {
                 select: {
                   id: true,
                   name: true
@@ -1058,10 +1141,10 @@ export class TripService {
       const trips = await prisma.trip.findMany({
         where: whereClause,
         include: {
-          pickup_locations: {
+          pickupLocation: {
             select: {
               name: true,
-              hospitals: {
+              hospital: {
                 select: {
                   name: true
                 }
@@ -1357,18 +1440,18 @@ export class TripService {
       if (filters.isSelected !== undefined) where.isSelected = filters.isSelected;
       
       if (filters.dateFrom || filters.dateTo) {
-        where.responseTimestamp = {};
+        where.responseTime = {};
         if (filters.dateFrom) {
-          where.responseTimestamp.gte = new Date(filters.dateFrom);
+          where.responseTime.gte = new Date(filters.dateFrom);
         }
         if (filters.dateTo) {
-          where.responseTimestamp.lte = new Date(filters.dateTo);
+          where.responseTime.lte = new Date(filters.dateTo);
         }
       }
 
       const responses = await prisma.agencyResponse.findMany({
         where,
-        orderBy: { responseTimestamp: 'desc' }
+        orderBy: { responseTime: 'desc' }
       });
 
       console.log('TCC_DEBUG: Found agency responses:', responses.length);
@@ -1485,7 +1568,7 @@ export class TripService {
         where: { id: tripId },
         include: {
           agencyResponses: {
-            orderBy: { responseTimestamp: 'asc' }
+            orderBy: { responseTime: 'asc' }
           }
         }
       });
@@ -1523,7 +1606,7 @@ export class TripService {
       const selectedResponse = responses.find((r: any) => r.isSelected);
       if (selectedResponse) {
         const responseTime = Math.round(
-          (new Date(selectedResponse.responseTimestamp).getTime() - 
+          (new Date(selectedResponse.responseTime).getTime() - 
            new Date(selectedResponse.createdAt).getTime()) / (1000 * 60)
         );
         
@@ -1678,6 +1761,54 @@ export class TripService {
     } catch (error) {
       console.error('TCC_DEBUG: Error updating trip response fields:', error);
       return { success: false, error: 'Failed to update trip response fields' };
+    }
+  }
+
+  /**
+   * Delete a trip
+   */
+  async deleteTrip(id: string) {
+    console.log('TCC_DEBUG: Deleting trip:', id);
+    
+    try {
+      // Check if trip exists
+      const existingTrip = await prisma.trip.findUnique({
+        where: { id }
+      });
+
+      if (!existingTrip) {
+        return { success: false, error: 'Trip not found' };
+      }
+
+      // Delete from center database
+      await prisma.trip.delete({
+        where: { id }
+      });
+
+      // Also delete from EMS and Hospital databases if they exist
+      try {
+        const emsPrisma = databaseManager.getEMSDB();
+        await emsPrisma.transportRequest.deleteMany({
+          where: { tripNumber: existingTrip.tripNumber }
+        });
+      } catch (error) {
+        console.log('TCC_DEBUG: No EMS database entry to delete for trip:', existingTrip.tripNumber);
+      }
+
+      try {
+        const hospitalPrisma = databaseManager.getHospitalDB();
+        await hospitalPrisma.transportRequest.deleteMany({
+          where: { tripNumber: existingTrip.tripNumber }
+        });
+      } catch (error) {
+        console.log('TCC_DEBUG: No Hospital database entry to delete for trip:', existingTrip.tripNumber);
+      }
+
+      console.log('TCC_DEBUG: Trip deleted successfully:', id);
+      return { success: true, message: 'Trip deleted successfully' };
+    } catch (error) {
+      console.error('TCC_DEBUG: Error deleting trip:', error);
+      return { success: false, error: 'Failed to delete trip' };
     }
   }
 }

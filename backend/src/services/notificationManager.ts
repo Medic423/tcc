@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../../node_modules/.prisma/center';
 import enhancedEmailService from './enhancedEmailService';
 
 const centerPrisma = new PrismaClient();

@@ -19,10 +19,10 @@ router.get('/hospital/:hospitalId', authenticateAdmin, async (req: Authenticated
       whereClause.isActive = true;
     }
 
-    const pickup_locationss = await databaseManager.getPrismaClient().pickup_locations.findMany({
+    const pickupLocations = await databaseManager.getPrismaClient().pickupLocation.findMany({
       where: whereClause,
       include: {
-        hospitals: {
+        hospital: {
           select: {
             id: true,
             name: true
@@ -36,7 +36,7 @@ router.get('/hospital/:hospitalId', authenticateAdmin, async (req: Authenticated
 
     res.json({
       success: true,
-      data: pickup_locationss
+      data: pickupLocations
     });
   } catch (error) {
     console.error('Error fetching pickup locations:', error);
@@ -52,10 +52,10 @@ router.get('/:id', authenticateAdmin, async (req: AuthenticatedRequest, res) => 
   try {
     const { id } = req.params;
 
-    const pickup_locations = await databaseManager.getPrismaClient().pickup_locations.findUnique({
+    const pickupLocation = await databaseManager.getPrismaClient().pickupLocation.findUnique({
       where: { id },
       include: {
-        hospitals: {
+        hospital: {
           select: {
             id: true,
             name: true
@@ -64,7 +64,7 @@ router.get('/:id', authenticateAdmin, async (req: AuthenticatedRequest, res) => 
       }
     });
 
-    if (!pickup_locations) {
+    if (!pickupLocation) {
       return res.status(404).json({
         success: false,
         error: 'Pickup location not found'
@@ -73,7 +73,7 @@ router.get('/:id', authenticateAdmin, async (req: AuthenticatedRequest, res) => 
 
     res.json({
       success: true,
-      data: pickup_locations
+      data: pickupLocation
     });
   } catch (error) {
     console.error('Error fetching pickup location:', error);
@@ -118,7 +118,7 @@ router.post('/', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
     }
 
     // Check if pickup location with same name already exists for this hospital
-    const existingLocation = await databaseManager.getPrismaClient().pickup_locations.findFirst({
+    const existingLocation = await databaseManager.getPrismaClient().pickupLocation.findFirst({
       where: {
         hospitalId,
         name: name.trim(),
@@ -133,7 +133,7 @@ router.post('/', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
       });
     }
 
-    const pickup_locations = await databaseManager.getPrismaClient().pickup_locations.create({
+    const pickupLocation = await databaseManager.getPrismaClient().pickupLocation.create({
       data: {
         id: `pickup-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         hospitalId,
@@ -146,7 +146,7 @@ router.post('/', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
         updatedAt: new Date()
       },
       include: {
-        hospitals: {
+        hospital: {
           select: {
             id: true,
             name: true
@@ -157,7 +157,7 @@ router.post('/', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
 
     res.status(201).json({
       success: true,
-      data: pickup_locations,
+      data: pickupLocation,
       message: 'Pickup location created successfully'
     });
   } catch (error) {
@@ -184,7 +184,7 @@ router.put('/:id', authenticateAdmin, async (req: AuthenticatedRequest, res) => 
     } = req.body;
 
     // Check if pickup location exists
-    const existingLocation = await databaseManager.getPrismaClient().pickup_locations.findUnique({
+    const existingLocation = await databaseManager.getPrismaClient().pickupLocation.findUnique({
       where: { id }
     });
 
@@ -197,7 +197,7 @@ router.put('/:id', authenticateAdmin, async (req: AuthenticatedRequest, res) => 
 
     // If updating name, check for duplicates
     if (name && name.trim() !== existingLocation.name) {
-      const duplicateLocation = await databaseManager.getPrismaClient().pickup_locations.findFirst({
+      const duplicateLocation = await databaseManager.getPrismaClient().pickupLocation.findFirst({
         where: {
           hospitalId: existingLocation.hospitalId,
           name: name.trim(),
@@ -214,7 +214,7 @@ router.put('/:id', authenticateAdmin, async (req: AuthenticatedRequest, res) => 
       }
     }
 
-    const updatedLocation = await databaseManager.getPrismaClient().pickup_locations.update({
+    const updatedLocation = await databaseManager.getPrismaClient().pickupLocation.update({
       where: { id },
       data: {
         name: name?.trim() || existingLocation.name,
@@ -226,7 +226,7 @@ router.put('/:id', authenticateAdmin, async (req: AuthenticatedRequest, res) => 
         isActive: isActive !== undefined ? isActive : existingLocation.isActive
       },
       include: {
-        hospitals: {
+        hospital: {
           select: {
             id: true,
             name: true
@@ -255,7 +255,7 @@ router.delete('/:id', authenticateAdmin, async (req: AuthenticatedRequest, res) 
     const { id } = req.params;
 
     // Check if pickup location exists
-    const existingLocation = await databaseManager.getPrismaClient().pickup_locations.findUnique({
+    const existingLocation = await databaseManager.getPrismaClient().pickupLocation.findUnique({
       where: { id }
     });
 
@@ -281,7 +281,7 @@ router.delete('/:id', authenticateAdmin, async (req: AuthenticatedRequest, res) 
     }
 
     // Soft delete by setting isActive to false
-    await databaseManager.getPrismaClient().pickup_locations.update({
+    await databaseManager.getPrismaClient().pickupLocation.update({
       where: { id },
       data: { isActive: false }
     });
@@ -305,7 +305,7 @@ router.delete('/:id/hard', authenticateAdmin, async (req: AuthenticatedRequest, 
     const { id } = req.params;
 
     // Check if pickup location exists
-    const existingLocation = await databaseManager.getPrismaClient().pickup_locations.findUnique({
+    const existingLocation = await databaseManager.getPrismaClient().pickupLocation.findUnique({
       where: { id }
     });
 
@@ -331,7 +331,7 @@ router.delete('/:id/hard', authenticateAdmin, async (req: AuthenticatedRequest, 
     }
 
     // Hard delete
-    await databaseManager.getPrismaClient().pickup_locations.delete({
+    await databaseManager.getPrismaClient().pickupLocation.delete({
       where: { id }
     });
 

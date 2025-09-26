@@ -1,4 +1,4 @@
-import { PrismaClient as CenterPrismaClient } from '@prisma/client';
+import { PrismaClient as CenterPrismaClient } from '../../node_modules/.prisma/center';
 import { PrismaClient as EMSPrismaClient } from '@prisma/ems';
 import { PrismaClient as HospitalPrismaClient } from '@prisma/hospital';
 
