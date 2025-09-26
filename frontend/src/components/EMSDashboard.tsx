@@ -21,6 +21,7 @@ interface EMSDashboardProps {
     name: string;
     userType: string;
     agencyName?: string;
+    agencyId?: string;
   };
   onLogout: () => void;
 }
@@ -240,7 +241,7 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
         },
         body: JSON.stringify({
           tripId: tripId,
-          agencyId: user.agencyId || 'agency_1', // Use agencyId from user or fallback to first agency
+          agencyId: user.agencyId, // Use agencyId from user object
           response: 'ACCEPTED',
           responseNotes: 'Agency accepted this transport request',
           estimatedArrival: new Date(Date.now() + 15 * 60 * 1000).toISOString() // 15 minutes from now
@@ -271,7 +272,7 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
         },
         body: JSON.stringify({
           tripId: tripId,
-          agencyId: user.agencyId || 'agency_1', // Use agencyId from user or fallback to first agency
+          agencyId: user.agencyId, // Use agencyId from user object
           response: 'DECLINED',
           responseNotes: 'Agency declined this transport request'
         }),
