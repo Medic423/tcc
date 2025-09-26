@@ -1372,6 +1372,30 @@ export class TripService {
         });
       }
 
+      // If this is an ACCEPTED response, automatically select this agency
+      if (data.response === 'ACCEPTED') {
+        await prisma.$transaction(async (tx: any) => {
+          // Mark this response as selected
+          await tx.agencyResponse.update({
+            where: { id: response.id },
+            data: { isSelected: true }
+          });
+
+          // Update the trip to show agency selected and accepted
+          await tx.trip.update({
+            where: { id: data.tripId },
+            data: {
+              responseStatus: 'AGENCY_SELECTED',
+              assignedAgencyId: data.agencyId,
+              status: 'ACCEPTED',
+              acceptedTimestamp: new Date()
+            }
+          });
+        });
+
+        console.log('TCC_DEBUG: Agency automatically selected and trip accepted:', response.id);
+      }
+
       console.log('TCC_DEBUG: Agency response created successfully:', response.id);
       return { success: true, data: response };
     } catch (error) {
