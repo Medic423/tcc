@@ -467,6 +467,74 @@ export class TripService {
   }
 
   /**
+   * Update a trip
+   */
+  async updateTrip(id: string, data: any) {
+    console.log('TCC_DEBUG: Updating trip with data:', { id, data });
+    
+    try {
+      const prisma = databaseManager.getCenterDB();
+      
+      // Check if trip exists
+      const existingTrip = await prisma.trip.findUnique({
+        where: { id }
+      });
+      
+      if (!existingTrip) {
+        return {
+          success: false,
+          error: 'Trip not found'
+        };
+      }
+
+      // Update the trip
+      const updatedTrip = await prisma.trip.update({
+        where: { id },
+        data: {
+          ...data,
+          updatedAt: new Date()
+        },
+        include: {
+          pickupLocation: {
+            include: {
+              hospital: {
+                select: {
+                  id: true,
+                  name: true
+                }
+              }
+            }
+          },
+          agencyResponses: {
+            include: {
+              agency: {
+                select: {
+                  id: true,
+                  name: true
+                }
+              }
+            }
+          }
+        }
+      });
+
+      console.log('TCC_DEBUG: Trip updated successfully:', updatedTrip.id);
+      
+      return {
+        success: true,
+        data: updatedTrip
+      };
+
+    } catch (error) {
+      console.error('TCC_DEBUG: Error updating trip:', error);
+      return {
+        success: false,
+        error: 'Failed to update trip'
+      };
+    }
+  }
+
+  /**
    * Update trip status (accept/decline/complete)
    */
   async updateTripStatus(id: string, data: UpdateTripStatusRequest) {

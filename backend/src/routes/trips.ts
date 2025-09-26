@@ -296,6 +296,70 @@ router.get('/:id', async (req, res) => {
 });
 
 /**
+ * PUT /api/trips/:id
+ * Update a trip
+ */
+router.put('/:id', async (req, res) => {
+  try {
+    console.log('TCC_DEBUG: Update trip request:', { id: req.params.id, body: req.body });
+    
+    const { id } = req.params;
+    const updateData = req.body;
+
+    // Validate required fields if provided
+    if (updateData.transportLevel && !['BLS', 'ALS', 'CCT', 'Other'].includes(updateData.transportLevel)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid transport level. Must be BLS, ALS, CCT, or Other'
+      });
+    }
+
+    if (updateData.urgencyLevel && !['Routine', 'Urgent', 'Emergent'].includes(updateData.urgencyLevel)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid urgency level. Must be Routine, Urgent, or Emergent'
+      });
+    }
+
+    if (updateData.status && !['PENDING', 'ACCEPTED', 'DECLINED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'].includes(updateData.status)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid status. Must be PENDING, ACCEPTED, DECLINED, IN_PROGRESS, COMPLETED, or CANCELLED'
+      });
+    }
+
+    if (updateData.priority && !['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'].includes(updateData.priority)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid priority. Must be LOW, MEDIUM, HIGH, or CRITICAL'
+      });
+    }
+
+    const result = await tripService.updateTrip(id, updateData);
+
+    if (!result.success) {
+      return res.status(400).json({
+        success: false,
+        error: result.error
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Trip updated successfully',
+      data: result.data
+    });
+
+  } catch (error) {
+    console.error('TCC_DEBUG: Update trip error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+});
+
+/**
  * PUT /api/trips/:id/status
  * Update trip status (accept/decline/complete)
  */

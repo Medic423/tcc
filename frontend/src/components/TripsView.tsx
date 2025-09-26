@@ -461,11 +461,19 @@ const TripsView: React.FC<TripsViewProps> = ({ user }) => {
     setEditingTrip(trip);
     setEditModalOpen(true);
     
-    // Fetch all locations and pickup locations
-    await Promise.all([
-      fetchAllLocations(),
-      trip.hospitalId ? fetchPickupLocations(trip.hospitalId) : Promise.resolve()
-    ]);
+    // Fetch all locations first
+    await fetchAllLocations();
+    
+    // If trip has a pickup location, get the hospital ID from it
+    if (trip.pickupLocation?.hospital?.id) {
+      await fetchPickupLocations(trip.pickupLocation.hospital.id);
+    } else {
+      // Try to find hospital by fromLocation name
+      const hospital = hospitals.find(h => h.name === trip.fromLocation);
+      if (hospital) {
+        await fetchPickupLocations(hospital.id);
+      }
+    }
   };
 
   const handleDeleteTrip = async (trip: Trip) => {
