@@ -384,11 +384,43 @@ const TripsView: React.FC<TripsViewProps> = ({ user }) => {
   // Edit modal states
   const [editingTrip, setEditingTrip] = useState<Trip | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [pickupLocations, setPickupLocations] = useState<any[]>([]);
+  const [loadingPickupLocations, setLoadingPickupLocations] = useState(false);
+
+  // Fetch pickup locations for a hospital
+  const fetchPickupLocations = async (hospitalId: string) => {
+    try {
+      setLoadingPickupLocations(true);
+      const response = await fetch(`/api/tcc/pickup-locations/hospital/${hospitalId}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setPickupLocations(data.data || []);
+      } else {
+        console.error('Failed to fetch pickup locations');
+        setPickupLocations([]);
+      }
+    } catch (error) {
+      console.error('Error fetching pickup locations:', error);
+      setPickupLocations([]);
+    } finally {
+      setLoadingPickupLocations(false);
+    }
+  };
 
   // Handler functions
-  const handleEditTrip = (trip: Trip) => {
+  const handleEditTrip = async (trip: Trip) => {
     setEditingTrip(trip);
     setEditModalOpen(true);
+    
+    // Extract hospital ID from fromLocation or use a default
+    // For now, we'll use a simple approach - in a real app, you'd have hospital mapping
+    const hospitalId = '1'; // This should be determined from the trip's fromLocation
+    await fetchPickupLocations(hospitalId);
   };
 
   const handleDeleteTrip = async (trip: Trip) => {
@@ -1249,6 +1281,57 @@ const TripsView: React.FC<TripsViewProps> = ({ user }) => {
                 </div>
               </div>
 
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Pick-up Location
+                </label>
+                {loadingPickupLocations ? (
+                  <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500">
+                    Loading pickup locations...
+                  </div>
+                ) : (
+                  <select
+                    value={editingTrip.pickupLocationId || ''}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onChange={(e) => setEditingTrip({
+                      ...editingTrip,
+                      pickupLocationId: e.target.value || undefined
+                    })}
+                  >
+                    <option value="">Select a pickup location</option>
+                    {pickupLocations.map((location) => (
+                      <option key={location.id} value={location.id}>
+                        {location.name}
+                        {location.floor && ` - Floor ${location.floor}`}
+                        {location.room && `, Room ${location.room}`}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                {editingTrip.pickupLocation && (
+                  <div className="mt-2 p-3 bg-blue-50 rounded-md">
+                    <p className="text-sm font-medium text-gray-900">{editingTrip.pickupLocation.name}</p>
+                    {editingTrip.pickupLocation.description && (
+                      <p className="text-sm text-gray-600 mt-1">{editingTrip.pickupLocation.description}</p>
+                    )}
+                    <div className="mt-2 space-y-1">
+                      {editingTrip.pickupLocation.floor && (
+                        <p className="text-xs text-gray-500"><span className="font-medium">Floor:</span> {editingTrip.pickupLocation.floor}</p>
+                      )}
+                      {editingTrip.pickupLocation.room && (
+                        <p className="text-xs text-gray-500"><span className="font-medium">Room:</span> {editingTrip.pickupLocation.room}</p>
+                      )}
+                      {editingTrip.pickupLocation.contactPhone && (
+                        <p className="text-xs text-gray-500"><span className="font-medium">Phone:</span> {editingTrip.pickupLocation.contactPhone}</p>
+                      )}
+                      {editingTrip.pickupLocation.contactEmail && (
+                        <p className="text-xs text-gray-500"><span className="font-medium">Email:</span> {editingTrip.pickupLocation.contactEmail}</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -1414,10 +1497,44 @@ const TripsView: React.FC<TripsViewProps> = ({ user }) => {
                 Cancel
               </button>
               <button
-                onClick={() => {
-                  // TODO: Implement save functionality
-                  console.log('Save trip changes:', editingTrip);
-                  setEditModalOpen(false);
+                onClick={async () => {
+                  if (!editingTrip) return;
+                  
+                  try {
+                    console.log('Saving trip changes:', editingTrip);
+                    
+                    // Update the trip via API
+                    await tripsAPI.update(editingTrip.id, {
+                      status: editingTrip.status,
+                      priority: editingTrip.priority,
+                      transportLevel: editingTrip.transportLevel,
+                      scheduledTime: editingTrip.scheduledTime,
+                      urgencyLevel: editingTrip.urgencyLevel,
+                      diagnosis: editingTrip.diagnosis,
+                      mobilityLevel: editingTrip.mobilityLevel,
+                      oxygenRequired: editingTrip.oxygenRequired,
+                      monitoringRequired: editingTrip.monitoringRequired,
+                      pickupLocationId: editingTrip.pickupLocationId
+                    });
+                    
+                    // Update the trip in local state
+                    setTrips(prevTrips => 
+                      prevTrips.map(t => 
+                        t.id === editingTrip.id ? editingTrip : t
+                      )
+                    );
+                    setFilteredTrips(prevTrips => 
+                      prevTrips.map(t => 
+                        t.id === editingTrip.id ? editingTrip : t
+                      )
+                    );
+                    
+                    setEditModalOpen(false);
+                    console.log('Trip updated successfully');
+                  } catch (error) {
+                    console.error('Error updating trip:', error);
+                    alert('Failed to update trip. Please try again.');
+                  }
                 }}
                 className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
