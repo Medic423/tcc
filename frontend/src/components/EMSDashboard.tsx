@@ -78,17 +78,31 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
         if (availableData.success && availableData.data) {
           const transformedAvailable = availableData.data.map((trip: any) => ({
             id: trip.id,
-            patientId: trip.patientName, // Backend uses patientName, not patientId
-            origin: trip.pickupLocation, // Backend uses pickupLocation
-            destination: trip.dropoffLocation, // Backend uses dropoffLocation
-            pickupLocation: trip.pickupLocation,
+            patientId: trip.patientId, // Backend uses patientId directly
+            origin: trip.fromLocation, // Backend uses fromLocation
+            destination: trip.toLocation, // Backend uses toLocation
+            pickupLocation: trip.fromLocation,
             transportLevel: trip.transportLevel || 'BLS',
             priority: trip.urgencyLevel || trip.priority, // Use urgencyLevel if available, fallback to priority
             distance: '12.5 miles', // Mock data
             estimatedTime: '25 minutes', // Mock data
             revenue: '$150', // Mock data
-            requestTime: new Date(trip.requestedTime).toLocaleString(), // Backend uses requestedTime
-            scheduledTime: trip.requestedTime // Backend uses requestedTime
+            requestTime: new Date(trip.scheduledTime).toLocaleString(), // Backend uses scheduledTime
+            scheduledTime: trip.scheduledTime, // Backend uses scheduledTime
+            // Transform pickup_locations to pickupLocation for frontend compatibility
+            pickupLocationDetails: trip.pickup_locations ? {
+              id: trip.pickup_locations.id,
+              name: trip.pickup_locations.name,
+              description: trip.pickup_locations.description,
+              contactPhone: trip.pickup_locations.contactPhone,
+              contactEmail: trip.pickup_locations.contactEmail,
+              floor: trip.pickup_locations.floor,
+              room: trip.pickup_locations.room,
+              hospital: trip.pickup_locations.hospitals ? {
+                id: trip.pickup_locations.hospitals.id,
+                name: trip.pickup_locations.hospitals.name
+              } : undefined
+            } : undefined
           }));
           setAvailableTrips(transformedAvailable);
         }
@@ -106,15 +120,29 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
         if (acceptedData.success && acceptedData.data) {
           const transformedAccepted = acceptedData.data.map((trip: any) => ({
             id: trip.id,
-            patientId: trip.patientName, // Backend uses patientName, not patientId
-            origin: trip.pickupLocation, // Backend uses pickupLocation
-            destination: trip.dropoffLocation, // Backend uses dropoffLocation
-            pickupLocation: trip.pickupLocation,
+            patientId: trip.patientId, // Backend uses patientId directly
+            origin: trip.fromLocation, // Backend uses fromLocation
+            destination: trip.toLocation, // Backend uses toLocation
+            pickupLocation: trip.fromLocation,
             transportLevel: trip.transportLevel || 'BLS',
             priority: trip.urgencyLevel || trip.priority, // Use urgencyLevel if available, fallback to priority
             status: trip.status,
             pickupTime: trip.actualStartTime ? new Date(trip.actualStartTime).toLocaleString() : 'Not started',
-            scheduledTime: trip.requestedTime // Backend uses requestedTime
+            scheduledTime: trip.scheduledTime, // Backend uses scheduledTime
+            // Transform pickup_locations to pickupLocation for frontend compatibility
+            pickupLocationDetails: trip.pickup_locations ? {
+              id: trip.pickup_locations.id,
+              name: trip.pickup_locations.name,
+              description: trip.pickup_locations.description,
+              contactPhone: trip.pickup_locations.contactPhone,
+              contactEmail: trip.pickup_locations.contactEmail,
+              floor: trip.pickup_locations.floor,
+              room: trip.pickup_locations.room,
+              hospital: trip.pickup_locations.hospitals ? {
+                id: trip.pickup_locations.hospitals.id,
+                name: trip.pickup_locations.hospitals.name
+              } : undefined
+            } : undefined
           }));
           setAcceptedTrips(transformedAccepted);
         }
@@ -212,7 +240,7 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
         },
         body: JSON.stringify({
           tripId: tripId,
-          agencyId: user.id, // Using user ID as agency ID for now
+          agencyId: user.agencyId || 'agency_1', // Use agencyId from user or fallback to first agency
           response: 'ACCEPTED',
           responseNotes: 'Agency accepted this transport request',
           estimatedArrival: new Date(Date.now() + 15 * 60 * 1000).toISOString() // 15 minutes from now
@@ -243,7 +271,7 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
         },
         body: JSON.stringify({
           tripId: tripId,
-          agencyId: user.id, // Using user ID as agency ID for now
+          agencyId: user.agencyId || 'agency_1', // Use agencyId from user or fallback to first agency
           response: 'DECLINED',
           responseNotes: 'Agency declined this transport request'
         }),

@@ -1,16 +1,16 @@
-const { PrismaClient } = require('@prisma/ems');
+const { PrismaClient } = require('.prisma/center');
 
-const emsPrisma = new PrismaClient({
+const centerPrisma = new PrismaClient({
   datasources: {
     db: {
-      url: process.env.EMS_DATABASE_URL || "postgresql://postgres:password@localhost:5432/tcc_ems?schema=public"
+      url: process.env.DATABASE_URL_CENTER || "postgresql://postgres:password@localhost:5434/tcc_center?schema=public"
     }
   }
 });
 
-async function createTestAgencies() {
+async function createTestAgenciesInCenter() {
   try {
-    console.log('Creating test agencies...');
+    console.log('Creating test agencies in Center database...');
     
     // Create test agencies
     const agencies = [
@@ -25,7 +25,8 @@ async function createTestAgencies() {
         zipCode: '16601',
         serviceArea: ['Altoona and surrounding areas'],
         capabilities: ['ALS', 'BLS', 'CCT'],
-        isActive: true
+        isActive: true,
+        status: 'ACTIVE'
       },
       {
         name: 'Blair County EMS',
@@ -38,7 +39,8 @@ async function createTestAgencies() {
         zipCode: '16648',
         serviceArea: ['Blair County'],
         capabilities: ['ALS', 'BLS'],
-        isActive: true
+        isActive: true,
+        status: 'ACTIVE'
       },
       {
         name: 'Mountain View EMS',
@@ -51,7 +53,8 @@ async function createTestAgencies() {
         zipCode: '16686',
         serviceArea: ['Tyrone and surrounding areas'],
         capabilities: ['BLS'],
-        isActive: true
+        isActive: true,
+        status: 'ACTIVE'
       },
       {
         name: 'Central PA Medical Transport',
@@ -64,23 +67,24 @@ async function createTestAgencies() {
         zipCode: '16801',
         serviceArea: ['Central Pennsylvania'],
         capabilities: ['CCT', 'ALS'],
-        isActive: true
+        isActive: true,
+        status: 'ACTIVE'
       }
     ];
 
     for (const agencyData of agencies) {
-      const agency = await emsPrisma.eMSAgency.create({
+      const agency = await centerPrisma.eMSAgency.create({
         data: agencyData
       });
-      console.log(`Created agency: ${agency.name} (ID: ${agency.id})`);
+      console.log(`Created agency in Center DB: ${agency.name} (ID: ${agency.id})`);
     }
 
-    console.log('Test agencies created successfully!');
+    console.log('Test agencies created successfully in Center database!');
   } catch (error) {
-    console.error('Error creating test agencies:', error);
+    console.error('Error creating test agencies in Center database:', error);
   } finally {
-    await emsPrisma.$disconnect();
+    await centerPrisma.$disconnect();
   }
 }
 
-createTestAgencies();
+createTestAgenciesInCenter();

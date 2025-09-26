@@ -117,14 +117,28 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
           // Transform API data to match component expectations
           const transformedTrips = data.data.map((trip: any) => ({
             id: trip.id,
-            patientId: trip.patientName,
-            destination: trip.dropoffLocation, // Backend uses dropoffLocation
-            pickupLocation: trip.pickupLocation,
+            patientId: trip.patientId, // Backend uses patientId directly
+            destination: trip.toLocation, // Backend uses toLocation
+            pickupLocation: trip.fromLocation, // Backend uses fromLocation
             transportLevel: trip.transportLevel || 'BLS',
             status: trip.status,
-            requestTime: new Date(trip.requestedTime).toLocaleString(), // Backend uses requestedTime
+            requestTime: new Date(trip.scheduledTime).toLocaleString(), // Backend uses scheduledTime
             priority: trip.priority,
-            urgencyLevel: trip.urgencyLevel || trip.priority // Fallback to priority if urgencyLevel not available
+            urgencyLevel: trip.urgencyLevel || trip.priority, // Fallback to priority if urgencyLevel not available
+            // Transform pickup_locations to pickupLocation for frontend compatibility
+            pickupLocationDetails: trip.pickup_locations ? {
+              id: trip.pickup_locations.id,
+              name: trip.pickup_locations.name,
+              description: trip.pickup_locations.description,
+              contactPhone: trip.pickup_locations.contactPhone,
+              contactEmail: trip.pickup_locations.contactEmail,
+              floor: trip.pickup_locations.floor,
+              room: trip.pickup_locations.room,
+              hospital: trip.pickup_locations.hospitals ? {
+                id: trip.pickup_locations.hospitals.id,
+                name: trip.pickup_locations.hospitals.name
+              } : undefined
+            } : undefined
           }));
           setTrips(transformedTrips);
         }

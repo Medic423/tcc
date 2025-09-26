@@ -76,7 +76,14 @@ interface TripTimelineEvent {
 }
 
 // Trip Card Component
-const TripCard: React.FC<{ trip: Trip; user: User }> = ({ trip, user }) => {
+const TripCard: React.FC<{ 
+  trip: Trip; 
+  user: User; 
+  onEditTrip: (trip: Trip) => void;
+  onDeleteTrip: (trip: Trip) => void;
+  onAcceptTrip: (trip: Trip) => void;
+  onDeclineTrip: (trip: Trip) => void;
+}> = ({ trip, user, onEditTrip, onDeleteTrip, onAcceptTrip, onDeclineTrip }) => {
   const [expanded, setExpanded] = useState(false);
   const [timeline, setTimeline] = useState<TripTimelineEvent[]>([]);
 
@@ -166,20 +173,6 @@ const TripCard: React.FC<{ trip: Trip; user: User }> = ({ trip, user }) => {
 
   const formatDateTime = (dateString: string) => {
     return new Date(dateString).toLocaleString();
-  };
-
-  const handleEditTrip = (trip: Trip) => {
-    // TODO: Implement edit functionality
-    console.log('Edit trip:', trip.id);
-    // This could open a modal or navigate to an edit page
-  };
-
-  const handleDeleteTrip = (trip: Trip) => {
-    // TODO: Implement delete functionality
-    if (window.confirm(`Are you sure you want to delete trip ${trip.tripNumber}?`)) {
-      console.log('Delete trip:', trip.id);
-      // This would call an API to delete the trip
-    }
   };
 
   const getStatusColor = (status: string) => {
@@ -292,22 +285,28 @@ const TripCard: React.FC<{ trip: Trip; user: User }> = ({ trip, user }) => {
           {/* Actions Column */}
           <div className="flex flex-col space-y-1">
             <div className="flex space-x-1">
-              <button className="bg-green-600 text-white px-2 py-1 rounded text-xs font-medium hover:bg-green-700">
+              <button 
+                onClick={() => onAcceptTrip(trip)}
+                className="bg-green-600 text-white px-2 py-1 rounded text-xs font-medium hover:bg-green-700"
+              >
                 Accept
               </button>
-              <button className="bg-red-600 text-white px-2 py-1 rounded text-xs font-medium hover:bg-red-700">
+              <button 
+                onClick={() => onDeclineTrip(trip)}
+                className="bg-red-600 text-white px-2 py-1 rounded text-xs font-medium hover:bg-red-700"
+              >
                 Decline
               </button>
             </div>
             <div className="flex space-x-1">
               <button 
-                onClick={() => handleEditTrip(trip)}
+                onClick={() => onEditTrip(trip)}
                 className="bg-blue-600 text-white px-2 py-1 rounded text-xs font-medium hover:bg-blue-700"
               >
                 Edit
               </button>
               <button 
-                onClick={() => handleDeleteTrip(trip)}
+                onClick={() => onDeleteTrip(trip)}
                 className="bg-gray-600 text-white px-2 py-1 rounded text-xs font-medium hover:bg-gray-700"
               >
                 Delete
@@ -381,6 +380,97 @@ const TripsView: React.FC<TripsViewProps> = ({ user }) => {
   const [showTripModal, setShowTripModal] = useState(false);
   const [sortField, setSortField] = useState<keyof Trip>('createdAt');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  
+  // Edit modal states
+  const [editingTrip, setEditingTrip] = useState<Trip | null>(null);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+
+  // Handler functions
+  const handleEditTrip = (trip: Trip) => {
+    setEditingTrip(trip);
+    setEditModalOpen(true);
+  };
+
+  const handleDeleteTrip = async (trip: Trip) => {
+    if (window.confirm(`Are you sure you want to delete trip ${trip.tripNumber}?`)) {
+      try {
+        console.log('Deleting trip:', trip.id);
+        await tripsAPI.delete(trip.id);
+        
+        // Remove the trip from the local state
+        setTrips(prevTrips => prevTrips.filter(t => t.id !== trip.id));
+        setFilteredTrips(prevTrips => prevTrips.filter(t => t.id !== trip.id));
+        
+        console.log('Trip deleted successfully');
+      } catch (error) {
+        console.error('Error deleting trip:', error);
+        alert('Failed to delete trip. Please try again.');
+      }
+    }
+  };
+
+  const handleAcceptTrip = async (trip: Trip) => {
+    try {
+      console.log('Accepting trip:', trip.id);
+      await tripsAPI.update(trip.id, {
+        status: 'ACCEPTED',
+        acceptedTimestamp: new Date().toISOString()
+      });
+      
+      // Update the trip in local state
+      setTrips(prevTrips => 
+        prevTrips.map(t => 
+          t.id === trip.id 
+            ? { ...t, status: 'ACCEPTED' as const, acceptedTimestamp: new Date().toISOString() }
+            : t
+        )
+      );
+      setFilteredTrips(prevTrips => 
+        prevTrips.map(t => 
+          t.id === trip.id 
+            ? { ...t, status: 'ACCEPTED' as const, acceptedTimestamp: new Date().toISOString() }
+            : t
+        )
+      );
+      
+      console.log('Trip accepted successfully');
+    } catch (error) {
+      console.error('Error accepting trip:', error);
+      alert('Failed to accept trip. Please try again.');
+    }
+  };
+
+  const handleDeclineTrip = async (trip: Trip) => {
+    if (window.confirm(`Are you sure you want to decline trip ${trip.tripNumber}?`)) {
+      try {
+        console.log('Declining trip:', trip.id);
+        await tripsAPI.update(trip.id, {
+          status: 'DECLINED'
+        });
+        
+        // Update the trip in local state
+        setTrips(prevTrips => 
+          prevTrips.map(t => 
+            t.id === trip.id 
+              ? { ...t, status: 'DECLINED' as const }
+              : t
+          )
+        );
+        setFilteredTrips(prevTrips => 
+          prevTrips.map(t => 
+            t.id === trip.id 
+              ? { ...t, status: 'DECLINED' as const }
+              : t
+          )
+        );
+        
+        console.log('Trip declined successfully');
+      } catch (error) {
+        console.error('Error declining trip:', error);
+        alert('Failed to decline trip. Please try again.');
+      }
+    }
+  };
 
   // Fetch trips data
   const fetchTrips = async () => {
@@ -391,13 +481,23 @@ const TripsView: React.FC<TripsViewProps> = ({ user }) => {
         // Transform API data to match component expectations
         const transformedTrips = response.data.data.map((trip: any) => ({
           ...trip,
-          patientId: trip.patientName, // Backend uses patientName
-          fromLocation: trip.pickupLocation, // Backend uses pickupLocation
-          toLocation: trip.dropoffLocation, // Backend uses dropoffLocation
-          scheduledTime: trip.requestedTime, // Backend uses requestedTime
-          createdAt: trip.requestedTime, // Backend uses requestedTime
-          updatedAt: trip.requestedTime, // Backend uses requestedTime
-          urgencyLevel: trip.urgencyLevel || trip.priority // Fallback to priority
+          // Backend already has the correct field names, no transformation needed
+          // Just ensure urgencyLevel is properly set
+          urgencyLevel: trip.urgencyLevel || trip.priority, // Fallback to priority
+          // Transform pickup_locations to pickupLocation for frontend compatibility
+          pickupLocation: trip.pickup_locations ? {
+            id: trip.pickup_locations.id,
+            name: trip.pickup_locations.name,
+            description: trip.pickup_locations.description,
+            contactPhone: trip.pickup_locations.contactPhone,
+            contactEmail: trip.pickup_locations.contactEmail,
+            floor: trip.pickup_locations.floor,
+            room: trip.pickup_locations.room,
+            hospital: trip.pickup_locations.hospitals ? {
+              id: trip.pickup_locations.hospitals.id,
+              name: trip.pickup_locations.hospitals.name
+            } : undefined
+          } : undefined
         }));
         setTrips(transformedTrips);
         setFilteredTrips(transformedTrips);
@@ -926,7 +1026,15 @@ const TripsView: React.FC<TripsViewProps> = ({ user }) => {
       {/* Trip Cards */}
       <div className="space-y-4">
         {filteredTrips.map((trip) => (
-          <TripCard key={trip.id} trip={trip} user={user} />
+          <TripCard 
+            key={trip.id} 
+            trip={trip} 
+            user={user} 
+            onEditTrip={handleEditTrip}
+            onDeleteTrip={handleDeleteTrip}
+            onAcceptTrip={handleAcceptTrip}
+            onDeclineTrip={handleDeclineTrip}
+          />
         ))}
 
         {filteredTrips.length === 0 && (
@@ -1069,6 +1177,252 @@ const TripsView: React.FC<TripsViewProps> = ({ user }) => {
                   Close
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Trip Modal */}
+      {editModalOpen && editingTrip && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold text-gray-900">
+                Edit Trip: {editingTrip.tripNumber}
+              </h2>
+              <button
+                onClick={() => setEditModalOpen(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Patient ID
+                  </label>
+                  <input
+                    type="text"
+                    value={editingTrip.patientId}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    readOnly
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Trip Number
+                  </label>
+                  <input
+                    type="text"
+                    value={editingTrip.tripNumber}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    readOnly
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    From Location
+                  </label>
+                  <input
+                    type="text"
+                    value={editingTrip.fromLocation}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    readOnly
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    To Location
+                  </label>
+                  <input
+                    type="text"
+                    value={editingTrip.toLocation}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    readOnly
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Status
+                  </label>
+                  <select
+                    value={editingTrip.status}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onChange={(e) => setEditingTrip({
+                      ...editingTrip,
+                      status: e.target.value as Trip['status']
+                    })}
+                  >
+                    <option value="PENDING">Pending</option>
+                    <option value="ACCEPTED">Accepted</option>
+                    <option value="DECLINED">Declined</option>
+                    <option value="IN_PROGRESS">In Progress</option>
+                    <option value="COMPLETED">Completed</option>
+                    <option value="CANCELLED">Cancelled</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Priority
+                  </label>
+                  <select
+                    value={editingTrip.priority}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onChange={(e) => setEditingTrip({
+                      ...editingTrip,
+                      priority: e.target.value as Trip['priority']
+                    })}
+                  >
+                    <option value="LOW">Low</option>
+                    <option value="MEDIUM">Medium</option>
+                    <option value="HIGH">High</option>
+                    <option value="CRITICAL">Critical</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Transport Level
+                  </label>
+                  <select
+                    value={editingTrip.transportLevel}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onChange={(e) => setEditingTrip({
+                      ...editingTrip,
+                      transportLevel: e.target.value as Trip['transportLevel']
+                    })}
+                  >
+                    <option value="BLS">BLS</option>
+                    <option value="ALS">ALS</option>
+                    <option value="CCT">CCT</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Scheduled Time
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={new Date(editingTrip.scheduledTime).toISOString().slice(0, 16)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onChange={(e) => setEditingTrip({
+                      ...editingTrip,
+                      scheduledTime: new Date(e.target.value).toISOString()
+                    })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Urgency Level
+                  </label>
+                  <select
+                    value={editingTrip.urgencyLevel}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onChange={(e) => setEditingTrip({
+                      ...editingTrip,
+                      urgencyLevel: e.target.value as Trip['urgencyLevel']
+                    })}
+                  >
+                    <option value="Routine">Routine</option>
+                    <option value="Urgent">Urgent</option>
+                    <option value="Emergent">Emergent</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Diagnosis
+                  </label>
+                  <input
+                    type="text"
+                    value={editingTrip.diagnosis || ''}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onChange={(e) => setEditingTrip({
+                      ...editingTrip,
+                      diagnosis: e.target.value
+                    })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Mobility Level
+                  </label>
+                  <select
+                    value={editingTrip.mobilityLevel || ''}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onChange={(e) => setEditingTrip({
+                      ...editingTrip,
+                      mobilityLevel: e.target.value
+                    })}
+                  >
+                    <option value="">Select mobility level</option>
+                    <option value="Ambulatory">Ambulatory</option>
+                    <option value="Wheelchair">Wheelchair</option>
+                    <option value="Stretcher">Stretcher</option>
+                    <option value="Bed">Bed</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-4">
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={editingTrip.oxygenRequired}
+                    onChange={(e) => setEditingTrip({
+                      ...editingTrip,
+                      oxygenRequired: e.target.checked
+                    })}
+                    className="mr-2"
+                  />
+                  <span className="text-sm text-gray-700">Oxygen Required</span>
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={editingTrip.monitoringRequired}
+                    onChange={(e) => setEditingTrip({
+                      ...editingTrip,
+                      monitoringRequired: e.target.checked
+                    })}
+                    className="mr-2"
+                  />
+                  <span className="text-sm text-gray-700">Monitoring Required</span>
+                </label>
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-3 mt-6">
+              <button
+                onClick={() => setEditModalOpen(false)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  // TODO: Implement save functionality
+                  console.log('Save trip changes:', editingTrip);
+                  setEditModalOpen(false);
+                }}
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                Save Changes
+              </button>
             </div>
           </div>
         </div>
