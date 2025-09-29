@@ -247,9 +247,6 @@ export const emsAnalyticsAPI = {
   
   getUnits: () =>
     api.get('/api/ems/analytics/units'),
-  
-  getPerformance: () =>
-    api.get('/api/ems/analytics/performance'),
 };
 
 // Dropdown Options API (legacy export for compatibility)

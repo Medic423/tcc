@@ -8,6 +8,7 @@ import {
   User,
   LogOut,
   Settings,
+  DollarSign,
   BarChart3
 } from 'lucide-react';
 import Notifications from './Notifications';
@@ -448,7 +449,7 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
               { id: 'accepted', name: 'My Trips', icon: CheckCircle },
               { id: 'overview', name: 'Overview', icon: BarChart3 },
               { id: 'units', name: 'Units', icon: Settings },
-              { id: 'analytics', name: 'Analytics', icon: BarChart3 },
+              { id: 'analytics', name: 'Revenue Settings', icon: DollarSign },
               { id: 'settings', name: 'Settings', icon: User }
             ].map((tab) => {
               const Icon = tab.icon;

@@ -447,13 +447,33 @@ router.post('/ems/register', async (req, res) => {
       });
     }
 
-    // Create new EMS user
+    // Create EMS agency in EMS database first
+    const emsAgency = await emsDB.eMSAgency.create({
+      data: {
+        name: agencyName,
+        contactName: name,
+        phone: phone || 'Phone to be provided',
+        email: email,
+        address: address || 'Address to be provided',
+        city: city || 'City to be provided',
+        state: state || 'State to be provided',
+        zipCode: zipCode || '00000',
+        serviceArea: serviceArea || [],
+        capabilities: capabilities || [],
+        operatingHours: operatingHours || undefined,
+        isActive: true, // Auto-approve new EMS registrations
+        status: "ACTIVE"
+      }
+    });
+
+    // Create new EMS user with agencyId
     const user = await emsDB.eMSUser.create({
       data: {
         email,
         password: await bcrypt.hash(password, 10),
         name,
         agencyName,
+        agencyId: emsAgency.id, // Link to the EMS agency
         userType: 'EMS',
         isActive: true // Auto-approve new EMS registrations
       }
@@ -473,7 +493,7 @@ router.post('/ems/register', async (req, res) => {
         zipCode: zipCode || '00000',
         serviceArea: serviceArea || [],
         capabilities: capabilities || [],
-        operatingHours: operatingHours || null,
+        operatingHours: operatingHours || undefined,
         latitude: latitude ? parseFloat(latitude) : null,
         longitude: longitude ? parseFloat(longitude) : null,
         isActive: true, // Auto-approve new EMS registrations
@@ -668,10 +688,56 @@ router.post('/ems/login', async (req, res) => {
       });
     }
 
+    // Handle missing agencyId for existing users (backward compatibility)
+    let agencyId = user.agencyId;
+    if (!agencyId) {
+      console.log('TCC_DEBUG: User missing agencyId, creating/finding agency...');
+      
+      // Try to find existing agency by email/name
+      let existingAgency = await emsDB.eMSAgency.findFirst({
+        where: {
+          OR: [
+            { email: user.email },
+            { name: user.agencyName }
+          ]
+        }
+      });
+
+      // If no agency found, create one
+      if (!existingAgency) {
+        console.log('TCC_DEBUG: Creating new agency for existing user...');
+        existingAgency = await emsDB.eMSAgency.create({
+          data: {
+            name: user.agencyName,
+            contactName: user.name,
+            phone: 'Phone to be provided',
+            email: user.email,
+            address: 'Address to be provided',
+            city: 'City to be provided',
+            state: 'State to be provided',
+            zipCode: '00000',
+            serviceArea: [],
+            capabilities: [],
+            isActive: true,
+            status: "ACTIVE"
+          }
+        });
+      }
+
+      // Update user with agencyId
+      await emsDB.eMSUser.update({
+        where: { id: user.id },
+        data: { agencyId: existingAgency.id }
+      });
+
+      agencyId = existingAgency.id;
+      console.log('TCC_DEBUG: Updated user with agencyId:', agencyId);
+    }
+
     // For EMS users, use agencyId in the token instead of user.id
     const token = jwt.sign(
       { 
-        id: user.agencyId, // Use agencyId for EMS users
+        id: agencyId, // Use agencyId for EMS users
         email: user.email, 
         userType: 'EMS' 
       },
