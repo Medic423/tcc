@@ -96,7 +96,7 @@ Exit Criteria ✅ COMPLETED
 ## Summary
 All major analytics tabs have been tested and verified:
 - **Overview**: 6 trips created and completed, metrics calculated correctly
-- **Performance**: Basic metrics working, response times show 0 due to missing requestTimestamp
+- **Performance**: ~~Basic metrics working, response times show 0 due to missing requestTimestamp~~ **REMOVED** - Not actionable for agency managers
 - **Unit Management**: Units can be created, updated, and status changes reflect in both EMS and TCC views
 - **Revenue Settings**: Frontend-only component working with localStorage persistence
 - **Revenue Preview**: Frontend calculations working correctly
@@ -107,6 +107,34 @@ All major analytics tabs have been tested and verified:
 3. TCC cross-visibility is working correctly
 4. All major data flows are functioning as expected
 5. **Fixed agencyId Issue**: EMS registration now properly creates EMSAgency in EMS database and links to EMSUser. Login handles missing agencyId for existing users by creating/finding agency.
+
+## UI/UX Improvements Completed (2025-09-29)
+
+### Performance Tab Removal
+- **Rationale**: Performance metrics were not actionable for agency managers
+- **Changes Made**:
+  - Removed Performance tab from EMS Analytics navigation
+  - Removed `/api/ems/analytics/performance` backend endpoint
+  - Removed `getPerformance()` API method from frontend services
+  - Cleaned up unused state management and imports
+
+### Navigation Simplification
+- **Rationale**: Reduce redundant navigation layers and improve user experience
+- **Changes Made**:
+  - Renamed "Analytics" navigation tab to "Revenue Settings"
+  - Updated icon from BarChart3 to DollarSign for better visual representation
+  - Removed redundant header section ("Analytics" title and description)
+  - Removed internal tab navigation system
+  - Direct navigation to Revenue Calculation Settings component
+
+### Code Cleanup
+- **Files Modified**:
+  - `frontend/src/components/EMSDashboard.tsx` - Updated navigation
+  - `frontend/src/components/EMSAnalytics.tsx` - Simplified component structure
+  - `frontend/src/services/api.ts` - Removed performance API method
+  - `backend/src/routes/emsAnalytics.ts` - Removed performance endpoint
+- **Lines of Code**: Reduced by ~50 lines of unnecessary code
+- **Result**: Cleaner, more direct user experience with immediate access to functionality
 
 
 ---
