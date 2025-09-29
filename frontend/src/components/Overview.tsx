@@ -1,232 +1,208 @@
 import React, { useState, useEffect } from 'react';
-import api, { analyticsAPI } from '../services/api';
-import { Building2, Truck, MapPin, Activity } from 'lucide-react';
+import { BarChart3, Activity, TrendingUp, DollarSign } from 'lucide-react';
+import { emsAnalyticsAPI } from '../services/api';
 
-interface SystemOverview {
-  totalHospitals: number;
-  totalAgencies: number;
-  totalFacilities: number;
-  activeHospitals: number;
-  activeAgencies: number;
-  activeFacilities: number;
-  totalUnits: number;
-  activeUnits: number;
+interface OverviewProps {
+  user: {
+    id: string;
+    email: string;
+    name: string;
+    userType: string;
+    agencyName?: string;
+  };
 }
 
-const Overview: React.FC = () => {
-  const [overview, setOverview] = useState<SystemOverview | null>(null);
+const Overview: React.FC<OverviewProps> = ({ user }) => {
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [feedWarnings, setFeedWarnings] = useState<string[]>([]);
-  const [showWarnings, setShowWarnings] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [overview, setOverview] = useState<any>(null);
+  const [trips, setTrips] = useState<any>(null);
 
+  const loadAgencyAnalytics = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [ovr, trs] = await Promise.all([
+        emsAnalyticsAPI.getOverview(),
+        emsAnalyticsAPI.getTrips(),
+      ]);
+
+      setOverview(ovr.data?.data || null);
+      setTrips(trs.data?.data || null);
+    } catch (err) {
+      setError('Failed to load analytics data');
+      console.error('Analytics loading error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load agency-specific analytics data
   useEffect(() => {
-    const fetchOverview = async () => {
-      try {
-        const response = await analyticsAPI.getOverview();
-        setOverview(response.data.data);
-      } catch (error: any) {
-        setError(error.response?.data?.error || 'Failed to load overview');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchOverview();
-
-    const checkFeeds = async () => {
-      const feeds: Array<{ path: string; label: string }> = [
-        { path: '/api/tcc/analytics/overview', label: 'Analytics Overview' },
-        { path: '/api/tcc/agencies', label: 'Agencies' },
-        { path: '/api/dropdown-options', label: 'Dropdown Categories' },
-        { path: '/api/tcc/hospitals', label: 'Hospitals' },
-      ];
-      const warnings: string[] = [];
-      await Promise.all(
-        feeds.map(async (f) => {
-          try {
-            const res = await api.get(f.path);
-            if (res.status !== 200 || res.data?.success === false) {
-              warnings.push(`${f.label}: ${res.status}`);
-            }
-          } catch (err: any) {
-            const code = err?.response?.status || 'ERR';
-            warnings.push(`${f.label}: ${code}`);
-          }
-        })
-      );
-      setFeedWarnings(warnings);
-    };
-
-    checkFeeds();
+    loadAgencyAnalytics();
   }, []);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="bg-red-50 border border-red-200 rounded-md p-4">
-        <div className="text-red-800">{error}</div>
-      </div>
-    );
-  }
-
-  const stats = [
-    {
-      name: 'Total Healthcare Facilities',
-      value: overview?.totalHospitals || 0,
-      active: overview?.activeHospitals || 0,
-      icon: Building2,
-      color: 'bg-blue-500',
-    },
-    {
-      name: 'EMS Agencies',
-      value: overview?.totalAgencies || 0,
-      active: overview?.activeAgencies || 0,
-      icon: Truck,
-      color: 'bg-green-500',
-    },
-    {
-      name: 'Facilities',
-      value: overview?.totalFacilities || 0,
-      active: overview?.activeFacilities || 0,
-      icon: MapPin,
-      color: 'bg-purple-500',
-    },
-    {
-      name: 'EMS Units',
-      value: overview?.totalUnits || 0,
-      active: overview?.activeUnits || 0,
-      icon: Activity,
-      color: 'bg-orange-500',
-    },
-  ];
-
   return (
-    <div>
-      {showWarnings && feedWarnings.length > 0 && (
-        <div className="mb-4 bg-red-50 border border-red-200 text-red-800 p-4 rounded">
-          <div className="flex items-start justify-between">
-            <div>
-              <div className="font-semibold">Feed warnings detected</div>
-              <ul className="list-disc ml-5 mt-1 text-sm">
-                {feedWarnings.map((w, idx) => (
-                  <li key={idx}>{w}</li>
-                ))}
-              </ul>
+    <div className="space-y-6">
+      {loading && (
+        <div className="text-center py-8">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+          <p className="mt-4 text-sm text-gray-500">Loading analytics data...</p>
+        </div>
+      )}
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-md p-4">
+          <div className="flex">
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">Error</h3>
+              <div className="mt-2 text-sm text-red-700">
+                <p>{error}</p>
+              </div>
             </div>
-            <button onClick={() => setShowWarnings(false)} className="text-sm underline">Dismiss</button>
           </div>
         </div>
       )}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">System Overview</h1>
-        <p className="mt-1 text-sm text-gray-500">
-          Monitor the status of hospitals, EMS agencies, and facilities in the system.
-        </p>
-      </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => (
-          <div key={stat.name} className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className={`p-3 rounded-md ${stat.color}`}>
-                    <stat.icon className="h-6 w-6 text-white" />
+      {!loading && !error && (
+        <>
+          {/* Agency Header */}
+          <div className="bg-white shadow rounded-lg p-6 mb-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">{overview?.agencyName || user.agencyName || 'Your Agency'}</h2>
+                <p className="text-sm text-gray-500">Agency Performance Dashboard</p>
+              </div>
+              <div className="text-right">
+                <div className="text-sm text-gray-500">Last Updated</div>
+                <div className="text-sm font-medium text-gray-900">{new Date().toLocaleTimeString()}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Key Metrics */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="bg-white overflow-hidden shadow rounded-lg">
+              <div className="p-5">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <BarChart3 className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <div className="ml-5 w-0 flex-1">
+                    <dl>
+                      <dt className="text-sm font-medium text-gray-500 truncate">Total Trips</dt>
+                      <dd className="text-lg font-medium text-gray-900">{overview?.totalTrips || 0}</dd>
+                    </dl>
                   </div>
                 </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
-                      {stat.name}
-                    </dt>
-                    <dd className="flex items-baseline">
-                      <div className="text-2xl font-semibold text-gray-900">
-                        {stat.value}
-                      </div>
-                      <div className="ml-2 text-sm text-gray-500">
-                        ({stat.active} active)
-                      </div>
-                    </dd>
-                  </dl>
+              </div>
+            </div>
+
+            <div className="bg-white overflow-hidden shadow rounded-lg">
+              <div className="p-5">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <Activity className="h-6 w-6 text-green-600" />
+                  </div>
+                  <div className="ml-5 w-0 flex-1">
+                    <dl>
+                      <dt className="text-sm font-medium text-gray-500 truncate">Completed</dt>
+                      <dd className="text-lg font-medium text-gray-900">{overview?.completedTrips || 0}</dd>
+                    </dl>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white overflow-hidden shadow rounded-lg">
+              <div className="p-5">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <TrendingUp className="h-6 w-6 text-purple-600" />
+                  </div>
+                  <div className="ml-5 w-0 flex-1">
+                    <dl>
+                      <dt className="text-sm font-medium text-gray-500 truncate">Efficiency</dt>
+                      <dd className="text-lg font-medium text-gray-900">{overview?.efficiency ? `${(overview.efficiency * 100).toFixed(1)}%` : '0%'}</dd>
+                    </dl>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white overflow-hidden shadow rounded-lg">
+              <div className="p-5">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <DollarSign className="h-6 w-6 text-orange-600" />
+                  </div>
+                  <div className="ml-5 w-0 flex-1">
+                    <dl>
+                      <dt className="text-sm font-medium text-gray-500 truncate">Avg Response</dt>
+                      <dd className="text-lg font-medium text-gray-900">{overview?.averageResponseTime ? `${overview.averageResponseTime.toFixed(1)} min` : '0 min'}</dd>
+                    </dl>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        ))}
-      </div>
 
-      {/* Quick Actions */}
-      <div className="mt-8">
-        <h2 className="text-lg font-medium text-gray-900 mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <a
-            href="/dashboard/trips"
-            className="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-primary-500 rounded-lg shadow hover:shadow-md transition-shadow"
-          >
-            <div>
-              <span className="rounded-lg inline-flex p-3 bg-blue-50 text-blue-700 ring-4 ring-white">
-                <Truck className="h-6 w-6" />
-              </span>
-            </div>
-            <div className="mt-4">
-              <h3 className="text-lg font-medium text-gray-900">
-                Manage Trips
-              </h3>
-              <p className="mt-2 text-sm text-gray-500">
-                View, manage, and monitor all transport requests.
-              </p>
-            </div>
-          </a>
+          {/* Trip Statistics */}
+          {trips && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="bg-white shadow rounded-lg p-6">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Trip Status Breakdown</h3>
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-500">Completed</span>
+                    <span className="text-sm font-medium text-gray-900">{trips.completedTrips || 0}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-500">Pending</span>
+                    <span className="text-sm font-medium text-gray-900">{trips.pendingTrips || 0}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-500">Cancelled</span>
+                    <span className="text-sm font-medium text-gray-900">{trips.cancelledTrips || 0}</span>
+                  </div>
+                </div>
+              </div>
 
-          <a
-            href="/dashboard/hospitals"
-            className="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-primary-500 rounded-lg shadow hover:shadow-md transition-shadow"
-          >
-            <div>
-              <span className="rounded-lg inline-flex p-3 bg-green-50 text-green-700 ring-4 ring-white">
-                <Building2 className="h-6 w-6" />
-              </span>
+              <div className="bg-white shadow rounded-lg p-6">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Transport Level Distribution</h3>
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-500">BLS</span>
+                    <span className="text-sm font-medium text-gray-900">{trips.tripsByLevel?.BLS || 0}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-500">ALS</span>
+                    <span className="text-sm font-medium text-gray-900">{trips.tripsByLevel?.ALS || 0}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-500">CCT</span>
+                    <span className="text-sm font-medium text-gray-900">{trips.tripsByLevel?.CCT || 0}</span>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="mt-4">
-              <h3 className="text-lg font-medium text-gray-900">
-                Manage Healthcare Facilities
-              </h3>
-              <p className="mt-2 text-sm text-gray-500">
-                Add, edit, or remove healthcare facilities from the system.
-              </p>
-            </div>
-          </a>
+          )}
 
-          <a
-            href="/dashboard/agencies"
-            className="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-primary-500 rounded-lg shadow hover:shadow-md transition-shadow"
-          >
-            <div>
-              <span className="rounded-lg inline-flex p-3 bg-purple-50 text-purple-700 ring-4 ring-white">
-                <Truck className="h-6 w-6" />
-              </span>
+          {/* Empty State Message */}
+          {overview && overview.totalTrips === 0 && (
+            <div className="bg-blue-50 border border-blue-200 rounded-md p-6">
+              <div className="text-center">
+                <BarChart3 className="mx-auto h-12 w-12 text-blue-400" />
+                <h3 className="mt-2 text-sm font-medium text-blue-900">No Trips Yet</h3>
+                <p className="mt-1 text-sm text-blue-700">
+                  Your agency hasn't been assigned any trips yet. Once trips are assigned, 
+                  you'll see detailed analytics and performance metrics here.
+                </p>
+              </div>
             </div>
-            <div className="mt-4">
-              <h3 className="text-lg font-medium text-gray-900">
-                Manage EMS Agencies
-              </h3>
-              <p className="mt-2 text-sm text-gray-500">
-                Add, edit, or remove EMS agencies and their units.
-              </p>
-            </div>
-          </a>
-
-        </div>
-      </div>
+          )}
+        </>
+      )}
     </div>
   );
 };

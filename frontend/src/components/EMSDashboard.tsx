@@ -13,6 +13,7 @@ import {
 import Notifications from './Notifications';
 import UnitsManagement from './UnitsManagement';
 import EMSAnalytics from './EMSAnalytics';
+import Overview from './Overview';
 
 interface EMSDashboardProps {
   user: {
@@ -445,6 +446,7 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
             {[
               { id: 'available', name: 'Available Trips', icon: MapPin },
               { id: 'accepted', name: 'My Trips', icon: CheckCircle },
+              { id: 'overview', name: 'Overview', icon: BarChart3 },
               { id: 'units', name: 'Units', icon: Settings },
               { id: 'analytics', name: 'Analytics', icon: BarChart3 },
               { id: 'settings', name: 'Settings', icon: User }
@@ -795,10 +797,13 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
           </div>
         )}
 
+        {activeTab === 'overview' && (
+          <Overview user={user} />
+        )}
+
         {activeTab === 'analytics' && (
           <EMSAnalytics user={user} />
         )}
-
 
         {activeTab === 'units' && (
           <>
