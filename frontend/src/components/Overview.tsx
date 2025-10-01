@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart3, Activity, TrendingUp, DollarSign, Building2, Truck } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { BarChart3, Activity, TrendingUp, DollarSign, Building2, Truck, Plus } from 'lucide-react';
 import { emsAnalyticsAPI, tccAnalyticsAPI } from '../services/api';
 
 interface OverviewProps {
@@ -17,6 +18,7 @@ const Overview: React.FC<OverviewProps> = ({ user }) => {
   const [error, setError] = useState<string | null>(null);
   const [overview, setOverview] = useState<any>(null);
   const [trips, setTrips] = useState<any>(null);
+  const navigate = useNavigate();
 
   // Debug logging
   console.log('TCC_DEBUG: Overview component render - user:', user);
@@ -270,6 +272,74 @@ const Overview: React.FC<OverviewProps> = ({ user }) => {
               </>
             )}
           </div>
+
+          {/* Quick Actions - Only for TCC Admin users */}
+          {user.userType !== 'EMS' && (
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+              <button
+                onClick={() => navigate('/dashboard/trips/create')}
+                className="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow cursor-pointer"
+              >
+                <div className="p-5">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0">
+                      <div className="p-3 rounded-md bg-green-500">
+                        <Plus className="h-6 w-6 text-white" />
+                      </div>
+                    </div>
+                    <div className="ml-5 w-0 flex-1">
+                      <dl>
+                        <dt className="text-sm font-medium text-gray-500 truncate">Create Trip</dt>
+                        <dd className="text-lg font-semibold text-gray-900">New Transport Request</dd>
+                      </dl>
+                    </div>
+                  </div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => navigate('/dashboard/hospitals')}
+                className="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow cursor-pointer"
+              >
+                <div className="p-5">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0">
+                      <div className="p-3 rounded-md bg-blue-500">
+                        <Building2 className="h-6 w-6 text-white" />
+                      </div>
+                    </div>
+                    <div className="ml-5 w-0 flex-1">
+                      <dl>
+                        <dt className="text-sm font-medium text-gray-500 truncate">Hospitals</dt>
+                        <dd className="text-lg font-semibold text-gray-900">Manage Facilities</dd>
+                      </dl>
+                    </div>
+                  </div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => navigate('/dashboard/agencies')}
+                className="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow cursor-pointer"
+              >
+                <div className="p-5">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0">
+                      <div className="p-3 rounded-md bg-purple-500">
+                        <Truck className="h-6 w-6 text-white" />
+                      </div>
+                    </div>
+                    <div className="ml-5 w-0 flex-1">
+                      <dl>
+                        <dt className="text-sm font-medium text-gray-500 truncate">Agencies</dt>
+                        <dd className="text-lg font-semibold text-gray-900">Manage EMS Agencies</dd>
+                      </dl>
+                    </div>
+                  </div>
+                </div>
+              </button>
+            </div>
+          )}
 
           {/* Trip Statistics - Only for EMS users */}
           {user.userType === 'EMS' && trips && (
