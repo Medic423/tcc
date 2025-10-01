@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import Login from './components/Login';
 import TCCDashboard from './components/TCCDashboard';
 import HealthcareDashboard from './components/HealthcareDashboard';
@@ -25,17 +25,23 @@ function AppContent() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentView, setCurrentView] = useState<'public' | 'healthcare-register' | 'ems-register' | 'login' | 'healthcare-login' | 'ems-login'>('public');
+  const navigate = useNavigate();
 
   useEffect(() => {
     const checkAuth = async () => {
       const token = localStorage.getItem('token');
       if (token) {
         try {
+          console.log('TCC_DEBUG: Checking auth with token:', token ? 'present' : 'missing');
           const response = await authAPI.verify();
+          console.log('TCC_DEBUG: Auth verify response:', response.data);
           setUser(response.data.user);
         } catch (error) {
+          console.error('TCC_DEBUG: Auth verify failed:', error);
+          console.error('TCC_DEBUG: Auth verify error response:', error.response);
           localStorage.removeItem('token');
           localStorage.removeItem('user');
+          setUser(null);
         }
       }
       setLoading(false);
@@ -66,7 +72,7 @@ function AppContent() {
     // Only redirect for ADMIN/USER types, healthcare/EMS show their dashboards directly
     if (userData.userType === 'ADMIN' || userData.userType === 'USER') {
       console.log('TCC_DEBUG: Redirecting to dashboard for admin/user');
-      window.location.href = '/dashboard';
+      navigate('/dashboard');
     } else {
       console.log('TCC_DEBUG: No redirect needed for healthcare/EMS - component should re-render');
     }
