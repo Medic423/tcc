@@ -13,12 +13,20 @@ interface OverviewProps {
 }
 
 const Overview: React.FC<OverviewProps> = ({ user }) => {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // Start as false, will be set to true when user is available
   const [error, setError] = useState<string | null>(null);
   const [overview, setOverview] = useState<any>(null);
   const [trips, setTrips] = useState<any>(null);
 
   const loadAgencyAnalytics = async () => {
+    // Safety check - don't proceed if user is not available
+    if (!user || !user.userType) {
+      console.warn('TCC_DEBUG: Cannot load analytics - user not available:', user);
+      setError('User information not available');
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
     try {
@@ -48,13 +56,22 @@ const Overview: React.FC<OverviewProps> = ({ user }) => {
     }
   };
 
-  // Load agency-specific analytics data
+  // Load analytics data when user is available
   useEffect(() => {
-    loadAgencyAnalytics();
-  }, []);
+    if (user && user.userType) {
+      loadAgencyAnalytics();
+    }
+  }, [user]);
 
   return (
     <div className="space-y-6">
+      {(!user || !user.userType) && (
+        <div className="text-center py-8">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+          <p className="mt-4 text-sm text-gray-500">Loading user information...</p>
+        </div>
+      )}
+
       {loading && (
         <div className="text-center py-8">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
