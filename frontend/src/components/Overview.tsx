@@ -18,7 +18,12 @@ const Overview: React.FC<OverviewProps> = ({ user }) => {
   const [overview, setOverview] = useState<any>(null);
   const [trips, setTrips] = useState<any>(null);
 
+  // Debug logging
+  console.log('TCC_DEBUG: Overview component render - user:', user);
+
   const loadAgencyAnalytics = async () => {
+    console.log('TCC_DEBUG: loadAgencyAnalytics called with user:', user);
+    
     // Safety check - don't proceed if user is not available
     if (!user || !user.userType) {
       console.warn('TCC_DEBUG: Cannot load analytics - user not available:', user);
@@ -27,6 +32,7 @@ const Overview: React.FC<OverviewProps> = ({ user }) => {
       return;
     }
 
+    console.log('TCC_DEBUG: Starting analytics load for user type:', user.userType);
     setLoading(true);
     setError(null);
     try {
@@ -34,11 +40,13 @@ const Overview: React.FC<OverviewProps> = ({ user }) => {
       
       // Use appropriate API based on user type
       if (user.userType === 'EMS') {
+        console.log('TCC_DEBUG: Calling EMS analytics API');
         [ovr, trs] = await Promise.all([
           emsAnalyticsAPI.getOverview(),
           emsAnalyticsAPI.getTrips(),
         ]);
       } else {
+        console.log('TCC_DEBUG: Calling TCC analytics API');
         // For ADMIN and other user types, use TCC analytics
         [ovr, trs] = await Promise.all([
           tccAnalyticsAPI.getOverview(),
@@ -46,11 +54,13 @@ const Overview: React.FC<OverviewProps> = ({ user }) => {
         ]);
       }
 
+      console.log('TCC_DEBUG: Analytics API responses - overview:', ovr.data, 'trips:', trs.data);
       setOverview(ovr.data?.data || null);
       setTrips(trs.data?.data || null);
+      console.log('TCC_DEBUG: Analytics data set - overview:', ovr.data?.data, 'trips:', trs.data?.data);
     } catch (err) {
+      console.error('TCC_DEBUG: Analytics loading error:', err);
       setError('Failed to load analytics data');
-      console.error('Analytics loading error:', err);
     } finally {
       setLoading(false);
     }
@@ -58,8 +68,12 @@ const Overview: React.FC<OverviewProps> = ({ user }) => {
 
   // Load analytics data when user is available
   useEffect(() => {
+    console.log('TCC_DEBUG: Overview useEffect triggered with user:', user);
     if (user && user.userType) {
+      console.log('TCC_DEBUG: User available, calling loadAgencyAnalytics');
       loadAgencyAnalytics();
+    } else {
+      console.log('TCC_DEBUG: User not available, skipping analytics load');
     }
   }, [user]);
 
