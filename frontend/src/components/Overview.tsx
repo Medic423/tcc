@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart3, Activity, TrendingUp, DollarSign } from 'lucide-react';
-import { emsAnalyticsAPI } from '../services/api';
+import { emsAnalyticsAPI, tccAnalyticsAPI } from '../services/api';
 
 interface OverviewProps {
   user: {
@@ -22,10 +22,21 @@ const Overview: React.FC<OverviewProps> = ({ user }) => {
     setLoading(true);
     setError(null);
     try {
-      const [ovr, trs] = await Promise.all([
-        emsAnalyticsAPI.getOverview(),
-        emsAnalyticsAPI.getTrips(),
-      ]);
+      let ovr, trs;
+      
+      // Use appropriate API based on user type
+      if (user.userType === 'EMS') {
+        [ovr, trs] = await Promise.all([
+          emsAnalyticsAPI.getOverview(),
+          emsAnalyticsAPI.getTrips(),
+        ]);
+      } else {
+        // For ADMIN and other user types, use TCC analytics
+        [ovr, trs] = await Promise.all([
+          tccAnalyticsAPI.getOverview(),
+          tccAnalyticsAPI.getTrips(),
+        ]);
+      }
 
       setOverview(ovr.data?.data || null);
       setTrips(trs.data?.data || null);
@@ -66,12 +77,22 @@ const Overview: React.FC<OverviewProps> = ({ user }) => {
 
       {!loading && !error && (
         <>
-          {/* Agency Header */}
+          {/* Header */}
           <div className="bg-white shadow rounded-lg p-6 mb-6">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-xl font-semibold text-gray-900">{overview?.agencyName || user.agencyName || 'Your Agency'}</h2>
-                <p className="text-sm text-gray-500">Agency Performance Dashboard</p>
+                <h2 className="text-xl font-semibold text-gray-900">
+                  {user.userType === 'EMS' 
+                    ? (overview?.agencyName || user.agencyName || 'Your Agency')
+                    : 'TCC System Overview'
+                  }
+                </h2>
+                <p className="text-sm text-gray-500">
+                  {user.userType === 'EMS' 
+                    ? 'Agency Performance Dashboard'
+                    : 'Transportation Coordination Center Analytics'
+                  }
+                </p>
               </div>
               <div className="text-right">
                 <div className="text-sm text-gray-500">Last Updated</div>
