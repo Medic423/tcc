@@ -92,7 +92,7 @@ const Overview: React.FC<OverviewProps> = ({ user }) => {
         </div>
       )}
 
-      {!loading && !error && (
+      {!loading && !error && user && user.userType && (
         <>
           {/* Header */}
           <div className="bg-white shadow rounded-lg p-6 mb-6">
