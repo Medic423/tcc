@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart3, Activity, TrendingUp, DollarSign } from 'lucide-react';
+import { BarChart3, Activity, TrendingUp, DollarSign, Building2, Truck } from 'lucide-react';
 import { emsAnalyticsAPI, tccAnalyticsAPI } from '../services/api';
 
 interface OverviewProps {
@@ -120,73 +120,145 @@ const Overview: React.FC<OverviewProps> = ({ user }) => {
 
           {/* Key Metrics */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <BarChart3 className="h-6 w-6 text-blue-600" />
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">Total Trips</dt>
-                      <dd className="text-lg font-medium text-gray-900">{overview?.totalTrips || 0}</dd>
-                    </dl>
+            {user.userType === 'EMS' ? (
+              // EMS User Metrics
+              <>
+                <div className="bg-white overflow-hidden shadow rounded-lg">
+                  <div className="p-5">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        <BarChart3 className="h-6 w-6 text-blue-600" />
+                      </div>
+                      <div className="ml-5 w-0 flex-1">
+                        <dl>
+                          <dt className="text-sm font-medium text-gray-500 truncate">Total Trips</dt>
+                          <dd className="text-lg font-medium text-gray-900">{overview?.totalTrips || 0}</dd>
+                        </dl>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
 
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <Activity className="h-6 w-6 text-green-600" />
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">Completed</dt>
-                      <dd className="text-lg font-medium text-gray-900">{overview?.completedTrips || 0}</dd>
-                    </dl>
+                <div className="bg-white overflow-hidden shadow rounded-lg">
+                  <div className="p-5">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        <Activity className="h-6 w-6 text-green-600" />
+                      </div>
+                      <div className="ml-5 w-0 flex-1">
+                        <dl>
+                          <dt className="text-sm font-medium text-gray-500 truncate">Completed</dt>
+                          <dd className="text-lg font-medium text-gray-900">{overview?.completedTrips || 0}</dd>
+                        </dl>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
 
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <TrendingUp className="h-6 w-6 text-purple-600" />
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">Efficiency</dt>
-                      <dd className="text-lg font-medium text-gray-900">{overview?.efficiency ? `${(overview.efficiency * 100).toFixed(1)}%` : '0%'}</dd>
-                    </dl>
+                <div className="bg-white overflow-hidden shadow rounded-lg">
+                  <div className="p-5">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        <TrendingUp className="h-6 w-6 text-purple-600" />
+                      </div>
+                      <div className="ml-5 w-0 flex-1">
+                        <dl>
+                          <dt className="text-sm font-medium text-gray-500 truncate">Efficiency</dt>
+                          <dd className="text-lg font-medium text-gray-900">{overview?.efficiency ? `${(overview.efficiency * 100).toFixed(1)}%` : '0%'}</dd>
+                        </dl>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
 
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <DollarSign className="h-6 w-6 text-orange-600" />
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">Avg Response</dt>
-                      <dd className="text-lg font-medium text-gray-900">{overview?.averageResponseTime ? `${overview.averageResponseTime.toFixed(1)} min` : '0 min'}</dd>
-                    </dl>
+                <div className="bg-white overflow-hidden shadow rounded-lg">
+                  <div className="p-5">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        <DollarSign className="h-6 w-6 text-orange-600" />
+                      </div>
+                      <div className="ml-5 w-0 flex-1">
+                        <dl>
+                          <dt className="text-sm font-medium text-gray-500 truncate">Avg Response</dt>
+                          <dd className="text-lg font-medium text-gray-900">{overview?.averageResponseTime ? `${overview.averageResponseTime.toFixed(1)} min` : '0 min'}</dd>
+                        </dl>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
+              </>
+            ) : (
+              // TCC Admin Metrics
+              <>
+                <div className="bg-white overflow-hidden shadow rounded-lg">
+                  <div className="p-5">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        <Building2 className="h-6 w-6 text-blue-600" />
+                      </div>
+                      <div className="ml-5 w-0 flex-1">
+                        <dl>
+                          <dt className="text-sm font-medium text-gray-500 truncate">Healthcare Facilities</dt>
+                          <dd className="text-lg font-medium text-gray-900">{overview?.totalFacilities || 0}</dd>
+                        </dl>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white overflow-hidden shadow rounded-lg">
+                  <div className="p-5">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        <Truck className="h-6 w-6 text-green-600" />
+                      </div>
+                      <div className="ml-5 w-0 flex-1">
+                        <dl>
+                          <dt className="text-sm font-medium text-gray-500 truncate">EMS Agencies</dt>
+                          <dd className="text-lg font-medium text-gray-900">{overview?.totalAgencies || 0}</dd>
+                        </dl>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white overflow-hidden shadow rounded-lg">
+                  <div className="p-5">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        <Activity className="h-6 w-6 text-purple-600" />
+                      </div>
+                      <div className="ml-5 w-0 flex-1">
+                        <dl>
+                          <dt className="text-sm font-medium text-gray-500 truncate">Total Units</dt>
+                          <dd className="text-lg font-medium text-gray-900">{overview?.totalUnits || 0}</dd>
+                        </dl>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white overflow-hidden shadow rounded-lg">
+                  <div className="p-5">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        <TrendingUp className="h-6 w-6 text-orange-600" />
+                      </div>
+                      <div className="ml-5 w-0 flex-1">
+                        <dl>
+                          <dt className="text-sm font-medium text-gray-500 truncate">Active Units</dt>
+                          <dd className="text-lg font-medium text-gray-900">{overview?.activeUnits || 0}</dd>
+                        </dl>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
 
-          {/* Trip Statistics */}
-          {trips && (
+          {/* Trip Statistics - Only for EMS users */}
+          {user.userType === 'EMS' && trips && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="bg-white shadow rounded-lg p-6">
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Trip Status Breakdown</h3>
@@ -227,7 +299,7 @@ const Overview: React.FC<OverviewProps> = ({ user }) => {
           )}
 
           {/* Empty State Message */}
-          {overview && overview.totalTrips === 0 && (
+          {user.userType === 'EMS' && overview && overview.totalTrips === 0 && (
             <div className="bg-blue-50 border border-blue-200 rounded-md p-6">
               <div className="text-center">
                 <BarChart3 className="mx-auto h-12 w-12 text-blue-400" />
@@ -235,6 +307,17 @@ const Overview: React.FC<OverviewProps> = ({ user }) => {
                 <p className="mt-1 text-sm text-blue-700">
                   Your agency hasn't been assigned any trips yet. Once trips are assigned, 
                   you'll see detailed analytics and performance metrics here.
+                </p>
+              </div>
+            </div>
+          )}
+          {user.userType !== 'EMS' && overview && overview.totalFacilities === 0 && overview.totalAgencies === 0 && (
+            <div className="bg-blue-50 border border-blue-200 rounded-md p-6">
+              <div className="text-center">
+                <Building2 className="mx-auto h-12 w-12 text-blue-400" />
+                <h3 className="mt-2 text-sm font-medium text-blue-900">No Facilities or Agencies Yet</h3>
+                <p className="mt-1 text-sm text-blue-700">
+                  Healthcare facilities and EMS agencies will appear here once they register with the system.
                 </p>
               </div>
             </div>
