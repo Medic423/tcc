@@ -506,7 +506,7 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
           <div className="py-6">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
               <Routes>
-                <Route path="/" element={<Overview />} />
+                <Route path="/" element={<Overview user={user} />} />
                 <Route path="/trips" element={<TripsView user={user} />} />
                 <Route path="/trips/create" element={<TCCCreateTrip user={user} />} />
                 <Route path="/analytics" element={<Analytics />} />
