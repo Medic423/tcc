@@ -95,6 +95,73 @@ app.use('/api/ems/analytics', emsAnalyticsRoutes);
 app.use('/api/optimize', optimizationRoutes);
 app.use('/api/backup', backupRoutes);
 
+// Public endpoints for healthcare users
+app.get('/api/public/categories', async (req, res) => {
+  try {
+    const hospitalPrisma = databaseManager.getHospitalDB();
+    
+    const categories = await hospitalPrisma.dropdownOption.findMany({
+      select: {
+        category: true
+      },
+      distinct: ['category'],
+      where: {
+        isActive: true
+      }
+    });
+
+    res.json({
+      success: true,
+      data: categories.map(c => c.category),
+      message: 'Categories retrieved successfully'
+    });
+  } catch (error) {
+    console.error('TCC_DEBUG: Get public categories error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get categories'
+    });
+  }
+});
+
+app.get('/api/public/hospitals', async (req, res) => {
+  try {
+    const hospitalPrisma = databaseManager.getHospitalDB();
+    
+    const hospitals = await hospitalPrisma.facility.findMany({
+      where: {
+        isActive: true
+      },
+      select: {
+        id: true,
+        name: true,
+        address: true,
+        city: true,
+        state: true,
+        zipCode: true,
+        phone: true,
+        email: true,
+        type: true
+      },
+      orderBy: {
+        name: 'asc'
+      }
+    });
+
+    res.json({
+      success: true,
+      data: hospitals,
+      message: 'Hospitals retrieved successfully'
+    });
+  } catch (error) {
+    console.error('TCC_DEBUG: Get public hospitals error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get hospitals'
+    });
+  }
+});
+
 // Test endpoints
 app.get('/api/test', (req, res) => {
   res.json({

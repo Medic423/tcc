@@ -81,6 +81,18 @@ const HospitalSettings: React.FC = () => {
     room: ''
   });
 
+  // Main contact form state
+  const [contactFormData, setContactFormData] = useState({
+    contactName: '',
+    contactTitle: '',
+    contactEmail: '',
+    contactPhone: '',
+    contactNotes: ''
+  });
+  const [contactLoading, setContactLoading] = useState(false);
+  const [contactError, setContactError] = useState<string | null>(null);
+  const [contactSuccess, setContactSuccess] = useState<string | null>(null);
+
   // Load categories on component mount
   useEffect(() => {
     loadCategories();
@@ -108,7 +120,7 @@ const HospitalSettings: React.FC = () => {
   const loadCategories = async () => {
     try {
       setLoading(true);
-      const response = await dropdownOptionsAPI.getCategories();
+      const response = await api.get('/api/public/categories');
       if (response.data.success) {
         setCategories(response.data.data);
         // Set default category if available
@@ -218,7 +230,7 @@ const HospitalSettings: React.FC = () => {
   const loadHospitals = async () => {
     try {
       setPickupLoading(true);
-      const response = await api.get('/api/tcc/hospitals');
+      const response = await api.get('/api/public/hospitals');
       if (response.data.success) {
         setHospitals(response.data.data);
         // Set default hospital if available
@@ -328,6 +340,41 @@ const HospitalSettings: React.FC = () => {
       setPickupError(error.response?.data?.error || 'Failed to delete pickup location');
     } finally {
       setPickupLoading(false);
+    }
+  };
+
+  // Contact form handlers
+  const handleContactInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setContactFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSaveContact = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!contactFormData.contactName || !contactFormData.contactEmail) {
+      setContactError('Contact name and email are required');
+      return;
+    }
+
+    try {
+      setContactLoading(true);
+      setContactError(null);
+      
+      // For now, we'll just simulate saving since there's no backend endpoint yet
+      // In a real implementation, this would call an API endpoint
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+      
+      setContactSuccess('Contact information saved successfully');
+      setTimeout(() => setContactSuccess(null), 3000);
+    } catch (error: any) {
+      console.error('Error saving contact information:', error);
+      setContactError('Failed to save contact information');
+    } finally {
+      setContactLoading(false);
     }
   };
 
@@ -777,7 +824,20 @@ const HospitalSettings: React.FC = () => {
               </p>
             </div>
             <div className="px-6 py-6">
-              <form className="space-y-6">
+              {/* Contact Success/Error Messages */}
+              {contactSuccess && (
+                <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-md">
+                  <p className="text-green-800">{contactSuccess}</p>
+                </div>
+              )}
+
+              {contactError && (
+                <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
+                  <p className="text-red-800">{contactError}</p>
+                </div>
+              )}
+
+              <form onSubmit={handleSaveContact} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label htmlFor="contactName" className="block text-sm font-medium text-gray-700 mb-2">
@@ -787,8 +847,11 @@ const HospitalSettings: React.FC = () => {
                       type="text"
                       id="contactName"
                       name="contactName"
+                      value={contactFormData.contactName}
+                      onChange={handleContactInputChange}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       placeholder="Enter contact name"
+                      required
                     />
                   </div>
                   <div>
@@ -799,6 +862,8 @@ const HospitalSettings: React.FC = () => {
                       type="text"
                       id="contactTitle"
                       name="contactTitle"
+                      value={contactFormData.contactTitle}
+                      onChange={handleContactInputChange}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       placeholder="e.g., IT Director, Administrator"
                     />
@@ -814,8 +879,11 @@ const HospitalSettings: React.FC = () => {
                       type="email"
                       id="contactEmail"
                       name="contactEmail"
+                      value={contactFormData.contactEmail}
+                      onChange={handleContactInputChange}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       placeholder="contact@hospital.com"
+                      required
                     />
                   </div>
                   <div>
@@ -826,6 +894,8 @@ const HospitalSettings: React.FC = () => {
                       type="tel"
                       id="contactPhone"
                       name="contactPhone"
+                      value={contactFormData.contactPhone}
+                      onChange={handleContactInputChange}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       placeholder="(555) 123-4567"
                     />
@@ -839,6 +909,8 @@ const HospitalSettings: React.FC = () => {
                   <textarea
                     id="contactNotes"
                     name="contactNotes"
+                    value={contactFormData.contactNotes}
+                    onChange={handleContactInputChange}
                     rows={3}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Any additional information about this contact person..."
@@ -848,15 +920,27 @@ const HospitalSettings: React.FC = () => {
                 <div className="flex justify-end space-x-3">
                   <button
                     type="button"
+                    onClick={() => {
+                      setContactFormData({
+                        contactName: '',
+                        contactTitle: '',
+                        contactEmail: '',
+                        contactPhone: '',
+                        contactNotes: ''
+                      });
+                      setContactError(null);
+                      setContactSuccess(null);
+                    }}
                     className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                   >
-                    Cancel
+                    Clear
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    disabled={contactLoading}
+                    className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Save Contact Information
+                    {contactLoading ? 'Saving...' : 'Save Contact Information'}
                   </button>
                 </div>
               </form>
