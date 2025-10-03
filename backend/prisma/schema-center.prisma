@@ -1,0 +1,399 @@
+// Center Database Schema (Port 5434)
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/center"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL_CENTER")
+}
+
+model CenterUser {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  userType  String   // ADMIN
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("center_users")
+}
+
+model Hospital {
+  id             String   @id @default(cuid())
+  name           String
+  address        String
+  city           String
+  state          String
+  zipCode        String
+  phone          String?
+  email          String?
+  type           String
+  capabilities   String[]
+  region         String
+  coordinates    Json?
+  
+  // Location data for distance calculations
+  latitude       Float?   // For distance calculations
+  longitude      Float?   // For distance calculations
+  
+  operatingHours String?
+  isActive       Boolean  @default(true)
+  requiresReview Boolean  @default(false)
+  approvedAt     DateTime?
+  approvedBy     String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  pickupLocations PickupLocation[]
+
+  @@map("hospitals")
+}
+
+model PickupLocation {
+  id          String   @id @default(cuid())
+  hospitalId  String
+  name        String   // e.g., "Emergency Department", "First Floor Nurses Station"
+  description String?  // Optional description
+  contactPhone String? // Contact phone number for this location
+  contactEmail String? // Contact email for this location
+  floor       String?  // Floor number or name
+  room        String?  // Room number or name
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  hospital    Hospital @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+  trips       Trip[]   @relation("PickupLocation")
+
+  @@map("pickup_locations")
+}
+
+model EMSAgency {
+  id             String   @id @default(cuid())
+  name           String
+  contactName    String
+  phone          String
+  email          String
+  address        String
+  city           String
+  state          String
+  zipCode        String
+  serviceArea    String[]
+  operatingHours Json?
+  capabilities   String[]
+  pricingStructure Json?
+  
+  // Location data for distance filtering
+  latitude       Float?   // For distance calculations
+  longitude      Float?   // For distance calculations
+  serviceRadius  Int?     // Service radius in miles
+  
+  // Availability tracking
+  totalUnits     Int      @default(0)  // Total number of units
+  availableUnits Int      @default(0)  // Currently available units
+  lastUpdated    DateTime @default(now()) // Last availability update
+  
+  // Notification preferences
+  acceptsNotifications Boolean @default(true) // Whether agency accepts trip notifications
+  notificationMethods  String[] // Email, SMS, Phone, etc.
+  
+  isActive       Boolean  @default(true)
+  status         String   @default("ACTIVE")
+  requiresReview Boolean  @default(false)
+  approvedAt     DateTime?
+  approvedBy     String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("ems_agencies")
+}
+
+model Trip {
+  id                String    @id @default(cuid())
+  tripNumber        String    @unique
+  
+  // Patient Information (HIPAA Compliant - NO name/age)
+  patientId         String    // Auto-generated patient ID (e.g., "PMTC1NJKZ")
+  patientWeight     String?   // Optional weight information (in kgs)
+  specialNeeds      String?   // Special medical needs
+  insuranceCompany  String?   // Patient's insurance company
+  
+  // Trip Details
+  fromLocation      String
+  pickupLocationId  String?  // Reference to specific pickup location within hospital
+  toLocation        String
+  scheduledTime     DateTime
+  transportLevel    String    // BLS, ALS, CCT, Other
+  urgencyLevel      String    // Routine, Urgent, Emergent
+  
+  // Location Data for Route Optimization
+  originLatitude       Float?   // Origin coordinates for distance calculations
+  originLongitude      Float?   // Origin coordinates for distance calculations
+  destinationLatitude  Float?   // Destination coordinates for distance calculations
+  destinationLongitude Float?   // Destination coordinates for distance calculations
+  
+  // Clinical Details
+  diagnosis         String?   // Optional dropdown: UTI, Dialysis, Cardiac, etc.
+  mobilityLevel     String?   // Ambulatory, Wheelchair, Stretcher, Bed
+  oxygenRequired    Boolean   @default(false)
+  monitoringRequired Boolean  @default(false)
+  
+  // QR Code
+  generateQRCode    Boolean   @default(false)
+  qrCodeData        String?   // QR code content when generated
+  
+  // Agency Notifications
+  selectedAgencies  String[]  // Array of agency IDs for notifications
+  notificationRadius Int?     // Distance radius for agency filtering (miles)
+  
+  // Time Tracking
+  transferRequestTime   DateTime?  // Auto-set when sent to agencies
+  transferAcceptedTime  DateTime?  // Auto-set when agency responds, manually editable
+  emsArrivalTime        DateTime?  // When EMS arrives at unit
+  emsDepartureTime      DateTime?  // When EMS leaves unit
+  
+  // Revenue and Distance Tracking
+  tripCost              Decimal?   @db.Decimal(10,2)  // Calculated trip cost
+  distanceMiles         Float?     // Total trip distance in miles
+  responseTimeMinutes   Int?       // Response time in minutes
+  deadheadMiles         Float?     // Deadhead miles (empty return)
+  
+  // Insurance-Specific Pricing
+  insurancePayRate      Decimal?   @db.Decimal(10,2)  // Negotiated rate for this insurance company
+  perMileRate           Decimal?   @db.Decimal(8,2)   // Per-mile rate for loaded miles
+  
+  // Performance Tracking
+  requestTimestamp      DateTime?  @default(now())  // When request was made
+  estimatedTripTimeMinutes Int?    // Expected trip duration
+  actualTripTimeMinutes   Int?     // Actual trip duration
+  completionTimeMinutes   Int?     // Total completion time
+  
+  // Revenue and Analytics Fields (Added per audit report)
+  loadedMiles           Decimal?   @db.Decimal(10,2)  // Loaded miles for revenue calculation
+  customerSatisfaction  Int?       // Customer satisfaction rating (1-5)
+  efficiency            Decimal?   @db.Decimal(5,2)   // Trip efficiency score
+  performanceScore      Decimal?   @db.Decimal(5,2)   // Overall performance score
+  revenuePerHour        Decimal?   @db.Decimal(10,2)  // Revenue per hour calculation
+  backhaulOpportunity   Boolean    @default(false)    // Whether trip has backhaul opportunity
+  
+  // Legacy fields (keeping for backward compatibility)
+  actualStartTime   DateTime?
+  actualEndTime     DateTime?
+  status            String
+  priority          String
+  notes             String?
+  assignedTo        String?
+  assignedAgencyId  String?
+  assignedUnitId    String?
+  acceptedTimestamp DateTime?
+  pickupTimestamp   DateTime?
+  completionTimestamp DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations
+  pickupLocation    PickupLocation? @relation("PickupLocation", fields: [pickupLocationId], references: [id])
+
+  @@map("trips")
+}
+
+model SystemAnalytics {
+  id          String   @id @default(cuid())
+  metricName  String
+  metricValue Json
+  timestamp   DateTime @default(now())
+  createdAt   DateTime @default(now())
+  userId      String?
+
+  @@map("system_analytics")
+}
+
+model pricingModel {
+  id                    String   @id @default(cuid())
+  agencyId              String?  // Agency-specific pricing
+  name                  String   // "Standard", "Peak Hours", "Weekend"
+  isActive              Boolean  @default(true)
+  
+  // Base Pricing
+  baseRates             Json     // Transport level base rates
+  perMileRates          Json     // Per-mile rates by transport level
+  priorityMultipliers   Json     // Priority-based multipliers
+  
+  // Time-based Pricing
+  peakHourMultipliers   Json     // Time-of-day multipliers
+  weekendMultipliers    Json     // Weekend/holiday multipliers
+  seasonalMultipliers   Json     // Seasonal pricing adjustments
+  
+  // Geographic Pricing
+  zoneMultipliers       Json     // Geographic zone multipliers
+  distanceTiers         Json     // Distance-based pricing tiers
+  
+  // Service-specific Pricing
+  specialRequirements   Json     // Special equipment/needs pricing
+  isolationPricing      Decimal? @db.Decimal(8,2)
+  bariatricPricing      Decimal? @db.Decimal(8,2)
+  oxygenPricing         Decimal? @db.Decimal(8,2)
+  monitoringPricing     Decimal? @db.Decimal(8,2)
+  
+  // Insurance-specific Rates
+  insuranceRates        Json     // Insurance company specific rates
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  @@map("pricing_models")
+}
+
+// Backhaul opportunities tracking (Added per audit report)
+model BackhaulOpportunities {
+  id            String    @id @default(cuid())
+  tripId1       String    // First trip ID
+  tripId2       String    // Second trip ID
+  revenueBonus  Decimal?  @db.Decimal(10,2)  // Additional revenue from backhaul
+  efficiency    Decimal?  @db.Decimal(5,2)   // Efficiency improvement
+  createdAt     DateTime  @default(now())
+  isActive      Boolean   @default(true)
+
+  @@map("backhaul_opportunities")
+}
+
+// Unit performance tracking (Added per audit report)
+model UnitAnalytics {
+  id                  String    @id @default(cuid())
+  unitId              String    // Reference to unit ID
+  performanceScore    Decimal?  @db.Decimal(5,2)  // Overall performance score
+  efficiency          Decimal?  @db.Decimal(5,2)  // Unit efficiency
+  totalTrips          Int       @default(0)       // Total trips completed
+  averageResponseTime Decimal?  @db.Decimal(5,2)  // Average response time
+  lastUpdated         DateTime  @default(now())
+
+  @@map("unit_analytics")
+}
+
+// Route Optimization Settings (Phase 3)
+model RouteOptimizationSettings {
+  id                    String   @id @default(cuid())
+  agencyId              String?  // Agency-specific settings (null for global)
+  
+  // Optimization Weights (α, β, γ, δ parameters)
+  deadheadMileWeight    Decimal  @db.Decimal(5,2)  @default(1.0)  // α - penalty for deadhead miles
+  waitTimeWeight        Decimal  @db.Decimal(5,2)  @default(1.0)  // β - penalty for wait time
+  backhaulBonusWeight   Decimal  @db.Decimal(5,2)  @default(1.0)  // γ - bonus for backhaul pairs
+  overtimeRiskWeight    Decimal  @db.Decimal(5,2)  @default(1.0)  // δ - penalty for overtime risk
+  revenueWeight         Decimal  @db.Decimal(5,2)  @default(1.0)  // Revenue optimization weight
+  
+  // Constraint Settings
+  maxDeadheadMiles      Decimal  @db.Decimal(6,2)  @default(50.0)  // Maximum deadhead miles
+  maxWaitTimeMinutes    Int      @default(30)      // Maximum wait time
+  maxOvertimeHours      Decimal  @db.Decimal(4,2)  @default(4.0)   // Maximum overtime allowed
+  maxResponseTimeMinutes Int     @default(15)      // Maximum response time
+  maxServiceDistance    Decimal  @db.Decimal(6,2)  @default(100.0) // Maximum service distance
+  
+  // Backhaul Optimization
+  backhaulTimeWindow    Int      @default(60)      // Time window for backhaul pairing (minutes)
+  backhaulDistanceLimit Decimal  @db.Decimal(6,2)  @default(25.0)  // Maximum distance for backhaul
+  backhaulRevenueBonus  Decimal  @db.Decimal(8,2)  @default(50.0)  // Base bonus for backhaul pairs
+  enableBackhaulOptimization Boolean @default(true) // Enable/disable backhaul optimization
+  
+  // Performance Targets
+  targetLoadedMileRatio Decimal  @db.Decimal(3,2)  @default(0.75)  // Target loaded mile ratio (0.0-1.0)
+  targetRevenuePerHour  Decimal  @db.Decimal(8,2)  @default(200.0) // Target revenue per hour
+  targetResponseTime    Int      @default(12)      // Target response time (minutes)
+  targetEfficiency      Decimal  @db.Decimal(3,2)  @default(0.85)  // Target efficiency score
+  
+  // Algorithm Settings
+  optimizationAlgorithm String   @default("HYBRID") // HYBRID, GREEDY, GENETIC, SIMULATED_ANNEALING
+  maxOptimizationTime  Int      @default(30)      // Maximum optimization time (seconds)
+  enableRealTimeOptimization Boolean @default(true) // Enable real-time optimization
+  
+  // Advanced Settings
+  crewAvailabilityWeight Decimal @db.Decimal(5,2)  @default(1.0)  // Weight for crew availability
+  equipmentCompatibilityWeight Decimal @db.Decimal(5,2) @default(1.0) // Weight for equipment compatibility
+  patientPriorityWeight  Decimal @db.Decimal(5,2)  @default(1.0)  // Weight for patient priority
+  
+  isActive              Boolean  @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  @@map("route_optimization_settings")
+}
+
+// Trip Cost Breakdown (Phase 4)
+model TripCostBreakdown {
+  id                    String   @id @default(cuid())
+  tripId                String   // Reference to Trip
+  
+  // Revenue Components
+  baseRevenue           Decimal  @db.Decimal(10,2)  // Base transport rate
+  mileageRevenue        Decimal  @db.Decimal(10,2)  // Per-mile revenue
+  priorityRevenue       Decimal  @db.Decimal(10,2)  // Priority-based revenue
+  specialRequirementsRevenue Decimal @db.Decimal(10,2)  // Special requirements surcharge
+  insuranceAdjustment   Decimal  @db.Decimal(10,2)  // Insurance rate adjustment
+  totalRevenue          Decimal  @db.Decimal(10,2)  // Total revenue
+  
+  // Cost Components
+  crewLaborCost         Decimal  @db.Decimal(10,2)  // Crew labor cost
+  vehicleCost           Decimal  @db.Decimal(10,2)  // Vehicle operational cost
+  fuelCost              Decimal  @db.Decimal(10,2)  // Fuel cost
+  maintenanceCost       Decimal  @db.Decimal(10,2)  // Maintenance cost
+  overheadCost          Decimal  @db.Decimal(10,2)  // Overhead allocation
+  totalCost             Decimal  @db.Decimal(10,2)  // Total cost
+  
+  // Profitability Metrics
+  grossProfit           Decimal  @db.Decimal(10,2)  // Gross profit (revenue - cost)
+  profitMargin          Decimal  @db.Decimal(5,2)   // Profit margin percentage
+  revenuePerMile        Decimal  @db.Decimal(8,2)   // Revenue per mile
+  costPerMile           Decimal  @db.Decimal(8,2)   // Cost per mile
+  
+  // Efficiency Metrics
+  loadedMileRatio       Decimal  @db.Decimal(3,2)   // Loaded miles / total miles
+  deadheadMileRatio     Decimal  @db.Decimal(3,2)   // Deadhead miles / total miles
+  utilizationRate       Decimal  @db.Decimal(3,2)   // Utilization rate
+  
+  // Trip Details (for analysis)
+  tripDistance          Decimal  @db.Decimal(6,2)   // Total trip distance
+  loadedMiles           Decimal  @db.Decimal(6,2)   // Loaded miles
+  deadheadMiles         Decimal  @db.Decimal(6,2)   // Deadhead miles
+  tripDurationHours     Decimal  @db.Decimal(4,2)   // Trip duration in hours
+  transportLevel        String   // BLS, ALS, CCT
+  priorityLevel         String   // LOW, MEDIUM, HIGH, URGENT
+  
+  // Cost Center Allocation
+  costCenterId          String?  // Reference to cost center
+  costCenterName        String?  // Cost center name for reporting
+  
+  // Analysis Timestamps
+  calculatedAt          DateTime @default(now())    // When breakdown was calculated
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  @@map("trip_cost_breakdowns")
+}
+
+// Cost Centers (Phase 4)
+model CostCenter {
+  id                    String   @id @default(cuid())
+  name                  String   // Cost center name
+  description           String?  // Cost center description
+  code                  String   @unique // Cost center code
+  
+  // Overhead Allocation
+  overheadRate          Decimal  @db.Decimal(5,2)  @default(0.0)  // Overhead rate percentage
+  fixedCosts            Decimal  @db.Decimal(10,2) @default(0.0)  // Fixed costs
+  variableCosts         Decimal  @db.Decimal(10,2) @default(0.0)  // Variable costs
+  
+  // Allocation Method
+  allocationMethod      String   @default("TRIP_COUNT") // TRIP_COUNT, REVENUE, MILES, HOURS
+  isActive              Boolean  @default(true)
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  @@map("cost_centers")
+}
