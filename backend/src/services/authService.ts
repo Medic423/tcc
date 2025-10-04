@@ -40,22 +40,23 @@ export class AuthService {
       console.log('TCC_DEBUG: AuthService.login called with:', { email: credentials.email, password: credentials.password ? '***' : 'missing' });
       const { email, password } = credentials;
 
-      // First try Center database (Admin and User types)
-      const centerDB = databaseManager.getCenterDB();
-      let user = await centerDB.centerUser.findUnique({
-        where: { email }
-      });
-
+      // Use single database to find user
+      const db = databaseManager.getCenterDB();
+      let user: any = null;
       let userType: 'ADMIN' | 'USER' | 'HEALTHCARE' | 'EMS' = 'ADMIN';
       let userData: User;
 
+      // Try to find user in CenterUser table first
+      user = await db.centerUser.findUnique({
+        where: { email }
+      });
       if (user) {
-        // Use the actual userType from the Center database
         userType = user.userType as 'ADMIN' | 'USER';
-      } else {
-        // Try Hospital database (Healthcare users)
-        const hospitalDB = databaseManager.getHospitalDB();
-        user = await hospitalDB.healthcareUser.findUnique({
+      }
+
+      // If not found, try HealthcareUser table
+      if (!user) {
+        user = await db.healthcareUser.findUnique({
           where: { email }
         });
         if (user) {
@@ -63,10 +64,9 @@ export class AuthService {
         }
       }
 
+      // If still not found, try EMSUser table
       if (!user) {
-        // Try EMS database (EMS users)
-        const emsDB = databaseManager.getEMSDB();
-        user = await emsDB.eMSUser.findUnique({
+        user = await db.eMSUser.findUnique({
           where: { email }
         });
         if (user) {
@@ -128,38 +128,15 @@ export class AuthService {
       );
 
       // Create user data based on type
-      if (userType === 'ADMIN') {
-        userData = {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          userType: 'ADMIN'
-        };
-      } else if (userType === 'USER') {
-        userData = {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          userType: 'USER'
-        };
-      } else if (userType === 'HEALTHCARE') {
-        userData = {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          userType: 'HEALTHCARE',
-          facilityName: (user as any).facilityName
-        };
-      } else {
-        userData = {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          userType: 'EMS',
-          agencyName: (user as any).agencyName,
-          agencyId: (user as any).agencyId
-        };
-      }
+      userData = {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        userType: userType,
+        facilityName: userType === 'HEALTHCARE' ? (user as any).facilityName : undefined,
+        agencyName: userType === 'EMS' ? (user as any).agencyName : undefined,
+        agencyId: userType === 'EMS' ? (user as any).agencyId : undefined
+      };
 
       return {
         success: true,
@@ -186,45 +163,22 @@ export class AuthService {
         return null;
       }
 
-      // Verify user still exists and is active based on user type
+      // Verify user still exists and is active using single database
+      const db = databaseManager.getCenterDB();
+      let user: any = null;
+
       if (decoded.userType === 'ADMIN' || decoded.userType === 'USER') {
-        const centerDB = databaseManager.getCenterDB();
-        const user = await centerDB.centerUser.findUnique({
+        user = await db.centerUser.findUnique({
           where: { id: decoded.id }
         });
-
-        if (!user || !user.isActive) {
-          return null;
-        }
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          userType: user.userType as 'ADMIN' | 'USER'
-        };
       } else if (decoded.userType === 'HEALTHCARE') {
-        const hospitalDB = databaseManager.getHospitalDB();
-        const user = await hospitalDB.healthcareUser.findUnique({
+        user = await db.healthcareUser.findUnique({
           where: { id: decoded.id }
         });
-
-        if (!user || !user.isActive) {
-          return null;
-        }
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          userType: 'HEALTHCARE',
-          facilityName: user.facilityName
-        };
       } else if (decoded.userType === 'EMS') {
-        const emsDB = databaseManager.getEMSDB();
         // For EMS users, decoded.id contains the agency ID, not the user ID
         // We need to find the user by email since that's what we have in the token
-        const user = await emsDB.eMSUser.findUnique({
+        user = await db.eMSUser.findUnique({
           where: { email: decoded.email }
         });
 
@@ -237,11 +191,25 @@ export class AuthService {
           email: user.email,
           name: user.name,
           userType: 'EMS',
-          agencyName: user.agencyName
+          agencyName: user.agencyName,
+          agencyId: user.agencyId
         };
       }
 
-      return null;
+      if (!user || !user.isActive) {
+        return null;
+      }
+
+      // Return unified user data
+      return {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        userType: decoded.userType as 'ADMIN' | 'USER' | 'HEALTHCARE' | 'EMS',
+        facilityName: decoded.userType === 'HEALTHCARE' ? (user as any).facilityName : undefined,
+        agencyName: decoded.userType === 'EMS' ? (user as any).agencyName : undefined,
+        agencyId: decoded.userType === 'EMS' ? (user as any).agencyId : undefined
+      };
 
     } catch (error) {
       console.error('Token verification error:', error);

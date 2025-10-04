@@ -1,11 +1,7 @@
-import { PrismaClient as CenterPrismaClient } from '@prisma/client';
-import { PrismaClient as EMSPrismaClient } from '@prisma/ems';
-import { PrismaClient as HospitalPrismaClient } from '@prisma/hospital';
+import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
-const centerDB = new CenterPrismaClient();
-const emsDB = new EMSPrismaClient();
-const hospitalDB = new HospitalPrismaClient();
+const prisma = new PrismaClient();
 
 async function main() {
   console.log('🌱 Starting database seeding...');
@@ -13,7 +9,7 @@ async function main() {
   try {
     // Create admin user
     const hashedPassword = await bcrypt.hash('admin123', 12);
-    const adminUser = await centerDB.centerUser.upsert({
+    const adminUser = await prisma.centerUser.upsert({
       where: { email: 'admin@tcc.com' },
       update: {},
       create: {
@@ -26,7 +22,7 @@ async function main() {
     console.log('✅ Admin user created:', adminUser.email);
 
     // Create regular user
-    const regularUser = await centerDB.centerUser.upsert({
+    const regularUser = await prisma.centerUser.upsert({
       where: { email: 'user@tcc.com' },
       update: {},
       create: {
@@ -39,7 +35,7 @@ async function main() {
     console.log('✅ Regular user created:', regularUser.email);
 
     // Create sample hospitals
-    const hospital1 = await centerDB.hospital.create({
+    const hospital1 = await prisma.hospital.create({
       data: {
         name: 'Altoona Regional Health System',
         address: '620 Howard Ave',
@@ -58,7 +54,7 @@ async function main() {
     });
     console.log('✅ Hospital created:', hospital1.name);
 
-    const hospital2 = await centerDB.hospital.create({
+    const hospital2 = await prisma.hospital.create({
       data: {
         name: 'UPMC Bedford',
         address: '10455 Lincoln Hwy',
@@ -78,7 +74,7 @@ async function main() {
     console.log('✅ Hospital created:', hospital2.name);
 
     // Create sample EMS agencies
-    const agency1 = await emsDB.eMSAgency.create({
+    const agency1 = await prisma.eMSAgency.create({
       data: {
         name: 'Altoona EMS',
         contactName: 'John Smith',
@@ -98,7 +94,7 @@ async function main() {
     });
     console.log('✅ EMS Agency created:', agency1.name);
 
-    const agency2 = await emsDB.eMSAgency.create({
+    const agency2 = await prisma.eMSAgency.create({
       data: {
         name: 'Bedford Ambulance Service',
         contactName: 'Jane Doe',
@@ -119,7 +115,7 @@ async function main() {
     console.log('✅ EMS Agency created:', agency2.name);
 
     // Create sample facilities
-    const facility1 = await hospitalDB.facility.create({
+    const facility1 = await prisma.facility.create({
       data: {
         name: 'Altoona Regional Emergency Department',
         type: 'HOSPITAL',
@@ -129,13 +125,14 @@ async function main() {
         zipCode: '16601',
         phone: '(814) 889-2011',
         email: 'emergency@altoonaregional.org',
+        region: 'Central PA',
         coordinates: { lat: 40.5187, lng: -78.3947 },
         isActive: true
       }
     });
     console.log('✅ Facility created:', facility1.name);
 
-    const facility2 = await hospitalDB.facility.create({
+    const facility2 = await prisma.facility.create({
       data: {
         name: 'UPMC Bedford Emergency Department',
         type: 'HOSPITAL',
@@ -145,26 +142,28 @@ async function main() {
         zipCode: '15537',
         phone: '(814) 623-3331',
         email: 'emergency@upmc.edu',
+        region: 'Central PA',
         coordinates: { lat: 40.0115, lng: -78.3734 },
         isActive: true
       }
     });
     console.log('✅ Facility created:', facility2.name);
 
-    // Create sample hospital user
-    const hospitalUser = await hospitalDB.hospitalUser.create({
+    // Create sample healthcare user
+    const healthcareUser = await prisma.healthcareUser.create({
       data: {
         email: 'nurse@altoonaregional.org',
         password: await bcrypt.hash('nurse123', 12),
         name: 'Sarah Johnson',
-        hospitalName: 'Altoona Regional Health System',
+        facilityName: 'Altoona Regional Health System',
+        facilityType: 'HOSPITAL',
         isActive: true
       }
     });
-    console.log('✅ Hospital user created:', hospitalUser.email);
+    console.log('✅ Healthcare user created:', healthcareUser.email);
 
     // Create sample transport request
-    const transportRequest = await hospitalDB.transportRequest.create({
+    const transportRequest = await prisma.transportRequest.create({
       data: {
         patientId: 'PAT-001',
         originFacilityId: facility1.id,
@@ -173,7 +172,7 @@ async function main() {
         priority: 'MEDIUM',
         status: 'PENDING',
         specialRequirements: 'Oxygen required',
-        createdById: hospitalUser.id
+        createdById: healthcareUser.id
       }
     });
     console.log('✅ Transport request created:', transportRequest.id);
@@ -183,9 +182,7 @@ async function main() {
     console.error('❌ Error seeding database:', error);
     throw error;
   } finally {
-    await centerDB.$disconnect();
-    await emsDB.$disconnect();
-    await hospitalDB.$disconnect();
+    await prisma.$disconnect();
   }
 }
 

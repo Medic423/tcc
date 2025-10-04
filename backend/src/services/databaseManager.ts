@@ -1,48 +1,23 @@
-import { PrismaClient as CenterPrismaClient } from '@prisma/client';
-import { PrismaClient as EMSPrismaClient } from '@prisma/ems';
-import { PrismaClient as HospitalPrismaClient } from '@prisma/hospital';
+import { PrismaClient } from '@prisma/client';
 
 class DatabaseManager {
   private static instance: DatabaseManager;
-  private prisma: CenterPrismaClient;
-  private emsPrisma: EMSPrismaClient;
-  private hospitalPrisma: HospitalPrismaClient;
+  private prisma: PrismaClient;
   private connectionRetries = 0;
   private maxRetries = 5;
   private retryDelay = 2000; // 2 seconds
 
   private constructor() {
-    this.prisma = new CenterPrismaClient({
+    this.prisma = new PrismaClient({
       datasources: {
         db: {
-          url: process.env.DATABASE_URL_CENTER
+          url: process.env.DATABASE_URL
         }
       },
       // Add connection configuration for Render PostgreSQL
       log: process.env.NODE_ENV === 'production' ? ['error'] : ['error', 'warn'],
       errorFormat: 'pretty',
     });
-
-    this.emsPrisma = new EMSPrismaClient({
-      datasources: {
-        db: {
-          url: process.env.DATABASE_URL_EMS
-        }
-      },
-      log: process.env.NODE_ENV === 'production' ? ['error'] : ['error', 'warn'],
-      errorFormat: 'pretty',
-    });
-
-    this.hospitalPrisma = new HospitalPrismaClient({
-      datasources: {
-        db: {
-          url: process.env.DATABASE_URL_HOSPITAL
-        }
-      },
-      log: process.env.NODE_ENV === 'production' ? ['error'] : ['error', 'warn'],
-      errorFormat: 'pretty',
-    });
-
   }
 
   public static getInstance(): DatabaseManager {
@@ -52,21 +27,21 @@ class DatabaseManager {
     return DatabaseManager.instance;
   }
 
-  public getPrismaClient(): CenterPrismaClient {
+  public getPrismaClient(): PrismaClient {
     return this.prisma;
   }
 
   // Backward compatibility methods for existing service calls
-  public getCenterDB(): CenterPrismaClient {
+  public getCenterDB(): PrismaClient {
     return this.prisma;
   }
 
-  public getEMSDB(): any {
-    return this.emsPrisma as any;
+  public getEMSDB(): PrismaClient {
+    return this.prisma;
   }
 
-  public getHospitalDB(): any {
-    return this.hospitalPrisma as any;
+  public getHospitalDB(): PrismaClient {
+    return this.prisma;
   }
 
   public async healthCheck(): Promise<boolean> {

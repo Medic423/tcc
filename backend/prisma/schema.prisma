@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL_EMS")
+  url      = env("DATABASE_URL")
 }
 
 model CenterUser {
@@ -357,6 +357,8 @@ model Unit {
   unitNumber      String
   type            String
   status          String          @default("AVAILABLE")
+  currentStatus   String          @default("AVAILABLE")
+  currentLocation String?
   capabilities    String[]
   crewSize        Int             @default(2)
   equipment       String[]
@@ -381,9 +383,15 @@ model unit_analytics {
   performanceScore    Decimal? @db.Decimal(5, 2)
   efficiency          Decimal? @db.Decimal(5, 2)
   totalTrips          Int      @default(0)
+  totalTripsCompleted Int      @default(0)
   averageResponseTime Decimal? @db.Decimal(5, 2)
+  totalRevenue        Decimal? @db.Decimal(12, 2)
+  totalCosts          Decimal? @db.Decimal(12, 2)
+  profitMargin        Decimal? @db.Decimal(5, 2)
   lastUpdated         DateTime @default(now())
   unit                Unit     @relation(fields: [unitId], references: [id], onDelete: Cascade)
+
+  @@map("unit_analytics")
 }
 
 model NotificationPreference {
@@ -412,4 +420,89 @@ model NotificationLog {
   user             CenterUser @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("notification_logs")
+}
+
+model DropdownOption {
+  id        String   @id @default(cuid())
+  category  String
+  value     String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([category, value])
+  @@map("dropdown_options")
+}
+
+model TransportRequest {
+  id                    String    @id @default(cuid())
+  tripNumber            String?   @unique
+  patientId             String
+  patientWeight         String?
+  specialNeeds          String?
+  originFacilityId      String?
+  destinationFacilityId String?
+  fromLocation          String?
+  toLocation            String?
+  scheduledTime         DateTime?
+  transportLevel        String
+  urgencyLevel          String?
+  priority              String
+  status                String    @default("PENDING")
+  specialRequirements   String?
+  diagnosis             String?
+  mobilityLevel         String?
+  oxygenRequired        Boolean   @default(false)
+  monitoringRequired    Boolean   @default(false)
+  generateQRCode        Boolean   @default(false)
+  qrCodeData            String?
+  selectedAgencies      String[]
+  notificationRadius    Int?
+  transferRequestTime   DateTime?
+  transferAcceptedTime  DateTime?
+  emsArrivalTime        DateTime?
+  emsDepartureTime      DateTime?
+  requestTimestamp      DateTime  @default(now())
+  acceptedTimestamp     DateTime?
+  pickupTimestamp       DateTime?
+  completionTimestamp   DateTime?
+  assignedAgencyId      String?
+  assignedUnitId        String?
+  createdById           String?
+  healthcareCreatedById String?
+  readyStart            DateTime?
+  readyEnd              DateTime?
+  isolation             Boolean   @default(false)
+  bariatric             Boolean   @default(false)
+  notes                 String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@map("transport_requests")
+}
+
+model Facility {
+  id             String   @id @default(cuid())
+  name           String
+  address        String
+  city           String
+  state          String
+  zipCode        String
+  phone          String?
+  email          String?
+  type           String
+  capabilities   String[]
+  region         String
+  coordinates    Json?
+  latitude       Float?
+  longitude      Float?
+  operatingHours String?
+  isActive       Boolean  @default(true)
+  requiresReview Boolean  @default(false)
+  approvedAt     DateTime?
+  approvedBy     String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("facilities")
 }

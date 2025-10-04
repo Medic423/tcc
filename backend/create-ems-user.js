@@ -1,21 +1,15 @@
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
 
-const emsPrisma = new PrismaClient({
-  datasources: {
-    db: {
-      url: process.env.DATABASE_URL_EMS
-    }
-  }
-});
+const prisma = new PrismaClient();
 
 async function createEMSUser() {
   try {
     console.log('Creating EMS user...');
     
-    // First, find the agency we just created
-    const agency = await emsPrisma.eMSAgency.findFirst({
-      where: { email: 'fferguson@movalleyems.com' }
+    // First, find an existing agency
+    const agency = await prisma.eMSAgency.findFirst({
+      where: { name: 'Altoona EMS' }
     });
     
     if (!agency) {
@@ -27,7 +21,7 @@ async function createEMSUser() {
     
     // Create EMS user in EMS database
     const hashedPassword = await bcrypt.hash('movalley123', 10);
-    const emsUser = await emsPrisma.eMSUser.create({
+    const emsUser = await prisma.eMSUser.create({
       data: {
         email: 'fferguson@movalleyems.com',
         password: hashedPassword,
@@ -47,7 +41,7 @@ async function createEMSUser() {
   } catch (error) {
     console.error('Error creating EMS user:', error);
   } finally {
-    await emsPrisma.$disconnect();
+    await prisma.$disconnect();
   }
 }
 
