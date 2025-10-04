@@ -5,36 +5,33 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.URGENCY_OPTIONS = exports.TRANSPORT_LEVEL_OPTIONS = exports.MOBILITY_OPTIONS = exports.DIAGNOSIS_OPTIONS = exports.PatientIdService = void 0;
-var PatientIdService = /** @class */ (function () {
-    function PatientIdService() {
-    }
+class PatientIdService {
     /**
      * Generate a unique patient ID in the format: PMTC + timestamp + random
      * Example: PMTC1NJKZ, PMTC2ABC3, etc.
      */
-    PatientIdService.generatePatientId = function () {
-        var timestamp = Date.now().toString(36);
-        var random = Math.random().toString(36).substr(2, 4).toUpperCase();
-        return "PMTC".concat(timestamp).concat(random).toUpperCase();
-    };
+    static generatePatientId() {
+        const timestamp = Date.now().toString(36);
+        const random = Math.random().toString(36).substr(2, 4).toUpperCase();
+        return `PMTC${timestamp}${random}`.toUpperCase();
+    }
     /**
      * Validate patient ID format
      */
-    PatientIdService.isValidPatientId = function (patientId) {
-        var pattern = /^PMTC[A-Z0-9]{8,12}$/;
+    static isValidPatientId(patientId) {
+        const pattern = /^PMTC[A-Z0-9]{8,12}$/;
         return pattern.test(patientId);
-    };
+    }
     /**
      * Generate QR code data for patient tracking
      */
-    PatientIdService.generateQRCodeData = function (tripId, patientId) {
+    static generateQRCodeData(tripId, patientId) {
         // In a real implementation, this would be a URL to a patient tracking page
         // For now, we'll create a simple encoded string
-        var baseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-        return "".concat(baseUrl, "/trip-tracking/").concat(tripId, "?patient=").concat(patientId);
-    };
-    return PatientIdService;
-}());
+        const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+        return `${baseUrl}/trip-tracking/${tripId}?patient=${patientId}`;
+    }
+}
 exports.PatientIdService = PatientIdService;
 /**
  * Diagnosis options for the dropdown
@@ -75,3 +72,4 @@ exports.URGENCY_OPTIONS = [
     'Urgent',
     'Emergent'
 ];
+//# sourceMappingURL=patientIdService.js.map

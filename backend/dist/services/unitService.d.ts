@@ -2,38 +2,30 @@ export interface Unit {
     id: string;
     agencyId: string;
     unitNumber: string;
-    type: string;
+    type: 'AMBULANCE' | 'HELICOPTER' | 'FIRE_TRUCK' | 'RESCUE_VEHICLE';
     capabilities: string[];
-    currentStatus: string;
-    currentLocation?: any;
+    currentStatus: 'AVAILABLE' | 'COMMITTED' | 'OUT_OF_SERVICE' | 'MAINTENANCE' | 'OFF_DUTY' | 'ON_CALL';
+    currentLocation: string;
+    crew: string[];
     isActive: boolean;
-    assignedTripId?: string;
-    lastStatusUpdate: Date;
-    statusHistory?: any[];
-    currentTripDetails?: any;
-    lastKnownLocation?: any;
-    locationUpdatedAt?: Date;
     totalTripsCompleted: number;
-    averageResponseTime?: number;
-    lastMaintenanceDate?: Date;
+    averageResponseTime: number;
+    lastMaintenanceDate: Date;
+    nextMaintenanceDate: Date;
     createdAt: Date;
     updatedAt: Date;
 }
 export interface UnitFormData {
     unitNumber: string;
-    type: string;
+    type: 'AMBULANCE' | 'HELICOPTER' | 'FIRE_TRUCK' | 'RESCUE_VEHICLE';
     capabilities: string[];
-    customCapabilities?: string[];
+    customCapabilities: string[];
     isActive: boolean;
 }
 export interface UnitStatusUpdate {
-    status: string;
-    reason?: string;
-    location?: {
-        lat: number;
-        lng: number;
-        address?: string;
-    };
+    status: 'AVAILABLE' | 'COMMITTED' | 'OUT_OF_SERVICE' | 'MAINTENANCE' | 'OFF_DUTY' | 'ON_CALL';
+    location?: string;
+    crew?: string[];
 }
 export interface UnitAnalytics {
     totalUnits: number;
@@ -42,11 +34,11 @@ export interface UnitAnalytics {
     outOfServiceUnits: number;
     maintenanceUnits: number;
     offDutyUnits: number;
-    averageResponseTime: number;
     totalTripsToday: number;
+    averageResponseTime: number;
     efficiency: number;
 }
-export declare class UnitService {
+declare class UnitService {
     private prisma;
     constructor();
     /**
@@ -60,38 +52,32 @@ export declare class UnitService {
     /**
      * Create a new unit
      */
-    createUnit(agencyId: string, unitData: UnitFormData): Promise<Unit>;
+    createUnit(unitData: UnitFormData, agencyId: string): Promise<Unit>;
     /**
-     * Update unit details
+     * Update a unit
      */
-    updateUnit(unitId: string, unitData: Partial<UnitFormData>): Promise<Unit>;
+    updateUnit(unitId: string, unitData: UnitFormData): Promise<Unit>;
+    /**
+     * Delete a unit
+     */
+    deleteUnit(unitId: string): Promise<void>;
     /**
      * Update unit status
      */
     updateUnitStatus(unitId: string, statusUpdate: UnitStatusUpdate): Promise<Unit>;
     /**
-     * Assign trip to unit
+     * Get available units for optimization
      */
-    assignTripToUnit(unitId: string, tripId: string, tripDetails: any): Promise<Unit>;
-    /**
-     * Complete trip assignment
-     */
-    completeTripAssignment(unitId: string): Promise<Unit>;
-    /**
-     * Deactivate unit (soft delete)
-     */
-    deactivateUnit(unitId: string): Promise<Unit>;
+    getAvailableUnits(agencyId: string): Promise<Unit[]>;
     /**
      * Get unit analytics for an agency
      */
     getUnitAnalytics(agencyId: string): Promise<UnitAnalytics>;
     /**
-     * Get available units for optimization
-     */
-    getAvailableUnits(agencyId: string): Promise<Unit[]>;
-    /**
      * Map Prisma unit to Unit interface
      */
     private mapPrismaUnitToUnit;
 }
+export declare const unitService: UnitService;
+export {};
 //# sourceMappingURL=unitService.d.ts.map

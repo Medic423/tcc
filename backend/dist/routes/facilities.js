@@ -1,48 +1,14 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
-    return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
-    function verb(n) { return function (v) { return step([n, v]); }; }
-    function step(op) {
-        if (f) throw new TypeError("Generator is already executing.");
-        while (g && (g = 0, op[0] && (_ = 0)), _) try {
-            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
-            if (y = 0, t) op = [op[0] & 2, t.value];
-            switch (op[0]) {
-                case 0: case 1: t = op; break;
-                case 4: _.label++; return { value: op[1], done: false };
-                case 5: _.label++; y = op[1]; op = [0]; continue;
-                case 7: op = _.ops.pop(); _.trys.pop(); continue;
-                default:
-                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
-                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
-                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
-                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
-                    if (t[2]) _.ops.pop();
-                    _.trys.pop(); continue;
-            }
-            op = body.call(thisArg, _);
-        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
-        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
-    }
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var express_1 = require("express");
-var facilityService_1 = require("../services/facilityService");
-var router = express_1.default.Router();
+const express_1 = __importDefault(require("express"));
+const facilityService_1 = require("../services/facilityService");
+const router = express_1.default.Router();
 // Apply authentication to all routes - allow both admin and healthcare users
-router.use(function (req, res, next) {
-    var _a;
-    var token = (_a = req.headers.authorization) === null || _a === void 0 ? void 0 : _a.replace('Bearer ', '');
+router.use((req, res, next) => {
+    const token = req.headers.authorization?.replace('Bearer ', '');
     if (!token) {
         return res.status(401).json({ success: false, error: 'Access token required' });
     }
@@ -52,223 +18,165 @@ router.use(function (req, res, next) {
  * GET /api/tcc/facilities
  * List all facilities with optional filtering
  */
-router.get('/', function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var filters, result, error_1;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0:
-                _a.trys.push([0, 2, , 3]);
-                filters = {
-                    name: req.query.name,
-                    type: req.query.type,
-                    city: req.query.city,
-                    state: req.query.state,
-                    isActive: req.query.isActive ? req.query.isActive === 'true' : undefined,
-                    page: req.query.page ? parseInt(req.query.page) : 1,
-                    limit: req.query.limit ? parseInt(req.query.limit) : 50
-                };
-                return [4 /*yield*/, facilityService_1.facilityService.getFacilities(filters)];
-            case 1:
-                result = _a.sent();
-                res.json({
-                    success: true,
-                    data: result.facilities,
-                    pagination: {
-                        page: result.page,
-                        totalPages: result.totalPages,
-                        total: result.total,
-                        limit: filters.limit
-                    }
-                });
-                return [3 /*break*/, 3];
-            case 2:
-                error_1 = _a.sent();
-                console.error('Get facilities error:', error_1);
-                res.status(500).json({
-                    success: false,
-                    error: 'Failed to retrieve facilities'
-                });
-                return [3 /*break*/, 3];
-            case 3: return [2 /*return*/];
-        }
-    });
-}); });
+router.get('/', async (req, res) => {
+    try {
+        const filters = {
+            name: req.query.name,
+            type: req.query.type,
+            city: req.query.city,
+            state: req.query.state,
+            isActive: req.query.isActive ? req.query.isActive === 'true' : undefined,
+            page: req.query.page ? parseInt(req.query.page) : 1,
+            limit: req.query.limit ? parseInt(req.query.limit) : 50
+        };
+        const result = await facilityService_1.facilityService.getFacilities(filters);
+        res.json({
+            success: true,
+            data: result.facilities,
+            pagination: {
+                page: result.page,
+                totalPages: result.totalPages,
+                total: result.total,
+                limit: filters.limit
+            }
+        });
+    }
+    catch (error) {
+        console.error('Get facilities error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to retrieve facilities'
+        });
+    }
+});
 /**
  * POST /api/tcc/facilities
  * Create new facility
  */
-router.post('/', function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var facilityData_1, requiredFields, missingFields, facility, error_2;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0:
-                _a.trys.push([0, 2, , 3]);
-                facilityData_1 = req.body;
-                requiredFields = ['name', 'type', 'address', 'city', 'state', 'zipCode'];
-                missingFields = requiredFields.filter(function (field) { return !facilityData_1[field]; });
-                if (missingFields.length > 0) {
-                    return [2 /*return*/, res.status(400).json({
-                            success: false,
-                            error: "Missing required fields: ".concat(missingFields.join(', '))
-                        })];
-                }
-                return [4 /*yield*/, facilityService_1.facilityService.createFacility(facilityData_1)];
-            case 1:
-                facility = _a.sent();
-                res.status(201).json({
-                    success: true,
-                    message: 'Facility created successfully',
-                    data: facility
-                });
-                return [3 /*break*/, 3];
-            case 2:
-                error_2 = _a.sent();
-                console.error('Create facility error:', error_2);
-                res.status(500).json({
-                    success: false,
-                    error: 'Failed to create facility'
-                });
-                return [3 /*break*/, 3];
-            case 3: return [2 /*return*/];
+router.post('/', async (req, res) => {
+    try {
+        const facilityData = req.body;
+        // Validate required fields
+        const requiredFields = ['name', 'type', 'address', 'city', 'state', 'zipCode'];
+        const missingFields = requiredFields.filter(field => !facilityData[field]);
+        if (missingFields.length > 0) {
+            return res.status(400).json({
+                success: false,
+                error: `Missing required fields: ${missingFields.join(', ')}`
+            });
         }
-    });
-}); });
+        const facility = await facilityService_1.facilityService.createFacility(facilityData);
+        res.status(201).json({
+            success: true,
+            message: 'Facility created successfully',
+            data: facility
+        });
+    }
+    catch (error) {
+        console.error('Create facility error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to create facility'
+        });
+    }
+});
 /**
  * GET /api/tcc/facilities/:id
  * Get facility by ID
  */
-router.get('/:id', function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var id, facility, error_3;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0:
-                _a.trys.push([0, 2, , 3]);
-                id = req.params.id;
-                return [4 /*yield*/, facilityService_1.facilityService.getFacilityById(id)];
-            case 1:
-                facility = _a.sent();
-                if (!facility) {
-                    return [2 /*return*/, res.status(404).json({
-                            success: false,
-                            error: 'Facility not found'
-                        })];
-                }
-                res.json({
-                    success: true,
-                    data: facility
-                });
-                return [3 /*break*/, 3];
-            case 2:
-                error_3 = _a.sent();
-                console.error('Get facility error:', error_3);
-                res.status(500).json({
-                    success: false,
-                    error: 'Failed to retrieve facility'
-                });
-                return [3 /*break*/, 3];
-            case 3: return [2 /*return*/];
+router.get('/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const facility = await facilityService_1.facilityService.getFacilityById(id);
+        if (!facility) {
+            return res.status(404).json({
+                success: false,
+                error: 'Facility not found'
+            });
         }
-    });
-}); });
+        res.json({
+            success: true,
+            data: facility
+        });
+    }
+    catch (error) {
+        console.error('Get facility error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to retrieve facility'
+        });
+    }
+});
 /**
  * PUT /api/tcc/facilities/:id
  * Update facility
  */
-router.put('/:id', function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var id, updateData, facility, error_4;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0:
-                _a.trys.push([0, 2, , 3]);
-                id = req.params.id;
-                updateData = req.body;
-                return [4 /*yield*/, facilityService_1.facilityService.updateFacility(id, updateData)];
-            case 1:
-                facility = _a.sent();
-                res.json({
-                    success: true,
-                    message: 'Facility updated successfully',
-                    data: facility
-                });
-                return [3 /*break*/, 3];
-            case 2:
-                error_4 = _a.sent();
-                console.error('Update facility error:', error_4);
-                res.status(500).json({
-                    success: false,
-                    error: 'Failed to update facility'
-                });
-                return [3 /*break*/, 3];
-            case 3: return [2 /*return*/];
-        }
-    });
-}); });
+router.put('/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const updateData = req.body;
+        const facility = await facilityService_1.facilityService.updateFacility(id, updateData);
+        res.json({
+            success: true,
+            message: 'Facility updated successfully',
+            data: facility
+        });
+    }
+    catch (error) {
+        console.error('Update facility error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to update facility'
+        });
+    }
+});
 /**
  * DELETE /api/tcc/facilities/:id
  * Delete facility
  */
-router.delete('/:id', function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var id, error_5;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0:
-                _a.trys.push([0, 2, , 3]);
-                id = req.params.id;
-                return [4 /*yield*/, facilityService_1.facilityService.deleteFacility(id)];
-            case 1:
-                _a.sent();
-                res.json({
-                    success: true,
-                    message: 'Facility deleted successfully'
-                });
-                return [3 /*break*/, 3];
-            case 2:
-                error_5 = _a.sent();
-                console.error('Delete facility error:', error_5);
-                res.status(500).json({
-                    success: false,
-                    error: 'Failed to delete facility'
-                });
-                return [3 /*break*/, 3];
-            case 3: return [2 /*return*/];
-        }
-    });
-}); });
+router.delete('/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        await facilityService_1.facilityService.deleteFacility(id);
+        res.json({
+            success: true,
+            message: 'Facility deleted successfully'
+        });
+    }
+    catch (error) {
+        console.error('Delete facility error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to delete facility'
+        });
+    }
+});
 /**
  * GET /api/tcc/facilities/search
  * Search facilities
  */
-router.get('/search', function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var q, facilities, error_6;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0:
-                _a.trys.push([0, 2, , 3]);
-                q = req.query.q;
-                if (!q || typeof q !== 'string') {
-                    return [2 /*return*/, res.status(400).json({
-                            success: false,
-                            error: 'Search query is required'
-                        })];
-                }
-                return [4 /*yield*/, facilityService_1.facilityService.searchFacilities(q)];
-            case 1:
-                facilities = _a.sent();
-                res.json({
-                    success: true,
-                    data: facilities
-                });
-                return [3 /*break*/, 3];
-            case 2:
-                error_6 = _a.sent();
-                console.error('Search facilities error:', error_6);
-                res.status(500).json({
-                    success: false,
-                    error: 'Failed to search facilities'
-                });
-                return [3 /*break*/, 3];
-            case 3: return [2 /*return*/];
+router.get('/search', async (req, res) => {
+    try {
+        const { q } = req.query;
+        if (!q || typeof q !== 'string') {
+            return res.status(400).json({
+                success: false,
+                error: 'Search query is required'
+            });
         }
-    });
-}); });
+        const facilities = await facilityService_1.facilityService.searchFacilities(q);
+        res.json({
+            success: true,
+            data: facilities
+        });
+    }
+    catch (error) {
+        console.error('Search facilities error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to search facilities'
+        });
+    }
+});
 exports.default = router;
+//# sourceMappingURL=facilities.js.map

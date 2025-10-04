@@ -290,7 +290,7 @@ export class TripService {
       const trips = await prisma.trip.findMany({
         where,
         include: {
-          pickupLocation: {
+          pickup_locations: {
             select: {
               id: true,
               name: true,
@@ -299,7 +299,7 @@ export class TripService {
               contactEmail: true,
               floor: true,
               room: true,
-              hospital: {
+              hospitals: {
                 select: {
                   id: true,
                   name: true
@@ -331,7 +331,7 @@ export class TripService {
       const trip = await prisma.trip.findUnique({
         where: { id },
         include: {
-          pickupLocation: {
+          pickup_locations: {
             select: {
               id: true,
               name: true,
@@ -340,7 +340,7 @@ export class TripService {
               contactEmail: true,
               floor: true,
               room: true,
-              hospital: {
+              hospitals: {
                 select: {
                   id: true,
                   name: true
@@ -843,7 +843,7 @@ export class TripService {
       
       return {
         success: true,
-        data: options.map(option => option.value),
+        data: options.map((option: any) => option.value),
         message: 'Insurance options retrieved successfully'
       };
     } catch (error) {
@@ -1038,10 +1038,10 @@ export class TripService {
       const trips = await prisma.trip.findMany({
         where: whereClause,
         include: {
-          pickupLocation: {
+          pickup_locations: {
             select: {
               name: true,
-              hospital: {
+              hospitals: {
                 select: {
                   name: true
                 }
@@ -1087,7 +1087,7 @@ export class TripService {
           tripCost: trip.tripCost,
           createdAt: trip.createdAt,
           updatedAt: trip.updatedAt,
-          pickupLocation: trip.pickupLocation
+          pickupLocation: trip.pickup_locations
         };
       });
 

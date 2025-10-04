@@ -447,27 +447,7 @@ export declare class TripService {
      */
     getAvailableAgencies(): Promise<{
         success: boolean;
-        data: {
-            email: string;
-            id: string;
-            name: string;
-            phone: string;
-            isActive: boolean;
-            createdAt: Date;
-            updatedAt: Date;
-            address: string;
-            city: string;
-            state: string;
-            zipCode: string;
-            capabilities: string[];
-            operatingHours: import("@prisma/ems/runtime/library").JsonValue | null;
-            contactName: string;
-            serviceArea: string[];
-            pricingStructure: import("@prisma/ems/runtime/library").JsonValue | null;
-            status: string;
-            addedBy: string | null;
-            addedAt: Date;
-        }[];
+        data: any;
         error?: undefined;
     } | {
         success: boolean;
@@ -501,19 +481,7 @@ export declare class TripService {
      */
     getAgenciesForHospital(hospitalId: string, radiusMiles?: number): Promise<{
         success: boolean;
-        data: {
-            email: string;
-            id: string;
-            name: string;
-            phone: string;
-            address: string;
-            city: string;
-            state: string;
-            zipCode: string;
-            capabilities: string[];
-            contactName: string;
-            serviceArea: string[];
-        }[];
+        data: any;
         message: string;
     }>;
     /**
@@ -627,7 +595,7 @@ export declare class TripService {
      */
     getInsuranceOptions(): Promise<{
         success: boolean;
-        data: string[];
+        data: any;
         message: string;
     }>;
     /**
@@ -676,7 +644,12 @@ export declare class TripService {
                 tripCost: import("@prisma/client/runtime/library").Decimal | null;
                 createdAt: Date;
                 updatedAt: Date;
-                pickupLocationId: string | null;
+                pickupLocation: {
+                    name: string;
+                    hospitals: {
+                        name: string;
+                    };
+                } | null;
             }[];
             pagination: {
                 total: number;
@@ -903,11 +876,6 @@ export declare class TripService {
      */
     createTripWithResponses(data: CreateTripWithResponsesRequest): Promise<{
         success: boolean;
-        error: string;
-        data?: undefined;
-        message?: undefined;
-    } | {
-        success: boolean;
         data: {
             id: string;
             createdAt: Date;
@@ -973,6 +941,11 @@ export declare class TripService {
         };
         message: string;
         error?: undefined;
+    } | {
+        success: boolean;
+        error: string;
+        data?: undefined;
+        message?: undefined;
     }>;
     /**
      * Update trip response fields

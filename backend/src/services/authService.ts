@@ -9,6 +9,7 @@ export interface User {
   userType: 'ADMIN' | 'USER' | 'HEALTHCARE' | 'EMS';
   facilityName?: string;
   agencyName?: string;
+  agencyId?: string;
 }
 
 export interface LoginCredentials {
@@ -140,8 +141,10 @@ export class AuthService {
             smsNotifications: false,
             isActive: emsUser.isActive,
             createdAt: emsUser.createdAt,
-            updatedAt: emsUser.updatedAt
-          };
+            updatedAt: emsUser.updatedAt,
+            agencyId: emsUser.agencyId,
+            agencyName: emsUser.agencyName
+          } as any;
         }
       }
 
