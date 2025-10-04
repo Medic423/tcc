@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { DollarSign, Save, User, Bell, Phone, Mail, Calculator } from 'lucide-react';
+import { DollarSign, Save, User, Bell, Phone, Mail, Calculator, RefreshCw } from 'lucide-react';
 
 interface RevenueSettings {
   baseRates: {
