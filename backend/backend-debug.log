@@ -1383,3 +1383,60 @@ Error: listen EADDRINUSE: address already in use :::5001
   port: 5001
 }
 [31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts`[39m
+TCC_DEBUG: AuthService constructor - JWT_SECRET loaded: YES
+TCC_DEBUG: JWT_SECRET value: your-super-secret-jwt-key-here
+TCC_DEBUG: SMS carriers initialized: 5
+TCC_DEBUG: Twilio credentials not configured
+TCC_DEBUG: SendGrid API key not configured
+Error: listen EADDRINUSE: address already in use :::5001
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at app.listen (/Users/scooper/Code/tcc-new-project/backend/node_modules/express/lib/application.js:635:24)
+    at startServer (/Users/scooper/Code/tcc-new-project/backend/src/index.ts:292:9)
+    at Object.<anonymous> (/Users/scooper/Code/tcc-new-project/backend/src/index.ts:309:1)
+    at Module._compile (node:internal/modules/cjs/loader:1692:14)
+    at Module.m._compile (/Users/scooper/Code/tcc-new-project/backend/node_modules/ts-node/src/index.ts:1618:23)
+    at node:internal/modules/cjs/loader:1824:10
+    at Object.require.extensions.<computed> [as .ts] (/Users/scooper/Code/tcc-new-project/backend/node_modules/ts-node/src/index.ts:1621:12) {
+  code: 'EADDRINUSE',
+  errno: -48,
+  syscall: 'listen',
+  address: '::',
+  port: 5001
+}
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts`[39m
+TCC_DEBUG: AuthService constructor - JWT_SECRET loaded: YES
+TCC_DEBUG: JWT_SECRET value: your-super-secret-jwt-key-here
+TCC_DEBUG: SMS carriers initialized: 5
+TCC_DEBUG: Twilio credentials not configured
+TCC_DEBUG: SendGrid API key not configured
+Error: listen EADDRINUSE: address already in use :::5001
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at app.listen (/Users/scooper/Code/tcc-new-project/backend/node_modules/express/lib/application.js:635:24)
+    at startServer (/Users/scooper/Code/tcc-new-project/backend/src/index.ts:292:9)
+    at Object.<anonymous> (/Users/scooper/Code/tcc-new-project/backend/src/index.ts:309:1)
+    at Module._compile (node:internal/modules/cjs/loader:1692:14)
+    at Module.m._compile (/Users/scooper/Code/tcc-new-project/backend/node_modules/ts-node/src/index.ts:1618:23)
+    at node:internal/modules/cjs/loader:1824:10
+    at Object.require.extensions.<computed> [as .ts] (/Users/scooper/Code/tcc-new-project/backend/node_modules/ts-node/src/index.ts:1621:12) {
+  code: 'EADDRINUSE',
+  errno: -48,
+  syscall: 'listen',
+  address: '::',
+  port: 5001
+}
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+npm error Lifecycle script `dev` failed with error:
+npm error code 143
+npm error path /Users/scooper/Code/tcc-new-project/backend
+npm error workspace tcc-backend@1.0.0
+npm error location /Users/scooper/Code/tcc-new-project/backend
+npm error command failed
+npm error command sh -c nodemon src/index.ts
