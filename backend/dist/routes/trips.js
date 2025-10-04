@@ -493,7 +493,7 @@ router.get('/agencies/:hospitalId', authenticateAdmin_1.authenticateAdmin, async
     try {
         const { hospitalId } = req.params;
         const { radius = 100 } = req.query;
-        const result = await tripService_1.tripService.getAgenciesForHospital(hospitalId, Number(radius));
+        const result = await tripService_1.tripService.getAgenciesForHospital(hospitalId);
         res.json(result);
     }
     catch (error) {

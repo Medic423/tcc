@@ -73,13 +73,13 @@ export class FacilityService {
     }
 
     const [facilities, total] = await Promise.all([
-      prisma.hospital.findMany({
+      prisma.facility.findMany({
         where,
         orderBy: { name: 'asc' },
         skip,
         take: limit
       }),
-      prisma.hospital.count({ where })
+      prisma.facility.count({ where })
     ]);
 
     return {
@@ -92,14 +92,14 @@ export class FacilityService {
 
   async getFacilityById(id: string): Promise<any | null> {
     const prisma = databaseManager.getCenterDB();
-    return await prisma.hospital.findUnique({
+    return await prisma.facility.findUnique({
       where: { id }
     });
   }
 
   async updateFacility(id: string, data: Partial<FacilityData>): Promise<any> {
     const prisma = databaseManager.getCenterDB();
-    return await prisma.hospital.update({
+    return await prisma.facility.update({
       where: { id },
       data: {
         ...data,
@@ -110,14 +110,14 @@ export class FacilityService {
 
   async deleteFacility(id: string): Promise<void> {
     const prisma = databaseManager.getCenterDB();
-    await prisma.hospital.delete({
+    await prisma.facility.delete({
       where: { id }
     });
   }
 
   async searchFacilities(query: string): Promise<any[]> {
     const prisma = databaseManager.getCenterDB();
-    return await prisma.hospital.findMany({
+    return await prisma.facility.findMany({
       where: {
         OR: [
           { name: { contains: query, mode: 'insensitive' } },

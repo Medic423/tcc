@@ -41,13 +41,13 @@ class FacilityService {
             where.isActive = whereFilters.isActive;
         }
         const [facilities, total] = await Promise.all([
-            prisma.hospital.findMany({
+            prisma.facility.findMany({
                 where,
                 orderBy: { name: 'asc' },
                 skip,
                 take: limit
             }),
-            prisma.hospital.count({ where })
+            prisma.facility.count({ where })
         ]);
         return {
             facilities,
@@ -58,13 +58,13 @@ class FacilityService {
     }
     async getFacilityById(id) {
         const prisma = databaseManager_1.databaseManager.getCenterDB();
-        return await prisma.hospital.findUnique({
+        return await prisma.facility.findUnique({
             where: { id }
         });
     }
     async updateFacility(id, data) {
         const prisma = databaseManager_1.databaseManager.getCenterDB();
-        return await prisma.hospital.update({
+        return await prisma.facility.update({
             where: { id },
             data: {
                 ...data,
@@ -74,13 +74,13 @@ class FacilityService {
     }
     async deleteFacility(id) {
         const prisma = databaseManager_1.databaseManager.getCenterDB();
-        await prisma.hospital.delete({
+        await prisma.facility.delete({
             where: { id }
         });
     }
     async searchFacilities(query) {
         const prisma = databaseManager_1.databaseManager.getCenterDB();
-        return await prisma.hospital.findMany({
+        return await prisma.facility.findMany({
             where: {
                 OR: [
                     { name: { contains: query, mode: 'insensitive' } },

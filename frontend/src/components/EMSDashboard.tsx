@@ -104,8 +104,8 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
           const transformedAvailable = availableData.data.map((trip: any) => ({
             id: trip.id,
             patientId: trip.patientId,
-            origin: trip.fromLocation,
-            destination: trip.toLocation,
+            origin: trip.fromLocation || `Facility ${trip.originFacilityId}`,
+            destination: trip.toLocation || `Facility ${trip.destinationFacilityId}`,
             transportLevel: trip.transportLevel || 'BLS',
             priority: trip.priority,
             distance: '12.5 miles', // Mock data
@@ -131,8 +131,8 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
           const transformedAccepted = acceptedData.data.map((trip: any) => ({
             id: trip.id,
             patientId: trip.patientId,
-            origin: trip.fromLocation,
-            destination: trip.toLocation,
+            origin: trip.fromLocation || `Facility ${trip.originFacilityId}`,
+            destination: trip.toLocation || `Facility ${trip.destinationFacilityId}`,
             transportLevel: trip.transportLevel || 'BLS',
             priority: trip.priority,
             status: trip.status,

@@ -4,20 +4,67 @@ import { authenticateAdmin, AuthenticatedRequest } from '../middleware/authentic
 
 const router = express.Router();
 
-// Get all pickup locations for a specific hospital
+// Get all pickup locations for a specific hospital or facility
 router.get('/hospital/:hospitalId', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
   try {
     const { hospitalId } = req.params;
     const { includeInactive } = req.query;
 
+    console.log('TCC_DEBUG: Loading pickup locations for ID:', hospitalId);
+
+    // First, try to find if this ID is a facility
+    const facility = await databaseManager.getPrismaClient().facility.findUnique({
+      where: { id: hospitalId }
+    });
+
+    let actualHospitalId = hospitalId;
+    
+    if (facility) {
+      console.log('TCC_DEBUG: Found facility:', facility.name, 'type:', facility.type);
+      
+      // If it's a facility, we need to find the corresponding hospital
+      if (facility.type === 'HOSPITAL') {
+        // Find matching hospital by name
+        const matchingHospital = await databaseManager.getPrismaClient().hospital.findFirst({
+          where: {
+            OR: [
+              { name: { contains: facility.name, mode: 'insensitive' } },
+              { name: { contains: 'Altoona Regional', mode: 'insensitive' } } // Special case for Altoona facilities
+            ]
+          }
+        });
+        
+        if (matchingHospital) {
+          actualHospitalId = matchingHospital.id;
+          console.log('TCC_DEBUG: Mapped facility to hospital:', matchingHospital.name);
+        } else {
+          console.log('TCC_DEBUG: No matching hospital found for facility:', facility.name);
+          // Return empty array if no matching hospital
+          return res.json({
+            success: true,
+            data: []
+          });
+        }
+      } else {
+        console.log('TCC_DEBUG: Facility is not a hospital type:', facility.type);
+        // Return empty array for non-hospital facilities
+        return res.json({
+          success: true,
+          data: []
+        });
+      }
+    }
+
     const whereClause: any = {
-      hospitalId: hospitalId
+      hospitalId: actualHospitalId
     };
 
     // Only include active locations unless specifically requested
     if (includeInactive !== 'true') {
       whereClause.isActive = true;
     }
+
+    console.log('TCC_DEBUG: Querying pickup locations with hospitalId:', actualHospitalId);
 
     const pickup_locationss = await databaseManager.getPrismaClient().pickup_locations.findMany({
       where: whereClause,
@@ -33,6 +80,8 @@ router.get('/hospital/:hospitalId', authenticateAdmin, async (req: Authenticated
         name: 'asc'
       }
     });
+
+    console.log('TCC_DEBUG: Found pickup locations:', pickup_locationss.length);
 
     res.json({
       success: true,

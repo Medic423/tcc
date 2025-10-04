@@ -170,28 +170,49 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
 
   const loadFormOptions = async () => {
     try {
-      console.log('TCC_DEBUG: Loading simplified form options for step 1 only...');
+      console.log('TCC_DEBUG: Loading real form options from API...');
       
-      // Initialize with mock data for step 1 only
+      // Load real facilities from API
+      const facilitiesResponse = await api.get('/api/tcc/facilities');
+      console.log('TCC_DEBUG: Facilities API response:', facilitiesResponse.data);
+      
+      let facilities = [];
+      if (facilitiesResponse.data?.success && Array.isArray(facilitiesResponse.data.data)) {
+        facilities = facilitiesResponse.data.data;
+        console.log('TCC_DEBUG: Loaded', facilities.length, 'real facilities');
+      } else {
+        console.warn('TCC_DEBUG: Failed to load facilities, using fallback');
+        facilities = [];
+      }
+      
+      // Initialize with real data
       const options: FormOptions = {
         diagnosis: ['Cardiac', 'Respiratory', 'Neurological', 'Trauma'],
         mobility: ['Ambulatory', 'Wheelchair', 'Stretcher', 'Bed-bound'],
         transportLevel: ['BLS', 'ALS', 'CCT', 'Other'],
         urgency: ['Routine', 'Urgent', 'Emergent', 'Critical'],
         insurance: ['Medicare', 'Medicaid', 'Private', 'Self-pay'],
-        facilities: [
-          { id: '1', name: 'Test Hospital', type: 'HOSPITAL' },
-          { id: '2', name: 'General Medical Center', type: 'HOSPITAL' },
-          { id: '3', name: 'Emergency Care Facility', type: 'CLINIC' }
-        ],
+        facilities: facilities,
         agencies: [],
         pickupLocations: []
       };
 
-      console.log('TCC_DEBUG: Setting simplified form options:', options);
+      console.log('TCC_DEBUG: Setting real form options:', options);
       setFormOptions(options);
     } catch (error) {
       console.error('Error loading form options:', error);
+      // Fallback to basic options if API fails
+      const fallbackOptions: FormOptions = {
+        diagnosis: ['Cardiac', 'Respiratory', 'Neurological', 'Trauma'],
+        mobility: ['Ambulatory', 'Wheelchair', 'Stretcher', 'Bed-bound'],
+        transportLevel: ['BLS', 'ALS', 'CCT', 'Other'],
+        urgency: ['Routine', 'Urgent', 'Emergent', 'Critical'],
+        insurance: ['Medicare', 'Medicaid', 'Private', 'Self-pay'],
+        facilities: [],
+        agencies: [],
+        pickupLocations: []
+      };
+      setFormOptions(fallbackOptions);
     }
   };
 
@@ -427,45 +448,58 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
         throw new Error('Invalid urgency level');
       }
 
-      // For steps 1-3, we'll show a success message and then redirect
-      console.log('TCC_DEBUG: Steps 1-3 validation passed:', formData);
-      setSuccess(true);
-      setTimeout(() => {
-        onTripCreated();
-      }, 3000); // Show success message for 3 seconds
-      return;
+      // Create the trip in the database
+      console.log('TCC_DEBUG: Creating trip with data:', formData);
+      
+      // Find the selected facility for fromLocation
+      const selectedFacility = formOptions.facilities.find(f => f.name === formData.fromLocation);
+      if (!selectedFacility) {
+        throw new Error('Selected facility not found');
+      }
 
-      // TODO: Add validation for other steps when we uncomment them
-      // Validate scheduled time
-      // if (formData.scheduledTime && new Date(formData.scheduledTime) < new Date()) {
-      //   throw new Error('Scheduled time cannot be in the past');
-      // }
+      // Find the destination facility
+      const destinationFacility = formOptions.facilities.find(f => f.name === formData.toLocation);
+      if (!destinationFacility) {
+        throw new Error('Destination facility not found');
+      }
 
-      // TODO: Add trip submission logic when we uncomment other steps
-      // console.log('TCC_DEBUG: Submitting trip data:', formData);
+      // Prepare trip data for API
+      const tripData = {
+        patientId: formData.patientId,
+        patientWeight: parseFloat(formData.patientWeight),
+        originFacilityId: selectedFacility.id,
+        destinationFacilityId: destinationFacility.id,
+        transportLevel: formData.transportLevel,
+        priority: formData.urgencyLevel === 'Critical' ? 'HIGH' : 
+                 formData.urgencyLevel === 'Emergent' ? 'HIGH' :
+                 formData.urgencyLevel === 'Urgent' ? 'MEDIUM' : 'LOW',
+        specialRequirements: formData.specialNeeds || '',
+        readyStart: formData.scheduledTime,
+        readyEnd: new Date(new Date(formData.scheduledTime).getTime() + 60 * 60 * 1000).toISOString(), // 1 hour window
+        isolation: false,
+        bariatric: parseFloat(formData.patientWeight) > 300, // Consider bariatric if weight > 300 lbs
+        pickupLocationId: formData.pickupLocationId,
+        notes: formData.notes || ''
+      };
 
-      // const tripData = {
-      //   ...formData,
-      //   patientWeight: formData.patientWeight ? parseFloat(formData.patientWeight) : null,
-      //   notificationRadius: formData.notificationRadius || 100,
-      //   scheduledTime: formData.scheduledTime || new Date().toISOString()
-      // };
+      console.log('TCC_DEBUG: Submitting trip data:', tripData);
 
-      // const response = await tripsAPI.createEnhanced(tripData);
-      // console.log('TCC_DEBUG: Trip creation response:', response.data);
+      // Submit trip to API
+      const response = await tripsAPI.create(tripData);
+      
+      if (response.data.success) {
+        console.log('TCC_DEBUG: Trip created successfully:', response.data.data);
+        setSuccess(true);
+        setTimeout(() => {
+          onTripCreated();
+        }, 3000); // Show success message for 3 seconds
+      } else {
+        throw new Error(response.data.error || 'Failed to create transport request');
+      }
 
-      // if (response.data?.success) {
-      //   setSuccess(true);
-      //   setTimeout(() => {
-      //     setSuccess(false);
-      //     onTripCreated();
-      //   }, 2000);
-      // } else {
-      //   throw new Error(response.data?.error || 'Failed to create transport request');
-      // }
     } catch (error: any) {
-      console.error('TCC_DEBUG: Trip creation error:', error);
-      setError(error.response?.data?.error || error.message || 'Failed to create transport request');
+      console.error('TCC_DEBUG: Error creating trip:', error);
+      setError(error.message || 'Failed to create transport request');
     } finally {
       setLoading(false);
     }

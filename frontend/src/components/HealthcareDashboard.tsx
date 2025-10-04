@@ -118,8 +118,8 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
           // Transform API data to match component expectations
           const transformedTrips = data.data.map((trip: any) => ({
             id: trip.id,
-            patientId: trip.patientName,
-            destination: trip.toLocation,
+            patientId: trip.patientId,
+            destination: trip.toLocation || `Facility ${trip.destinationFacilityId}`,
             pickupLocation: trip.pickupLocation,
             transportLevel: trip.transportLevel || 'BLS',
             status: trip.status,
@@ -512,13 +512,13 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
             <EnhancedTripForm 
               user={user} 
               onTripCreated={() => {
-                // Refresh trips list and go to overview to see the new trip
+                // Refresh trips list and go to trips tab to see the new trip
                 loadTrips();
-                setActiveTab('overview');
+                setActiveTab('trips');
               }}
               onCancel={() => {
-                // Go back to overview tab when cancel is clicked
-                setActiveTab('overview');
+                // Go back to trips tab when cancel is clicked
+                setActiveTab('trips');
               }}
             />
           </div>

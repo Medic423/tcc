@@ -565,7 +565,7 @@ router.get('/agencies/:hospitalId', authenticateAdmin, async (req: Authenticated
     const { hospitalId } = req.params;
     const { radius = 100 } = req.query;
     
-    const result = await tripService.getAgenciesForHospital(hospitalId, Number(radius));
+    const result = await tripService.getAgenciesForHospital(hospitalId);
     res.json(result);
   } catch (error) {
     console.error('TCC_DEBUG: Get agencies error:', error);
