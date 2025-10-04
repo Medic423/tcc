@@ -285,21 +285,24 @@ Keep in development until fully tested.
 
 #### **EMS Dashboard Changes:**
 1. **Keep These Tabs:**
-   - **Overview** - Basic trip summary and unit status
-   - **Available Trips** - View and accept trip requests  
+   - **Available Trips** - View and accept trip requests (NEW LANDING PAGE)
    - **My Trips** - Manage accepted trips
    - **Units** - Basic unit management and status
+   - **Revenue Settings** - Basic rates and costs (simplified)
 
-2. **Move to TCC Admin:**
-   - **Analytics** → Move to TCC Admin dashboard
-   - **Revenue Settings** → Move to TCC Admin (keep basic rates only)
+2. **Remove These Tabs:**
+   - **Overview** - Remove completely (redundant)
+   - **Analytics** - Remove completely (move to TCC Admin later)
+
+3. **Move to TCC Admin:**
+   - **Analytics** → Move to TCC Admin dashboard (all sub-tabs)
    - **Settings** → Move to TCC Admin
 
 #### **Files to Modify:**
-- `frontend/src/components/EMSDashboard.tsx` - Remove tabs
-- `frontend/src/components/EMSAnalytics.tsx` - Move to Admin
-- `frontend/src/components/RevenueSettings.tsx` - Simplify and move to Admin
-- Create new Admin components for moved functionality
+- `frontend/src/components/EMSDashboard.tsx` - Remove Overview and Analytics tabs, make Available Trips default
+- `frontend/src/components/EMSAnalytics.tsx` - Move to backup folder (will move to Admin later)
+- `frontend/src/components/RevenueSettings.tsx` - Keep in EMS, simplify in later step
+- Create new Admin components for Analytics functionality
 
 ### **Phase 3: Backend API Simplification (Week 2)**
 **Goal**: Remove complex API endpoints and simplify remaining ones
