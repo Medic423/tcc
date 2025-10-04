@@ -385,9 +385,9 @@ model unit_analytics {
   totalTrips          Int      @default(0)
   totalTripsCompleted Int      @default(0)
   averageResponseTime Decimal? @db.Decimal(5, 2)
-  totalRevenue        Decimal? @db.Decimal(12, 2)
-  totalCosts          Decimal? @db.Decimal(12, 2)
-  profitMargin        Decimal? @db.Decimal(5, 2)
+  // totalRevenue        Decimal? @db.Decimal(12, 2)  // Commented out - complex financial tracking
+  // totalCosts          Decimal? @db.Decimal(12, 2)  // Commented out - complex financial tracking
+  // profitMargin        Decimal? @db.Decimal(5, 2)   // Commented out - complex financial tracking
   lastUpdated         DateTime @default(now())
   unit                Unit     @relation(fields: [unitId], references: [id], onDelete: Cascade)
 
@@ -458,20 +458,20 @@ model TransportRequest {
   qrCodeData            String?
   selectedAgencies      String[]
   notificationRadius    Int?
-  transferRequestTime   DateTime?
-  transferAcceptedTime  DateTime?
-  emsArrivalTime        DateTime?
-  emsDepartureTime      DateTime?
-  requestTimestamp      DateTime  @default(now())
-  acceptedTimestamp     DateTime?
-  pickupTimestamp       DateTime?
-  completionTimestamp   DateTime?
+  // transferRequestTime   DateTime?               // Commented out - complex tracking
+  // transferAcceptedTime  DateTime?              // Commented out - complex tracking  
+  // emsArrivalTime        DateTime?              // Commented out - complex tracking
+  // emsDepartureTime      DateTime?              // Commented out - complex tracking
+  requestTimestamp      DateTime  @default(now()) // ✅ Time trip was saved by hospital
+  acceptedTimestamp     DateTime?                 // ✅ Time trip was accepted by EMS
+  pickupTimestamp       DateTime?                 // ✅ Time patient is ready for pickup
+  // completionTimestamp   DateTime?             // Commented out - complex tracking
   assignedAgencyId      String?
   assignedUnitId        String?
   createdById           String?
   healthcareCreatedById String?
-  readyStart            DateTime?
-  readyEnd              DateTime?
+  // readyStart            DateTime?             // Commented out - complex tracking
+  // readyEnd              DateTime?             // Commented out - complex tracking
   isolation             Boolean   @default(false)
   bariatric             Boolean   @default(false)
   notes                 String?
