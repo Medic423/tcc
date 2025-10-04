@@ -110,7 +110,6 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
                  urgencyLevel: trip.urgencyLevel || 'Routine',
                  distance: '12.5 miles', // Mock data
                  estimatedTime: '25 minutes', // Mock data
-                 revenue: '$150', // Mock data
                  requestTime: new Date(trip.createdAt).toLocaleString(),
                  scheduledTime: trip.scheduledTime
                }));
@@ -515,7 +514,7 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
                             <span className="font-medium">Time:</span> {trip.estimatedTime}
                           </div>
                           <div>
-                            <span className="font-medium">Revenue:</span> {trip.revenue}
+                            <span className="font-medium">Priority:</span> {trip.urgencyLevel}
                           </div>
                         </div>
                       </div>
