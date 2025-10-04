@@ -18,31 +18,30 @@ class AuthService {
         try {
             console.log('TCC_DEBUG: AuthService.login called with:', { email: credentials.email, password: credentials.password ? '***' : 'missing' });
             const { email, password } = credentials;
-            // First try Center database (Admin and User types)
-            const centerDB = databaseManager_1.databaseManager.getCenterDB();
-            let user = await centerDB.centerUser.findUnique({
-                where: { email }
-            });
+            // Use single database to find user
+            const db = databaseManager_1.databaseManager.getCenterDB();
+            let user = null;
             let userType = 'ADMIN';
             let userData;
+            // Try to find user in CenterUser table first
+            user = await db.centerUser.findUnique({
+                where: { email }
+            });
             if (user) {
-                // Use the actual userType from the Center database
                 userType = user.userType;
             }
-            else {
-                // Try Hospital database (Healthcare users)
-                const hospitalDB = databaseManager_1.databaseManager.getHospitalDB();
-                user = await hospitalDB.healthcareUser.findUnique({
+            // If not found, try HealthcareUser table
+            if (!user) {
+                user = await db.healthcareUser.findUnique({
                     where: { email }
                 });
                 if (user) {
                     userType = 'HEALTHCARE';
                 }
             }
+            // If still not found, try EMSUser table
             if (!user) {
-                // Try EMS database (EMS users)
-                const emsDB = databaseManager_1.databaseManager.getEMSDB();
-                user = await emsDB.eMSUser.findUnique({
+                user = await db.eMSUser.findUnique({
                     where: { email }
                 });
                 if (user) {
@@ -93,41 +92,15 @@ class AuthService {
                 userType: userType
             }, this.jwtSecret, { expiresIn: '24h' });
             // Create user data based on type
-            if (userType === 'ADMIN') {
-                userData = {
-                    id: user.id,
-                    email: user.email,
-                    name: user.name,
-                    userType: 'ADMIN'
-                };
-            }
-            else if (userType === 'USER') {
-                userData = {
-                    id: user.id,
-                    email: user.email,
-                    name: user.name,
-                    userType: 'USER'
-                };
-            }
-            else if (userType === 'HEALTHCARE') {
-                userData = {
-                    id: user.id,
-                    email: user.email,
-                    name: user.name,
-                    userType: 'HEALTHCARE',
-                    facilityName: user.facilityName
-                };
-            }
-            else {
-                userData = {
-                    id: user.id,
-                    email: user.email,
-                    name: user.name,
-                    userType: 'EMS',
-                    agencyName: user.agencyName,
-                    agencyId: user.agencyId
-                };
-            }
+            userData = {
+                id: user.id,
+                email: user.email,
+                name: user.name,
+                userType: userType,
+                facilityName: userType === 'HEALTHCARE' ? user.facilityName : undefined,
+                agencyName: userType === 'EMS' ? user.agencyName : undefined,
+                agencyId: userType === 'EMS' ? user.agencyId : undefined
+            };
             return {
                 success: true,
                 user: userData,
@@ -150,43 +123,23 @@ class AuthService {
             if (!['ADMIN', 'USER', 'HEALTHCARE', 'EMS'].includes(decoded.userType)) {
                 return null;
             }
-            // Verify user still exists and is active based on user type
+            // Verify user still exists and is active using single database
+            const db = databaseManager_1.databaseManager.getCenterDB();
+            let user = null;
             if (decoded.userType === 'ADMIN' || decoded.userType === 'USER') {
-                const centerDB = databaseManager_1.databaseManager.getCenterDB();
-                const user = await centerDB.centerUser.findUnique({
+                user = await db.centerUser.findUnique({
                     where: { id: decoded.id }
                 });
-                if (!user || !user.isActive) {
-                    return null;
-                }
-                return {
-                    id: user.id,
-                    email: user.email,
-                    name: user.name,
-                    userType: user.userType
-                };
             }
             else if (decoded.userType === 'HEALTHCARE') {
-                const hospitalDB = databaseManager_1.databaseManager.getHospitalDB();
-                const user = await hospitalDB.healthcareUser.findUnique({
+                user = await db.healthcareUser.findUnique({
                     where: { id: decoded.id }
                 });
-                if (!user || !user.isActive) {
-                    return null;
-                }
-                return {
-                    id: user.id,
-                    email: user.email,
-                    name: user.name,
-                    userType: 'HEALTHCARE',
-                    facilityName: user.facilityName
-                };
             }
             else if (decoded.userType === 'EMS') {
-                const emsDB = databaseManager_1.databaseManager.getEMSDB();
                 // For EMS users, decoded.id contains the agency ID, not the user ID
                 // We need to find the user by email since that's what we have in the token
-                const user = await emsDB.eMSUser.findUnique({
+                user = await db.eMSUser.findUnique({
                     where: { email: decoded.email }
                 });
                 if (!user || !user.isActive) {
@@ -197,10 +150,23 @@ class AuthService {
                     email: user.email,
                     name: user.name,
                     userType: 'EMS',
-                    agencyName: user.agencyName
+                    agencyName: user.agencyName,
+                    agencyId: user.agencyId
                 };
             }
-            return null;
+            if (!user || !user.isActive) {
+                return null;
+            }
+            // Return unified user data
+            return {
+                id: user.id,
+                email: user.email,
+                name: user.name,
+                userType: decoded.userType,
+                facilityName: decoded.userType === 'HEALTHCARE' ? user.facilityName : undefined,
+                agencyName: decoded.userType === 'EMS' ? user.agencyName : undefined,
+                agencyId: decoded.userType === 'EMS' ? user.agencyId : undefined
+            };
         }
         catch (error) {
             console.error('Token verification error:', error);

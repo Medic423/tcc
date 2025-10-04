@@ -579,11 +579,11 @@ router.post('/ems/login', async (req, res) => {
                 error: 'Email and password are required'
             });
         }
-        const centerDB = databaseManager_1.databaseManager.getCenterDB();
-        const user = await centerDB.centerUser.findFirst({
+        const db = databaseManager_1.databaseManager.getCenterDB();
+        const user = await db.eMSUser.findFirst({
             where: {
                 email,
-                userType: 'EMS'
+                isActive: true
             }
         });
         if (!user) {
@@ -600,22 +600,15 @@ router.post('/ems/login', async (req, res) => {
                 error: 'Invalid credentials'
             });
         }
-        if (!user.isActive) {
-            return res.status(401).json({
-                success: false,
-                error: 'Account is deactivated'
-            });
-        }
-        // For EMS users, we need to find their agency
-        const emsDB = databaseManager_1.databaseManager.getEMSDB();
-        let agency = await emsDB.eMSAgency.findFirst({
+        // Find the user's agency
+        let agency = await db.eMSAgency.findFirst({
             where: {
                 email: user.email
             }
         });
         if (!agency) {
             // If no agency found by email, get the first available agency
-            agency = await emsDB.eMSAgency.findFirst();
+            agency = await db.eMSAgency.findFirst();
         }
         if (!agency) {
             return res.status(500).json({
@@ -674,9 +667,12 @@ router.post('/healthcare/login', async (req, res) => {
                 error: 'Email and password are required'
             });
         }
-        const hospitalDB = databaseManager_1.databaseManager.getHospitalDB();
-        const user = await hospitalDB.healthcareUser.findUnique({
-            where: { email }
+        const db = databaseManager_1.databaseManager.getCenterDB();
+        const user = await db.healthcareUser.findFirst({
+            where: {
+                email,
+                isActive: true
+            }
         });
         if (!user) {
             console.log('TCC_DEBUG: No Healthcare user found for email:', email);
@@ -690,12 +686,6 @@ router.post('/healthcare/login', async (req, res) => {
             return res.status(401).json({
                 success: false,
                 error: 'Invalid credentials'
-            });
-        }
-        if (!user.isActive) {
-            return res.status(401).json({
-                success: false,
-                error: 'Account is deactivated'
             });
         }
         const token = jsonwebtoken_1.default.sign({

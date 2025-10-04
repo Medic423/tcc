@@ -150,9 +150,15 @@ router.get('/units', async (req, res) => {
             emsPrisma.unit.count({ where: { agencyId, currentStatus: 'OUT_OF_SERVICE' } }),
             emsPrisma.unit.findMany({
                 where: { agencyId },
-                orderBy: { totalTripsCompleted: 'desc' },
+                orderBy: { analytics: { totalTripsCompleted: 'desc' } },
                 take: 5,
-                select: { id: true, unitNumber: true, totalTripsCompleted: true, averageResponseTime: true }
+                select: {
+                    id: true,
+                    unitNumber: true,
+                    analytics: {
+                        select: { totalTripsCompleted: true, averageResponseTime: true }
+                    }
+                }
             })
         ]);
         const averageUtilization = totalUnits > 0 ? committedUnits / totalUnits : 0;

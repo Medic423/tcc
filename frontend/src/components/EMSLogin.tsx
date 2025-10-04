@@ -36,7 +36,7 @@ const EMSLogin: React.FC<EMSLoginProps> = ({ onBack, onLogin }) => {
       const { authAPI } = await import('../services/api');
       
       console.log('TCC_DEBUG: EMS Login attempt with:', formData.email);
-      const response = await authAPI.emsLogin({
+      const response = await authAPI.login({
         email: formData.email,
         password: formData.password
       });

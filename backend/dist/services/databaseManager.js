@@ -10,7 +10,7 @@ class DatabaseManager {
         this.prisma = new client_1.PrismaClient({
             datasources: {
                 db: {
-                    url: process.env.DATABASE_URL_EMS // Using EMS database for unified schema
+                    url: process.env.DATABASE_URL
                 }
             },
             // Add connection configuration for Render PostgreSQL

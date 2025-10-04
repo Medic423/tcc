@@ -638,7 +638,7 @@ export declare class TripService {
      */
     getInsuranceOptions(): Promise<{
         success: boolean;
-        data: any;
+        data: any[];
         message: string;
     }>;
     /**
