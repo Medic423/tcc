@@ -74,6 +74,7 @@ export declare class RevenueOptimizer {
     calculateScore(unit: Unit, request: TransportRequest, currentTime: Date): number;
     /**
      * Calculate base revenue for a transport request
+     * SIMPLIFIED: Basic revenue calculation for Phase 3
      */
     calculateRevenue(request: TransportRequest): number;
     /**

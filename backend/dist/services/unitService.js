@@ -37,7 +37,7 @@ class UnitService {
                 currentLocation: unit.location ? JSON.stringify(unit.location) : 'Unknown',
                 crew: [], // Will be populated from separate crew management
                 isActive: unit.isActive,
-                totalTripsCompleted: unit.analytics?.totalTrips || 0,
+                totalTripsCompleted: unit.analytics?.totalTripsCompleted || 0,
                 averageResponseTime: unit.analytics?.averageResponseTime?.toNumber() || 0,
                 lastMaintenanceDate: unit.lastMaintenance || new Date(),
                 nextMaintenanceDate: unit.nextMaintenance || new Date(),
@@ -82,7 +82,7 @@ class UnitService {
                 currentLocation: unit.location ? JSON.stringify(unit.location) : 'Unknown',
                 crew: [], // Will be populated from separate crew management
                 isActive: unit.isActive,
-                totalTripsCompleted: unit.analytics?.totalTrips || 0,
+                totalTripsCompleted: unit.analytics?.totalTripsCompleted || 0,
                 averageResponseTime: unit.analytics?.averageResponseTime?.toNumber() || 0,
                 lastMaintenanceDate: unit.lastMaintenance || new Date(),
                 nextMaintenanceDate: unit.nextMaintenance || new Date(),
@@ -159,7 +159,7 @@ class UnitService {
                 data: {
                     id: `analytics-${newUnit.id}`,
                     unitId: newUnit.id,
-                    totalTrips: 0,
+                    totalTripsCompleted: 0,
                     averageResponseTime: 0,
                     performanceScore: 0,
                     efficiency: 0
@@ -304,24 +304,97 @@ class UnitService {
      */
     async getUnitAnalytics(agencyId) {
         try {
-            // TODO: Implement proper Unit model in Prisma schema
             console.log('TCC_DEBUG: getUnitAnalytics called with agencyId:', agencyId);
-            const mockAnalytics = {
-                totalUnits: 2,
-                availableUnits: 1,
-                committedUnits: 0,
-                outOfServiceUnits: 0,
-                maintenanceUnits: 0,
-                offDutyUnits: 0,
-                totalTripsToday: 0,
-                averageResponseTime: 0,
-                efficiency: 0.5
+            const prisma = databaseManager_1.databaseManager.getEMSDB();
+            // Get all units for the agency
+            const units = await prisma.unit.findMany({
+                where: {
+                    agencyId: agencyId,
+                    isActive: true
+                },
+                include: {
+                    analytics: true
+                }
+            });
+            // Calculate analytics from actual data
+            const totalUnits = units.length;
+            const availableUnits = units.filter(u => u.status === 'AVAILABLE').length;
+            const committedUnits = units.filter(u => u.status === 'COMMITTED').length;
+            const outOfServiceUnits = units.filter(u => u.status === 'OUT_OF_SERVICE').length;
+            const maintenanceUnits = units.filter(u => u.status === 'MAINTENANCE').length;
+            const offDutyUnits = units.filter(u => u.status === 'OFF_DUTY').length;
+            // Calculate average response time from analytics
+            const totalResponseTime = units.reduce((sum, unit) => {
+                return sum + (unit.analytics?.averageResponseTime?.toNumber() || 0);
+            }, 0);
+            const averageResponseTime = totalUnits > 0 ? totalResponseTime / totalUnits : 0;
+            // Calculate total trips today (placeholder - would need actual trip data)
+            const totalTripsToday = 0;
+            // Calculate efficiency (placeholder calculation)
+            const efficiency = totalUnits > 0 ? (availableUnits / totalUnits) : 0;
+            const analytics = {
+                totalUnits,
+                availableUnits,
+                committedUnits,
+                outOfServiceUnits,
+                maintenanceUnits,
+                offDutyUnits,
+                totalTripsToday,
+                averageResponseTime,
+                efficiency
             };
-            return mockAnalytics;
+            console.log('TCC_DEBUG: Calculated analytics:', analytics);
+            return analytics;
         }
         catch (error) {
             console.error('Error getting unit analytics:', error);
             throw new Error('Failed to retrieve unit analytics');
+        }
+    }
+    /**
+     * Update unit duty status (on/off duty)
+     */
+    async updateUnitDutyStatus(unitId, isActive) {
+        try {
+            console.log('TCC_DEBUG: updateUnitDutyStatus called with unitId:', unitId, 'isActive:', isActive);
+            const prisma = databaseManager_1.databaseManager.getEMSDB();
+            // Update the unit's isActive status
+            const updatedUnit = await prisma.unit.update({
+                where: {
+                    id: unitId
+                },
+                data: {
+                    isActive: isActive
+                },
+                include: {
+                    analytics: true,
+                    agency: true
+                }
+            });
+            // Transform to our Unit interface
+            const transformedUnit = {
+                id: updatedUnit.id,
+                agencyId: updatedUnit.agencyId,
+                unitNumber: updatedUnit.unitNumber,
+                type: updatedUnit.type,
+                capabilities: updatedUnit.capabilities,
+                currentStatus: updatedUnit.status,
+                currentLocation: updatedUnit.location ? JSON.stringify(updatedUnit.location) : 'Station 1',
+                crew: [],
+                isActive: updatedUnit.isActive,
+                totalTripsCompleted: updatedUnit.analytics?.totalTripsCompleted || 0,
+                averageResponseTime: updatedUnit.analytics?.averageResponseTime?.toNumber() || 0,
+                lastMaintenanceDate: updatedUnit.lastMaintenance || new Date(),
+                nextMaintenanceDate: updatedUnit.nextMaintenance || new Date(),
+                createdAt: updatedUnit.createdAt,
+                updatedAt: updatedUnit.updatedAt
+            };
+            console.log('TCC_DEBUG: Unit duty status updated successfully:', transformedUnit);
+            return transformedUnit;
+        }
+        catch (error) {
+            console.error('Error updating unit duty status:', error);
+            throw new Error('Failed to update unit duty status');
         }
     }
     /**

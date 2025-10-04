@@ -98,7 +98,9 @@ router.post('/routes', async (req, res) => {
 /**
  * GET /api/optimize/revenue
  * Get revenue analytics for a time period
+ * SIMPLIFIED: Commented out complex revenue calculations for Phase 3 simplification
  */
+/*
 router.get('/revenue', async (req, res) => {
   try {
     const { timeframe = '24h', agencyId } = req.query;
@@ -149,6 +151,30 @@ router.get('/revenue', async (req, res) => {
         averageRevenuePerTrip: trips.length > 0 ? totalRevenue / trips.length : 0,
         totalMiles,
         loadedMiles
+      }
+    });
+  } catch (error) {
+    console.error('Revenue analytics error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error during revenue analytics'
+    });
+  }
+});
+*/
+
+// SIMPLIFIED: Basic revenue endpoint that returns minimal data
+router.get('/revenue', async (req, res) => {
+  try {
+    const { timeframe = '24h', agencyId } = req.query;
+
+    // For simplification, just return basic trip count
+    res.json({
+      success: true,
+      data: {
+        timeframe,
+        totalTrips: 0, // Will be populated when trips are implemented
+        message: 'Simplified revenue endpoint - complex calculations removed for Phase 3'
       }
     });
   } catch (error) {

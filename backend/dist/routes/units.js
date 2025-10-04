@@ -299,5 +299,46 @@ router.delete('/:id', authenticateAdmin_1.authenticateAdmin, async (req, res) =>
         });
     }
 });
+/**
+ * PATCH /api/units/:id/duty
+ * Toggle unit duty status (on/off duty)
+ */
+router.patch('/:id/duty', authenticateAdmin_1.authenticateAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { isActive } = req.body;
+        const agencyId = req.user?.id;
+        console.log('🔍 Units API PATCH duty: req.user:', req.user);
+        console.log('🔍 Units API PATCH duty: agencyId:', agencyId);
+        console.log('🔍 Units API PATCH duty: unitId:', id);
+        console.log('🔍 Units API PATCH duty: isActive:', isActive);
+        if (!agencyId) {
+            return res.status(400).json({
+                success: false,
+                error: 'Agency ID not found'
+            });
+        }
+        if (typeof isActive !== 'boolean') {
+            return res.status(400).json({
+                success: false,
+                error: 'isActive must be a boolean value'
+            });
+        }
+        const updatedUnit = await unitService_1.unitService.updateUnitDutyStatus(id, isActive);
+        console.log('🔍 Units API PATCH duty: unit updated:', updatedUnit);
+        res.json({
+            success: true,
+            data: updatedUnit,
+            message: `Unit ${isActive ? 'activated' : 'deactivated'} successfully`
+        });
+    }
+    catch (error) {
+        console.error('Error updating unit duty status:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to update unit duty status'
+        });
+    }
+});
 exports.default = router;
 //# sourceMappingURL=units.js.map

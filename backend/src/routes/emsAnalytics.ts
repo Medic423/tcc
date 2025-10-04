@@ -228,6 +228,7 @@ router.get('/units', async (req: AuthenticatedRequest, res) => {
 /**
  * GET /api/ems/analytics/performance
  * Get agency-specific performance metrics
+ * SIMPLIFIED: Reduced to basic metrics for Phase 3 simplification
  */
 router.get('/performance', async (req: AuthenticatedRequest, res) => {
   try {
@@ -238,38 +239,22 @@ router.get('/performance', async (req: AuthenticatedRequest, res) => {
 
     const prisma = databaseManager.getCenterDB();
 
-    const [
-      totalTrips,
-      completedTrips,
-      responseTimes,
-      tripTimes,
-      revenueAgg
-    ] = await Promise.all([
+    // SIMPLIFIED: Only get basic trip counts, skip complex calculations
+    const [totalTrips, completedTrips] = await Promise.all([
       prisma.trip.count({ where: { assignedAgencyId: agencyId } }),
-      prisma.trip.count({ where: { assignedAgencyId: agencyId, status: 'COMPLETED' } }),
-      prisma.trip.findMany({ where: { assignedAgencyId: agencyId, responseTimeMinutes: { not: null } }, select: { responseTimeMinutes: true } }),
-      prisma.trip.findMany({ where: { assignedAgencyId: agencyId, actualTripTimeMinutes: { not: null } }, select: { actualTripTimeMinutes: true } }),
-      prisma.trip.aggregate({ where: { assignedAgencyId: agencyId, tripCost: { not: null } }, _sum: { tripCost: true } })
+      prisma.trip.count({ where: { assignedAgencyId: agencyId, status: 'COMPLETED' } })
     ]);
 
-    const averageResponseTime = responseTimes.length > 0
-      ? responseTimes.reduce((s, t) => s + (t.responseTimeMinutes || 0), 0) / responseTimes.length
-      : 0;
-    const averageTripTime = tripTimes.length > 0
-      ? tripTimes.reduce((s, t) => s + (t.actualTripTimeMinutes || 0), 0) / tripTimes.length
-      : 0;
+    // SIMPLIFIED: Basic completion rate only
     const completionRate = totalTrips > 0 ? completedTrips / totalTrips : 0;
-    const totalRevenue = Number((revenueAgg._sum as any)?.tripCost || 0);
-    const efficiency = completionRate; // Alias per spec
 
     res.json({
       success: true,
       data: {
-        averageResponseTime,
-        averageTripTime,
+        totalTrips,
+        completedTrips,
         completionRate,
-        totalRevenue,
-        efficiency
+        message: 'Simplified performance metrics - complex calculations removed for Phase 3'
       }
     });
 

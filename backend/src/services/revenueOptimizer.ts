@@ -112,29 +112,12 @@ export class RevenueOptimizer {
 
   /**
    * Calculate base revenue for a transport request
+   * SIMPLIFIED: Basic revenue calculation for Phase 3
    */
   calculateRevenue(request: TransportRequest): number {
-    // If insurance-specific pricing is available, use it
-    if (request.insurancePayRate && request.perMileRate && request.distanceMiles) {
-      const baseRevenue = request.insurancePayRate;
-      const mileageRevenue = request.perMileRate * request.distanceMiles;
-      
-      // Priority multipliers still apply
-      const priorityMultipliers = {
-        'LOW': 1.0,
-        'MEDIUM': 1.1,
-        'HIGH': 1.25,
-        'URGENT': 1.5
-      };
-      const priorityMultiplier = priorityMultipliers[request.priority as keyof typeof priorityMultipliers] || 1.0;
-      
-      // Special requirements surcharge
-      const specialSurcharge = request.specialRequirements ? 50.0 : 0.0;
-      
-      return (baseRevenue + mileageRevenue + specialSurcharge) * priorityMultiplier * this.weights.baseRevenue;
-    }
+    console.log('TCC_DEBUG: Simplified calculateRevenue called - complex revenue calculations disabled for Phase 3');
     
-    // Fallback to standard rates if insurance pricing not available
+    // SIMPLIFIED: Basic flat rates without complex calculations
     const baseRates = {
       'BLS': 150.0,
       'ALS': 250.0,
@@ -143,7 +126,7 @@ export class RevenueOptimizer {
 
     const baseRate = baseRates[request.transportLevel as keyof typeof baseRates] || 150.0;
     
-    // Priority multipliers
+    // SIMPLIFIED: Basic priority multiplier only
     const priorityMultipliers = {
       'LOW': 1.0,
       'MEDIUM': 1.1,
@@ -152,11 +135,8 @@ export class RevenueOptimizer {
     };
 
     const priorityMultiplier = priorityMultipliers[request.priority as keyof typeof priorityMultipliers] || 1.0;
-    
-    // Special requirements surcharge
-    const specialSurcharge = request.specialRequirements ? 50.0 : 0.0;
 
-    return (baseRate * priorityMultiplier + specialSurcharge) * this.weights.baseRevenue;
+    return baseRate * priorityMultiplier;
   }
 
   /**

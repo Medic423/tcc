@@ -78,6 +78,10 @@ declare class UnitService {
      */
     getUnitAnalytics(agencyId: string): Promise<UnitAnalytics>;
     /**
+     * Update unit duty status (on/off duty)
+     */
+    updateUnitDutyStatus(unitId: string, isActive: boolean): Promise<Unit>;
+    /**
      * Map Prisma unit to Unit interface
      */
     private mapPrismaUnitToUnit;

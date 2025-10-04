@@ -92,50 +92,81 @@ router.post('/routes', async (req, res) => {
 /**
  * GET /api/optimize/revenue
  * Get revenue analytics for a time period
+ * SIMPLIFIED: Commented out complex revenue calculations for Phase 3 simplification
  */
+/*
+router.get('/revenue', async (req, res) => {
+  try {
+    const { timeframe = '24h', agencyId } = req.query;
+
+    // Calculate time range
+    const now = new Date();
+    const timeRanges = {
+      '1h': 1 * 60 * 60 * 1000,
+      '24h': 24 * 60 * 60 * 1000,
+      '7d': 7 * 24 * 60 * 60 * 1000,
+      '30d': 30 * 24 * 60 * 60 * 1000
+    };
+
+    const timeRange = timeRanges[timeframe as keyof typeof timeRanges] || timeRanges['24h'];
+    const startTime = new Date(now.getTime() - timeRange);
+
+    // Get completed trips in time range
+    const trips = await getCompletedTripsInRange(startTime, now, agencyId as string);
+    console.log('TCC_DEBUG: Revenue analytics - trips found:', trips.length);
+    console.log('TCC_DEBUG: Revenue analytics - sample trip:', trips[0]);
+
+    // Calculate metrics using new database fields when available
+    const totalRevenue = trips.reduce((sum, trip) => sum + calculateTripRevenue(trip), 0);
+    const totalMiles = trips.reduce((sum, trip) => sum + calculateTripMiles(trip), 0);
+    const loadedMiles = trips.reduce((sum, trip) => sum + calculateLoadedMiles(trip), 0);
+    const loadedMileRatio = totalMiles > 0 ? loadedMiles / totalMiles : 0;
+    
+    // Use stored revenuePerHour if available, otherwise calculate
+    const storedRevenuePerHour = trips.find(trip => trip.revenuePerHour)?.revenuePerHour;
+    const revenuePerHour = storedRevenuePerHour ? Number(storedRevenuePerHour) : totalRevenue / (timeRange / (1000 * 60 * 60));
+    
+    console.log('TCC_DEBUG: Revenue analytics - calculated values:', {
+      totalRevenue,
+      totalMiles,
+      loadedMiles,
+      loadedMileRatio,
+      revenuePerHour
+    });
+
+    res.json({
+      success: true,
+      data: {
+        timeframe,
+        totalRevenue,
+        loadedMileRatio,
+        revenuePerHour,
+        totalTrips: trips.length,
+        averageRevenuePerTrip: trips.length > 0 ? totalRevenue / trips.length : 0,
+        totalMiles,
+        loadedMiles
+      }
+    });
+  } catch (error) {
+    console.error('Revenue analytics error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error during revenue analytics'
+    });
+  }
+});
+*/
+// SIMPLIFIED: Basic revenue endpoint that returns minimal data
 router.get('/revenue', async (req, res) => {
     try {
         const { timeframe = '24h', agencyId } = req.query;
-        // Calculate time range
-        const now = new Date();
-        const timeRanges = {
-            '1h': 1 * 60 * 60 * 1000,
-            '24h': 24 * 60 * 60 * 1000,
-            '7d': 7 * 24 * 60 * 60 * 1000,
-            '30d': 30 * 24 * 60 * 60 * 1000
-        };
-        const timeRange = timeRanges[timeframe] || timeRanges['24h'];
-        const startTime = new Date(now.getTime() - timeRange);
-        // Get completed trips in time range
-        const trips = await getCompletedTripsInRange(startTime, now, agencyId);
-        console.log('TCC_DEBUG: Revenue analytics - trips found:', trips.length);
-        console.log('TCC_DEBUG: Revenue analytics - sample trip:', trips[0]);
-        // Calculate metrics using new database fields when available
-        const totalRevenue = trips.reduce((sum, trip) => sum + calculateTripRevenue(trip), 0);
-        const totalMiles = trips.reduce((sum, trip) => sum + calculateTripMiles(trip), 0);
-        const loadedMiles = trips.reduce((sum, trip) => sum + calculateLoadedMiles(trip), 0);
-        const loadedMileRatio = totalMiles > 0 ? loadedMiles / totalMiles : 0;
-        // Use stored revenuePerHour if available, otherwise calculate
-        const storedRevenuePerHour = trips.find(trip => trip.revenuePerHour)?.revenuePerHour;
-        const revenuePerHour = storedRevenuePerHour ? Number(storedRevenuePerHour) : totalRevenue / (timeRange / (1000 * 60 * 60));
-        console.log('TCC_DEBUG: Revenue analytics - calculated values:', {
-            totalRevenue,
-            totalMiles,
-            loadedMiles,
-            loadedMileRatio,
-            revenuePerHour
-        });
+        // For simplification, just return basic trip count
         res.json({
             success: true,
             data: {
                 timeframe,
-                totalRevenue,
-                loadedMileRatio,
-                revenuePerHour,
-                totalTrips: trips.length,
-                averageRevenuePerTrip: trips.length > 0 ? totalRevenue / trips.length : 0,
-                totalMiles,
-                loadedMiles
+                totalTrips: 0, // Will be populated when trips are implemented
+                message: 'Simplified revenue endpoint - complex calculations removed for Phase 3'
             }
         });
     }

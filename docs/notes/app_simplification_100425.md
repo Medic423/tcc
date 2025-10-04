@@ -387,6 +387,36 @@ Keep in development until fully tested.
 - [ ] Update services to work with simplified database fields
 - [ ] Remove unused endpoints
 
+### ✅ Phase 3: Backend API Simplification (COMPLETED)
+
+#### Complex APIs Simplified/Removed:
+1. ✅ **Revenue Analytics APIs** (`/api/optimize/revenue`) - Simplified to basic trip counts
+2. ✅ **Advanced Analytics Service** - Commented out complex cost breakdowns, kept basic metrics
+3. ✅ **Revenue Optimizer Service** - Simplified to basic flat rates without complex calculations
+4. ✅ **EMS Analytics Performance** - Reduced to basic trip counts and completion rates
+5. ✅ **Cost Analysis APIs** - Commented out complex financial analysis, return minimal data
+
+#### Core APIs Preserved:
+- ✅ Basic unit management (`/api/units`)
+- ✅ Trip management (`/api/trips`) 
+- ✅ Agency responses (`/api/agency-responses`)
+- ✅ Basic notifications (`/api/notifications`)
+- ✅ Essential facility/agency data (`/api/tcc/*`)
+- ✅ Simple optimization (route, backhaul)
+
+#### Implementation Completed:
+1. ✅ **Commented out complex analytics endpoints** in route files
+2. ✅ **Simplified analytics services** to return basic counts only
+3. ✅ **Simplified revenue calculations** to basic flat rates
+4. ✅ **Preserved essential functionality** for core workflow
+5. ✅ **Tested that core features still work** - All endpoints responding correctly
+
+#### Files Modified:
+- `backend/src/routes/optimization.ts` - Simplified revenue endpoint
+- `backend/src/routes/emsAnalytics.ts` - Simplified performance metrics
+- `backend/src/services/analyticsService.ts` - Recreated with basic metrics only
+- `backend/src/services/revenueOptimizer.ts` - Simplified to basic flat rates
+
 ### ⏳ Phase 4: Real Data & Testing (PENDING)
 - [ ] Create real hospital and EMS agency data
 - [ ] Conduct user testing with actual data
