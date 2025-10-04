@@ -107,7 +107,7 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
                  origin: trip.originFacility?.name || 'Unknown Origin',
                  destination: trip.destinationFacility?.name || 'Unknown Destination',
                  transportLevel: trip.transportLevel || 'BLS',
-                 priority: trip.priority,
+                 urgencyLevel: trip.urgencyLevel || 'Routine',
                  distance: '12.5 miles', // Mock data
                  estimatedTime: '25 minutes', // Mock data
                  revenue: '$150', // Mock data
@@ -134,7 +134,7 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
                  origin: trip.originFacility?.name || 'Unknown Origin',
                  destination: trip.destinationFacility?.name || 'Unknown Destination',
                  transportLevel: trip.transportLevel || 'BLS',
-                 priority: trip.priority,
+                 urgencyLevel: trip.urgencyLevel || 'Routine',
                  status: trip.status,
                  pickupTime: trip.actualStartTime ? new Date(trip.actualStartTime).toLocaleString() : 'Not started',
                  scheduledTime: trip.scheduledTime
@@ -363,12 +363,16 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
     }
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'HIGH': return 'text-red-600 bg-red-100';
-      case 'MEDIUM': return 'text-yellow-600 bg-yellow-100';
-      case 'LOW': return 'text-green-600 bg-green-100';
-      default: return 'text-gray-600 bg-gray-100';
+  const getUrgencyLevelStyle = (urgencyLevel: string) => {
+    switch (urgencyLevel) {
+      case 'Routine':
+        return 'text-black bg-transparent';
+      case 'Urgent':
+        return 'text-black bg-orange-200';
+      case 'Emergent':
+        return 'text-black bg-red-200';
+      default:
+        return 'text-black bg-transparent';
     }
   };
 
@@ -496,8 +500,8 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
                               {trip.origin} → {trip.destination}
                             </p>
                           </div>
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(trip.priority)}`}>
-                            {trip.priority}
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getUrgencyLevelStyle(trip.urgencyLevel)}`}>
+                            {trip.urgencyLevel}
                           </span>
                         </div>
                         <div className="mt-2 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
