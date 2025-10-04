@@ -15,7 +15,8 @@ import {
 } from 'lucide-react';
 import Notifications from './Notifications';
 import UnitsManagement from './UnitsManagement';
-import RevenueSettings from './RevenueSettings';
+import AgencySettings from './AgencySettings';
+// import RevenueSettings from './RevenueSettings'; // Replaced by AgencySettings
 // import EMSAnalytics from './EMSAnalytics'; // Moved to backup - will move to Admin later
 
 interface EMSDashboardProps {
@@ -425,7 +426,7 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
               { id: 'available', name: 'Available Trips', icon: MapPin },
               { id: 'accepted', name: 'My Trips', icon: CheckCircle },
               { id: 'units', name: 'Units', icon: Settings },
-              { id: 'revenue-settings', name: 'Revenue Settings', icon: DollarSign }
+              { id: 'revenue-settings', name: 'Agency Settings', icon: DollarSign }
             ].map((tab) => {
               const Icon = tab.icon;
               return (
@@ -607,7 +608,7 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
         {/* Analytics tab removed - moved to TCC Admin dashboard */}
 
         {activeTab === 'revenue-settings' && (
-          <RevenueSettings />
+          <AgencySettings user={user} />
         )}
 
         {activeTab === 'units' && (
