@@ -308,13 +308,13 @@ router.put('/ems/agency/update', authenticateAdmin, async (req: AuthenticatedReq
     const updateData = req.body;
     console.log('TCC_DEBUG: Update data received:', updateData);
 
-    const emsDB = databaseManager.getEMSDB();
+    const db = databaseManager.getCenterDB();
     const centerDB = databaseManager.getCenterDB();
 
     console.log('TCC_DEBUG: Attempting to update EMS user record...');
     
     // Update EMS user record
-    const updatedUser = await emsDB.eMSUser.update({
+    const updatedUser = await db.eMSUser.update({
       where: { id: userId },
       data: {
         agencyName: updateData.agencyName,
@@ -433,10 +433,10 @@ router.post('/ems/register', async (req, res) => {
       }
     }
 
-    const emsDB = databaseManager.getEMSDB();
+    const db = databaseManager.getCenterDB();
     
     // Check if user already exists
-    const existingUser = await emsDB.eMSUser.findUnique({
+    const existingUser = await db.eMSUser.findUnique({
       where: { email }
     });
 
@@ -448,7 +448,7 @@ router.post('/ems/register', async (req, res) => {
     }
 
     // Create new EMS user
-    const user = await emsDB.eMSUser.create({
+    const user = await db.eMSUser.create({
       data: {
         email,
         password: await bcrypt.hash(password, 10),
