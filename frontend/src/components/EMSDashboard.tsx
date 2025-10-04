@@ -499,9 +499,6 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
                               {trip.origin} → {trip.destination}
                             </p>
                           </div>
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getUrgencyLevelStyle(trip.urgencyLevel)}`}>
-                            {trip.urgencyLevel}
-                          </span>
                         </div>
                         <div className="mt-2 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
                           <div>
