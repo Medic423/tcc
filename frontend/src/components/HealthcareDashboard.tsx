@@ -82,6 +82,13 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
   // Load trips from API
   useEffect(() => {
     loadTrips();
+    
+    // Set up auto-refresh every 30 seconds to catch status updates from EMS
+    const interval = setInterval(() => {
+      loadTrips();
+    }, 30000);
+    
+    return () => clearInterval(interval);
   }, []);
 
   // Load agency responses when responses tab is active
@@ -278,10 +285,12 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'PENDING': return 'text-yellow-600 bg-yellow-100';
-      case 'ACCEPTED': return 'text-green-600 bg-green-100';
-      case 'IN_PROGRESS': return 'text-blue-600 bg-blue-100';
-      case 'COMPLETED': return 'text-gray-600 bg-gray-100';
+      case 'PENDING': return 'text-yellow-800 bg-yellow-200 border border-yellow-300';
+      case 'ACCEPTED': return 'text-green-800 bg-green-200 border border-green-300 font-bold';
+      case 'DECLINED': return 'text-red-800 bg-red-200 border border-red-300 font-bold';
+      case 'CANCELLED': return 'text-red-800 bg-red-200 border border-red-300 font-bold';
+      case 'IN_PROGRESS': return 'text-blue-800 bg-blue-200 border border-blue-300 font-bold';
+      case 'COMPLETED': return 'text-gray-800 bg-gray-200 border border-gray-300 font-bold';
       default: return 'text-gray-600 bg-gray-100';
     }
   };
@@ -471,12 +480,6 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                           {trip.urgencyLevel || 'Routine'}
                         </span>
                         <div className="flex space-x-2 ml-4">
-                          <button
-                            onClick={() => handleViewResponses(trip)}
-                            className="text-purple-600 hover:text-purple-900 text-xs px-2 py-1 rounded hover:bg-purple-50"
-                          >
-                            View Responses
-                          </button>
                           <button
                             onClick={() => handleEditTrip(trip)}
                             className="text-blue-600 hover:text-blue-900 text-xs px-2 py-1 rounded hover:bg-blue-50"
