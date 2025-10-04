@@ -99,7 +99,18 @@ export declare class TripService {
         agencyId?: string;
     }): Promise<{
         success: boolean;
-        data: {
+        data: ({
+            originFacility: {
+                id: string;
+                name: string;
+                type: string;
+            } | null;
+            destinationFacility: {
+                id: string;
+                name: string;
+                type: string;
+            } | null;
+        } & {
             id: string;
             createdAt: Date;
             updatedAt: Date;
@@ -135,7 +146,7 @@ export declare class TripService {
             healthcareCreatedById: string | null;
             isolation: boolean;
             bariatric: boolean;
-        }[];
+        })[];
         error?: undefined;
     } | {
         success: boolean;
@@ -152,6 +163,17 @@ export declare class TripService {
     } | {
         success: boolean;
         data: {
+            originFacility: {
+                id: string;
+                name: string;
+                type: string;
+            } | null;
+            destinationFacility: {
+                id: string;
+                name: string;
+                type: string;
+            } | null;
+        } & {
             id: string;
             createdAt: Date;
             updatedAt: Date;

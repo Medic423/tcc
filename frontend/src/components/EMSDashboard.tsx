@@ -101,19 +101,19 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
       if (availableResponse.ok) {
         const availableData = await availableResponse.json();
         if (availableData.success && availableData.data) {
-          const transformedAvailable = availableData.data.map((trip: any) => ({
-            id: trip.id,
-            patientId: trip.patientId,
-            origin: trip.fromLocation || `Facility ${trip.originFacilityId}`,
-            destination: trip.toLocation || `Facility ${trip.destinationFacilityId}`,
-            transportLevel: trip.transportLevel || 'BLS',
-            priority: trip.priority,
-            distance: '12.5 miles', // Mock data
-            estimatedTime: '25 minutes', // Mock data
-            revenue: '$150', // Mock data
-            requestTime: new Date(trip.createdAt).toLocaleString(),
-            scheduledTime: trip.scheduledTime
-          }));
+               const transformedAvailable = availableData.data.map((trip: any) => ({
+                 id: trip.id,
+                 patientId: trip.patientId,
+                 origin: trip.originFacility?.name || 'Unknown Origin',
+                 destination: trip.destinationFacility?.name || 'Unknown Destination',
+                 transportLevel: trip.transportLevel || 'BLS',
+                 priority: trip.priority,
+                 distance: '12.5 miles', // Mock data
+                 estimatedTime: '25 minutes', // Mock data
+                 revenue: '$150', // Mock data
+                 requestTime: new Date(trip.createdAt).toLocaleString(),
+                 scheduledTime: trip.scheduledTime
+               }));
           setAvailableTrips(transformedAvailable);
         }
       }
@@ -128,17 +128,17 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
       if (acceptedResponse.ok) {
         const acceptedData = await acceptedResponse.json();
         if (acceptedData.success && acceptedData.data) {
-          const transformedAccepted = acceptedData.data.map((trip: any) => ({
-            id: trip.id,
-            patientId: trip.patientId,
-            origin: trip.fromLocation || `Facility ${trip.originFacilityId}`,
-            destination: trip.toLocation || `Facility ${trip.destinationFacilityId}`,
-            transportLevel: trip.transportLevel || 'BLS',
-            priority: trip.priority,
-            status: trip.status,
-            pickupTime: trip.actualStartTime ? new Date(trip.actualStartTime).toLocaleString() : 'Not started',
-            scheduledTime: trip.scheduledTime
-          }));
+               const transformedAccepted = acceptedData.data.map((trip: any) => ({
+                 id: trip.id,
+                 patientId: trip.patientId,
+                 origin: trip.originFacility?.name || 'Unknown Origin',
+                 destination: trip.destinationFacility?.name || 'Unknown Destination',
+                 transportLevel: trip.transportLevel || 'BLS',
+                 priority: trip.priority,
+                 status: trip.status,
+                 pickupTime: trip.actualStartTime ? new Date(trip.actualStartTime).toLocaleString() : 'Not started',
+                 scheduledTime: trip.scheduledTime
+               }));
           setAcceptedTrips(transformedAccepted);
         }
       }

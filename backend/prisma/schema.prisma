@@ -478,6 +478,10 @@ model TransportRequest {
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
+  // Relationships
+  originFacility        Facility? @relation("OriginFacility", fields: [originFacilityId], references: [id])
+  destinationFacility   Facility? @relation("DestinationFacility", fields: [destinationFacilityId], references: [id])
+
   @@map("transport_requests")
 }
 
@@ -503,6 +507,10 @@ model Facility {
   approvedBy     String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+
+  // Relationships
+  originTrips     TransportRequest[] @relation("OriginFacility")
+  destinationTrips TransportRequest[] @relation("DestinationFacility")
 
   @@map("facilities")
 }

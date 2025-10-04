@@ -119,7 +119,8 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
           const transformedTrips = data.data.map((trip: any) => ({
             id: trip.id,
             patientId: trip.patientId,
-            destination: trip.toLocation || `Facility ${trip.destinationFacilityId}`,
+            origin: trip.originFacility?.name || 'Unknown Origin',
+            destination: trip.destinationFacility?.name || 'Unknown Destination',
             pickupLocation: trip.pickupLocation,
             transportLevel: trip.transportLevel || 'BLS',
             status: trip.status,
@@ -448,7 +449,7 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                       <div className="flex items-center space-x-4">
                         <div>
                           <p className="text-sm font-medium text-gray-900">
-                            Patient ID: {trip.patientId} - {trip.destination}
+                            Patient ID: {trip.patientId} - {trip.origin} → {trip.destination}
                           </p>
                           {trip.pickupLocation && (
                             <p className="text-xs text-blue-600">
@@ -458,7 +459,7 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                             </p>
                           )}
                           <p className="text-xs text-gray-500">
-                            {trip.transportLevel} • {trip.urgencyLevel || trip.priority} • {trip.requestTime}
+                            {trip.transportLevel} • {trip.urgencyLevel || 'Routine'} • {trip.requestTime}
                           </p>
                         </div>
                       </div>

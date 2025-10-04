@@ -85,6 +85,22 @@ class TripService {
                 orderBy: {
                     createdAt: 'desc',
                 },
+                include: {
+                    originFacility: {
+                        select: {
+                            id: true,
+                            name: true,
+                            type: true
+                        }
+                    },
+                    destinationFacility: {
+                        select: {
+                            id: true,
+                            name: true,
+                            type: true
+                        }
+                    }
+                }
             });
             console.log('TCC_DEBUG: Found trips:', trips.length);
             return { success: true, data: trips };
@@ -101,7 +117,23 @@ class TripService {
         console.log('TCC_DEBUG: Getting trip by ID:', id);
         try {
             const trip = await prisma.transportRequest.findUnique({
-                where: { id }
+                where: { id },
+                include: {
+                    originFacility: {
+                        select: {
+                            id: true,
+                            name: true,
+                            type: true
+                        }
+                    },
+                    destinationFacility: {
+                        select: {
+                            id: true,
+                            name: true,
+                            type: true
+                        }
+                    }
+                }
             });
             if (!trip) {
                 return { success: false, error: 'Transport request not found' };

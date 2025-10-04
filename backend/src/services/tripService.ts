@@ -143,6 +143,22 @@ export class TripService {
         orderBy: {
           createdAt: 'desc',
         },
+        include: {
+          originFacility: {
+            select: {
+              id: true,
+              name: true,
+              type: true
+            }
+          },
+          destinationFacility: {
+            select: {
+              id: true,
+              name: true,
+              type: true
+            }
+          }
+        }
       });
 
       console.log('TCC_DEBUG: Found trips:', trips.length);
@@ -161,7 +177,23 @@ export class TripService {
     
     try {
       const trip = await prisma.transportRequest.findUnique({
-        where: { id }
+        where: { id },
+        include: {
+          originFacility: {
+            select: {
+              id: true,
+              name: true,
+              type: true
+            }
+          },
+          destinationFacility: {
+            select: {
+              id: true,
+              name: true,
+              type: true
+            }
+          }
+        }
       });
 
       if (!trip) {
