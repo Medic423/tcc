@@ -402,6 +402,24 @@ Keep in development until fully tested.
 - Fixed in createUnit, getAllUnits, and getUnitsByAgency methods  
 **Status**: ✅ RESOLVED - Unit creation now works successfully
 
+#### ✅ Total Units Analytics Display Fixed
+**Issue**: "Total Units" tile showing incorrect count (2 instead of 1)  
+**Root Cause**: getUnitAnalytics method returning hardcoded mock data instead of calculating from database  
+**Solution**: Replaced mock analytics with real database calculations:
+- Added proper filtering by agency ID and active status
+- Implemented real analytics for all unit status categories
+- Added efficiency calculation based on actual available units  
+**Status**: ✅ RESOLVED - Analytics now show accurate counts
+
+#### ✅ On Duty Toggle Feature Added
+**Issue**: Users had to edit units to change duty status (poor UX)  
+**Solution**: Added one-click toggle directly in units list:
+- **Frontend**: Added "On Duty" column with checkbox toggle
+- **Backend**: Added PATCH /api/units/:id/duty endpoint
+- **UX**: Immediate visual feedback with "On Duty"/"Off Duty" labels
+- **Performance**: Optimistic UI updates for better responsiveness  
+**Status**: ✅ COMPLETED - Much improved user experience for duty management
+
 ---
 
 **Document Status**: Implementation In Progress  
