@@ -38,14 +38,8 @@ fi
 # Create database backup directory
 mkdir -p "$BACKUP_DIR/$BACKUP_NAME/databases"
 
-# Backup each database
-echo "📊 Backing up medport_center database..."
-pg_dump -h localhost -U scooper -d medport_center > "$BACKUP_DIR/$BACKUP_NAME/databases/medport_center.sql"
-
-echo "📊 Backing up medport_hospital database..."
-pg_dump -h localhost -U scooper -d medport_hospital > "$BACKUP_DIR/$BACKUP_NAME/databases/medport_hospital.sql"
-
-echo "📊 Backing up medport_ems database..."
+# Backup the single consolidated database
+echo "📊 Backing up medport_ems database (consolidated TCC database)..."
 pg_dump -h localhost -U scooper -d medport_ems > "$BACKUP_DIR/$BACKUP_NAME/databases/medport_ems.sql"
 
 # 3. Create database restore script
@@ -65,20 +59,12 @@ if ! pg_isready -q; then
     sleep 5
 fi
 
-# Create databases if they don't exist
-echo "📊 Creating databases..."
-createdb -h localhost -U scooper medport_center 2>/dev/null || true
-createdb -h localhost -U scooper medport_hospital 2>/dev/null || true
+# Create the single consolidated database if it doesn't exist
+echo "📊 Creating consolidated TCC database..."
 createdb -h localhost -U scooper medport_ems 2>/dev/null || true
 
-# Restore databases
-echo "📊 Restoring medport_center database..."
-psql -h localhost -U scooper -d medport_center < databases/medport_center.sql
-
-echo "📊 Restoring medport_hospital database..."
-psql -h localhost -U scooper -d medport_hospital < databases/medport_hospital.sql
-
-echo "📊 Restoring medport_ems database..."
+# Restore the consolidated database
+echo "📊 Restoring medport_ems database (consolidated TCC database)..."
 psql -h localhost -U scooper -d medport_ems < databases/medport_ems.sql
 
 echo "✅ Database restoration completed!"
@@ -142,14 +128,12 @@ Status: Full CRUD functionality with optimization algorithms
 
 Contents:
 - Complete project files (source code, configs, docs)
-- PostgreSQL database dumps (medport_center, medport_hospital, medport_ems)
+- PostgreSQL database dump (medport_ems - consolidated TCC database)
 - Database restore scripts
 - Complete restoration script
 
-Databases Included:
-✅ medport_center.sql - Main TCC database
-✅ medport_hospital.sql - Hospital management database  
-✅ medport_ems.sql - EMS agencies database
+Database Included:
+✅ medport_ems.sql - Consolidated TCC database (all tables in single database)
 
 Features Working:
 ✅ TCC Admin Dashboard (Hospitals, Agencies, Facilities)
