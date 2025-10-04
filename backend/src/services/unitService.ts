@@ -369,22 +369,55 @@ class UnitService {
    */
   async getUnitAnalytics(agencyId: string): Promise<UnitAnalytics> {
     try {
-      // TODO: Implement proper Unit model in Prisma schema
       console.log('TCC_DEBUG: getUnitAnalytics called with agencyId:', agencyId);
       
-      const mockAnalytics: UnitAnalytics = {
-        totalUnits: 2,
-        availableUnits: 1,
-        committedUnits: 0,
-        outOfServiceUnits: 0,
-        maintenanceUnits: 0,
-        offDutyUnits: 0,
-        totalTripsToday: 0,
-        averageResponseTime: 0,
-        efficiency: 0.5
+      const prisma = databaseManager.getEMSDB();
+      
+      // Get all units for the agency
+      const units = await prisma.unit.findMany({
+        where: {
+          agencyId: agencyId,
+          isActive: true
+        },
+        include: {
+          analytics: true
+        }
+      });
+
+      // Calculate analytics from actual data
+      const totalUnits = units.length;
+      const availableUnits = units.filter(u => u.status === 'AVAILABLE').length;
+      const committedUnits = units.filter(u => u.status === 'COMMITTED').length;
+      const outOfServiceUnits = units.filter(u => u.status === 'OUT_OF_SERVICE').length;
+      const maintenanceUnits = units.filter(u => u.status === 'MAINTENANCE').length;
+      const offDutyUnits = units.filter(u => u.status === 'OFF_DUTY').length;
+      
+      // Calculate average response time from analytics
+      const totalResponseTime = units.reduce((sum, unit) => {
+        return sum + (unit.analytics?.averageResponseTime?.toNumber() || 0);
+      }, 0);
+      const averageResponseTime = totalUnits > 0 ? totalResponseTime / totalUnits : 0;
+      
+      // Calculate total trips today (placeholder - would need actual trip data)
+      const totalTripsToday = 0;
+      
+      // Calculate efficiency (placeholder calculation)
+      const efficiency = totalUnits > 0 ? (availableUnits / totalUnits) : 0;
+
+      const analytics: UnitAnalytics = {
+        totalUnits,
+        availableUnits,
+        committedUnits,
+        outOfServiceUnits,
+        maintenanceUnits,
+        offDutyUnits,
+        totalTripsToday,
+        averageResponseTime,
+        efficiency
       };
 
-      return mockAnalytics;
+      console.log('TCC_DEBUG: Calculated analytics:', analytics);
+      return analytics;
     } catch (error) {
       console.error('Error getting unit analytics:', error);
       throw new Error('Failed to retrieve unit analytics');
