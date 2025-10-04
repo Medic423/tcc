@@ -85,7 +85,7 @@ class UnitService {
         currentLocation: unit.location ? JSON.stringify(unit.location) : 'Unknown',
         crew: [], // Will be populated from separate crew management
         isActive: unit.isActive,
-        totalTripsCompleted: unit.analytics?.totalTrips || 0,
+        totalTripsCompleted: unit.analytics?.totalTripsCompleted || 0,
         averageResponseTime: unit.analytics?.averageResponseTime?.toNumber() || 0,
         lastMaintenanceDate: unit.lastMaintenance || new Date(),
         nextMaintenanceDate: unit.nextMaintenance || new Date(),
@@ -133,7 +133,7 @@ class UnitService {
         currentLocation: unit.location ? JSON.stringify(unit.location) : 'Unknown',
         crew: [], // Will be populated from separate crew management
         isActive: unit.isActive,
-        totalTripsCompleted: unit.analytics?.totalTrips || 0,
+        totalTripsCompleted: unit.analytics?.totalTripsCompleted || 0,
         averageResponseTime: unit.analytics?.averageResponseTime?.toNumber() || 0,
         lastMaintenanceDate: unit.lastMaintenance || new Date(),
         nextMaintenanceDate: unit.nextMaintenance || new Date(),
@@ -216,7 +216,7 @@ class UnitService {
         data: {
           id: `analytics-${newUnit.id}`,
           unitId: newUnit.id,
-          totalTrips: 0,
+          totalTripsCompleted: 0,
           averageResponseTime: 0,
           performanceScore: 0,
           efficiency: 0
