@@ -9,6 +9,7 @@ export interface User {
   userType: 'ADMIN' | 'USER' | 'HEALTHCARE' | 'EMS';
   facilityName?: string;
   agencyName?: string;
+  agencyId?: string;
 }
 
 export interface LoginCredentials {
