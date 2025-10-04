@@ -681,8 +681,8 @@ export declare class TripService {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            agencyId: string;
             tripId: string;
+            agencyId: string;
             response: string;
             responseTimestamp: Date;
             responseNotes: string | null;
@@ -704,8 +704,8 @@ export declare class TripService {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            agencyId: string;
             tripId: string;
+            agencyId: string;
             response: string;
             responseTimestamp: Date;
             responseNotes: string | null;
@@ -723,8 +723,8 @@ export declare class TripService {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            agencyId: string;
             tripId: string;
+            agencyId: string;
             response: string;
             responseTimestamp: Date;
             responseNotes: string | null;
@@ -750,8 +750,8 @@ export declare class TripService {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            agencyId: string;
             tripId: string;
+            agencyId: string;
             response: string;
             responseTimestamp: Date;
             responseNotes: string | null;
@@ -786,8 +786,8 @@ export declare class TripService {
                 id: string;
                 createdAt: Date;
                 updatedAt: Date;
-                agencyId: string;
                 tripId: string;
+                agencyId: string;
                 response: string;
                 responseTimestamp: Date;
                 responseNotes: string | null;
