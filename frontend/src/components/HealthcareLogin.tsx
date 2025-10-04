@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Building2, AlertCircle } from 'lucide-react';
+import { authAPI } from '../services/api';
 
 interface HealthcareLoginProps {
   onBack: () => void;
@@ -7,6 +8,8 @@ interface HealthcareLoginProps {
 }
 
 const HealthcareLogin: React.FC<HealthcareLoginProps> = ({ onBack, onLogin }) => {
+  console.log('TCC_DEBUG: HealthcareLogin component rendering');
+  
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -35,7 +38,6 @@ const HealthcareLogin: React.FC<HealthcareLoginProps> = ({ onBack, onLogin }) =>
       console.log('TCC_DEBUG: Attempting healthcare login with data:', formData);
 
       // Use the real API for healthcare login
-      const { authAPI } = await import('../services/api');
       const response = await authAPI.login(formData);
 
       if (response.data.success) {
