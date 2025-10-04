@@ -11,7 +11,8 @@ import {
   Navigation,
   Settings,
   BarChart3,
-  DollarSign
+  DollarSign,
+  Archive
 } from 'lucide-react';
 import Notifications from './Notifications';
 import UnitsManagement from './UnitsManagement';
@@ -32,6 +33,7 @@ interface EMSDashboardProps {
 
 const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
   const [activeTab, setActiveTab] = useState('available'); // Default to Available Trips (new landing page)
+  const [completedTrips, setCompletedTrips] = useState<any[]>([]);
   
   // Settings state
   const [settingsData, setSettingsData] = useState({
@@ -117,8 +119,8 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
         }
       }
 
-      // Load accepted trips (ACCEPTED, IN_PROGRESS, COMPLETED status)
-      const acceptedResponse = await fetch('/api/trips?status=ACCEPTED,IN_PROGRESS,COMPLETED', {
+      // Load accepted trips (ACCEPTED, IN_PROGRESS status only)
+      const acceptedResponse = await fetch('/api/trips?status=ACCEPTED,IN_PROGRESS', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
@@ -141,6 +143,32 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
           setAcceptedTrips(transformedAccepted);
         }
       }
+
+      // Load completed trips separately
+      const completedResponse = await fetch('/api/trips?status=COMPLETED', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      
+      if (completedResponse.ok) {
+        const completedData = await completedResponse.json();
+        if (completedData.success && completedData.data) {
+          const transformedCompleted = completedData.data.map((trip: any) => ({
+            id: trip.id,
+            patientId: trip.patientId,
+            origin: trip.originFacility?.name || 'Unknown Origin',
+            destination: trip.destinationFacility?.name || 'Unknown Destination',
+            transportLevel: trip.transportLevel || 'BLS',
+            urgencyLevel: trip.urgencyLevel || 'Routine',
+            status: trip.status,
+            requestTime: new Date(trip.createdAt).toLocaleString(),
+            completionTime: trip.completionTimestamp ? new Date(trip.completionTimestamp).toLocaleString() : null,
+            scheduledTime: trip.scheduledTime
+          }));
+          setCompletedTrips(transformedCompleted);
+        }
+      }
     } catch (error) {
       console.error('Error loading trips:', error);
       setError('Failed to load trips');
@@ -153,6 +181,74 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     onLogout();
+  };
+
+  const exportCompletedTripsToCSV = () => {
+    if (completedTrips.length === 0) {
+      alert('No completed trips to export');
+      return;
+    }
+
+    const csvHeaders = [
+      'Patient ID',
+      'Origin Facility',
+      'Destination Facility',
+      'Transport Level',
+      'Urgency Level',
+      'Request Time',
+      'Completion Time',
+      'Status'
+    ];
+
+    const csvData = completedTrips.map(trip => [
+      trip.patientId,
+      trip.origin,
+      trip.destination,
+      trip.transportLevel,
+      trip.urgencyLevel,
+      trip.requestTime,
+      trip.completionTime || 'N/A',
+      trip.status
+    ]);
+
+    const csvContent = [csvHeaders, ...csvData]
+      .map(row => row.map(field => `"${field}"`).join(','))
+      .join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `completed-trips-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'PENDING': return 'text-yellow-800 bg-yellow-200 border border-yellow-300';
+      case 'ACCEPTED': return 'text-green-800 bg-green-200 border border-green-300 font-bold';
+      case 'DECLINED': return 'text-red-800 bg-red-200 border border-red-300 font-bold';
+      case 'CANCELLED': return 'text-red-800 bg-red-200 border border-red-300 font-bold';
+      case 'IN_PROGRESS': return 'text-blue-800 bg-blue-200 border border-blue-300 font-bold';
+      case 'COMPLETED': return 'text-gray-800 bg-gray-200 border border-gray-300 font-bold';
+      default: return 'text-gray-600 bg-gray-100';
+    }
+  };
+
+  const getUrgencyLevelStyle = (urgencyLevel: string) => {
+    switch (urgencyLevel) {
+      case 'Routine':
+        return 'text-black bg-transparent';
+      case 'Urgent':
+        return 'text-black bg-orange-200';
+      case 'Emergent':
+        return 'text-black bg-red-200';
+      default:
+        return 'text-black bg-transparent';
+    }
   };
 
   const handleSettingsChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -362,29 +458,6 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
     }
   };
 
-  const getUrgencyLevelStyle = (urgencyLevel: string) => {
-    switch (urgencyLevel) {
-      case 'Routine':
-        return 'text-black bg-transparent';
-      case 'Urgent':
-        return 'text-black bg-orange-200';
-      case 'Emergent':
-        return 'text-black bg-red-200';
-      default:
-        return 'text-black bg-transparent';
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'ACCEPTED': return 'text-green-600 bg-green-100';
-      case 'EN_ROUTE': return 'text-blue-600 bg-blue-100';
-      case 'PICKUP': return 'text-purple-600 bg-purple-100';
-      case 'COMPLETED': return 'text-gray-600 bg-gray-100';
-      default: return 'text-gray-600 bg-gray-100';
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -428,6 +501,7 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
             {[
               { id: 'available', name: 'Available Trips', icon: MapPin },
               { id: 'accepted', name: 'My Trips', icon: CheckCircle },
+              { id: 'completed', name: 'Completed Trips', icon: Archive },
               { id: 'units', name: 'Units', icon: Settings },
               { id: 'revenue-settings', name: 'Agency Settings', icon: DollarSign }
             ].map((tab) => {
@@ -605,6 +679,80 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
           </div>
         )}
 
+        {activeTab === 'completed' && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-gray-900">Completed Trips</h2>
+              <button
+                onClick={exportCompletedTripsToCSV}
+                className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 text-sm font-medium"
+              >
+                Export CSV
+              </button>
+            </div>
+            
+            <div className="bg-white rounded-lg shadow">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h3 className="text-lg font-medium text-gray-900">
+                  Completed Transport Requests ({completedTrips.length})
+                </h3>
+              </div>
+              <div className="p-6">
+                {completedTrips.length > 0 ? (
+                  <div className="space-y-4">
+                    {completedTrips.map((trip) => (
+                      <div key={trip.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-4">
+                              <div>
+                                <h4 className="text-lg font-medium text-gray-900">Patient {trip.patientId}</h4>
+                                <p className="text-sm text-gray-500">
+                                  {trip.origin} → {trip.destination}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="mt-2 flex items-center space-x-6 text-sm text-gray-500">
+                              <div>
+                                <span className="font-medium">Transport Level:</span> {trip.transportLevel}
+                              </div>
+                              <div>
+                                <span className="font-medium">Priority:</span> {trip.urgencyLevel}
+                              </div>
+                              <div>
+                                <span className="font-medium">Request Time:</span> {trip.requestTime}
+                              </div>
+                              <div>
+                                <span className="font-medium">Completion Time:</span> {trip.completionTime || 'N/A'}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="ml-4 flex items-center space-x-2">
+                            <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${getStatusColor(trip.status)}`}>
+                              {trip.status}
+                            </span>
+                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getUrgencyLevelStyle(trip.urgencyLevel || 'Routine')}`}>
+                              {trip.urgencyLevel || 'Routine'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <Archive className="mx-auto h-12 w-12 text-gray-400" />
+                    <h3 className="mt-2 text-sm font-medium text-gray-900">No completed trips</h3>
+                    <p className="mt-1 text-sm text-gray-500">
+                      Completed trips will appear here once they are finished.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Analytics tab removed - moved to TCC Admin dashboard */}
 
         {activeTab === 'revenue-settings' && (
@@ -612,10 +760,7 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
         )}
 
         {activeTab === 'units' && (
-          <>
-            {console.log('🔍 EMSDashboard: Rendering UnitsManagement component, activeTab:', activeTab)}
-            <UnitsManagement user={user} />
-          </>
+          <UnitsManagement user={user} />
         )}
 
         {/* Settings tab removed - moved to TCC Admin dashboard */}

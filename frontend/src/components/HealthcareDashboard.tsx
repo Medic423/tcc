@@ -30,6 +30,7 @@ interface HealthcareDashboardProps {
 
 const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogout }) => {
   const [activeTab, setActiveTab] = useState('create');
+  const [completedTrips, setCompletedTrips] = useState<any[]>([]);
   const [agencyResponses, setAgencyResponses] = useState<any[]>([]);
   const [selectedTrip, setSelectedTrip] = useState<any>(null);
   const [loadingResponses, setLoadingResponses] = useState(false);
@@ -133,9 +134,17 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
             status: trip.status,
             requestTime: new Date(trip.createdAt).toLocaleString(),
             priority: trip.priority,
-            urgencyLevel: trip.urgencyLevel
+            urgencyLevel: trip.urgencyLevel,
+            completionTime: trip.completionTimestamp ? new Date(trip.completionTimestamp).toLocaleString() : null
           }));
-          setTrips(transformedTrips);
+          
+          // Filter out completed trips from main list
+          const activeTrips = transformedTrips.filter(trip => trip.status !== 'COMPLETED');
+          setTrips(activeTrips);
+          
+          // Set completed trips for the completed tab
+          const completed = transformedTrips.filter(trip => trip.status === 'COMPLETED');
+          setCompletedTrips(completed);
         }
       }
     } catch (error) {
@@ -224,6 +233,49 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     onLogout();
+  };
+
+  const exportCompletedTripsToCSV = () => {
+    if (completedTrips.length === 0) {
+      alert('No completed trips to export');
+      return;
+    }
+
+    const csvHeaders = [
+      'Patient ID',
+      'Origin Facility',
+      'Destination Facility',
+      'Transport Level',
+      'Urgency Level',
+      'Request Time',
+      'Completion Time',
+      'Status'
+    ];
+
+    const csvData = completedTrips.map(trip => [
+      trip.patientId,
+      trip.origin,
+      trip.destination,
+      trip.transportLevel,
+      trip.urgencyLevel,
+      trip.requestTime,
+      trip.completionTime || 'N/A',
+      trip.status
+    ]);
+
+    const csvContent = [csvHeaders, ...csvData]
+      .map(row => row.map(field => `"${field}"`).join(','))
+      .join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `completed-trips-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   // Agency Response Management Functions
@@ -348,6 +400,7 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
           <nav className="flex space-x-8">
             {[
               { id: 'trips', name: 'Transport Requests', icon: Clock },
+              { id: 'completed', name: 'Completed Trips', icon: CheckCircle },
               { id: 'responses', name: 'Agency Responses', icon: Bell },
               { id: 'create', name: 'Create Request', icon: Plus },
               { id: 'hospital-settings', name: 'Hospital Settings', icon: Building2 }
@@ -525,6 +578,80 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                 setActiveTab('trips');
               }}
             />
+          </div>
+        )}
+
+        {activeTab === 'completed' && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-gray-900">Completed Trips</h2>
+              <button
+                onClick={exportCompletedTripsToCSV}
+                className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 text-sm font-medium"
+              >
+                Export CSV
+              </button>
+            </div>
+            
+            <div className="bg-white rounded-lg shadow">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h3 className="text-lg font-medium text-gray-900">
+                  Completed Transport Requests ({completedTrips.length})
+                </h3>
+              </div>
+              <div className="p-6">
+                {completedTrips.length > 0 ? (
+                  <div className="space-y-4">
+                    {completedTrips.map((trip) => (
+                      <div key={trip.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-4">
+                              <div>
+                                <h4 className="text-lg font-medium text-gray-900">Patient {trip.patientId}</h4>
+                                <p className="text-sm text-gray-500">
+                                  {trip.origin} → {trip.destination}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="mt-2 flex items-center space-x-6 text-sm text-gray-500">
+                              <div>
+                                <span className="font-medium">Transport Level:</span> {trip.transportLevel}
+                              </div>
+                              <div>
+                                <span className="font-medium">Priority:</span> {trip.urgencyLevel}
+                              </div>
+                              <div>
+                                <span className="font-medium">Request Time:</span> {trip.requestTime}
+                              </div>
+                              <div>
+                                <span className="font-medium">Completion Time:</span> {trip.completionTime || 'N/A'}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="ml-4 flex items-center space-x-2">
+                            <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${getStatusColor(trip.status)}`}>
+                              {trip.status}
+                            </span>
+                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getUrgencyLevelStyle(trip.urgencyLevel || 'Routine')}`}>
+                              {trip.urgencyLevel || 'Routine'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <CheckCircle className="mx-auto h-12 w-12 text-gray-400" />
+                    <h3 className="mt-2 text-sm font-medium text-gray-900">No completed trips</h3>
+                    <p className="mt-1 text-sm text-gray-500">
+                      Completed trips will appear here once they are finished.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
 
