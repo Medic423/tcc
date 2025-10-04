@@ -21,6 +21,7 @@ import HealthcarePortal from './HealthcarePortal';
 import EMSDashboard from './EMSDashboard';
 import NotificationSettings from './NotificationSettings';
 import UserManagement from './UserManagement';
+import FinancialDashboard from './FinancialDashboard';
 import TCCUnitsManagement from './TCCUnitsManagement';
 import TCCRouteOptimizer from './TCCRouteOptimizer';
 import Analytics from './Analytics';
@@ -233,7 +234,7 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
                 <Route path="/ems-dashboard" element={<EMSDashboard user={user} onLogout={onLogout} />} />
                 <Route path="/notifications" element={<NotificationSettings />} />
                 <Route path="/settings" element={<UserManagement />} />
-                <Route path="/financial" element={<div className="text-center py-12"><h3 className="text-lg font-medium text-gray-900">Financial</h3><p className="text-gray-500">Financial reports and billing (Admin only)</p></div>} />
+                <Route path="/financial" element={<FinancialDashboard />} />
                 <Route path="/my-trips" element={<div className="text-center py-12"><h3 className="text-lg font-medium text-gray-900">My Trips</h3><p className="text-gray-500">Coming soon...</p></div>} />
                 <Route path="/my-assignments" element={<div className="text-center py-12"><h3 className="text-lg font-medium text-gray-900">My Assignments</h3><p className="text-gray-500">Coming soon...</p></div>} />
               </Routes>

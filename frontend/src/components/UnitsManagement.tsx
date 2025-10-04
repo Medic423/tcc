@@ -16,6 +16,7 @@ import {
   Eye,
   MoreVertical
 } from 'lucide-react';
+import api from '../services/api';
 import {
   Unit,
   UnitFormData,
@@ -89,7 +90,6 @@ const UnitsManagement: React.FC<UnitsManagementProps> = ({ user }) => {
   // Fetch analytics
   const fetchAnalytics = async () => {
     try {
-      const api = (await import('../services/api')).default;
       const response = await api.get('/api/units/analytics', { headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' } });
       const data = response.data;
       if (data.success) {
