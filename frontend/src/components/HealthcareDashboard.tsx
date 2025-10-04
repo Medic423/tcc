@@ -31,51 +31,9 @@ interface HealthcareDashboardProps {
 const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogout }) => {
   const [activeTab, setActiveTab] = useState('create');
   const [completedTrips, setCompletedTrips] = useState<any[]>([]);
-  const [agencyResponses, setAgencyResponses] = useState<any[]>([]);
-  const [selectedTrip, setSelectedTrip] = useState<any>(null);
-  const [loadingResponses, setLoadingResponses] = useState(false);
-  const [trips, setTrips] = useState([
-    {
-      id: '1',
-      patientId: 'P001',
-      destination: 'General Hospital',
-      transportLevel: 'BLS',
-      status: 'PENDING',
-      requestTime: '2025-09-07 10:30 AM',
-      priority: 'MEDIUM',
-      urgencyLevel: 'Urgent'
-    },
-    {
-      id: '2',
-      patientId: 'P002',
-      destination: 'Rehabilitation Center',
-      transportLevel: 'ALS',
-      status: 'ACCEPTED',
-      requestTime: '2025-09-07 09:15 AM',
-      priority: 'HIGH',
-      urgencyLevel: 'Emergent'
-    },
-    {
-      id: '3',
-      patientId: 'P003',
-      destination: 'Emergency Room',
-      transportLevel: 'CCT',
-      status: 'IN_PROGRESS',
-      requestTime: '2025-09-07 08:45 AM',
-      priority: 'HIGH',
-      urgencyLevel: 'Emergent'
-    },
-    {
-      id: '4',
-      patientId: 'P004',
-      destination: 'Outpatient Clinic',
-      transportLevel: 'BLS',
-      status: 'COMPLETED',
-      requestTime: '2025-09-07 07:30 AM',
-      priority: 'LOW',
-      urgencyLevel: 'Routine'
-    }
-  ]);
+  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [trips, setTrips] = useState<any[]>([]);
+  const [filteredTrips, setFilteredTrips] = useState<any[]>([]);
   const [editingTrip, setEditingTrip] = useState<any>(null);
   const [editFormData, setEditFormData] = useState<any>({});
   const [updating, setUpdating] = useState(false);
@@ -92,12 +50,15 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
     return () => clearInterval(interval);
   }, []);
 
-  // Load agency responses when responses tab is active
+  // Apply status filter when trips or filter changes
   useEffect(() => {
-    if (activeTab === 'responses') {
-      loadAgencyResponses();
+    if (statusFilter === 'ALL') {
+      setFilteredTrips(trips);
+    } else {
+      const filtered = trips.filter(trip => trip.status === statusFilter);
+      setFilteredTrips(filtered);
     }
-  }, [activeTab]);
+  }, [trips, statusFilter]);
 
   // Function to get urgency level styling
   const getUrgencyLevelStyle = (urgencyLevel: string) => {
@@ -141,6 +102,7 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
           // Filter out completed trips from main list
           const activeTrips = transformedTrips.filter(trip => trip.status !== 'COMPLETED');
           setTrips(activeTrips);
+          setFilteredTrips(activeTrips); // Initialize filtered trips
           
           // Set completed trips for the completed tab
           const completed = transformedTrips.filter(trip => trip.status === 'COMPLETED');
@@ -278,62 +240,7 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
     document.body.removeChild(link);
   };
 
-  // Agency Response Management Functions
-  const loadAgencyResponses = async (tripId?: string) => {
-    setLoadingResponses(true);
-    try {
-      const url = tripId ? `/api/agency-responses?tripId=${tripId}` : '/api/agency-responses';
-      const response = await fetch(url, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.data) {
-          setAgencyResponses(data.data);
-        }
-      }
-    } catch (error) {
-      console.error('Error loading agency responses:', error);
-    } finally {
-      setLoadingResponses(false);
-    }
-  };
 
-  const handleSelectAgency = async (tripId: string, agencyResponseId: string, reason?: string) => {
-    try {
-      const response = await fetch(`/api/agency-responses/select/${tripId}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          agencyResponseId: agencyResponseId,
-          selectionNotes: reason || 'Selected by healthcare provider'
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to select agency');
-      }
-
-      // Reload responses and trips
-      await loadAgencyResponses(tripId);
-      await loadTrips();
-    } catch (error: any) {
-      console.error('Error selecting agency:', error);
-      alert(error.message || 'Failed to select agency');
-    }
-  };
-
-  const handleViewResponses = async (trip: any) => {
-    setSelectedTrip(trip);
-    await loadAgencyResponses(trip.id);
-  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -401,7 +308,6 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
             {[
               { id: 'trips', name: 'Transport Requests', icon: Clock },
               { id: 'completed', name: 'Completed Trips', icon: CheckCircle },
-              { id: 'responses', name: 'Agency Responses', icon: Bell },
               { id: 'create', name: 'Create Request', icon: Plus },
               { id: 'hospital-settings', name: 'Hospital Settings', icon: Building2 }
             ].map((tab) => {
@@ -501,12 +407,32 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
             {/* Transport Requests List */}
             <div className="bg-white rounded-lg shadow">
               <div className="px-6 py-4 border-b border-gray-200">
-                <h3 className="text-lg font-medium text-gray-900">Transport Requests</h3>
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-medium text-gray-900">Transport Requests</h3>
+                  <div className="flex items-center space-x-4">
+                    <label htmlFor="status-filter" className="text-sm font-medium text-gray-700">
+                      Filter by status:
+                    </label>
+                    <select
+                      id="status-filter"
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value)}
+                      className="block w-40 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    >
+                      <option value="ALL">All Status</option>
+                      <option value="PENDING">Pending</option>
+                      <option value="ACCEPTED">Accepted</option>
+                      <option value="DECLINED">Declined</option>
+                      <option value="IN_PROGRESS">In Progress</option>
+                      <option value="CANCELLED">Cancelled</option>
+                    </select>
+                  </div>
+                </div>
               </div>
               <div className="p-6">
-              {trips.length > 0 ? (
+              {filteredTrips.length > 0 ? (
                 <div className="space-y-4">
-                  {trips.map((trip) => (
+                  {filteredTrips.map((trip) => (
                     <div key={trip.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                       <div className="flex items-center space-x-4">
                         <div>
@@ -555,8 +481,17 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8">
-                  <p className="text-gray-500">No transport requests found</p>
+                <div className="text-center py-12">
+                  <Clock className="mx-auto h-12 w-12 text-gray-400" />
+                  <h3 className="mt-2 text-sm font-medium text-gray-900">
+                    {statusFilter === 'ALL' ? 'No transport requests' : `No ${statusFilter.toLowerCase()} requests`}
+                  </h3>
+                  <p className="mt-1 text-sm text-gray-500">
+                    {statusFilter === 'ALL' 
+                      ? 'Create your first transport request to get started.'
+                      : 'Try selecting a different status filter or create a new request.'
+                    }
+                  </p>
                 </div>
               )}
               </div>
@@ -655,7 +590,7 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
           </div>
         )}
 
-        {activeTab === 'responses' && (
+        {false && activeTab === 'responses' && (
           <div className="space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold text-gray-900">Agency Responses</h2>
