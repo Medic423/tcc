@@ -425,6 +425,56 @@ class UnitService {
   }
 
   /**
+   * Update unit duty status (on/off duty)
+   */
+  async updateUnitDutyStatus(unitId: string, isActive: boolean): Promise<Unit> {
+    try {
+      console.log('TCC_DEBUG: updateUnitDutyStatus called with unitId:', unitId, 'isActive:', isActive);
+      
+      const prisma = databaseManager.getEMSDB();
+      
+      // Update the unit's isActive status
+      const updatedUnit = await prisma.unit.update({
+        where: {
+          id: unitId
+        },
+        data: {
+          isActive: isActive
+        },
+        include: {
+          analytics: true,
+          agency: true
+        }
+      });
+
+      // Transform to our Unit interface
+      const transformedUnit: Unit = {
+        id: updatedUnit.id,
+        agencyId: updatedUnit.agencyId,
+        unitNumber: updatedUnit.unitNumber,
+        type: updatedUnit.type as any,
+        capabilities: updatedUnit.capabilities,
+        currentStatus: updatedUnit.status as any,
+        currentLocation: updatedUnit.location ? JSON.stringify(updatedUnit.location) : 'Station 1',
+        crew: [],
+        isActive: updatedUnit.isActive,
+        totalTripsCompleted: updatedUnit.analytics?.totalTripsCompleted || 0,
+        averageResponseTime: updatedUnit.analytics?.averageResponseTime?.toNumber() || 0,
+        lastMaintenanceDate: updatedUnit.lastMaintenance || new Date(),
+        nextMaintenanceDate: updatedUnit.nextMaintenance || new Date(),
+        createdAt: updatedUnit.createdAt,
+        updatedAt: updatedUnit.updatedAt
+      };
+
+      console.log('TCC_DEBUG: Unit duty status updated successfully:', transformedUnit);
+      return transformedUnit;
+    } catch (error) {
+      console.error('Error updating unit duty status:', error);
+      throw new Error('Failed to update unit duty status');
+    }
+  }
+
+  /**
    * Map Prisma unit to Unit interface
    */
   private mapPrismaUnitToUnit(unit: any): Unit {
