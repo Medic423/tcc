@@ -640,9 +640,12 @@ router.post('/ems/login', async (req, res) => {
       });
     }
 
-    const emsDB = databaseManager.getEMSDB();
-    const user = await emsDB.eMSUser.findUnique({
-      where: { email }
+    const centerDB = databaseManager.getCenterDB();
+    const user = await centerDB.centerUser.findFirst({
+      where: { 
+        email,
+        userType: 'EMS'
+      }
     });
 
     if (!user) {
@@ -668,10 +671,30 @@ router.post('/ems/login', async (req, res) => {
       });
     }
 
-    // For EMS users, use agencyId in the token instead of user.id
+    // For EMS users, we need to find their agency
+    const emsDB = databaseManager.getEMSDB();
+    let agency = await emsDB.eMSAgency.findFirst({
+      where: {
+        email: user.email
+      }
+    });
+    
+    if (!agency) {
+      // If no agency found by email, get the first available agency
+      agency = await emsDB.eMSAgency.findFirst();
+    }
+    
+    if (!agency) {
+      return res.status(500).json({
+        success: false,
+        error: 'No agency found for EMS user'
+      });
+    }
+    
+    // Use agencyId in the token for EMS users
     const token = jwt.sign(
       { 
-        id: user.agencyId, // Use agencyId for EMS users
+        id: agency.id, // Use agencyId for EMS users
         email: user.email, 
         userType: 'EMS' 
       },
@@ -695,7 +718,7 @@ router.post('/ems/login', async (req, res) => {
         email: user.email,
         name: user.name,
         userType: 'EMS',
-        agencyName: user.agencyName
+        agencyName: agency.name
       },
       token
     });

@@ -1,18 +1,16 @@
-import { PrismaClient as CenterPrismaClient } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 declare class DatabaseManager {
     private static instance;
     private prisma;
-    private emsPrisma;
-    private hospitalPrisma;
     private connectionRetries;
     private maxRetries;
     private retryDelay;
     private constructor();
     static getInstance(): DatabaseManager;
-    getPrismaClient(): CenterPrismaClient;
-    getCenterDB(): CenterPrismaClient;
-    getEMSDB(): any;
-    getHospitalDB(): any;
+    getPrismaClient(): PrismaClient;
+    getCenterDB(): PrismaClient;
+    getEMSDB(): PrismaClient;
+    getHospitalDB(): PrismaClient;
     healthCheck(): Promise<boolean>;
     private executeWithRetry;
     private delay;

@@ -42,6 +42,10 @@ declare class UnitService {
     private prisma;
     constructor();
     /**
+     * Get all units (for admin users)
+     */
+    getAllUnits(): Promise<Unit[]>;
+    /**
      * Get all units for an agency
      */
     getUnitsByAgency(agencyId: string): Promise<Unit[]>;

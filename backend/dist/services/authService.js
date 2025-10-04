@@ -124,7 +124,8 @@ class AuthService {
                     email: user.email,
                     name: user.name,
                     userType: 'EMS',
-                    agencyName: user.agencyName
+                    agencyName: user.agencyName,
+                    agencyId: user.agencyId
                 };
             }
             return {

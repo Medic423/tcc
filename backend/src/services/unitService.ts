@@ -1,4 +1,5 @@
 import { PrismaClient as EMSPrismaClient } from '@prisma/client';
+import { databaseManager } from './databaseManager';
 
 // Types for unit management
 export interface Unit {
@@ -53,52 +54,95 @@ class UnitService {
   }
 
   /**
+   * Get all units (for admin users)
+   */
+  async getAllUnits(): Promise<Unit[]> {
+    try {
+      console.log('TCC_DEBUG: getAllUnits called');
+      
+      const prisma = databaseManager.getEMSDB();
+      const units = await prisma.unit.findMany({
+        where: {
+          isActive: true
+        },
+        include: {
+          analytics: true,
+          agency: true
+        },
+        orderBy: {
+          unitNumber: 'asc'
+        }
+      });
+
+      // Transform Prisma units to our Unit interface
+      const transformedUnits: Unit[] = units.map((unit: any) => ({
+        id: unit.id,
+        agencyId: unit.agencyId,
+        unitNumber: unit.unitNumber,
+        type: unit.type as any,
+        capabilities: unit.capabilities,
+        currentStatus: unit.status as any,
+        currentLocation: unit.location ? JSON.stringify(unit.location) : 'Unknown',
+        crew: [], // Will be populated from separate crew management
+        isActive: unit.isActive,
+        totalTripsCompleted: unit.analytics?.totalTrips || 0,
+        averageResponseTime: unit.analytics?.averageResponseTime?.toNumber() || 0,
+        lastMaintenanceDate: unit.lastMaintenance || new Date(),
+        nextMaintenanceDate: unit.nextMaintenance || new Date(),
+        createdAt: unit.createdAt,
+        updatedAt: unit.updatedAt
+      }));
+
+      console.log('TCC_DEBUG: Found all units:', transformedUnits.length);
+      return transformedUnits;
+    } catch (error) {
+      console.error('Error getting all units:', error);
+      throw new Error('Failed to retrieve units');
+    }
+  }
+
+  /**
    * Get all units for an agency
    */
   async getUnitsByAgency(agencyId: string): Promise<Unit[]> {
     try {
-      // TODO: Implement proper Unit model in Prisma schema
-      // For now, return mock data to get the system working
       console.log('TCC_DEBUG: getUnitsByAgency called with agencyId:', agencyId);
       
-      const mockUnits: Unit[] = [
-        {
-          id: '1',
+      const prisma = databaseManager.getEMSDB();
+      const units = await prisma.unit.findMany({
+        where: {
           agencyId: agencyId,
-          unitNumber: 'U001',
-          type: 'AMBULANCE',
-          capabilities: ['BLS'],
-          currentStatus: 'AVAILABLE',
-          currentLocation: 'Station 1',
-          crew: ['John Doe', 'Jane Smith'],
-          isActive: true,
-          totalTripsCompleted: 0,
-          averageResponseTime: 0,
-          lastMaintenanceDate: new Date(),
-          nextMaintenanceDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-          createdAt: new Date(),
-          updatedAt: new Date()
+          isActive: true
         },
-        {
-          id: '2',
-          agencyId: agencyId,
-          unitNumber: 'U002',
-          type: 'AMBULANCE',
-          capabilities: ['ALS'],
-          currentStatus: 'ON_CALL',
-          currentLocation: 'En Route',
-          crew: ['Bob Johnson', 'Alice Brown'],
-          isActive: true,
-          totalTripsCompleted: 0,
-          averageResponseTime: 0,
-          lastMaintenanceDate: new Date(),
-          nextMaintenanceDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-          createdAt: new Date(),
-          updatedAt: new Date()
+        include: {
+          analytics: true
+        },
+        orderBy: {
+          unitNumber: 'asc'
         }
-      ];
+      });
 
-      return mockUnits;
+      // Transform Prisma units to our Unit interface
+      const transformedUnits: Unit[] = units.map((unit: any) => ({
+        id: unit.id,
+        agencyId: unit.agencyId,
+        unitNumber: unit.unitNumber,
+        type: unit.type as any,
+        capabilities: unit.capabilities,
+        currentStatus: unit.status as any,
+        currentLocation: unit.location ? JSON.stringify(unit.location) : 'Unknown',
+        crew: [], // Will be populated from separate crew management
+        isActive: unit.isActive,
+        totalTripsCompleted: unit.analytics?.totalTrips || 0,
+        averageResponseTime: unit.analytics?.averageResponseTime?.toNumber() || 0,
+        lastMaintenanceDate: unit.lastMaintenance || new Date(),
+        nextMaintenanceDate: unit.nextMaintenance || new Date(),
+        createdAt: unit.createdAt,
+        updatedAt: unit.updatedAt
+      }));
+
+      console.log('TCC_DEBUG: Found units:', transformedUnits.length);
+      return transformedUnits;
     } catch (error) {
       console.error('Error getting units by agency:', error);
       throw new Error('Failed to retrieve units');
@@ -144,28 +188,62 @@ class UnitService {
    */
   async createUnit(unitData: UnitFormData, agencyId: string): Promise<Unit> {
     try {
-      // TODO: Implement proper Unit model in Prisma schema
       console.log('TCC_DEBUG: createUnit called with data:', unitData);
       
-      const mockUnit: Unit = {
-        id: 'new-unit-id',
-        agencyId: agencyId,
-        unitNumber: unitData.unitNumber,
-        type: unitData.type,
-        capabilities: unitData.capabilities,
-        currentStatus: 'AVAILABLE',
-        currentLocation: 'Station 1',
+      const prisma = databaseManager.getEMSDB();
+      
+      // Create the unit in the database
+      const newUnit = await prisma.unit.create({
+        data: {
+          agencyId: agencyId,
+          unitNumber: unitData.unitNumber,
+          type: unitData.type,
+          capabilities: unitData.capabilities,
+          status: 'AVAILABLE',
+          crewSize: 2, // Default crew size
+          equipment: [], // Default empty equipment array
+          isActive: unitData.isActive,
+          lastMaintenance: new Date(),
+          nextMaintenance: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days from now
+        },
+        include: {
+          analytics: true
+        }
+      });
+
+      // Create analytics record for the new unit
+      await prisma.unit_analytics.create({
+        data: {
+          id: `analytics-${newUnit.id}`,
+          unitId: newUnit.id,
+          totalTrips: 0,
+          averageResponseTime: 0,
+          performanceScore: 0,
+          efficiency: 0
+        }
+      });
+
+      // Transform to our Unit interface
+      const transformedUnit: Unit = {
+        id: newUnit.id,
+        agencyId: newUnit.agencyId,
+        unitNumber: newUnit.unitNumber,
+        type: newUnit.type as any,
+        capabilities: newUnit.capabilities,
+        currentStatus: newUnit.status as any,
+        currentLocation: newUnit.location ? JSON.stringify(newUnit.location) : 'Station 1',
         crew: [],
-        isActive: unitData.isActive,
+        isActive: newUnit.isActive,
         totalTripsCompleted: 0,
         averageResponseTime: 0,
-        lastMaintenanceDate: new Date(),
-        nextMaintenanceDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        createdAt: new Date(),
-        updatedAt: new Date()
+        lastMaintenanceDate: newUnit.lastMaintenance || new Date(),
+        nextMaintenanceDate: newUnit.nextMaintenance || new Date(),
+        createdAt: newUnit.createdAt,
+        updatedAt: newUnit.updatedAt
       };
 
-      return mockUnit;
+      console.log('TCC_DEBUG: Unit created successfully:', transformedUnit);
+      return transformedUnit;
     } catch (error) {
       console.error('Error creating unit:', error);
       throw new Error('Failed to create unit');

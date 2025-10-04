@@ -1,0 +1,250 @@
+
+> tcc-backend@1.0.0 dev
+> nodemon src/index.ts
+
+[33m[nodemon] 3.1.10[39m
+[33m[nodemon] to restart at any time, enter `rs`[39m
+[33m[nodemon] watching path(s): *.*[39m
+[33m[nodemon] watching extensions: ts,json[39m
+[32m[nodemon] starting `ts-node src/index.ts`[39m
+TCC_DEBUG: AuthService constructor - JWT_SECRET loaded: YES
+TCC_DEBUG: JWT_SECRET value: your-super-secret-jwt-key-here
+TCC_DEBUG: SMS carriers initialized: 5
+TCC_DEBUG: Twilio credentials not configured
+TCC_DEBUG: SendGrid API key not configured
+Error: listen EADDRINUSE: address already in use :::5001
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at app.listen (/Users/scooper/Code/tcc-new-project/backend/node_modules/express/lib/application.js:635:24)
+    at startServer (/Users/scooper/Code/tcc-new-project/backend/src/index.ts:292:9)
+    at Object.<anonymous> (/Users/scooper/Code/tcc-new-project/backend/src/index.ts:309:1)
+    at Module._compile (node:internal/modules/cjs/loader:1692:14)
+    at Module.m._compile (/Users/scooper/Code/tcc-new-project/backend/node_modules/ts-node/src/index.ts:1618:23)
+    at node:internal/modules/cjs/loader:1824:10
+    at Object.require.extensions.<computed> [as .ts] (/Users/scooper/Code/tcc-new-project/backend/node_modules/ts-node/src/index.ts:1621:12) {
+  code: 'EADDRINUSE',
+  errno: -48,
+  syscall: 'listen',
+  address: '::',
+  port: 5001
+}
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts`[39m
+/Users/scooper/Code/tcc-new-project/backend/node_modules/ts-node/src/index.ts:859
+    return new TSError(diagnosticText, diagnosticCodes, diagnostics);
+           ^
+TSError: ⨯ Unable to compile TypeScript:
+src/services/databaseManager.ts(5,19): error TS2552: Cannot find name 'CenterPrismaClient'. Did you mean 'PrismaClient'?
+src/services/databaseManager.ts(6,22): error TS2552: Cannot find name 'EMSPrismaClient'. Did you mean 'PrismaClient'?
+src/services/databaseManager.ts(7,27): error TS2304: Cannot find name 'HospitalPrismaClient'.
+src/services/databaseManager.ts(13,23): error TS2552: Cannot find name 'CenterPrismaClient'. Did you mean 'PrismaClient'?
+src/services/databaseManager.ts(24,26): error TS2552: Cannot find name 'EMSPrismaClient'. Did you mean 'PrismaClient'?
+src/services/databaseManager.ts(34,31): error TS2304: Cannot find name 'HospitalPrismaClient'.
+src/services/databaseManager.ts(53,29): error TS2552: Cannot find name 'CenterPrismaClient'. Did you mean 'PrismaClient'?
+src/services/databaseManager.ts(58,25): error TS2552: Cannot find name 'CenterPrismaClient'. Did you mean 'PrismaClient'?
+
+    at createTSError (/Users/scooper/Code/tcc-new-project/backend/node_modules/ts-node/src/index.ts:859:12)
+    at reportTSError (/Users/scooper/Code/tcc-new-project/backend/node_modules/ts-node/src/index.ts:863:19)
+    at getOutput (/Users/scooper/Code/tcc-new-project/backend/node_modules/ts-node/src/index.ts:1077:36)
+    at Object.compile (/Users/scooper/Code/tcc-new-project/backend/node_modules/ts-node/src/index.ts:1433:41)
+    at Module.m._compile (/Users/scooper/Code/tcc-new-project/backend/node_modules/ts-node/src/index.ts:1617:30)
+    at node:internal/modules/cjs/loader:1824:10
+    at Object.require.extensions.<computed> [as .ts] (/Users/scooper/Code/tcc-new-project/backend/node_modules/ts-node/src/index.ts:1621:12)
+    at Module.load (node:internal/modules/cjs/loader:1427:32)
+    at Module._load (node:internal/modules/cjs/loader:1250:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14) {
+  diagnosticCodes: [
+    2552, 2552, 2304,
+    2552, 2552, 2304,
+    2552, 2552
+  ]
+}
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts`[39m
+/Users/scooper/Code/tcc-new-project/backend/node_modules/ts-node/src/index.ts:859
+    return new TSError(diagnosticText, diagnosticCodes, diagnostics);
+           ^
+TSError: ⨯ Unable to compile TypeScript:
+src/services/databaseManager.ts(30,29): error TS2552: Cannot find name 'CenterPrismaClient'. Did you mean 'PrismaClient'?
+src/services/databaseManager.ts(35,25): error TS2552: Cannot find name 'CenterPrismaClient'. Did you mean 'PrismaClient'?
+src/services/databaseManager.ts(40,17): error TS2551: Property 'emsPrisma' does not exist on type 'DatabaseManager'. Did you mean 'prisma'?
+src/services/databaseManager.ts(44,17): error TS2339: Property 'hospitalPrisma' does not exist on type 'DatabaseManager'.
+
+    at createTSError (/Users/scooper/Code/tcc-new-project/backend/node_modules/ts-node/src/index.ts:859:12)
+    at reportTSError (/Users/scooper/Code/tcc-new-project/backend/node_modules/ts-node/src/index.ts:863:19)
+    at getOutput (/Users/scooper/Code/tcc-new-project/backend/node_modules/ts-node/src/index.ts:1077:36)
+    at Object.compile (/Users/scooper/Code/tcc-new-project/backend/node_modules/ts-node/src/index.ts:1433:41)
+    at Module.m._compile (/Users/scooper/Code/tcc-new-project/backend/node_modules/ts-node/src/index.ts:1617:30)
+    at node:internal/modules/cjs/loader:1824:10
+    at Object.require.extensions.<computed> [as .ts] (/Users/scooper/Code/tcc-new-project/backend/node_modules/ts-node/src/index.ts:1621:12)
+    at Module.load (node:internal/modules/cjs/loader:1427:32)
+    at Module._load (node:internal/modules/cjs/loader:1250:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14) {
+  diagnosticCodes: [ 2552, 2552, 2551, 2339 ]
+}
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts`[39m
+/Users/scooper/Code/tcc-new-project/backend/node_modules/ts-node/src/index.ts:859
+    return new TSError(diagnosticText, diagnosticCodes, diagnostics);
+           ^
+TSError: ⨯ Unable to compile TypeScript:
+src/index.ts(103,45): error TS2339: Property 'dropdownOption' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.
+src/index.ts(131,44): error TS2339: Property 'facility' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.
+
+    at createTSError (/Users/scooper/Code/tcc-new-project/backend/node_modules/ts-node/src/index.ts:859:12)
+    at reportTSError (/Users/scooper/Code/tcc-new-project/backend/node_modules/ts-node/src/index.ts:863:19)
+    at getOutput (/Users/scooper/Code/tcc-new-project/backend/node_modules/ts-node/src/index.ts:1077:36)
+    at Object.compile (/Users/scooper/Code/tcc-new-project/backend/node_modules/ts-node/src/index.ts:1433:41)
+    at Module.m._compile (/Users/scooper/Code/tcc-new-project/backend/node_modules/ts-node/src/index.ts:1617:30)
+    at node:internal/modules/cjs/loader:1824:10
+    at Object.require.extensions.<computed> [as .ts] (/Users/scooper/Code/tcc-new-project/backend/node_modules/ts-node/src/index.ts:1621:12)
+    at Module.load (node:internal/modules/cjs/loader:1427:32)
+    at Module._load (node:internal/modules/cjs/loader:1250:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14) {
+  diagnosticCodes: [ 2339, 2339 ]
+}
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts`[39m
+/Users/scooper/Code/tcc-new-project/backend/node_modules/ts-node/src/index.ts:859
+    return new TSError(diagnosticText, diagnosticCodes, diagnostics);
+           ^
+TSError: ⨯ Unable to compile TypeScript:
+src/index.ts(103,45): error TS2339: Property 'dropdownOption' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.
+src/index.ts(131,44): error TS2339: Property 'facility' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.
+
+    at createTSError (/Users/scooper/Code/tcc-new-project/backend/node_modules/ts-node/src/index.ts:859:12)
+    at reportTSError (/Users/scooper/Code/tcc-new-project/backend/node_modules/ts-node/src/index.ts:863:19)
+    at getOutput (/Users/scooper/Code/tcc-new-project/backend/node_modules/ts-node/src/index.ts:1077:36)
+    at Object.compile (/Users/scooper/Code/tcc-new-project/backend/node_modules/ts-node/src/index.ts:1433:41)
+    at Module.m._compile (/Users/scooper/Code/tcc-new-project/backend/node_modules/ts-node/src/index.ts:1617:30)
+    at node:internal/modules/cjs/loader:1824:10
+    at Object.require.extensions.<computed> [as .ts] (/Users/scooper/Code/tcc-new-project/backend/node_modules/ts-node/src/index.ts:1621:12)
+    at Module.load (node:internal/modules/cjs/loader:1427:32)
+    at Module._load (node:internal/modules/cjs/loader:1250:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14) {
+  diagnosticCodes: [ 2339, 2339 ]
+}
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts`[39m
+/Users/scooper/Code/tcc-new-project/backend/node_modules/ts-node/src/index.ts:859
+    return new TSError(diagnosticText, diagnosticCodes, diagnostics);
+           ^
+TSError: ⨯ Unable to compile TypeScript:
+src/services/databaseManager.ts(55,29): error TS2552: Cannot find name 'PrismaClient'. Did you mean 'EMSPrismaClient'?
+src/services/databaseManager.ts(60,25): error TS2552: Cannot find name 'PrismaClient'. Did you mean 'EMSPrismaClient'?
+src/services/databaseManager.ts(64,22): error TS2552: Cannot find name 'PrismaClient'. Did you mean 'EMSPrismaClient'?
+src/services/databaseManager.ts(68,27): error TS2552: Cannot find name 'PrismaClient'. Did you mean 'EMSPrismaClient'?
+
+    at createTSError (/Users/scooper/Code/tcc-new-project/backend/node_modules/ts-node/src/index.ts:859:12)
+    at reportTSError (/Users/scooper/Code/tcc-new-project/backend/node_modules/ts-node/src/index.ts:863:19)
+    at getOutput (/Users/scooper/Code/tcc-new-project/backend/node_modules/ts-node/src/index.ts:1077:36)
+    at Object.compile (/Users/scooper/Code/tcc-new-project/backend/node_modules/ts-node/src/index.ts:1433:41)
+    at Module.m._compile (/Users/scooper/Code/tcc-new-project/backend/node_modules/ts-node/src/index.ts:1617:30)
+    at node:internal/modules/cjs/loader:1824:10
+    at Object.require.extensions.<computed> [as .ts] (/Users/scooper/Code/tcc-new-project/backend/node_modules/ts-node/src/index.ts:1621:12)
+    at Module.load (node:internal/modules/cjs/loader:1427:32)
+    at Module._load (node:internal/modules/cjs/loader:1250:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14) {
+  diagnosticCodes: [ 2552, 2552, 2552, 2552 ]
+}
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts`[39m
+TCC_DEBUG: AuthService constructor - JWT_SECRET loaded: YES
+TCC_DEBUG: JWT_SECRET value: your-super-secret-jwt-key-here
+TCC_DEBUG: SMS carriers initialized: 5
+TCC_DEBUG: Twilio credentials not configured
+TCC_DEBUG: SendGrid API key not configured
+Error: listen EADDRINUSE: address already in use :::5001
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at app.listen (/Users/scooper/Code/tcc-new-project/backend/node_modules/express/lib/application.js:635:24)
+    at startServer (/Users/scooper/Code/tcc-new-project/backend/src/index.ts:292:9)
+    at Object.<anonymous> (/Users/scooper/Code/tcc-new-project/backend/src/index.ts:309:1)
+    at Module._compile (node:internal/modules/cjs/loader:1692:14)
+    at Module.m._compile (/Users/scooper/Code/tcc-new-project/backend/node_modules/ts-node/src/index.ts:1618:23)
+    at node:internal/modules/cjs/loader:1824:10
+    at Object.require.extensions.<computed> [as .ts] (/Users/scooper/Code/tcc-new-project/backend/node_modules/ts-node/src/index.ts:1621:12) {
+  code: 'EADDRINUSE',
+  errno: -48,
+  syscall: 'listen',
+  address: '::',
+  port: 5001
+}
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts`[39m
+TCC_DEBUG: AuthService constructor - JWT_SECRET loaded: YES
+TCC_DEBUG: JWT_SECRET value: your-super-secret-jwt-key-here
+TCC_DEBUG: SMS carriers initialized: 5
+TCC_DEBUG: Twilio credentials not configured
+TCC_DEBUG: SendGrid API key not configured
+Error: listen EADDRINUSE: address already in use :::5001
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at app.listen (/Users/scooper/Code/tcc-new-project/backend/node_modules/express/lib/application.js:635:24)
+    at startServer (/Users/scooper/Code/tcc-new-project/backend/src/index.ts:292:9)
+    at Object.<anonymous> (/Users/scooper/Code/tcc-new-project/backend/src/index.ts:309:1)
+    at Module._compile (node:internal/modules/cjs/loader:1692:14)
+    at Module.m._compile (/Users/scooper/Code/tcc-new-project/backend/node_modules/ts-node/src/index.ts:1618:23)
+    at node:internal/modules/cjs/loader:1824:10
+    at Object.require.extensions.<computed> [as .ts] (/Users/scooper/Code/tcc-new-project/backend/node_modules/ts-node/src/index.ts:1621:12) {
+  code: 'EADDRINUSE',
+  errno: -48,
+  syscall: 'listen',
+  address: '::',
+  port: 5001
+}
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m

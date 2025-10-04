@@ -447,7 +447,38 @@ export declare class TripService {
      */
     getAvailableAgencies(): Promise<{
         success: boolean;
-        data: any;
+        data: {
+            email: string;
+            id: string;
+            name: string;
+            phone: string;
+            isActive: boolean;
+            createdAt: Date;
+            updatedAt: Date;
+            address: string;
+            city: string;
+            state: string;
+            zipCode: string;
+            latitude: number | null;
+            longitude: number | null;
+            capabilities: string[];
+            operatingHours: import("@prisma/client/runtime/library").JsonValue | null;
+            requiresReview: boolean;
+            approvedAt: Date | null;
+            approvedBy: string | null;
+            contactName: string;
+            serviceArea: string[];
+            pricingStructure: import("@prisma/client/runtime/library").JsonValue | null;
+            status: string;
+            addedBy: string | null;
+            addedAt: Date;
+            acceptsNotifications: boolean;
+            availableUnits: number;
+            lastUpdated: Date;
+            notificationMethods: string[];
+            serviceRadius: number | null;
+            totalUnits: number;
+        }[];
         error?: undefined;
     } | {
         success: boolean;
@@ -481,7 +512,19 @@ export declare class TripService {
      */
     getAgenciesForHospital(hospitalId: string, radiusMiles?: number): Promise<{
         success: boolean;
-        data: any;
+        data: {
+            email: string;
+            id: string;
+            name: string;
+            phone: string;
+            address: string;
+            city: string;
+            state: string;
+            zipCode: string;
+            capabilities: string[];
+            contactName: string;
+            serviceArea: string[];
+        }[];
         message: string;
     }>;
     /**

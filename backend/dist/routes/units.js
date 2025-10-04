@@ -13,16 +13,20 @@ const router = express_1.default.Router();
  */
 router.get('/', authenticateAdmin_1.authenticateAdmin, async (req, res) => {
     try {
-        const agencyId = req.user?.id; // Assuming user ID is the agency ID for EMS users
+        const user = req.user;
         console.log('🔍 Units API: req.user:', req.user);
-        console.log('🔍 Units API: agencyId:', agencyId);
-        if (!agencyId) {
-            return res.status(400).json({
-                success: false,
-                error: 'Agency ID not found'
-            });
+        let units;
+        if (user?.userType === 'EMS') {
+            // For EMS users, get units for their agency
+            const agencyId = user.id; // EMS users have agencyId as their id
+            console.log('🔍 Units API: agencyId for EMS user:', agencyId);
+            units = await unitService_1.unitService.getUnitsByAgency(agencyId);
         }
-        const units = await unitService_1.unitService.getUnitsByAgency(agencyId);
+        else {
+            // For admin users, get all units
+            console.log('🔍 Units API: Getting all units for admin user');
+            units = await unitService_1.unitService.getAllUnits();
+        }
         console.log('🔍 Units API: units found:', units.length);
         res.json({
             success: true,

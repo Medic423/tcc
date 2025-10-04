@@ -156,7 +156,8 @@ export class AuthService {
           email: user.email,
           name: user.name,
           userType: 'EMS',
-          agencyName: (user as any).agencyName
+          agencyName: (user as any).agencyName,
+          agencyId: (user as any).agencyId
         };
       }
 

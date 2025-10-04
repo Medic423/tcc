@@ -2,8 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.databaseManager = void 0;
 const client_1 = require("@prisma/client");
-const ems_1 = require("@prisma/ems");
-const hospital_1 = require("@prisma/hospital");
 class DatabaseManager {
     constructor() {
         this.connectionRetries = 0;
@@ -12,28 +10,10 @@ class DatabaseManager {
         this.prisma = new client_1.PrismaClient({
             datasources: {
                 db: {
-                    url: process.env.DATABASE_URL_CENTER
+                    url: process.env.DATABASE_URL_EMS // Using EMS database for unified schema
                 }
             },
             // Add connection configuration for Render PostgreSQL
-            log: process.env.NODE_ENV === 'production' ? ['error'] : ['error', 'warn'],
-            errorFormat: 'pretty',
-        });
-        this.emsPrisma = new ems_1.PrismaClient({
-            datasources: {
-                db: {
-                    url: process.env.DATABASE_URL_EMS
-                }
-            },
-            log: process.env.NODE_ENV === 'production' ? ['error'] : ['error', 'warn'],
-            errorFormat: 'pretty',
-        });
-        this.hospitalPrisma = new hospital_1.PrismaClient({
-            datasources: {
-                db: {
-                    url: process.env.DATABASE_URL_HOSPITAL
-                }
-            },
             log: process.env.NODE_ENV === 'production' ? ['error'] : ['error', 'warn'],
             errorFormat: 'pretty',
         });
@@ -52,10 +32,10 @@ class DatabaseManager {
         return this.prisma;
     }
     getEMSDB() {
-        return this.emsPrisma;
+        return this.prisma;
     }
     getHospitalDB() {
-        return this.hospitalPrisma;
+        return this.prisma;
     }
     async healthCheck() {
         return await this.executeWithRetry(async () => {

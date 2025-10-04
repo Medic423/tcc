@@ -113,47 +113,32 @@ const UnitsManagement: React.FC<UnitsManagementProps> = ({ user }) => {
     setFormError(null);
 
     try {
-      // TODO: Backend doesn't have POST /api/units endpoint yet
-      // For now, simulate unit creation with mock data
-      console.log('TCC_DEBUG: Simulating unit creation with data:', formData);
+      console.log('TCC_DEBUG: Creating unit with data:', formData);
       
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Use the real API endpoint
+      const response = await api.post('/api/units', formData);
       
-      // Create mock unit
-      const mockUnit: Unit = {
-        id: `mock-unit-${Date.now()}`,
-        agencyId: 'mock-agency',
-        unitNumber: formData.unitNumber,
-        type: formData.type,
-        capabilities: formData.capabilities,
-        currentStatus: 'AVAILABLE',
-        currentLocation: 'Station 1',
-        crew: [],
-        isActive: formData.isActive,
-        totalTripsCompleted: 0,
-        averageResponseTime: 0,
-        lastMaintenanceDate: new Date(),
-        nextMaintenanceDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-
-      // Add to local state
-      setUnits(prev => [...prev, mockUnit]);
-      
-      // Close modals and reset form
-      setShowCreateModal(false);
-      setShowEditModal(false);
-      setSelectedUnit(null);
-      resetForm();
-      
-      // Show success message
-      console.log('TCC_DEBUG: Mock unit created successfully:', mockUnit);
+      if (response.data.success) {
+        const newUnit = response.data.data;
+        
+        // Add to local state
+        setUnits(prev => [...prev, newUnit]);
+        
+        // Close modals and reset form
+        setShowCreateModal(false);
+        setShowEditModal(false);
+        setSelectedUnit(null);
+        resetForm();
+        
+        // Show success message
+        console.log('TCC_DEBUG: Unit created successfully:', newUnit);
+      } else {
+        throw new Error(response.data.error || 'Failed to create unit');
+      }
       
     } catch (error: any) {
       console.error('Error saving unit:', error);
-      setFormError(error.message);
+      setFormError(error.response?.data?.error || error.message || 'Failed to create unit');
     } finally {
       setFormLoading(false);
     }
@@ -292,24 +277,6 @@ const UnitsManagement: React.FC<UnitsManagementProps> = ({ user }) => {
         </button>
       </div>
 
-      {/* Mock Implementation Notice */}
-      <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
-        <div className="flex">
-          <div className="flex-shrink-0">
-            <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-            </svg>
-          </div>
-          <div className="ml-3">
-            <h3 className="text-sm font-medium text-yellow-800">
-              Mock Implementation
-            </h3>
-            <div className="mt-2 text-sm text-yellow-700">
-              <p>Unit creation is currently simulated locally. Created units will appear in the list but won't persist after page refresh. Backend API endpoint needs to be implemented.</p>
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Analytics Cards */}
       {analytics && (

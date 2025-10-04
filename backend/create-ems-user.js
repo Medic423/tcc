@@ -1,66 +1,53 @@
-const { databaseManager } = require('./dist/services/databaseManager');
-const bcrypt = require('bcrypt');
+const { PrismaClient } = require('@prisma/client');
+const bcrypt = require('bcryptjs');
+
+const emsPrisma = new PrismaClient({
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL_EMS
+    }
+  }
+});
 
 async function createEMSUser() {
-  let emsPrisma;
   try {
     console.log('Creating EMS user...');
     
-    emsPrisma = databaseManager.getEMSDB();
+    // First, find the agency we just created
+    const agency = await emsPrisma.eMSAgency.findFirst({
+      where: { email: 'fferguson@movalleyems.com' }
+    });
     
-    // Hash the password
+    if (!agency) {
+      console.error('Agency not found. Please run setup-test-data.js first.');
+      return;
+    }
+    
+    console.log('Found agency:', agency.id);
+    
+    // Create EMS user in EMS database
     const hashedPassword = await bcrypt.hash('movalley123', 10);
-    
-    // Create EMS user
-    const emsUser = await emsPrisma.eMSUser.upsert({
-      where: { email: 'fferguson@movalleyems.com' },
-      update: { 
-        password: hashedPassword,
-        name: 'Frank Ferguson',
-        agencyName: 'Mountain Valley EMS',
-        isActive: true,
-        userType: 'EMS'
-      },
-      create: {
+    const emsUser = await emsPrisma.eMSUser.create({
+      data: {
         email: 'fferguson@movalleyems.com',
         password: hashedPassword,
         name: 'Frank Ferguson',
-        agencyName: 'Mountain Valley EMS',
-        isActive: true,
-        userType: 'EMS'
+        agencyName: agency.name,
+        agencyId: agency.id,
+        userType: 'EMS',
+        isActive: true
       }
     });
     
-    console.log('✅ EMS User created/updated:', emsUser.email);
-    console.log('User ID:', emsUser.id);
-    
-    // Create EMS Agency
-    const emsAgency = await emsPrisma.eMSAgency.create({
-      data: {
-        name: 'Mountain Valley EMS',
-        contactName: 'Frank Ferguson',
-        phone: '555-123-4567',
-        email: 'contact@movalleyems.com',
-        address: '123 Main Street',
-        city: 'Mountain Valley',
-        state: 'CA',
-        zipCode: '90210',
-        serviceArea: ['Mountain Valley', 'Valley View', 'Hillside'],
-        capabilities: ['BLS', 'ALS', 'CCT'],
-        isActive: true,
-        status: 'ACTIVE'
-      }
-    });
-    
-    console.log('✅ EMS Agency created/updated:', emsAgency.name);
-    console.log('Agency ID:', emsAgency.id);
+    console.log('EMS User created in EMS database:', emsUser.id);
+    console.log('EMS login credentials:');
+    console.log('Email: fferguson@movalleyems.com');
+    console.log('Password: movalley123');
     
   } catch (error) {
-    console.error('❌ Error creating EMS user/agency:', error);
+    console.error('Error creating EMS user:', error);
   } finally {
-    if (emsPrisma) {
-      await emsPrisma.$disconnect();
-    }
+    await emsPrisma.$disconnect();
   }
 }
 
