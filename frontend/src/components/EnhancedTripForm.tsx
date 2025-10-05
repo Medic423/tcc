@@ -200,11 +200,16 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
 
       const toValues = (resp: any, fallback: string[]) => (resp?.data?.success && Array.isArray(resp.data.data) ? resp.data.data.map((o: any) => o.value) : fallback);
 
+      // Ensure urgency always has baseline defaults merged with hospital settings
+      const urgencyDefaults = ['Routine', 'Urgent', 'Emergent'];
+      const urgencyFromAPI = toValues(urgRes, []);
+      const urgencyOptions = [...urgencyDefaults, ...urgencyFromAPI.filter(val => !urgencyDefaults.includes(val))];
+
       const options: FormOptions = {
         diagnosis: toValues(diagRes, ['Cardiac', 'Respiratory', 'Neurological', 'Trauma']),
         mobility: toValues(mobRes, ['Ambulatory', 'Wheelchair', 'Stretcher', 'Bed-bound']),
         transportLevel: toValues(tlRes, ['BLS', 'ALS', 'CCT', 'Other']),
-        urgency: toValues(urgRes, ['Routine', 'Urgent', 'Emergent', 'Critical']),
+        urgency: urgencyOptions,
         insurance: toValues(insRes, ['Medicare', 'Medicaid', 'Private', 'Self-pay']),
         specialNeeds: toValues(snRes, ['Bariatric Stretcher']),
         facilities: facilities,
@@ -509,6 +514,7 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
         originFacilityId: selectedFacility.id,
         destinationFacilityId: destinationFacility.id,
         transportLevel: formData.transportLevel,
+        urgencyLevel: formData.urgencyLevel,
         priority: formData.urgencyLevel === 'Critical' ? 'HIGH' : 
                  formData.urgencyLevel === 'Emergent' ? 'HIGH' :
                  formData.urgencyLevel === 'Urgent' ? 'MEDIUM' : 'LOW',

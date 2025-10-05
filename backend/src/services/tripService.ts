@@ -11,6 +11,7 @@ export interface CreateTripRequest {
   originFacilityId: string;
   destinationFacilityId: string;
   transportLevel: 'BLS' | 'ALS' | 'CCT';
+  urgencyLevel?: 'Routine' | 'Urgent' | 'Emergent';
   priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
   specialNeeds?: string;
   readyStart: string; // ISO string
@@ -71,7 +72,7 @@ export class TripService {
         toLocation: null,
         scheduledTime: new Date(data.readyStart),
         transportLevel: data.transportLevel,
-        urgencyLevel: null,
+        urgencyLevel: data.urgencyLevel || 'Routine',
         priority: data.priority,
         status: 'PENDING',
         specialRequirements: data.specialNeeds || null,
@@ -336,7 +337,7 @@ export class TripService {
 
       // Connect pickup location relation if provided
       if (data.pickupLocationId) {
-        tripData.pickup_locations = { connect: { id: data.pickupLocationId } };
+        tripData.pickupLocation = { connect: { id: data.pickupLocationId } };
       }
 
       const trip = await prisma.transportRequest.create({
