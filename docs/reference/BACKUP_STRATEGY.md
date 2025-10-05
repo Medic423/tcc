@@ -21,7 +21,7 @@ You correctly identified that **Git does NOT maintain critical files** needed fo
 
 ### **Layer 1: Enhanced External Backup**
 - **Script**: `scripts/backup-enhanced-latest.sh`
-- **Purpose**: Complete project backup including ALL environment files
+- **Purpose**: Wrapper that invokes root `backup-enhanced.sh` to create a complete project backup including ALL environment files
 - **Location**: External drive (`/Volumes/Acasis/`)
 - **Includes**: Environment files, Vercel config, databases, restore scripts
 
