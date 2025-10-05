@@ -5,7 +5,14 @@ import { AuthenticatedRequest } from '../middleware/authenticateAdmin';
 
 const router = express.Router();
 
-const ALLOWED_CATEGORIES = new Set(['transport-level', 'urgency', 'diagnosis', 'mobility']);
+const ALLOWED_CATEGORIES = new Set([
+  'transport-level',
+  'urgency',
+  'diagnosis',
+  'mobility',
+  'insurance',
+  'special-needs'
+]);
 
 // Get all dropdown options for a category
 router.get('/:category', authenticateAdmin, async (req: AuthenticatedRequest, res) => {

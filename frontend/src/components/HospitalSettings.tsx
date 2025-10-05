@@ -131,7 +131,7 @@ const HospitalSettings: React.FC = () => {
     try {
       setLoading(true);
       // Use fixed categories per product decision
-      const fixed = ['transport-level', 'urgency', 'diagnosis', 'mobility'];
+      const fixed = ['transport-level', 'urgency', 'diagnosis', 'mobility', 'insurance', 'special-needs'];
       setCategories(fixed);
       setSelectedCategory(fixed[0]);
     } catch (error) {
@@ -419,7 +419,8 @@ const HospitalSettings: React.FC = () => {
       'diagnosis': 'Primary Diagnosis',
       'mobility': 'Mobility Levels',
       'transport-level': 'Transport Levels',
-      'urgency': 'Urgency Levels'
+      'urgency': 'Urgency Levels',
+      'special-needs': 'Special Needs'
     };
     return displayNames[category] || category;
   };
