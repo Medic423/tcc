@@ -540,7 +540,7 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                             </p>
                           )}
                           <p className="text-xs text-gray-500">
-                            {trip.transportLevel} • {trip.urgencyLevel || 'Routine'} • {trip.requestTime}
+                            {trip.transportLevel} • {trip.urgencyLevel || 'Routine'} • Request Time: {trip.requestTime}
                           </p>
                         </div>
                       </div>
