@@ -12,6 +12,7 @@ import {
   Truck
 } from 'lucide-react';
 import { tripsAPI } from '../services/api';
+import { dropdownOptionsAPI } from '../services/api';
 
 interface EnhancedTripFormProps {
   user: {
@@ -84,6 +85,7 @@ interface FormOptions {
   transportLevel: string[];
   urgency: string[];
   insurance: string[];
+  specialNeeds: string[];
   facilities: any[];
   agencies: any[];
   pickupLocations: PickupLocation[];
@@ -100,6 +102,7 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
     transportLevel: [],
     urgency: [],
     insurance: [],
+    specialNeeds: [],
     facilities: [],
     agencies: [],
     pickupLocations: []
@@ -185,20 +188,55 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
         facilities = [];
       }
       
-      // Initialize with real data
+      // Load dropdown options from backend Hospital Settings
+      const [diagRes, mobRes, tlRes, urgRes, insRes, snRes] = await Promise.all([
+        dropdownOptionsAPI.getByCategory('diagnosis').catch(() => ({ data: { success: false, data: [] }})),
+        dropdownOptionsAPI.getByCategory('mobility').catch(() => ({ data: { success: false, data: [] }})),
+        dropdownOptionsAPI.getByCategory('transport-level').catch(() => ({ data: { success: false, data: [] }})),
+        dropdownOptionsAPI.getByCategory('urgency').catch(() => ({ data: { success: false, data: [] }})),
+        dropdownOptionsAPI.getByCategory('insurance').catch(() => ({ data: { success: false, data: [] }})),
+        dropdownOptionsAPI.getByCategory('special-needs').catch(() => ({ data: { success: false, data: [] }})),
+      ]);
+
+      const toValues = (resp: any, fallback: string[]) => (resp?.data?.success && Array.isArray(resp.data.data) ? resp.data.data.map((o: any) => o.value) : fallback);
+
       const options: FormOptions = {
-        diagnosis: ['Cardiac', 'Respiratory', 'Neurological', 'Trauma'],
-        mobility: ['Ambulatory', 'Wheelchair', 'Stretcher', 'Bed-bound'],
-        transportLevel: ['BLS', 'ALS', 'CCT', 'Other'],
-        urgency: ['Routine', 'Urgent', 'Emergent', 'Critical'],
-        insurance: ['Medicare', 'Medicaid', 'Private', 'Self-pay'],
+        diagnosis: toValues(diagRes, ['Cardiac', 'Respiratory', 'Neurological', 'Trauma']),
+        mobility: toValues(mobRes, ['Ambulatory', 'Wheelchair', 'Stretcher', 'Bed-bound']),
+        transportLevel: toValues(tlRes, ['BLS', 'ALS', 'CCT', 'Other']),
+        urgency: toValues(urgRes, ['Routine', 'Urgent', 'Emergent', 'Critical']),
+        insurance: toValues(insRes, ['Medicare', 'Medicaid', 'Private', 'Self-pay']),
+        specialNeeds: toValues(snRes, ['Bariatric Stretcher']),
         facilities: facilities,
         agencies: [],
         pickupLocations: []
       };
-
+ 
       console.log('TCC_DEBUG: Setting real form options:', options);
       setFormOptions(options);
+ 
+      // Apply defaults from backend
+      try {
+        const [tl, urg, dx, mob, ins, sn] = await Promise.all([
+          api.get('/api/dropdown-options/transport-level/default'),
+          api.get('/api/dropdown-options/urgency/default'),
+          api.get('/api/dropdown-options/diagnosis/default'),
+          api.get('/api/dropdown-options/mobility/default'),
+          api.get('/api/dropdown-options/insurance/default'),
+          api.get('/api/dropdown-options/special-needs/default')
+        ]);
+        setFormData(prev => ({
+          ...prev,
+          transportLevel: tl.data?.data?.option?.value || prev.transportLevel,
+          urgencyLevel: urg.data?.data?.option?.value || prev.urgencyLevel,
+          diagnosis: dx.data?.data?.option?.value ? dx.data.data.option.value : '',
+          mobilityLevel: mob.data?.data?.option?.value || prev.mobilityLevel,
+          insuranceCompany: ins.data?.data?.option?.value || prev.insuranceCompany,
+          specialNeeds: sn.data?.data?.option?.value || prev.specialNeeds
+        }));
+      } catch (e) {
+        console.warn('TCC_DEBUG: Defaults not available yet');
+      }
     } catch (error) {
       console.error('Error loading form options:', error);
       // Fallback to basic options if API fails
@@ -208,6 +246,7 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
         transportLevel: ['BLS', 'ALS', 'CCT', 'Other'],
         urgency: ['Routine', 'Urgent', 'Emergent', 'Critical'],
         insurance: ['Medicare', 'Medicaid', 'Private', 'Self-pay'],
+        specialNeeds: ['Bariatric Stretcher'],
         facilities: [],
         agencies: [],
         pickupLocations: []
@@ -584,14 +623,17 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Special Needs
                 </label>
-                <input
-                  type="text"
+                <select
                   name="specialNeeds"
                   value={formData.specialNeeds}
                   onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Enter special needs"
-                />
+                >
+                  <option value="">Select special needs</option>
+                  {formOptions.specialNeeds.map((sn) => (
+                    <option key={sn} value={sn}>{sn}</option>
+                  ))}
+                </select>
               </div>
             </div>
 

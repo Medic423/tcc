@@ -93,6 +93,9 @@ const HospitalSettings: React.FC = () => {
   const [contactError, setContactError] = useState<string | null>(null);
   const [contactSuccess, setContactSuccess] = useState<string | null>(null);
 
+  // Default option state
+  const [defaultOptionId, setDefaultOptionId] = useState<string>('');
+
   // Load categories on component mount
   useEffect(() => {
     loadCategories();
@@ -117,17 +120,20 @@ const HospitalSettings: React.FC = () => {
     }
   }, [selectedHospital]);
 
+  // Load default option when category changes
+  useEffect(() => {
+    if (selectedCategory) {
+      loadDefault(selectedCategory);
+    }
+  }, [selectedCategory]);
+
   const loadCategories = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/api/public/categories');
-      if (response.data.success) {
-        setCategories(response.data.data);
-        // Set default category if available
-        if (response.data.data.length > 0) {
-          setSelectedCategory(response.data.data[0]);
-        }
-      }
+      // Use fixed categories per product decision
+      const fixed = ['transport-level', 'urgency', 'diagnosis', 'mobility', 'insurance', 'special-needs'];
+      setCategories(fixed);
+      setSelectedCategory(fixed[0]);
     } catch (error) {
       console.error('Error loading categories:', error);
       setError('Failed to load categories');
@@ -148,6 +154,19 @@ const HospitalSettings: React.FC = () => {
       setError('Failed to load options');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadDefault = async (category: string) => {
+    try {
+      const res = await dropdownOptionsAPI.getDefault(category);
+      if (res.data.success && res.data.data) {
+        setDefaultOptionId(res.data.data.optionId);
+      } else {
+        setDefaultOptionId('');
+      }
+    } catch (e) {
+      setDefaultOptionId('');
     }
   };
 
@@ -221,6 +240,22 @@ const HospitalSettings: React.FC = () => {
     } catch (error) {
       console.error('Error deleting option:', error);
       setError('Failed to delete option');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSetDefault = async () => {
+    if (!selectedCategory || !defaultOptionId) return;
+    try {
+      setLoading(true);
+      const res = await dropdownOptionsAPI.setDefault(selectedCategory, defaultOptionId);
+      if (res.data.success) {
+        setSuccess('Default updated');
+        setTimeout(() => setSuccess(null), 3000);
+      }
+    } catch (e) {
+      setError('Failed to set default');
     } finally {
       setLoading(false);
     }
@@ -384,7 +419,8 @@ const HospitalSettings: React.FC = () => {
       'diagnosis': 'Primary Diagnosis',
       'mobility': 'Mobility Levels',
       'transport-level': 'Transport Levels',
-      'urgency': 'Urgency Levels'
+      'urgency': 'Urgency Levels',
+      'special-needs': 'Special Needs'
     };
     return displayNames[category] || category;
   };
@@ -518,6 +554,31 @@ const HospitalSettings: React.FC = () => {
                     {loading ? 'Adding...' : 'Add'}
                   </button>
                 </form>
+              </div>
+
+              {/* Default Option Selector */}
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Default {getCategoryDisplayName(selectedCategory)}</h3>
+                <div className="flex gap-2 items-center">
+                  <select
+                    value={defaultOptionId}
+                    onChange={(e) => setDefaultOptionId(e.target.value)}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                 >
+                    <option value="">No default</option>
+                    {options.map((opt) => (
+                      <option key={opt.id} value={opt.id}>{opt.value}</option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={handleSetDefault}
+                    disabled={loading}
+                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50"
+                  >
+                    {loading ? 'Saving...' : 'Save Default'}
+                  </button>
+                </div>
               </div>
 
               {/* Options List */}

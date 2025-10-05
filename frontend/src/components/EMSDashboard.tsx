@@ -108,6 +108,11 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
                  patientId: trip.patientId,
                  origin: trip.originFacility?.name || 'Unknown Origin',
                  destination: trip.destinationFacility?.name || 'Unknown Destination',
+                 pickupLocation: trip.pickupLocation ? {
+                   name: trip.pickupLocation.name,
+                   floor: trip.pickupLocation.floor,
+                   room: trip.pickupLocation.room,
+                 } : null,
                  transportLevel: trip.transportLevel || 'BLS',
                  urgencyLevel: trip.urgencyLevel || 'Routine',
                  distance: '12.5 miles', // Mock data
@@ -578,6 +583,13 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
                           <div>
                             <span className="font-medium">Level:</span> {trip.transportLevel}
                           </div>
+                          {trip.pickupLocation && (
+                            <div>
+                              <span className="font-medium">Pickup:</span> {trip.pickupLocation.name}
+                              {trip.pickupLocation.floor && ` (Floor ${trip.pickupLocation.floor})`}
+                              {trip.pickupLocation.room && ` - Room ${trip.pickupLocation.room}`}
+                            </div>
+                          )}
                           <div>
                             <span className="font-medium">Distance:</span> {trip.distance}
                           </div>
