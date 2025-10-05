@@ -526,8 +526,9 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                     <div key={trip.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                       <div className="flex items-center space-x-4">
                         <div>
-                          <p className="text-sm font-medium text-gray-900">
-                            Patient ID: {trip.patientId} - {trip.origin} → {trip.destination}
+                          <h4 className="text-lg font-medium text-gray-900">Patient {trip.patientId}</h4>
+                          <p className="text-base text-gray-600">
+                            {trip.origin} → {trip.destination}
                           </p>
                           {trip.pickupLocation && (
                             <p className="text-xs text-blue-600">

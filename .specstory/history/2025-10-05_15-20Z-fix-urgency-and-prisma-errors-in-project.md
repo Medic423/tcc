@@ -2523,6 +2523,382 @@ Read file: /Users/scooper/Code/tcc-new-project/frontend/src/components/Healthcar
 
 ---
 
+Let me find the summary tiles section:
+
+
+---
+
+Tool use: **grep**
+
+---
+
+Let me search for the tiles section:
+
+
+---
+
+Tool use: **grep**
+
+---
+
+Let me search for the summary section:
+
+
+---
+
+Tool use: **grep**
+
+---
+
+Let me search for the grid with summary tiles:
+
+
+---
+
+Tool use: **grep**
+
+<details>
+<summary>Grep for ""grid.*gap-6"" in "/Users/scooper/Code/tcc-new-project/frontend/src/components/HealthcareDashboard.tsx" • 2 matches</summary>
+
+Output mode: content
+
+
+| Content | Line |
+|------|------|
+| `<div className="grid grid-cols-1 md:grid-cols-3 gap-6">` | L426 |
+| `<div className="grid grid-cols-1 md:grid-cols-4 gap-6">` | L701 |
+
+
+</details>
+
+---
+
+Perfect! I found the summary tiles section. Let me read that section to see the current implementation:
+
+
+---
+
+Tool use: **read_file**
+
+Read file: /Users/scooper/Code/tcc-new-project/frontend/src/components/HealthcareDashboard.tsx
+
+---
+
+Perfect! I can see the issues:
+
+1. **"Completed Today" tile** (lines 460-470) is using `completedTrips` but filtering by date - it should just use `completedTrips.length` since `completedTrips` already contains only completed trips
+2. **"High Priority" tile** (lines 489-495) needs to be renamed to "Emergent Trips" and should only count trips with `urgencyLevel === 'Emergent'` (not priority HIGH)
+
+Let me fix these issues:
+
+
+---
+
+Tool use: **search_replace**
+
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/HealthcareDashboard.tsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 8
+
+```diff
+@@ -461,12 +461,5 @@
+                          </dt>
+                          <dd className="text-lg font-medium text-gray-900">
+-                           {completedTrips.filter(trip => {
+-                             if (!trip.completionTimestampISO) return false;
+-                             const completedDate = new Date(trip.completionTimestampISO);
+-                             const now = new Date();
+-                             return completedDate.getFullYear() === now.getFullYear() &&
+-                               completedDate.getMonth() === now.getMonth() &&
+-                               completedDate.getDate() === now.getDate();
+-                           }).length}
++                           {completedTrips.length}
+                          </dd>
+                        </dl>
+```
+
+</details>
+
+---
+
+Now let me fix the "High Priority" tile to be "Emergent Trips" and only count Emergent urgency level:
+
+
+---
+
+Tool use: **search_replace**
+
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/HealthcareDashboard.tsx</summary>
+
+**Chunk 1**
+Lines added: 2, lines removed: 2
+
+```diff
+@@ -480,10 +480,10 @@
+                        <dl>
+                          <dt className="text-sm font-medium text-gray-500 truncate">
+-                           High Priority
++                           Emergent Trips
+                          </dt>
+                          <dd className="text-lg font-medium text-gray-900">
+                            {trips.filter(trip => 
+                              (trip.status === 'PENDING' || trip.status === 'ACCEPTED' || trip.status === 'IN_PROGRESS') && 
+-                             ((trip.urgencyLevel === 'Emergent') || trip.priority === 'HIGH')
++                             (trip.urgencyLevel === 'Emergent')
+                            ).length}
+                          </dd>
+```
+
+</details>
+
+---
+
+Perfect! Now let me commit and push these changes:
+
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git add -A && git commit -m "fix(tiles): correct summary tile counts and labels
+
+- Fix 'Completed Today' tile to show completedTrips.length (matches Completed Trips tab)
+- Rename 'High Priority' to 'Emergent Trips' 
+- Update Emergent Trips logic to only count trips with urgencyLevel === 'Emergent'
+- Remove priority-based filtering to focus on urgency level only"
+```
+
+```
+[main dbf4d3d3] fix(tiles): correct summary tile counts and labels
+ 2 files changed, 811 insertions(+), 10 deletions(-)
+
+```
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git push backup main
+```
+
+```
+To /Users/scooper/Code/tcc-new-project-backup-20250922_105547
+   32ec9b44..dbf4d3d3  main -> main
+
+```
+
+---
+
+Perfect! 🎉
+
+## ✅ **Summary Tiles Fixed!**
+
+I've successfully corrected the summary tile issues:
+
+### 🔧 **Changes Made**
+
+1. **"Completed Today" Tile**:
+   - ✅ **Fixed**: Now shows `completedTrips.length` (which matches the "Completed Transport Requests (2)" count)
+   - ✅ **Simplified**: Removed complex date filtering since `completedTrips` already contains only completed trips
+
+2. **"High Priority" → "Emergent Trips" Tile**:
+   - ✅ **Renamed**: Changed from "High Priority" to "Emergent Trips"
+   - ✅ **Fixed Logic**: Now only counts trips with `urgencyLevel === 'Emergent'`
+   - ✅ **Removed Priority Filter**: No longer counts `priority === 'HIGH'` trips
+   - ✅ **Active Trips Only**: Still filters for active statuses (PENDING, ACCEPTED, IN_PROGRESS)
+
+### 🎯 **Expected Results**
+
+Based on your current data:
+- **"Completed Today"**: Should show **2** (matching the "Completed Transport Requests (2)" tab)
+- **"Emergent Trips"**: Should show **2** (for the 2 trips with urgency "Emergent" in the Transport Requests list)
+
+The tiles now accurately reflect the data shown in their corresponding tabs and use the correct filtering logic! 🚀
+
+---
+
+_**User (2025-10-03 22:38Z)**_
+
+Yup tiles are updating properly now. Now we need to work on this display. I think you could model, not copy, the look of the Available trips display in EMS. Let's do this in a systematic fashion by updating a line at a time. Let's start with the first line by making the text bit bigger since we have alot of empty space to the right of:  Patient ID: TEST123 - Bedford Memorial Hospital → Conemaugh Nason Medical Center. Any questions about this first step?
+
+---
+
+_**Assistant (default)**_
+
+Perfect! I understand exactly what you want to do. You want to improve the transport request card display by making the patient ID and route information bigger to better utilize the available space, similar to how the EMS "Available trips" display looks.
+
+Let me first find the current transport request card display code to see how it's currently styled:
+
+
+---
+
+Tool use: **codebase_search**
+
+<details>
+                <summary>Searched codebase "Where is the transport request card displayed with patient ID and route information?" • **8** results</summary>
+            
+| File | Lines |
+|------|-------|
+| `frontend/src/components/HealthcareDashboard.tsx` | L17-1075 |
+| `frontend/src/components/TripsView.tsx` | L75-359 |
+| `frontend/src/components/EMSDashboard.tsx` | L31-1147 |
+| `frontend/src/components/TripsView.tsx` | L359-1066 |
+| `frontend/src/components/RevenueOptimizationPanel.tsx` | L49-323 |
+| `frontend/src/components/TCCRouteOptimizer.tsx` | L22-807 |
+| `frontend/src/components/TripHistory.tsx` | L62-440 |
+| `frontend/src/components/TripsView.tsx` | L71-359 |
+
+</details>
+
+---
+
+Perfect! I found the transport request card display in the HealthcareDashboard. Looking at line 530, I can see the current structure:
+
+```tsx
+<p className="text-sm font-medium text-gray-900">
+  Patient ID: {trip.patientId} - {trip.origin} → {trip.destination}
+</p>
+```
+
+I can see it's currently using `text-sm` which is quite small. Let me also look at the EMS dashboard to see how they display their trip cards for reference:
+
+
+---
+
+Tool use: **codebase_search**
+
+<details>
+                <summary>Searched codebase "How are available trips displayed in EMS dashboard with patient ID and route?" • **2** results</summary>
+            
+| File | Lines |
+|------|-------|
+| `frontend/src/components/EMSDashboard.tsx` | L31-1147 |
+| `frontend/src/components/EMSDashboard.tsx` | L22-1147 |
+
+</details>
+
+---
+
+Perfect! I can see the EMS dashboard uses a much better layout. Looking at lines 576-579, they use:
+
+- **Patient ID**: `text-lg font-medium text-gray-900` (larger, bold)
+- **Route**: `text-sm text-gray-500` (separate line, smaller)
+
+This is much better than the current Healthcare dashboard which puts everything on one line with `text-sm`. Let me update the Healthcare dashboard to match this better layout:
+
+
+---
+
+Tool use: **search_replace**
+
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/HealthcareDashboard.tsx</summary>
+
+**Chunk 1**
+Lines added: 3, lines removed: 2
+
+```diff
+@@ -527,6 +527,7 @@
+                        <div className="flex items-center space-x-4">
+                          <div>
+-                           <p className="text-sm font-medium text-gray-900">
+-                             Patient ID: {trip.patientId} - {trip.origin} → {trip.destination}
++                           <h4 className="text-lg font-medium text-gray-900">Patient {trip.patientId}</h4>
++                           <p className="text-sm text-gray-500">
++                             {trip.origin} → {trip.destination}
+                            </p>
+                            {trip.pickupLocation && (
+```
+
+</details>
+
+---
+
+Perfect! 🎉 
+
+## ✅ **First Line Updated Successfully!**
+
+I've updated the first line of the transport request card display to match the EMS dashboard style:
+
+### 🔧 **Changes Made**
+
+**Before:**
+```tsx
+<p className="text-sm font-medium text-gray-900">
+  Patient ID: {trip.patientId} - {trip.origin} → {trip.destination}
+</p>
+```
+
+**After:**
+```tsx
+<h4 className="text-lg font-medium text-gray-900">Patient {trip.patientId}</h4>
+<p className="text-sm text-gray-500">
+  {trip.origin} → {trip.destination}
+</p>
+```
+
+### 🎯 **Improvements**
+
+1. **Patient ID**: Now uses `text-lg font-medium` (larger, bolder) instead of `text-sm`
+2. **Route Information**: Now on a separate line with `text-sm text-gray-500` (better visual hierarchy)
+3. **Better Space Utilization**: The larger text and separate lines better fill the available space
+4. **Consistent with EMS**: Now matches the professional layout used in the EMS dashboard
+
+The patient ID and route information now have much better visual prominence and make better use of the available space! 
+
+**Ready for the next step?** What would you like to improve next in the transport request card display?
+
+---
+
+_**User (2025-10-03 22:38Z)**_
+
+Let's make the second line bigger so the user can identify the trip better. This raises an interesting issue. Our beta test hospital is Dubois Reginonl, which is part of the Penn Higlands system. Penn Highlands utilizes a "Transport Center" concept to arrange trips for all their hospitals which includes hospitals in Clearfiled, Tyrone, Huntingdon and State Collge. We need to improve the system so a "Transport Center" can book trips for all their hospital without having to log out and log back in as the hospital they want to create a trip for. Show me a plan for how we would implement this feature and write it to /doc/notes/hospital_transport_center.md. 
+
+---
+
+_**Assistant (default)**_
+
+Excellent point! You've identified a critical real-world use case. Let me first update the second line to make it bigger, then create a comprehensive plan for the Transport Center feature.
+
+
+---
+
+Tool use: **search_replace**
+
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/HealthcareDashboard.tsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -528,5 +528,5 @@
+                          <div>
+                            <h4 className="text-lg font-medium text-gray-900">Patient {trip.patientId}</h4>
+-                           <p className="text-sm text-gray-500">
++                           <p className="text-base text-gray-600">
+                              {trip.origin} → {trip.destination}
+                            </p>
+```
+
+</details>
+
+---
+
+Now let me create a comprehensive plan for the Transport Center feature:
+
+
+---
+
+Tool use: **write**
+
+---
+
 
 
 ---
