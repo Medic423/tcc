@@ -675,10 +675,12 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                             </div>
                             <div className="mt-2 flex items-center space-x-6 text-sm text-gray-500">
                               <div>
-                                <span className="font-medium">Transport Level:</span> {trip.transportLevel}
+                                <div className="font-medium">Transport Level:</div>
+                                <div>{trip.transportLevel}</div>
                               </div>
                               <div>
-                                <span className="font-medium">Urgency:</span> {trip.urgencyLevel || 'Routine'}
+                                <div className="font-medium">Urgency:</div>
+                                <div>{trip.urgencyLevel || 'Routine'}</div>
                               </div>
                               <div>
                                 <div className="font-medium">Request Time:</div>

@@ -4823,3 +4823,171 @@ Tool use: **todo_write**
 
 ---
 
+_**User (2025-10-03 22:38Z)**_
+
+Now a small formatting change in these lines:
+
+Request Time: 10/5/2025, 9:40:05 Pickup Time: 10/5/2025, 10:55:02 Wait Time: 1h Completion Time: N/
+AM AM 14m A
+
+After the colon in each of those the data all need to be on the second line so it looks like these: 
+
+Transport Level:             Urgency:
+BLS                                  Routine
+
+Does that make scense?
+
+---
+
+_**Assistant (default)**_
+
+Absolutely! I understand perfectly. You want to format the time and metric information so that the labels are on the first line and the values are on the second line, creating a cleaner two-line format like:
+
+```
+Transport Level:    Urgency:
+BLS                 Routine
+```
+
+Let me update the completed trips display to format the time information this way:
+
+
+---
+
+Tool use: **search_replace**
+
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/HealthcareDashboard.tsx</summary>
+
+**Chunk 1**
+Lines added: 8, lines removed: 4
+
+```diff
+@@ -682,18 +682,22 @@
+                                </div>
+                                <div>
+-                                 <span className="font-medium">Request Time:</span> {trip.requestTime}
++                                 <div className="font-medium">Request Time:</div>
++                                 <div>{trip.requestTime}</div>
+                                </div>
+                                {trip.pickupTime && (
+                                  <div>
+-                                   <span className="font-medium">Pickup Time:</span> {trip.pickupTime}
++                                   <div className="font-medium">Pickup Time:</div>
++                                   <div>{trip.pickupTime}</div>
+                                  </div>
+                                )}
+                                {trip.waitTime && (
+                                  <div>
+-                                   <span className="font-medium">Wait Time:</span> <span className="text-green-600 font-semibold">{trip.waitTime}</span>
++                                   <div className="font-medium">Wait Time:</div>
++                                   <div className="text-green-600 font-semibold">{trip.waitTime}</div>
+                                  </div>
+                                )}
+                                <div>
+-                                 <span className="font-medium">Completion Time:</span> {trip.completionTime || 'N/A'}
++                                 <div className="font-medium">Completion Time:</div>
++                                 <div>{trip.completionTime || 'N/A'}</div>
+                                </div>
+                              </div>
+```
+
+</details>
+
+---
+
+Perfect! Now let me commit this formatting improvement:
+
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git add -A && git commit -m "feat(ui): improve completed trips time formatting with two-line layout
+
+- Format time labels and values on separate lines for better readability
+- Create cleaner vertical alignment for Request Time, Pickup Time, Wait Time, Completion Time
+- Improve visual hierarchy and reduce text wrapping issues"
+```
+
+```
+[main 0f09b914] feat(ui): improve completed trips time formatting with two-line layout
+ 2 files changed, 140 insertions(+), 4 deletions(-)
+
+```
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git push backup main
+```
+
+```
+To /Users/scooper/Code/tcc-new-project-backup-20250922_105547
+   97ec72b7..0f09b914  main -> main
+
+```
+
+---
+
+Perfect! 🎉
+
+## ✅ **Completed Trips Time Formatting Improved!**
+
+### 🔧 **Formatting Change**
+
+**Before:**
+```
+Request Time: 10/5/2025, 9:40:05 AM
+Pickup Time: 10/5/2025, 10:55:02 AM
+Wait Time: 1h 14m
+Completion Time: N/A
+```
+
+**After:**
+```
+Request Time:
+10/5/2025, 9:40:05 AM
+
+Pickup Time:
+10/5/2025, 10:55:02 AM
+
+Wait Time:
+1h 14m
+
+Completion Time:
+N/A
+```
+
+### 🎯 **Benefits**
+
+- **Better Alignment**: Labels and values are properly separated
+- **Cleaner Layout**: No more text wrapping issues with long timestamps
+- **Improved Readability**: Easier to scan and read the information
+- **Consistent Formatting**: Matches the Transport Level/Urgency pattern
+- **Professional Appearance**: More organized and structured look
+
+The completed trips display now has much cleaner, more readable time formatting! 🚀
+
+
+---
+
+Tool use: **todo_write**
+
+## Todo List
+
+- [x] Fix backend routes/trips.ts to accept and pass urgencyLevel
+- [x] Fix tripService.ts to handle urgencyLevel and pickupLocation relation
+- [x] Fix EnhancedTripForm.tsx to send urgencyLevel and merge defaults
+- [x] Fix HealthcareDashboard.tsx to display urgencyLevel and correct High Priority tile
+- [x] Ensure dropdownOptions.ts returns merged urgency defaults
+- [x] Restart services, commit, push, and verify functionality
+- [x] Enhanced transport request display with improved layout and styling
+- [x] Remove redundant urgency pill from completed trips display
+- [x] Remove redundant COMPLETED status pill from completed trips display
+- [x] Improve completed trips time formatting with two-line layout
+
+---
+
