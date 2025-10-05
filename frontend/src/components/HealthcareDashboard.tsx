@@ -673,34 +673,34 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                                 </p>
                               </div>
                             </div>
-                            <div className="mt-2 grid grid-cols-6 gap-4 text-sm text-gray-500">
+                            <div className="mt-2 grid grid-cols-6 gap-4 text-sm">
                               <div>
-                                <div className="font-medium">Transport Level:</div>
-                                <div>{trip.transportLevel}</div>
+                                <div className="font-bold text-gray-800">Transport Level:</div>
+                                <div className="text-gray-500">{trip.transportLevel}</div>
                               </div>
                               <div>
-                                <div className="font-medium">Urgency:</div>
-                                <div>{trip.urgencyLevel || 'Routine'}</div>
+                                <div className="font-bold text-gray-800">Urgency:</div>
+                                <div className="text-gray-500">{trip.urgencyLevel || 'Routine'}</div>
                               </div>
                               <div>
-                                <div className="font-medium">Request Time:</div>
-                                <div>{trip.requestTime}</div>
+                                <div className="font-bold text-gray-800">Request Time:</div>
+                                <div className="text-gray-500">{trip.requestTime}</div>
                               </div>
                               {trip.pickupTime && (
                                 <div>
-                                  <div className="font-medium">Pickup Time:</div>
-                                  <div>{trip.pickupTime}</div>
+                                  <div className="font-bold text-gray-800">Pickup Time:</div>
+                                  <div className="text-gray-500">{trip.pickupTime}</div>
                                 </div>
                               )}
                               {trip.waitTime && (
                                 <div>
-                                  <div className="font-medium">Wait Time:</div>
+                                  <div className="font-bold text-gray-800">Wait Time:</div>
                                   <div className="text-green-600 font-semibold">{trip.waitTime}</div>
                                 </div>
                               )}
                               <div>
-                                <div className="font-medium">Completion Time:</div>
-                                <div>{trip.completionTime || 'N/A'}</div>
+                                <div className="font-bold text-gray-800">Completion Time:</div>
+                                <div className="text-gray-500">{trip.completionTime || 'N/A'}</div>
                               </div>
                             </div>
                           </div>

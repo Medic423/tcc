@@ -5308,3 +5308,219 @@ Tool use: **todo_write**
 
 ---
 
+_**User (2025-10-03 22:38Z)**_
+
+Now let make the second line a bit bigger. Which is the origin and destination:
+
+Altoona Regional Emergency Department → UPMC Bedford Emergency Department
+
+---
+
+_**Assistant (default)**_
+
+I'll make the origin and destination line larger for better readability. Let me update the font size:
+
+
+---
+
+Tool use: **search_replace**
+
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/HealthcareDashboard.tsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -669,5 +669,5 @@
+                                <div>
+                                  <h4 className="text-lg font-medium text-gray-900">Patient {trip.patientId}</h4>
+-                                 <p className="text-sm text-gray-500">
++                                 <p className="text-base text-gray-600">
+                                    {trip.origin} → {trip.destination}
+                                  </p>
+```
+
+</details>
+
+---
+
+Perfect! Now let me commit this improvement:
+
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git add -A && git commit -m "feat(ui): increase font size for origin and destination in completed trips
+
+- Change origin → destination text from text-sm to text-base
+- Update color from text-gray-500 to text-gray-600 for better contrast
+- Improve readability of route information in completed trips display"
+```
+
+```
+[main c914b3fa] feat(ui): increase font size for origin and destination in completed trips
+ 2 files changed, 150 insertions(+), 1 deletion(-)
+
+```
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git push backup main
+```
+
+```
+To /Users/scooper/Code/tcc-new-project-backup-20250922_105547
+   0b3bea9a..c914b3fa  main -> main
+
+```
+
+---
+
+Perfect! 🎉
+
+## ✅ **Origin and Destination Text Size Improved!**
+
+### 🔧 **Font Size Enhancement**
+
+**Before:**
+```
+Patient LEG-005
+Altoona Regional Emergency Department → UPMC Bedford Emergency Department  ← text-sm
+```
+
+**After:**
+```
+Patient LEG-005
+Altoona Regional Emergency Department → UPMC Bedford Emergency Department  ← text-base
+```
+
+### 🎯 **Changes Made**
+
+- **Font Size**: Increased from `text-sm` to `text-base` (14px → 16px)
+- **Color**: Enhanced from `text-gray-500` to `text-gray-600` for better contrast
+- **Readability**: Route information is now more prominent and easier to read
+
+### 🎨 **Visual Hierarchy**
+
+The completed trips display now has better visual hierarchy:
+1. **Patient ID**: `text-lg` (largest)
+2. **Route Information**: `text-base` (medium, now more prominent)
+3. **Trip Details Grid**: `text-sm` (smaller, supporting information)
+
+The origin and destination information is now more readable and stands out better in the completed trips display! 🚀
+
+
+---
+
+Tool use: **todo_write**
+
+## Todo List
+
+- [x] Fix backend routes/trips.ts to accept and pass urgencyLevel
+- [x] Fix tripService.ts to handle urgencyLevel and pickupLocation relation
+- [x] Fix EnhancedTripForm.tsx to send urgencyLevel and merge defaults
+- [x] Fix HealthcareDashboard.tsx to display urgencyLevel and correct High Priority tile
+- [x] Ensure dropdownOptions.ts returns merged urgency defaults
+- [x] Restart services, commit, push, and verify functionality
+- [x] Enhanced transport request display with improved layout and styling
+- [x] Remove redundant urgency pill from completed trips display
+- [x] Remove redundant COMPLETED status pill from completed trips display
+- [x] Improve completed trips time formatting with two-line layout
+- [x] Fix Transport Level and Urgency formatting to consistent two-line layout
+- [x] Optimize completed trips layout with single-row grid system
+- [x] Increase font size for origin and destination in completed trips
+
+---
+
+_**User (2025-10-03 22:38Z)**_
+
+Lets make the text in the third line, the header line for Transport Level: and so on, bold and maybe a dark grey. 
+
+---
+
+_**Assistant (default)**_
+
+Perfect! I'll make the header labels (Transport Level:, Urgency:, etc.) bold and use a darker grey color for better visual hierarchy:
+
+
+---
+
+Tool use: **search_replace**
+
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/HealthcareDashboard.tsx</summary>
+
+**Chunk 1**
+Lines added: 12, lines removed: 12
+
+```diff
+@@ -674,32 +674,32 @@
+                                </div>
+                              </div>
+-                             <div className="mt-2 grid grid-cols-6 gap-4 text-sm text-gray-500">
++                             <div className="mt-2 grid grid-cols-6 gap-4 text-sm">
+                                <div>
+-                                 <div className="font-medium">Transport Level:</div>
+-                                 <div>{trip.transportLevel}</div>
++                                 <div className="font-bold text-gray-800">Transport Level:</div>
++                                 <div className="text-gray-500">{trip.transportLevel}</div>
+                                </div>
+                                <div>
+-                                 <div className="font-medium">Urgency:</div>
+-                                 <div>{trip.urgencyLevel || 'Routine'}</div>
++                                 <div className="font-bold text-gray-800">Urgency:</div>
++                                 <div className="text-gray-500">{trip.urgencyLevel || 'Routine'}</div>
+                                </div>
+                                <div>
+-                                 <div className="font-medium">Request Time:</div>
+-                                 <div>{trip.requestTime}</div>
++                                 <div className="font-bold text-gray-800">Request Time:</div>
++                                 <div className="text-gray-500">{trip.requestTime}</div>
+                                </div>
+                                {trip.pickupTime && (
+                                  <div>
+-                                   <div className="font-medium">Pickup Time:</div>
+-                                   <div>{trip.pickupTime}</div>
++                                   <div className="font-bold text-gray-800">Pickup Time:</div>
++                                   <div className="text-gray-500">{trip.pickupTime}</div>
+                                  </div>
+                                )}
+                                {trip.waitTime && (
+                                  <div>
+-                                   <div className="font-medium">Wait Time:</div>
++                                   <div className="font-bold text-gray-800">Wait Time:</div>
+                                    <div className="text-green-600 font-semibold">{trip.waitTime}</div>
+                                  </div>
+                                )}
+                                <div>
+-                                 <div className="font-medium">Completion Time:</div>
+-                                 <div>{trip.completionTime || 'N/A'}</div>
++                                 <div className="font-bold text-gray-800">Completion Time:</div>
++                                 <div className="text-gray-500">{trip.completionTime || 'N/A'}</div>
+                                </div>
+                              </div>
+```
+
+</details>
+
+---
+
+Perfect! Now let me commit this styling improvement:
+
+
+---
+
+Tool use: **run_terminal_cmd**
+
+---
+
+
+
+---
+
