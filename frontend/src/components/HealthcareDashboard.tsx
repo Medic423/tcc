@@ -555,7 +555,7 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                     <div key={trip.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                       <div className="flex items-center space-x-4">
                         <div>
-                          <h4 className="text-lg font-medium text-gray-900">Patient {trip.patientId} - Request Time: {trip.requestTime}</h4>
+                          <h4 className="text-lg font-medium text-gray-900">Patient {trip.patientId} - {trip.transportLevel} - Request Time: {trip.requestTime}</h4>
                           <p className="text-base text-gray-600">
                             {trip.origin} → {trip.destination}
                           </p>
@@ -567,9 +567,17 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                               {trip.pickupTime && ` • ${trip.pickupTime}`}
                             </p>
                           )}
-                          <p className="text-xs text-gray-500">
-                            {trip.transportLevel} • {trip.urgencyLevel || 'Routine'}
-                          </p>
+                          <div className="flex items-center space-x-2">
+                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                              (trip.urgencyLevel || 'Routine') === 'Emergent' 
+                                ? 'bg-red-100 text-red-800' 
+                                : (trip.urgencyLevel || 'Routine') === 'Urgent'
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : 'bg-green-100 text-green-800'
+                            }`}>
+                              {trip.urgencyLevel || 'Routine'}
+                            </span>
+                          </div>
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
@@ -579,7 +587,7 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                         <div className="flex space-x-2 ml-4">
                           <button
                             onClick={() => handleEditTrip(trip)}
-                            className="text-blue-600 hover:text-blue-900 text-xs px-2 py-1 rounded hover:bg-blue-50"
+                            className="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 hover:bg-blue-200"
                             disabled={updating}
                           >
                             Edit
@@ -587,7 +595,7 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                           {trip.status !== 'COMPLETED' && (
                             <button
                               onClick={() => handleCompleteTrip(trip.id)}
-                              className="text-green-600 hover:text-green-900 text-xs px-2 py-1 rounded hover:bg-green-50"
+                              className="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 hover:bg-green-200"
                               disabled={updating}
                             >
                               Complete

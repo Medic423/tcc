@@ -3762,6 +3762,282 @@ Lines added: 1, lines removed: 1
 
 ---
 
+Now let me remove the request time from the bottom line:
+
+
+---
+
+Tool use: **search_replace**
+
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/HealthcareDashboard.tsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -541,5 +541,5 @@
+                            )}
+                            <p className="text-xs text-gray-500">
+-                             {trip.transportLevel} • {trip.urgencyLevel || 'Routine'} • Request Time: {trip.requestTime}
++                             {trip.transportLevel} • {trip.urgencyLevel || 'Routine'}
+                            </p>
+                          </div>
+```
+
+</details>
+
+---
+
+Now let me add the wait time calculation to the trip data transformation. First, let me add a function to calculate wait time:
+
+
+---
+
+Tool use: **search_replace**
+
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/HealthcareDashboard.tsx</summary>
+
+**Chunk 1**
+Lines added: 21, lines removed: undefined
+
+```diff
+@@ -46,4 +46,25 @@
+      specialNeeds: []
+    });
++ 
++   // Calculate wait time from request to pickup
++   const calculateWaitTime = (requestTime: string, pickupTime: string | null) => {
++     if (!pickupTime) return null;
++     
++     const request = new Date(requestTime);
++     const pickup = new Date(pickupTime);
++     const diffMs = pickup.getTime() - request.getTime();
++     
++     if (diffMs < 0) return '0 min'; // Handle edge cases
++     
++     const diffMinutes = Math.floor(diffMs / (1000 * 60));
++     const diffHours = Math.floor(diffMinutes / 60);
++     const remainingMinutes = diffMinutes % 60;
++     
++     if (diffHours > 0) {
++       return `${diffHours}h ${remainingMinutes}m`;
++     } else {
++       return `${diffMinutes} min`;
++     }
++   };
+  
+    // Load trips from API
+```
+
+</details>
+
+---
+
+Now let me add the wait time calculation to the trip data transformation:
+
+
+---
+
+Tool use: **search_replace**
+
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/HealthcareDashboard.tsx</summary>
+
+**Chunk 1**
+Lines added: 2, lines removed: undefined
+
+```diff
+@@ -129,5 +129,7 @@
+              status: trip.status,
+              requestTime: new Date(trip.createdAt).toLocaleString(),
++             requestTimeISO: trip.createdAt,
+              pickupTime: trip.pickupTimestamp ? new Date(trip.pickupTimestamp).toLocaleString() : null,
++             pickupTimeISO: trip.pickupTimestamp,
+              priority: trip.priority,
+              urgencyLevel: trip.urgencyLevel,
+```
+
+</details>
+
+---
+
+Now let me add the wait time calculation to the completed trips transformation:
+
+
+---
+
+Tool use: **search_replace**
+
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/HealthcareDashboard.tsx</summary>
+
+**Chunk 1**
+Lines added: 7, lines removed: 2
+
+```diff
+@@ -143,6 +143,11 @@
+            setFilteredTrips(activeTrips); // Initialize filtered trips
+            
+-           // Set completed trips for the completed tab
+-           const completed = transformedTrips.filter(trip => trip.status === 'COMPLETED');
++           // Set completed trips for the completed tab with wait time calculation
++           const completed = transformedTrips
++             .filter(trip => trip.status === 'COMPLETED')
++             .map(trip => ({
++               ...trip,
++               waitTime: calculateWaitTime(trip.requestTimeISO, trip.pickupTimeISO)
++             }));
+            setCompletedTrips(completed);
+          }
+```
+
+</details>
+
+---
+
+Now let me add the wait time display to the completed trips section:
+
+
+---
+
+Tool use: **search_replace**
+
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/HealthcareDashboard.tsx</summary>
+
+**Chunk 1**
+Lines added: 5, lines removed: undefined
+
+```diff
+@@ -683,4 +683,9 @@
+                                  </div>
+                                )}
++                               {trip.waitTime && (
++                                 <div>
++                                   <span className="font-medium">Wait Time:</span> <span className="text-green-600 font-semibold">{trip.waitTime}</span>
++                                 </div>
++                               )}
+                                <div>
+                                  <span className="font-medium">Completion Time:</span> {trip.completionTime || 'N/A'}
+```
+
+</details>
+
+---
+
+Perfect! Now let me commit these changes:
+
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git add -A && git commit -m "feat(ui): enhance trip display with prominent request time and wait time metrics
+
+- Move request time to first line for better visibility and hospital monitoring
+- Add wait time calculation (request time → pickup time) for completed trips
+- Display wait time in green to highlight performance metric
+- Improve layout: Patient ID - Request Time on first line
+- Add wait time as key performance indicator for system effectiveness"
+```
+
+```
+[main 6aea4b35] feat(ui): enhance trip display with prominent request time and wait time metrics
+ 2 files changed, 759 insertions(+), 4 deletions(-)
+
+```
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git push backup main
+```
+
+```
+To /Users/scooper/Code/tcc-new-project-backup-20250922_105547
+   c25329db..6aea4b35  main -> main
+
+```
+
+---
+
+Perfect! 🎉
+
+## ✅ **Enhanced Trip Display Complete!**
+
+### 🔧 **Changes Made**
+
+1. **Moved Request Time to First Line**:
+   - **Before**: `Patient TEST123` (separate line)
+   - **After**: `Patient TEST123 - Request Time: 10/5/2025, 1:10:32 PM`
+   - Makes request time much more prominent for hospital monitoring
+
+2. **Added Wait Time Calculation & Display**:
+   - **New Metric**: Calculates time from Request Time → Pickup Time
+   - **Display**: Shows in green with format like "25 min" or "1h 15m"
+   - **Location**: Added to Completed Trips section
+   - **Purpose**: Key performance indicator for system effectiveness
+
+### 🎯 **New Display Layout**
+
+**Main Trip Cards:**
+```
+Patient TEST123 - Request Time: 10/5/2025, 1:10:32 PM
+Bedford Memorial Hospital → Conemaugh Nason Medical Center
+Pickup: Cardiac Unit (Floor 4th Floor) • 10/5/2025, 2:15:30 PM
+ALS • Emergent
+```
+
+**Completed Trips Section:**
+```
+Transport Level: ALS
+Urgency: Emergent
+Request Time: 10/5/2025, 1:10:32 PM
+Pickup Time: 10/5/2025, 2:15:30 PM
+Wait Time: 1h 5m  ← NEW! (in green)
+Completion Time: 10/5/2025, 3:45:15 PM
+```
+
+### 📊 **Business Value**
+
+This creates a powerful performance metric that hospitals can use to:
+- **Monitor Efficiency**: Track how quickly patients are being picked up
+- **System Validation**: Prove that the TCC system reduces wait times
+- **Performance Benchmarking**: Compare wait times across different periods
+- **Operational Insights**: Identify bottlenecks and improvement opportunities
+
+The wait time metric will be invaluable for demonstrating the ROI of using the TCC system! 🚀
+
+---
+
+_**User (2025-10-03 22:38Z)**_
+
+Lets continue tweaking the Transport Requests display.  We currently have:
+
+Patient TEST123 - Request Time: 10/5/2025, 1:10:32 PM
+Bedford Memorial Hospital → Conemaugh Nason Medical Center
+Pickup: Cardiac Unit (Floor 4th Floor) • 10/5/2025, 2:15:30 PM
+ALS • Emergent
+
+We need to move up the transport level ( ALS, BLS ) to the top line so it reads:
+Patient TEST123 - ALS - Request Time: 10/5/2025, 1:10:32 PM
+ 
+The last improvement would be to change the priority level, If "Emergent" to the same format as the "Decline" button in the EMS -> Available Trips display. 
+
+The "Edit, Complete" buttons on the Healthcare Transport requests need to use the "pill" type display to match the "Pending" display.
+
+Any questions?
+
+
+---
+
+_**Assistant (default)**_
+
 
 
 ---
