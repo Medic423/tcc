@@ -430,9 +430,21 @@ model DropdownOption {
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  defaultFor CategoryDefault?
 
   @@unique([category, value])
   @@map("dropdown_options")
+}
+
+model CategoryDefault {
+  id        String         @id @default(cuid())
+  category  String         @unique
+  optionId  String         @unique
+  option    DropdownOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@map("dropdown_category_defaults")
 }
 
 model TransportRequest {

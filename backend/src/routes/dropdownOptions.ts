@@ -41,6 +41,65 @@ router.get('/:category', authenticateAdmin, async (req: AuthenticatedRequest, re
   }
 });
 
+// Get default option for a category
+router.get('/:category/default', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
+  try {
+    const { category } = req.params;
+
+    if (!ALLOWED_CATEGORIES.has(category)) {
+      return res.status(400).json({ success: false, error: 'Invalid category' });
+    }
+
+    const hospitalPrisma = databaseManager.getHospitalDB();
+    const existing = await hospitalPrisma.categoryDefault.findUnique({
+      where: { category },
+      include: { option: true }
+    });
+
+    res.json({ success: true, data: existing || null });
+  } catch (error) {
+    console.error('TCC_DEBUG: Get default option error:', error);
+    res.status(500).json({ success: false, error: 'Failed to get default option' });
+  }
+});
+
+// Set default option for a category
+router.post('/:category/default', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
+  try {
+    const { category } = req.params;
+    const { optionId } = req.body;
+
+    if (!ALLOWED_CATEGORIES.has(category)) {
+      return res.status(400).json({ success: false, error: 'Invalid category' });
+    }
+    if (!optionId) {
+      return res.status(400).json({ success: false, error: 'optionId is required' });
+    }
+
+    const hospitalPrisma = databaseManager.getHospitalDB();
+
+    // Validate option exists and belongs to category
+    const option = await hospitalPrisma.dropdownOption.findUnique({ where: { id: optionId } });
+    if (!option || option.category !== category || !option.isActive) {
+      return res.status(400).json({ success: false, error: 'Invalid option for this category' });
+    }
+
+    // Upsert default for category
+    const updated = await hospitalPrisma.categoryDefault.upsert({
+      where: { category },
+      update: { optionId },
+      create: { category, optionId }
+    });
+
+    const withOption = await hospitalPrisma.categoryDefault.findUnique({ where: { category }, include: { option: true } });
+
+    res.json({ success: true, data: withOption, message: 'Default updated' });
+  } catch (error) {
+    console.error('TCC_DEBUG: Set default option error:', error);
+    res.status(500).json({ success: false, error: 'Failed to set default option' });
+  }
+});
+
 // Add new dropdown option
 router.post('/', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
   try {

@@ -199,6 +199,25 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
 
       console.log('TCC_DEBUG: Setting real form options:', options);
       setFormOptions(options);
+
+      // Apply defaults from backend
+      try {
+        const [tl, urg, dx, mob] = await Promise.all([
+          api.get('/api/dropdown-options/transport-level/default'),
+          api.get('/api/dropdown-options/urgency/default'),
+          api.get('/api/dropdown-options/diagnosis/default'),
+          api.get('/api/dropdown-options/mobility/default')
+        ]);
+        setFormData(prev => ({
+          ...prev,
+          transportLevel: tl.data?.data?.option?.value || prev.transportLevel,
+          urgencyLevel: urg.data?.data?.option?.value || prev.urgencyLevel,
+          diagnosis: dx.data?.data?.option?.value ? dx.data.data.option.value : '',
+          mobilityLevel: mob.data?.data?.option?.value || prev.mobilityLevel
+        }));
+      } catch (e) {
+        console.warn('TCC_DEBUG: Defaults not available yet');
+      }
     } catch (error) {
       console.error('Error loading form options:', error);
       // Fallback to basic options if API fails

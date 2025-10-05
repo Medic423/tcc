@@ -257,6 +257,14 @@ export const dropdownOptionsAPI = {
   getByCategory: (category: string) =>
     api.get(`/api/dropdown-options/${encodeURIComponent(category)}`),
 
+  // Get default for a category
+  getDefault: (category: string) =>
+    api.get(`/api/dropdown-options/${encodeURIComponent(category)}/default`),
+
+  // Set default for a category
+  setDefault: (category: string, optionId: string) =>
+    api.post(`/api/dropdown-options/${encodeURIComponent(category)}/default`, { optionId }),
+
   // CRUD for options
   create: (data: { category: string; value: string }) =>
     api.post('/api/dropdown-options', data),
