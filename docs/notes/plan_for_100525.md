@@ -28,6 +28,14 @@ Based on the successful completion of the TCC Application Simplification Plan on
 
 ## Phase 5: Comprehensive Data Flow Testing (October 5, 2025)
 
+### Accomplishments (Oct 5)
+- Added `pickupLocation` support end-to-end: schema relation, backend create/connect, and UI display in `HealthcareDashboard` and `EMSDashboard`.
+- Fixed Prisma validation issues for facility relations and pickup location; ensured proper `connect` usage.
+- Hospital Settings dropdowns: enforced fixed core categories and added user-configurable `insurance` and `special-needs` categories.
+- Introduced `CategoryDefault` model and backend endpoints to get/set per-category defaults.
+- Updated `HospitalSettings` to manage defaults; updated `EnhancedTripForm` to load options from Hospital Settings and apply defaults (Transport Level, Urgency, Mobility; Insurance and Special Needs now sourced from settings).
+- Merged feature branch into `main` and pushed; created enhanced backup at `/Volumes/Acasis/tcc-backups/...`.
+
 ### **Priority 1: Healthcare ↔ EMS Data Flow Verification** 🔥 **CRITICAL**
 
 #### **Objective**: Ensure all data fields are properly wired and updating correctly between Healthcare and EMS modules
