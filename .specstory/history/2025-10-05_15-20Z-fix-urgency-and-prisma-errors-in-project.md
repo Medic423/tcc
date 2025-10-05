@@ -3040,6 +3040,728 @@ Output mode: content
 
 ---
 
+Perfect! I can see that:
+
+1. **`requestTime`** is derived from `trip.createdAt` (line 109) - this is when the trip was **created/requested**
+2. There's also a **`completionTime`** derived from `trip.completionTimestamp` (line 112) - this is when the trip was **completed**
+3. But I don't see a **pickup time** field being used
+
+Let me check what fields are available in the trip data by looking at the API response or the trip transformation:
+
+
+---
+
+Tool use: **read_file**
+
+Read file: /Users/scooper/Code/tcc-new-project/frontend/src/components/HealthcareDashboard.tsx
+
+---
+
+I can see that the current transformation doesn't include a pickup time. Let me check what fields are available in the raw trip data by looking at the database schema or API response. Let me check the backend trip service to see what fields are available:
+
+
+---
+
+Tool use: **grep**
+
+<details>
+<summary>Grep for "pickupTimestamp" in "/Users/scooper/Code/tcc-new-project/backend/src/services/tripService.ts" • 5 matches</summary>
+
+Output mode: content
+
+
+| Content | Line |
+|------|------|
+| `pickupTimestamp?: string;` | L29 |
+| `pickupTimestamp: null,` | L97 |
+| `updateData.pickupTimestamp = new Date(data.completionTimestamp);` | L269 |
+| `pickupTimestamp: null,` | L350 |
+| `updateData.pickupTimestamp = new Date(times.emsArrivalTime);` | L505 |
+
+
+</details>
+
+---
+
+Great! I can see that there is a `pickupTimestamp` field in the database. Now let me check if this field is being returned in the API response:
+
+
+---
+
+Tool use: **grep**
+
+---
+
+The `pickupTimestamp` field is not currently being used in the frontend. Let me add it to the trip transformation and then update the display. First, let me add the pickup time to the trip transformation:
+
+
+---
+
+Tool use: **search_replace**
+
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/HealthcareDashboard.tsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: undefined
+
+```diff
+@@ -108,4 +108,5 @@
+              status: trip.status,
+              requestTime: new Date(trip.createdAt).toLocaleString(),
++             pickupTime: trip.pickupTimestamp ? new Date(trip.pickupTimestamp).toLocaleString() : null,
+              priority: trip.priority,
+              urgencyLevel: trip.urgencyLevel,
+```
+
+</details>
+
+---
+
+Now let me update the pickup location line to include the pickup time:
+
+
+---
+
+Tool use: **search_replace**
+
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/HealthcareDashboard.tsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: undefined
+
+```diff
+@@ -537,4 +537,5 @@
+                                {trip.pickupLocation.floor && ` (Floor ${trip.pickupLocation.floor})`}
+                                {trip.pickupLocation.room && ` - Room ${trip.pickupLocation.room}`}
++                               {trip.pickupTime && ` • ${trip.pickupTime}`}
+                              </p>
+                            )}
+```
+
+</details>
+
+---
+
+Perfect! Now let me also update the completed trips section to include pickup time:
+
+
+---
+
+Tool use: **grep**
+
+---
+
+Let me search for the completed trips section:
+
+
+---
+
+Tool use: **grep**
+
+---
+
+Let me search for the completed trips display section:
+
+
+---
+
+Tool use: **grep**
+
+---
+
+Let me find the completed trips section by looking for the tab content:
+
+
+---
+
+Tool use: **grep**
+
+---
+
+Let me search for the completed trips section more broadly:
+
+
+---
+
+Tool use: **grep**
+
+---
+
+Let me search for "Completed" with capital C:
+
+
+---
+
+Tool use: **grep**
+
+---
+
+Let me search for the completed trips section by looking for the tab structure:
+
+
+---
+
+Tool use: **grep**
+
+---
+
+Let me look at the tab structure to find the completed trips section:
+
+
+---
+
+Tool use: **read_file**
+
+Read file: /Users/scooper/Code/tcc-new-project/frontend/src/components/HealthcareDashboard.tsx
+
+---
+
+Great! I found the completed trips section. Let me continue reading to see the full structure:
+
+
+---
+
+Tool use: **read_file**
+
+Read file: /Users/scooper/Code/tcc-new-project/frontend/src/components/HealthcareDashboard.tsx
+
+---
+
+Perfect! I can see the completed trips section. Now let me add pickup time to the completed trips display as well:
+
+
+---
+
+Tool use: **search_replace**
+
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/HealthcareDashboard.tsx</summary>
+
+**Chunk 1**
+Lines added: 5, lines removed: undefined
+
+```diff
+@@ -650,4 +650,9 @@
+                                  <span className="font-medium">Request Time:</span> {trip.requestTime}
+                                </div>
++                               {trip.pickupTime && (
++                                 <div>
++                                   <span className="font-medium">Pickup Time:</span> {trip.pickupTime}
++                                 </div>
++                               )}
+                                <div>
+                                  <span className="font-medium">Completion Time:</span> {trip.completionTime || 'N/A'}
+```
+
+</details>
+
+---
+
+Perfect! Now let me commit these changes:
+
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git add -A && git commit -m "feat(ui): add pickup time display to trip cards
+
+- Add pickupTime field to trip data transformation from pickupTimestamp
+- Display pickup time next to pickup location in main trip cards
+- Add pickup time to completed trips section for better tracking
+- Improves visibility of when EMS actually picked up patients"
+```
+
+```
+[main e0361a86] feat(ui): add pickup time display to trip cards
+ 2 files changed, 148 insertions(+)
+
+```
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git push backup main
+```
+
+```
+To /Users/scooper/Code/tcc-new-project-backup-20250922_105547
+   8a432f39..e0361a86  main -> main
+
+```
+
+---
+
+Perfect! 🎉
+
+## ✅ **Pickup Time Added Successfully!**
+
+### 🔧 **Changes Made**
+
+1. **Added Pickup Time Field**: 
+   - Added `pickupTime` to the trip data transformation from `trip.pickupTimestamp`
+   - This field will show when EMS actually picked up the patient
+
+2. **Updated Main Trip Cards**:
+   - **Before**: `Pickup: Cardiac Unit (Floor 4th Floor)`
+   - **After**: `Pickup: Cardiac Unit (Floor 4th Floor) • 10/5/2025, 2:15:30 PM`
+   - The pickup time appears right after the pickup location with a bullet separator
+
+3. **Enhanced Completed Trips Section**:
+   - Added pickup time as a separate field in the completed trips display
+   - Shows: "Pickup Time: 10/5/2025, 2:15:30 PM" when available
+
+### 📋 **Data Flow Clarification**
+
+To answer your question about the timestamps:
+
+- **"10/5/2025, 1:10:32 PM"** = **Request Time** (when the trip was created/requested)
+- **Pickup Time** = When EMS actually arrived and picked up the patient (from `pickupTimestamp`)
+- **Completion Time** = When the trip was marked as completed
+
+### 🎯 **Expected Result**
+
+Now the pickup location line will show:
+```
+Pickup: Cardiac Unit (Floor 4th Floor) • 10/5/2025, 2:15:30 PM
+```
+
+This provides much better visibility into the actual timeline of patient transport! The pickup time will only appear when it's available (i.e., when EMS has marked that they've picked up the patient).
+
+**Ready for the next UI improvement?** 🚀
+
+---
+
+_**User (2025-10-03 22:38Z)**_
+
+A couple of things. The app currently doesn't support a way for EMS to mark that the patient has been pickedup. That would be recorded by the hospital when EMS leaves with the patient by the hospital clicking the "Complete button which is already on this page. We need to add a label to "10/5/2025, 1:10:32 PM"  so it reads "Request Time: "10/5/2025, 1:10:32 PM" Does that make scense. The UI didn't update with the changes you implemented. I did a refresh on the page but it didn't change. 
+
+---
+
+_**Assistant (default)**_
+
+You're absolutely right on both points! Let me address them:
+
+1. **Request Time Label**: Yes, that makes perfect sense! The timestamp should be clearly labeled as "Request Time:" to avoid confusion.
+
+2. **UI Not Updating**: The frontend changes should have updated automatically with Vite's hot module replacement. Let me check if there's an issue and also add the label.
+
+Let me first add the "Request Time:" label to make it clearer:
+
+
+---
+
+Tool use: **search_replace**
+
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/HealthcareDashboard.tsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -541,5 +541,5 @@
+                            )}
+                            <p className="text-xs text-gray-500">
+-                             {trip.transportLevel} • {trip.urgencyLevel || 'Routine'} • {trip.requestTime}
++                             {trip.transportLevel} • {trip.urgencyLevel || 'Routine'} • Request Time: {trip.requestTime}
+                            </p>
+                          </div>
+```
+
+</details>
+
+---
+
+Now let me check if there are any console errors or issues preventing the hot reload. Let me also check the current state of the file to make sure our changes are properly saved:
+
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git status
+```
+
+```
+On branch main
+Your branch is up to date with 'backup/main'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   .specstory/history/2025-10-05_15-20Z-fix-urgency-and-prisma-errors-in-project.md
+	modified:   frontend/src/components/HealthcareDashboard.tsx
+
+no changes added to commit (use "git add" and/or "git commit -a")
+
+```
+
+---
+
+I can see the HealthcareDashboard.tsx file has been modified. Let me check if there are any syntax errors that might be preventing the hot reload:
+
+
+---
+
+Tool use: **read_lints**
+
+<details>
+          <summary>Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `/Users/scooper/Code/tcc-new-project/frontend/src/components/HealthcareDashboard.tsx`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+
+---
+
+The file looks good. Let me commit this change and also check if the frontend development server is running properly:
+
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git add frontend/src/components/HealthcareDashboard.tsx && git commit -m "fix(ui): add Request Time label to trip cards for clarity
+
+- Add 'Request Time:' label to timestamp display
+- Clarifies that timestamp represents when trip was requested, not pickup time
+- Improves user understanding of timeline information"
+```
+
+```
+[main c25329db] fix(ui): add Request Time label to trip cards for clarity
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+```
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git push backup main
+```
+
+```
+To /Users/scooper/Code/tcc-new-project-backup-20250922_105547
+   e0361a86..c25329db  main -> main
+
+```
+
+---
+
+Now let me check if the frontend development server is running properly. The hot reload might not be working due to a server issue:
+
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && ps aux | grep -E "(vite|npm|node)" | grep -v grep
+```
+
+```
+scooper          93940   0.5  0.1 453169968  35728   ??  S     5:46PM  11:23.69 node /Users/scooper/Code/tcc-new-project/frontend/node_modules/.bin/vite
+scooper          21693   0.1  0.5 453190080 135408   ??  S    11:23AM   1:35.87 node /Users/scooper/Code/tcc-new-project/frontend/node_modules/.bin/vite
+scooper          21694   0.0  0.1 410829600  20928   ??  S    11:23AM   0:05.16 /Users/scooper/Code/tcc-new-project/frontend/node_modules/@esbuild/darwin-arm64/bin/esbuild --service=0.21.5 --ping
+scooper          21678   0.0  0.1 436336320  31328   ??  S    11:23AM   0:00.18 npm run dev   
+scooper          21586   0.0  0.1 436298192  25648   ??  S    11:23AM   0:00.26 node /Users/scooper/Code/tcc-new-project/backend/node_modules/.bin/nodemon src/index.ts
+scooper          21571   0.0  0.1 436339984  31376   ??  S    11:23AM   0:00.17 npm run dev   
+scooper          93941   0.0  0.0 410820432  12144   ??  S     5:46PM   0:37.82 /Users/scooper/Code/tcc-new-project/frontend/node_modules/@esbuild/darwin-arm64/bin/esbuild --service=0.21.5 --ping
+scooper          93925   0.0  0.1 436340480  18640   ??  S     5:46PM   0:00.83 npm run dev   
+scooper          93919   0.0  0.0 435308304   1072   ??  S     5:46PM   0:00.00 /bin/zsh -o extendedglob -c snap=$(command cat <&3); builtin unsetopt aliases 2>/dev/null; builtin unalias -m '*' 2>/dev/null || true; builtin setopt extendedglob; builtin eval "$snap" && { builtin export PWD="$(builtin pwd)"; builtin setopt aliases 2>/dev/null; builtin eval "$1" < /dev/null; }; COMMAND_EXIT_CODE=$?; dump_zsh_state >&4; builtin exit $COMMAND_EXIT_CODE -- cd /Users/scooper/Code/tcc-new-project/frontend && npm run dev
+scooper          89427   0.0  0.1 444765200  14112   ??  SN    3:58PM   0:01.01 node /Users/scooper/Code/tcc-new-project/node_modules/tcc-backend/node_modules/.bin/prisma studio --port 5555
+scooper          89393   0.0  0.1 436335472  15104   ??  SN    3:58PM   0:00.24 npm exec prisma studio --port 5555     
+scooper          17963   0.0  0.0 444769488   8688   ??  SN   Sat10AM   0:01.08 node /Users/scooper/Code/tcc-new-project/node_modules/tcc-backend/node_modules/.bin/prisma studio --port 5556
+scooper          17928   0.0  0.0 436343296   6432   ??  SN   Sat10AM   0:00.25 npm exec prisma studio --port 5556     
+scooper          27454   0.0  0.0 1647047392   7440   ??  S    Fri05PM   0:01.12 /Applications/Cursor.app/Contents/Frameworks/Cursor Helper (Plugin).app/Contents/MacOS/Cursor Helper (Plugin) /Applications/Cursor.app/Contents/Resources/app/extensions/node_modules/typescript/lib/typingsInstaller.js --globalTypingsCacheLocation /Users/scooper/Library/Caches/typescript/5.9 --enableTelemetry --typesMapLocation /Applications/Cursor.app/Contents/Resources/app/extensions/node_modules/typescript/lib/typesMap.json --validateDefaultNpmLocation
+scooper          26891   0.0  0.1 1647047072  26080   ??  S    Fri05PM   0:10.08 /Applications/Cursor.app/Contents/Frameworks/Cursor Helper (Plugin).app/Contents/MacOS/Cursor Helper (Plugin) /Applications/Cursor.app/Contents/Resources/app/extensions/markdown-language-features/dist/serverWorkerMain --node-ipc --clientProcessId=26511
+scooper          26752   0.0  0.1 1647046944  16160   ??  S    Fri05PM   0:06.88 /Applications/Cursor.app/Contents/Frameworks/Cursor Helper (Plugin).app/Contents/MacOS/Cursor Helper (Plugin) /Applications/Cursor.app/Contents/Resources/app/extensions/json-language-features/server/dist/node/jsonServerMain --node-ipc --clientProcessId=26511
+scooper          92138   0.0  0.3 445095968  85040   ??  SN    1:22PM   0:05.49 node /Users/scooper/Code/tcc-new-project/backend/node_modules/.bin/ts-node src/index.ts
+scooper          91557   0.0  0.1 436298624  26080   ??  SN    1:22PM   0:00.12 node /Users/scooper/Code/tcc-new-project/backend/node_modules/.bin/nodemon src/index.ts
+scooper          91531   0.0  0.1 436335888  31824   ??  SN    1:22PM   0:00.11 npm run dev   
+scooper          85457   0.0  0.1 436298000  26144   ??  SN    1:12PM   0:00.14 node /Users/scooper/Code/tcc-new-project/backend/node_modules/.bin/nodemon src/index.ts
+scooper          85431   0.0  0.1 436332560  31840   ??  SN    1:12PM   0:00.12 npm run dev   
+
+```
+
+---
+
+I can see there are multiple Vite processes running, which might be causing conflicts. Let me restart the development servers cleanly:
+
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && pkill -f "vite" && pkill -f "ts-node" && sleep 2
+```
+
+---
+
+Now let me restart the development servers:
+
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && ./scripts/start-dev-complete.sh &
+```
+
+---
+
+Let me wait a moment for the servers to start and then check their status:
+
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+sleep 5 && cd /Users/scooper/Code/tcc-new-project && curl -s http://localhost:5173 | head -5
+```
+
+---
+
+Let me check if the servers are running:
+
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && ps aux | grep -E "(vite|ts-node)" | grep -v grep
+```
+
+```
+scooper          19540  67.8  2.2 445149648 552432   ??  SN    2:10PM   0:04.23 node /Users/scooper/Code/tcc-new-project/backend/node_modules/.bin/ts-node src/index.ts
+scooper          19615   0.1  1.5 453365616 367296   ??  SN    2:10PM   0:01.65 node /Users/scooper/Code/tcc-new-project/frontend/node_modules/.bin/vite
+
+```
+
+---
+
+Great! The servers are running. Now let me check if the frontend is accessible:
+
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && curl -s -I http://localhost:5173
+```
+
+---
+
+Let me check what ports the servers are actually running on:
+
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && lsof -i :5173 && echo "---" && lsof -i :3001
+```
+
+---
+
+Let me check the server logs to see what's happening:
+
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && netstat -an | grep LISTEN | grep -E "(3001|5173)"
+```
+
+---
+
+It seems the servers might not be running properly. Let me start them manually:
+
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+cd /Users/scooper/Code/tcc-new-project/frontend && npm run dev &
+```
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+cd /Users/scooper/Code/tcc-new-project/backend && npm run dev &
+```
+
+---
+
+Let me wait a moment and check if the servers are now running:
+
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+sleep 3 && cd /Users/scooper/Code/tcc-new-project && ps aux | grep -E "(vite|ts-node)" | grep -v grep
+```
+
+```
+scooper          19989   0.5  0.5 453165104 114544   ??  SN    2:11PM   0:00.39 node /Users/scooper/Code/tcc-new-project/frontend/node_modules/.bin/vite
+scooper          19615   0.4  0.7 453173136 174512   ??  SN    2:10PM   0:02.02 node /Users/scooper/Code/tcc-new-project/frontend/node_modules/.bin/vite
+scooper          19540   0.0  2.2 445142320 552832   ??  SN    2:10PM   0:04.24 node /Users/scooper/Code/tcc-new-project/backend/node_modules/.bin/ts-node src/index.ts
+
+```
+
+---
+
+Good! Now let me check if the frontend is accessible:
+
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && curl -s -I http://localhost:5173 | head -3
+```
+
+---
+
+Let me check what port Vite is actually running on by looking at the process:
+
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && lsof -i -P | grep LISTEN | grep node
+```
+
+```
+node      17963 scooper   15u  IPv6 0x4b3090972d7f4602      0t0  TCP *:5556 (LISTEN)
+node      19540 scooper   12u  IPv6 0x304be04de67fddbb      0t0  TCP *:5001 (LISTEN)
+node      19615 scooper   18u  IPv6 0x9bd8c040c42e5011      0t0  TCP localhost:3000 (LISTEN)
+node      19989 scooper   19u  IPv6 0xde0cbe37f9fe7aa4      0t0  TCP localhost:3001 (LISTEN)
+node      89427 scooper   15u  IPv6 0x4a1b4f55668597f6      0t0  TCP *:5555 (LISTEN)
+
+```
+
+---
+
+I can see that:
+- Backend is running on port 5001 ✅
+- Frontend is running on port 3000 (not 5173) ✅
+
+The frontend should be accessible at `http://localhost:3000`. The changes should now be visible when you refresh the page.
+
+## ✅ **Summary of Changes Made**
+
+1. **Added "Request Time:" Label**: 
+   - **Before**: `ALS • Emergent • 10/5/2025, 1:10:32 PM`
+   - **After**: `ALS • Emergent • Request Time: 10/5/2025, 1:10:32 PM`
+
+2. **Added Pickup Time Display**:
+   - **Before**: `Pickup: Cardiac Unit (Floor 4th Floor)`
+   - **After**: `Pickup: Cardiac Unit (Floor 4th Floor) • 10/5/2025, 2:15:30 PM` (when available)
+
+3. **Clarified Data Flow**:
+   - **Request Time** = When the trip was created/requested by the hospital
+   - **Pickup Time** = When EMS actually picked up the patient (recorded by hospital when they click "Complete")
+   - **Completion Time** = When the trip was marked as completed
+
+## 🔧 **About EMS Pickup Tracking**
+
+You're absolutely correct that currently there's no way for EMS to mark pickup directly. The pickup time is recorded when the hospital clicks the "Complete" button, which represents the hospital confirming that EMS has left with the patient. This is actually a good workflow since the hospital is the authoritative source for when the patient physically leaves their facility.
+
+**Please try refreshing the page at `http://localhost:3000` now** - the changes should be visible with the "Request Time:" label added! 🚀
+
+---
+
+_**User (2025-10-03 22:38Z)**_
+
+Great now I see the "Request Time" label. The display looks like this:
+
+Patient TEST123
+Bedford Memorial Hospital → Conemaugh Nason Medical Center
+Pickup: Cardiac Unit (Floor 4th Floor)
+ALS • Emergent • Request Time: 10/5/2025, 1:10:32 PM
+
+I think it may make some sense to move the request time up to the first line to make it more promiment. Hospitals now closely monitor the during of how long it takes from the time they make the request until the patient is picked-up  
+
+Patient TEST123 - Request Time: 10/5/2025, 1:10:32 PM
+Bedford Memorial Hospital → Conemaugh Nason Medical Center
+Pickup: Cardiac Unit (Floor 4th Floor)
+ALS • Emergent 
+
+I don't think we make a duration calculation but it would be perfect to add a "Duration" filed to the Completed Trips display to monitor how they are doing. It would be a perfect metric for us to use too, to show if using the system is shortening the wait times. "Wait Time" might be a better description than "Duration"
+
+Any questions? 
+
+---
+
+_**Assistant (default)**_
+
+Perfect! That makes excellent sense from both a business and operational perspective. Let me implement both changes:
+
+1. **Move Request Time to the first line** for better prominence
+2. **Add "Wait Time" calculation** to completed trips (Request Time → Pickup Time)
+
+This is a great metric for hospitals to track their efficiency and for us to demonstrate the system's value!
+
+Let me start with moving the request time to the first line:
+
+
+---
+
+Tool use: **search_replace**
+
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/HealthcareDashboard.tsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -528,5 +528,5 @@
+                        <div className="flex items-center space-x-4">
+                          <div>
+-                           <h4 className="text-lg font-medium text-gray-900">Patient {trip.patientId}</h4>
++                           <h4 className="text-lg font-medium text-gray-900">Patient {trip.patientId} - Request Time: {trip.requestTime}</h4>
+                            <p className="text-base text-gray-600">
+                              {trip.origin} → {trip.destination}
+```
+
+</details>
+
+---
+
 
 
 ---

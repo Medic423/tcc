@@ -46,6 +46,27 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
     specialNeeds: []
   });
 
+  // Calculate wait time from request to pickup
+  const calculateWaitTime = (requestTime: string, pickupTime: string | null) => {
+    if (!pickupTime) return null;
+    
+    const request = new Date(requestTime);
+    const pickup = new Date(pickupTime);
+    const diffMs = pickup.getTime() - request.getTime();
+    
+    if (diffMs < 0) return '0 min'; // Handle edge cases
+    
+    const diffMinutes = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMinutes / 60);
+    const remainingMinutes = diffMinutes % 60;
+    
+    if (diffHours > 0) {
+      return `${diffHours}h ${remainingMinutes}m`;
+    } else {
+      return `${diffMinutes} min`;
+    }
+  };
+
   // Load trips from API
   useEffect(() => {
     loadTrips();
@@ -107,7 +128,9 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
             transportLevel: trip.transportLevel || 'BLS',
             status: trip.status,
             requestTime: new Date(trip.createdAt).toLocaleString(),
+            requestTimeISO: trip.createdAt,
             pickupTime: trip.pickupTimestamp ? new Date(trip.pickupTimestamp).toLocaleString() : null,
+            pickupTimeISO: trip.pickupTimestamp,
             priority: trip.priority,
             urgencyLevel: trip.urgencyLevel,
             completionTime: trip.completionTimestamp ? new Date(trip.completionTimestamp).toLocaleString() : null,
@@ -119,8 +142,13 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
           setTrips(activeTrips);
           setFilteredTrips(activeTrips); // Initialize filtered trips
           
-          // Set completed trips for the completed tab
-          const completed = transformedTrips.filter(trip => trip.status === 'COMPLETED');
+          // Set completed trips for the completed tab with wait time calculation
+          const completed = transformedTrips
+            .filter(trip => trip.status === 'COMPLETED')
+            .map(trip => ({
+              ...trip,
+              waitTime: calculateWaitTime(trip.requestTimeISO, trip.pickupTimeISO)
+            }));
           setCompletedTrips(completed);
         }
       }
@@ -527,7 +555,7 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                     <div key={trip.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                       <div className="flex items-center space-x-4">
                         <div>
-                          <h4 className="text-lg font-medium text-gray-900">Patient {trip.patientId}</h4>
+                          <h4 className="text-lg font-medium text-gray-900">Patient {trip.patientId} - Request Time: {trip.requestTime}</h4>
                           <p className="text-base text-gray-600">
                             {trip.origin} → {trip.destination}
                           </p>
@@ -540,7 +568,7 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                             </p>
                           )}
                           <p className="text-xs text-gray-500">
-                            {trip.transportLevel} • {trip.urgencyLevel || 'Routine'} • Request Time: {trip.requestTime}
+                            {trip.transportLevel} • {trip.urgencyLevel || 'Routine'}
                           </p>
                         </div>
                       </div>
@@ -652,6 +680,11 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                               {trip.pickupTime && (
                                 <div>
                                   <span className="font-medium">Pickup Time:</span> {trip.pickupTime}
+                                </div>
+                              )}
+                              {trip.waitTime && (
+                                <div>
+                                  <span className="font-medium">Wait Time:</span> <span className="text-green-600 font-semibold">{trip.waitTime}</span>
                                 </div>
                               )}
                               <div>
