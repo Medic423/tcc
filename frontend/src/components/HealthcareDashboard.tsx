@@ -90,7 +90,11 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
             patientId: trip.patientId,
             origin: trip.originFacility?.name || 'Unknown Origin',
             destination: trip.destinationFacility?.name || 'Unknown Destination',
-            pickupLocation: trip.pickupLocation,
+            pickupLocation: trip.pickupLocation ? {
+              name: trip.pickupLocation.name,
+              floor: trip.pickupLocation.floor,
+              room: trip.pickupLocation.room,
+            } : null,
             transportLevel: trip.transportLevel || 'BLS',
             status: trip.status,
             requestTime: new Date(trip.createdAt).toLocaleString(),

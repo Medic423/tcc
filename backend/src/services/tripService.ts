@@ -61,13 +61,12 @@ export class TripService {
     try {
       const tripNumber = `TRP-${Date.now()}`;
       
-      const tripData = {
+      const tripData: any = {
         tripNumber,
         patientId: data.patientId,
         patientWeight: null,
         specialNeeds: data.specialNeeds || null,
-        originFacilityId: data.originFacilityId,
-        destinationFacilityId: data.destinationFacilityId,
+        // Use relation connects for facilities (Prisma expects relation objects here)
         fromLocation: null,
         toLocation: null,
         scheduledTime: new Date(data.readyStart),
@@ -87,11 +86,22 @@ export class TripService {
         requestTimestamp: new Date(),
         acceptedTimestamp: null,
         pickupTimestamp: null,
-        pickupLocationId: null,
         notes: null,
         isolation: data.isolation || false,
         bariatric: data.bariatric || false,
       };
+
+      // Connect origin/destination facilities if provided
+      if (data.originFacilityId) {
+        tripData.originFacility = { connect: { id: data.originFacilityId } };
+      }
+      if (data.destinationFacilityId) {
+        tripData.destinationFacility = { connect: { id: data.destinationFacilityId } };
+      }
+      // Connect pickup location if provided
+      if ((data as any).pickupLocationId) {
+        tripData.pickupLocation = { connect: { id: (data as any).pickupLocationId } };
+      }
 
       const trip = await prisma.transportRequest.create({
         data: tripData
@@ -157,6 +167,14 @@ export class TripService {
               name: true,
               type: true
             }
+          },
+          pickupLocation: {
+            select: {
+              id: true,
+              name: true,
+              floor: true,
+              room: true
+            }
           }
         }
       });
@@ -191,6 +209,14 @@ export class TripService {
               id: true,
               name: true,
               type: true
+            }
+          },
+          pickupLocation: {
+            select: {
+              id: true,
+              name: true,
+              floor: true,
+              room: true
             }
           }
         }

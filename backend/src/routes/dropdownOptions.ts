@@ -5,10 +5,16 @@ import { AuthenticatedRequest } from '../middleware/authenticateAdmin';
 
 const router = express.Router();
 
+const ALLOWED_CATEGORIES = new Set(['transport-level', 'urgency', 'diagnosis', 'mobility']);
+
 // Get all dropdown options for a category
 router.get('/:category', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
   try {
     const { category } = req.params;
+
+    if (!ALLOWED_CATEGORIES.has(category)) {
+      return res.status(400).json({ success: false, error: 'Invalid category' });
+    }
     
     const hospitalPrisma = databaseManager.getHospitalDB();
     const options = await hospitalPrisma.dropdownOption.findMany({
@@ -45,6 +51,10 @@ router.post('/', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
         success: false,
         error: 'Category and value are required'
       });
+    }
+
+    if (!ALLOWED_CATEGORIES.has(category)) {
+      return res.status(400).json({ success: false, error: 'Invalid category' });
     }
 
     const hospitalPrisma = databaseManager.getHospitalDB();
@@ -146,21 +156,9 @@ router.delete('/:id', authenticateAdmin, async (req: AuthenticatedRequest, res) 
 // Get all categories
 router.get('/', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
   try {
-    const hospitalPrisma = databaseManager.getHospitalDB();
-    
-    const categories = await hospitalPrisma.dropdownOption.findMany({
-      select: {
-        category: true
-      },
-      distinct: ['category'],
-      where: {
-        isActive: true
-      }
-    });
-
     res.json({
       success: true,
-      data: categories.map((c: any) => c.category),
+      data: Array.from(ALLOWED_CATEGORIES),
       message: 'Categories retrieved successfully'
     });
   } catch (error) {

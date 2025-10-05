@@ -24,6 +24,7 @@ router.post('/', async (req, res) => {
       readyEnd,
       isolation,
       bariatric,
+      pickupLocationId,
     } = req.body;
 
     // Validation
@@ -60,9 +61,12 @@ router.post('/', async (req, res) => {
       isolation: isolation || false,
       bariatric: bariatric || false,
       createdById: null, // TODO: Get from authenticated user
-    };
+    } as any;
 
-    const result = await tripService.createTrip(tripData);
+    const result = await tripService.createTrip({
+      ...(tripData as any),
+      pickupLocationId,
+    } as any);
 
     if (!result.success) {
       return res.status(400).json({

@@ -120,14 +120,10 @@ const HospitalSettings: React.FC = () => {
   const loadCategories = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/api/public/categories');
-      if (response.data.success) {
-        setCategories(response.data.data);
-        // Set default category if available
-        if (response.data.data.length > 0) {
-          setSelectedCategory(response.data.data[0]);
-        }
-      }
+      // Use fixed categories per product decision
+      const fixed = ['transport-level', 'urgency', 'diagnosis', 'mobility'];
+      setCategories(fixed);
+      setSelectedCategory(fixed[0]);
     } catch (error) {
       console.error('Error loading categories:', error);
       setError('Failed to load categories');
