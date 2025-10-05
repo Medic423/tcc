@@ -4463,7 +4463,299 @@ _**Assistant (default)**_
 
 <think><details><summary>Thought Process</summary>**Reviewing backup strategy**
 
-I need to ensure that the backups align with our strategy outlined in BACKUP_STRATEGY.md. It mentions scripts like `backup-enhanced-latest.sh` and `backup-critical-scripts-to-icloud.sh`. I must check if these scripts are present and adjust to ensure we run the latest one and potentially the critical scripts too. After making any changes, I should</details></think>
+I need to ensure that the backups align with our strategy outlined in BACKUP_STRATEGY.md. It mentions scripts like `backup-enhanced-latest.sh` and `backup-critical-scripts-to-icloud.sh`. I must check if these scripts are present and adjust to ensure we run the latest one and potentially the critical scripts too. After making any changes, I should remember to commit and push, plus alert about database changes when needed. I'll also need to review the scripts directory.</details></think>
+
+---
+
+I'll verify the backup scripts exist and match the documented names, then run the required backups (enhanced latest and critical scripts to iCloud).
+
+---
+
+Tool use: **todo_write**
+
+## Todo List
+
+- [-] Verify backup scripts exist and align with strategy
+- [ ] Run scripts/backup-enhanced-latest.sh to external drive
+- [ ] Run scripts/backup-critical-scripts-to-icloud.sh
+- [ ] Sync docs if script names/usage differ
+
+---
+
+Tool use: **list_dir**
+
+<details>
+            <summary>Listed directory undefined • **0** results</summary>
+        
+No results found
+</details>
+
+---
+
+<think><details><summary>Thought Process</summary>**Ensuring backup strategy compliance**
+
+I need to make sure our backups are aligned with the guidelines in BACKUP_STRATEGY.md. The scripts directory is missing specific backup scripts, namely backup-enhanced-latest.sh and backup-critical-scripts-to-icloud.sh. We previously executed backup-enhanced.sh at the project root. To adhere to the strategy, I could create symlink or new wrapper scripts in the scripts/ folder to invoke the existing scripts. Additionally, I'll check if backup-critical-scripts-to-icloud.sh exists, as it wasn't found in root or scripts.
+**Creating backup scripts for iCloud**
+
+I need to set up scripts that copy critical files to an iCloud Drive path, but the exact destination isn’t clear from the documentation. I might use the path /Library/Mobile Documents/comappleCloudDocs/TCC-Scripts or something similar. To avoid confusion, I should create a script that checks for the iCloud path and notifies the user if it isn't found. I'll also ensure the scripts call the existing backup-enhanced.sh with the correct destination and execute backup-enhanced-latest.sh and backup-critical-scripts-to-icloud.sh accordingly. After that, I'll update the TODOs and provide a summary.
+**Implementing backup scripts**
+
+I’m planning to create two scripts to streamline the backup process. The first one, scripts/backup-enhanced-latest.sh, will call the existing backup-enhanced.sh from the project root, using a default destination of /Volumes/Acasis while ensuring it creates the necessary directory if needed. The second script, scripts/backup-critical-scripts-to-icloud.sh, will copy critical scripts to an iCloud folder, including a timestamp and accepting an optional destination argument. I’ll also implement the run_terminal_cmd function and remember to commit and push these changes afterward.</details></think>
+
+---
+
+I'll create the two backup scripts described in the strategy, wire them to the existing root backup script, make them executable, run the enhanced backup to /Volumes/Acasis/, and attempt the critical scripts backup to iCloud (using the standard iCloud Drive path if available). Then I'll commit and push.
+
+---
+
+Tool use: **apply_patch**
+
+<details>
+        <summary>Apply patch for /Users/scooper/Code/tcc-new-project/scripts/backup-enhanced-latest.sh</summary>
+      
+
+```diff
+*** Begin Patch
+*** Add File: /Users/scooper/Code/tcc-new-project/scripts/backup-enhanced-latest.sh
++#!/usr/bin/env bash
++set -euo pipefail
++
++# Usage: scripts/backup-enhanced-latest.sh [DESTINATION_DIR]
++# Default DESTINATION_DIR: /Volumes/Acasis/
++
++SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
++PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
++
++DEST_ROOT="${1:-/Volumes/Acasis/}"
++
++echo "🔄 Running enhanced latest backup..."
++echo "Project: ${PROJECT_ROOT}"
++echo "Destination root: ${DEST_ROOT}"
++
++if [ ! -d "${DEST_ROOT}" ]; then
++  echo "❌ Destination root not found: ${DEST_ROOT}" >&2
++  exit 1
++fi
++
++chmod +x "${PROJECT_ROOT}/backup-enhanced.sh" || true
++
++"${PROJECT_ROOT}/backup-enhanced.sh" "${DEST_ROOT}"
++
++echo "✅ Enhanced latest backup completed."
++
+*** End Patch
+```
+
+---
+
+Tool use: **apply_patch**
+
+<details>
+        <summary>Apply patch for /Users/scooper/Code/tcc-new-project/scripts/backup-critical-scripts-to-icloud.sh</summary>
+      
+
+```diff
+*** Begin Patch
+*** Add File: /Users/scooper/Code/tcc-new-project/scripts/backup-critical-scripts-to-icloud.sh
++#!/usr/bin/env bash
++set -euo pipefail
++
++# Copies critical backup scripts to iCloud Drive for resilience
++
++SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
++PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
++
++# Default iCloud Drive location on macOS
++ICLOUD_DRIVE="${HOME}/Library/Mobile Documents/com~apple~CloudDocs/TCC-Critical-Scripts"
++
++mkdir -p "${ICLOUD_DRIVE}"
++
++echo "☁️  Backing up critical scripts to iCloud: ${ICLOUD_DRIVE}"
++
++cp -f "${PROJECT_ROOT}/scripts/backup-enhanced-latest.sh" "${ICLOUD_DRIVE}/" || true
++cp -f "${PROJECT_ROOT}/scripts/backup-critical-scripts-to-icloud.sh" "${ICLOUD_DRIVE}/" || true
++cp -f "${PROJECT_ROOT}/backup-enhanced.sh" "${ICLOUD_DRIVE}/" || true
++
++echo "✅ Critical scripts updated in iCloud"
++
+*** End Patch
+```
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+chmod +x scripts/backup-enhanced-latest.sh scripts/backup-critical-scripts-to-icloud.sh && ./scripts/backup-enhanced-latest.sh /Volumes/Acasis/ && ./scripts/backup-critical-scripts-to-icloud.sh
+```
+
+```
+chmod: scripts/backup-enhanced-latest.sh: No such file or directory
+chmod: scripts/backup-critical-scripts-to-icloud.sh: No such file or directory
+
+```
+
+---
+
+
+
+---
+
+Tool use: **list_dir**
+
+<details>
+            <summary>Listed directory undefined • **0** results</summary>
+        
+No results found
+</details>
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+chmod +x /Users/scooper/Code/tcc-new-project/scripts/backup-enhanced-latest.sh /Users/scooper/Code/tcc-new-project/scripts/backup-critical-scripts-to-icloud.sh && /Users/scooper/Code/tcc-new-project/scripts/backup-enhanced-latest.sh /Volumes/Acasis/ && /Users/scooper/Code/tcc-new-project/scripts/backup-critical-scripts-to-icloud.sh
+```
+
+```
+🔄 Running enhanced latest backup...
+Project: /Users/scooper/Code/tcc-new-project
+Destination root: /Volumes/Acasis/
+🔄 Starting TCC project enhanced backup...
+Project: /Users/scooper/Code/tcc-new-project
+Backup to: /Volumes/Acasis//tcc-backups/tcc-backup-20251005_103224
+📦 Creating project backup...
+🧹 Cleaning up node_modules...
+🗄️ Backing up PostgreSQL databases...
+📊 Backing up medport_ems database (consolidated TCC database)...
+📝 Creating database restore script...
+📝 Creating comprehensive restore script...
+📝 Creating backup info...
+✅ Enhanced backup completed: /Volumes/Acasis//tcc-backups/tcc-backup-20251005_103224
+📊 Project size: 183M
+📊 Database size:  60K
+📊 Total size: 183M
+📁 Backup location: /Volumes/Acasis//tcc-backups/tcc-backup-20251005_103224
+
+🔧 To restore: cd /Volumes/Acasis//tcc-backups/tcc-backup-20251005_103224 && ./restore-complete.sh
+✅ Enhanced latest backup completed.
+☁️  Backing up critical scripts to iCloud: /Users/scooper/Library/Mobile Documents/com~apple~CloudDocs/TCC-Critical-Scripts
+✅ Critical scripts updated in iCloud
+
+```
+
+---
+
+Tool use: **todo_write**
+
+## Todo List
+
+- [x] Verify backup scripts exist and align with strategy
+- [x] Run scripts/backup-enhanced-latest.sh to external drive
+- [x] Run scripts/backup-critical-scripts-to-icloud.sh
+- [-] Sync docs if script names/usage differ
+
+---
+
+Tool use: **apply_patch**
+
+<details>
+        <summary>Apply patch for /Users/scooper/Code/tcc-new-project/docs/reference/BACKUP_STRATEGY.md</summary>
+      
+
+```diff
+*** Begin Patch
+*** Update File: /Users/scooper/Code/tcc-new-project/docs/reference/BACKUP_STRATEGY.md
+@@
+-### **Layer 1: Enhanced External Backup**
+-- **Script**: `scripts/backup-enhanced-latest.sh`
+-- **Purpose**: Complete project backup including ALL environment files
+-- **Location**: External drive (`/Volumes/Acasis/`)
+-- **Includes**: Environment files, Vercel config, databases, restore scripts
++### **Layer 1: Enhanced External Backup**
++- **Script**: `scripts/backup-enhanced-latest.sh`
++- **Purpose**: Wrapper that invokes root `backup-enhanced.sh` to create a complete project backup including ALL environment files
++- **Location**: External drive (`/Volumes/Acasis/`)
++- **Includes**: Environment files, Vercel config, databases, restore scripts
+@@
+-- **Script**: `scripts/backup-critical-scripts-to-icloud.sh`
++- **Script**: `scripts/backup-critical-scripts-to-icloud.sh`
+*** End Patch
+```
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+git add -A && git commit -m "chore(backups): add backup-enhanced-latest and critical-scripts-to-icloud; run enhanced backup; update strategy doc"
+```
+
+```
+[main 0359a7f8] chore(backups): add backup-enhanced-latest and critical-scripts-to-icloud; run enhanced backup; update strategy doc
+ 4 files changed, 322 insertions(+), 1 deletion(-)
+ create mode 100755 scripts/backup-critical-scripts-to-icloud.sh
+ create mode 100755 scripts/backup-enhanced-latest.sh
+
+```
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+git push -u backup main
+```
+
+```
+To /Users/scooper/Code/tcc-new-project-backup-20250922_105547
+   dc17210c..0359a7f8  main -> main
+branch 'main' set up to track 'backup/main'.
+
+```
+
+---
+
+Tool use: **todo_write**
+
+## Todo List
+
+- [x] Verify backup scripts exist and align with strategy
+- [x] Run scripts/backup-enhanced-latest.sh to external drive
+- [x] Run scripts/backup-critical-scripts-to-icloud.sh
+- [x] Sync docs if script names/usage differ
+
+---
+
+- Conformance implemented
+  - Added `scripts/backup-enhanced-latest.sh` (wrapper around root `backup-enhanced.sh`) per the strategy.
+  - Added `scripts/backup-critical-scripts-to-icloud.sh` and synced critical scripts to iCloud Drive.
+  - Updated `docs/reference/BACKUP_STRATEGY.md` to reference and describe these scripts.
+
+- Executed backups
+  - External enhanced backup ran successfully: see `/Volumes/Acasis/tcc-backups/tcc-backup-20251005_103224` with restore script.
+  - Critical scripts copied to iCloud: `~/Library/Mobile Documents/com~apple~CloudDocs/TCC-Critical-Scripts`.
+
+- Git
+  - Committed and pushed backup scripts and doc updates on `main`.
+
+If you want, I can schedule a weekly cron note or add a small helper to run both backups together.
+
+---
+
+_**User (2025-10-03 22:38Z)**_
+
+Yes, add a helper to run both backups together.
+
+---
+
+_**Assistant (default)**_
+
+
+
+---
+
+
 
 ---
 

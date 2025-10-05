@@ -119,6 +119,11 @@ This is exactly why we need:
 ./scripts/backup-critical-scripts-to-icloud.sh
 ```
 
+### **Run Both Backups Together:**
+```bash
+./scripts/backup-run-all.sh /Volumes/Acasis/
+```
+
 ### **Restore from Backup:**
 ```bash
 cd /path/to/backup
