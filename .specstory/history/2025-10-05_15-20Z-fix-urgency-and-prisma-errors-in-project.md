@@ -2899,6 +2899,147 @@ Tool use: **write**
 
 ---
 
+Now let me commit these changes:
+
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git add -A && git commit -m "feat(ui): improve trip card display and add transport center feature plan
+
+- Update route display to text-base text-gray-600 for better visibility
+- Create comprehensive Transport Center implementation plan
+- Addresses Penn Highlands multi-hospital system requirements
+- Includes database schema, API design, frontend components, and migration strategy"
+```
+
+```
+[main 8a432f39] feat(ui): improve trip card display and add transport center feature plan
+ 3 files changed, 821 insertions(+), 2 deletions(-)
+ create mode 100644 docs/notes/hospital_transport_center.md
+
+```
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git push backup main
+```
+
+```
+To /Users/scooper/Code/tcc-new-project-backup-20250922_105547
+   dbf4d3d3..8a432f39  main -> main
+
+```
+
+---
+
+Perfect! 🎉
+
+## ✅ **UI Improvement + Transport Center Plan Complete!**
+
+### 🔧 **UI Changes Made**
+- **Route Display**: Updated from `text-sm text-gray-500` to `text-base text-gray-600` for better visibility and easier trip identification
+
+### 📋 **Transport Center Implementation Plan Created**
+
+I've created a comprehensive plan at `/docs/notes/hospital_transport_center.md` that addresses the Penn Highlands use case. Here's what the plan covers:
+
+#### **Key Features:**
+1. **Single Login**: Transport Center users can manage trips for all assigned hospitals without logging out/in
+2. **Hospital Selector**: Dropdown to select which hospital when creating trips
+3. **Centralized Dashboard**: View all system trips with hospital filtering
+4. **Audit Trail**: Track which hospital each trip was created for
+
+#### **Technical Architecture:**
+- **New Database Tables**: `transport_centers`, `transport_center_hospitals`
+- **Enhanced User Types**: `TRANSPORT_CENTER` user type
+- **Updated APIs**: Hospital assignment and trip creation endpoints
+- **Frontend Components**: Hospital selector, enhanced dashboards
+
+#### **Implementation Phases:**
+1. **Phase 1**: Database schema and backend APIs
+2. **Phase 2**: Frontend components and integration  
+3. **Phase 3**: Testing and user acceptance
+4. **Phase 4**: Production deployment
+
+#### **Business Benefits:**
+- **Efficiency**: No more logout/login workflow
+- **Visibility**: Centralized view of all system transport requests
+- **Accuracy**: Clear audit trail of trip creation
+- **Scalability**: Supports multiple hospital systems
+
+The plan is ready for implementation and addresses all the real-world requirements of healthcare systems like Penn Highlands that use centralized transport coordination! 🚀
+
+**Ready for the next step in the UI improvements?**
+
+---
+
+_**User (2025-10-03 22:38Z)**_
+
+On this line: 
+
+Pickup: Cardiac Unit (Floor 4th Floor)
+
+We need to add the pickup time. In the line underneath:
+
+ALS • Emergent • 10/5/2025, 1:10:32 PM
+
+Is the "10/5/2025, 1:10:32 PM" the pickup time and date? If it is you could position it next to the "Pickup: Cardiac Unit (Floor 4th Floor)". 
+
+---
+
+_**Assistant (default)**_
+
+Great question! Let me first check what that timestamp represents in the data structure. Looking at the current display, "10/5/2025, 1:10:32 PM" appears to be the request time, not the pickup time. Let me examine the trip data structure to understand what fields are available:
+
+
+---
+
+Tool use: **read_file**
+
+Read file: /Users/scooper/Code/tcc-new-project/frontend/src/components/HealthcareDashboard.tsx
+
+---
+
+I can see that on line 541, the timestamp is labeled as `{trip.requestTime}`. Let me check how the trip data is transformed to understand what fields are available:
+
+
+---
+
+Tool use: **grep**
+
+---
+
+Let me search for how the trip data is processed:
+
+
+---
+
+Tool use: **grep**
+
+<details>
+<summary>Grep for "requestTime" in "/Users/scooper/Code/tcc-new-project/frontend/src/components/HealthcareDashboard.tsx" • 4 matches</summary>
+
+Output mode: content
+
+
+| Content | Line |
+|------|------|
+| `requestTime: new Date(trip.createdAt).toLocaleString(),` | L109 |
+| `trip.requestTime,` | L310 |
+| `\{trip.transportLevel\} • \{trip.urgencyLevel \|\| 'Routine'\} • \{trip.requestTime\}` | L541 |
+| `<span className="font-medium">Request Time:</span> \{trip.requestTime\}` | L648 |
+
+
+</details>
+
+---
+
 
 
 ---

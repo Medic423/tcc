@@ -107,6 +107,7 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
             transportLevel: trip.transportLevel || 'BLS',
             status: trip.status,
             requestTime: new Date(trip.createdAt).toLocaleString(),
+            pickupTime: trip.pickupTimestamp ? new Date(trip.pickupTimestamp).toLocaleString() : null,
             priority: trip.priority,
             urgencyLevel: trip.urgencyLevel,
             completionTime: trip.completionTimestamp ? new Date(trip.completionTimestamp).toLocaleString() : null,
@@ -535,6 +536,7 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                               Pickup: {trip.pickupLocation.name}
                               {trip.pickupLocation.floor && ` (Floor ${trip.pickupLocation.floor})`}
                               {trip.pickupLocation.room && ` - Room ${trip.pickupLocation.room}`}
+                              {trip.pickupTime && ` • ${trip.pickupTime}`}
                             </p>
                           )}
                           <p className="text-xs text-gray-500">
@@ -647,6 +649,11 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                               <div>
                                 <span className="font-medium">Request Time:</span> {trip.requestTime}
                               </div>
+                              {trip.pickupTime && (
+                                <div>
+                                  <span className="font-medium">Pickup Time:</span> {trip.pickupTime}
+                                </div>
+                              )}
                               <div>
                                 <span className="font-medium">Completion Time:</span> {trip.completionTime || 'N/A'}
                               </div>
