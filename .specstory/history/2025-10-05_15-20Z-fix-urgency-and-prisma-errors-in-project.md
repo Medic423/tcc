@@ -4991,3 +4991,171 @@ Tool use: **todo_write**
 
 ---
 
+_**User (2025-10-03 22:38Z)**_
+
+Almost. These two items got changed to a single line when they should have remained two lines:
+
+Transport Level: BLS Urgency: Routine
+
+Change to:
+
+Transport Level:             Urgency:
+BLS                                  Routine
+
+
+---
+
+_**Assistant (default)**_
+
+You're absolutely right! I need to fix the Transport Level and Urgency fields to use the same two-line format. Let me correct that:
+
+
+---
+
+Tool use: **search_replace**
+
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/HealthcareDashboard.tsx</summary>
+
+**Chunk 1**
+Lines added: 4, lines removed: 2
+
+```diff
+@@ -676,8 +676,10 @@
+                              <div className="mt-2 flex items-center space-x-6 text-sm text-gray-500">
+                                <div>
+-                                 <span className="font-medium">Transport Level:</span> {trip.transportLevel}
++                                 <div className="font-medium">Transport Level:</div>
++                                 <div>{trip.transportLevel}</div>
+                                </div>
+                                <div>
+-                                 <span className="font-medium">Urgency:</span> {trip.urgencyLevel || 'Routine'}
++                                 <div className="font-medium">Urgency:</div>
++                                 <div>{trip.urgencyLevel || 'Routine'}</div>
+                                </div>
+                                <div>
+```
+
+</details>
+
+---
+
+Perfect! Now let me commit this correction:
+
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git add -A && git commit -m "fix(ui): correct Transport Level and Urgency formatting to two-line layout
+
+- Fix Transport Level and Urgency fields to use consistent two-line format
+- Ensure all completed trip details follow the same label/value separation pattern
+- Maintain visual consistency across all time and metric displays"
+```
+
+```
+[main 71fa84fc] fix(ui): correct Transport Level and Urgency formatting to two-line layout
+ 2 files changed, 172 insertions(+), 2 deletions(-)
+
+```
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git push backup main
+```
+
+```
+To /Users/scooper/Code/tcc-new-project-backup-20250922_105547
+   0f09b914..71fa84fc  main -> main
+
+```
+
+---
+
+Perfect! 🎉
+
+## ✅ **Transport Level and Urgency Formatting Fixed!**
+
+### 🔧 **Corrected Format**
+
+**Before (incorrect):**
+```
+Transport Level: BLS Urgency: Routine
+```
+
+**After (correct):**
+```
+Transport Level:             Urgency:
+BLS                          Routine
+```
+
+### 🎯 **Now All Fields Are Consistent**
+
+The completed trips display now has consistent two-line formatting for all fields:
+
+```
+Transport Level:             Urgency:
+BLS                          Routine
+
+Request Time:
+10/5/2025, 9:40:05 AM
+
+Pickup Time:
+10/5/2025, 10:55:02 AM
+
+Wait Time:
+1h 14m
+
+Completion Time:
+N/A
+```
+
+All labels and values are now properly separated on different lines, creating a clean, organized, and consistent layout throughout the completed trips display! 🚀
+
+
+---
+
+Tool use: **todo_write**
+
+## Todo List
+
+- [x] Fix backend routes/trips.ts to accept and pass urgencyLevel
+- [x] Fix tripService.ts to handle urgencyLevel and pickupLocation relation
+- [x] Fix EnhancedTripForm.tsx to send urgencyLevel and merge defaults
+- [x] Fix HealthcareDashboard.tsx to display urgencyLevel and correct High Priority tile
+- [x] Ensure dropdownOptions.ts returns merged urgency defaults
+- [x] Restart services, commit, push, and verify functionality
+- [x] Enhanced transport request display with improved layout and styling
+- [x] Remove redundant urgency pill from completed trips display
+- [x] Remove redundant COMPLETED status pill from completed trips display
+- [x] Improve completed trips time formatting with two-line layout
+- [x] Fix Transport Level and Urgency formatting to consistent two-line layout
+
+---
+
+_**User (2025-10-03 22:38Z)**_
+
+Almost done. We have a lot of room to the right of those last two line. Can we adjust those to better fill the space? 
+
+---
+
+_**Assistant (default)**_
+
+Absolutely! We can improve the layout to better utilize the available space. Let me adjust the formatting to spread the information more evenly across the width:
+
+
+---
+
+Tool use: **search_replace**
+
+---
+
+
+
+---
+

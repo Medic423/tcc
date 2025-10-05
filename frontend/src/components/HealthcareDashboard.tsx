@@ -673,7 +673,7 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                                 </p>
                               </div>
                             </div>
-                            <div className="mt-2 flex items-center space-x-6 text-sm text-gray-500">
+                            <div className="mt-2 grid grid-cols-6 gap-4 text-sm text-gray-500">
                               <div>
                                 <div className="font-medium">Transport Level:</div>
                                 <div>{trip.transportLevel}</div>
