@@ -7,7 +7,8 @@ This comprehensive guide outlines the production deployment strategy for the TCC
 ## Current Deployment Status Assessment
 
 ### ✅ **What's Working**
-- **Backend**: Render deployment configured with production schema
+- **Backend**: Vercel deployment configured with production schema
+- **Frontend**: Vercel deployment (though currently outdated)
 - **Database**: PostgreSQL production database with unified schema
 - **Environment Variables**: Properly configured for production
 - **Build Process**: Production build scripts and TypeScript configuration
@@ -44,8 +45,8 @@ This comprehensive guide outlines the production deployment strategy for the TCC
 
 #### **1.1 Staging Infrastructure Setup**
 
-**Backend Staging (Render)**
-- Create new Render service: `tcc-backend-staging`
+**Backend Staging (Vercel)**
+- Create new Vercel project: `tcc-backend-staging`
 - Use `staging` branch for deployment
 - Separate PostgreSQL database: `tcc-staging-database`
 - Environment: `NODE_ENV=staging`
@@ -58,12 +59,12 @@ This comprehensive guide outlines the production deployment strategy for the TCC
 
 #### **1.2 Staging Environment Variables**
 
-**Backend Staging (.env.staging)**
+**Backend Staging (Vercel Environment Variables)**
 ```bash
 NODE_ENV=staging
 PORT=5001
 JWT_SECRET=tcc-staging-jwt-secret-2024
-DATABASE_URL=postgresql://staging_user:password@staging-db.onrender.com:5432/tcc_staging_db
+DATABASE_URL=postgresql://staging_user:password@staging-db.vercel.com:5432/tcc_staging_db
 FRONTEND_URL=https://tcc-frontend-staging.vercel.app
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
@@ -73,26 +74,27 @@ SMTP_PASS=your-app-password
 
 **Frontend Staging (Vercel Environment Variables)**
 ```bash
-VITE_API_URL=https://tcc-backend-staging.onrender.com
+VITE_API_URL=https://tcc-backend-staging.vercel.app
 VITE_ENVIRONMENT=staging
 ```
 
 #### **1.3 Staging Deployment Configuration**
 
-**Render Staging Service**
-- **Name**: `tcc-backend-staging`
+**Backend Staging (Vercel)**
+- **Project Name**: `tcc-backend-staging`
 - **Branch**: `staging`
 - **Root Directory**: `backend`
 - **Build Command**: `npm install && npm run build:prod`
-- **Start Command**: `npm start`
-- **Region**: Oregon (same as production)
+- **Output Directory**: `dist`
+- **Framework**: Node.js
 
-**Vercel Staging Project**
+**Frontend Staging (Vercel)**
 - **Project Name**: `tcc-frontend-staging`
 - **Branch**: `staging`
 - **Root Directory**: `frontend`
 - **Build Command**: `npm run build`
 - **Output Directory**: `dist`
+- **Framework**: Vite
 
 ### **Priority 2: Fix Current Production Issues** 🔥 **HIGH**
 
@@ -133,7 +135,7 @@ VITE_ENVIRONMENT=staging
 **Health Check Validation**
 ```bash
 # Test production backend health
-curl https://your-backend-app.onrender.com/health
+curl https://your-backend-app.vercel.app/health
 
 # Expected response
 {
@@ -146,9 +148,66 @@ curl https://your-backend-app.onrender.com/health
 **Database Connection Test**
 ```bash
 # Test database connectivity
-curl https://your-backend-app.onrender.com/api/trips
+curl https://your-backend-app.vercel.app/api/trips
 
 # Should return trip data or empty array
+```
+
+## Phase 1.5: Vercel-Specific Considerations
+
+### **Vercel Deployment Strategy**
+
+#### **Backend on Vercel (Serverless Functions)**
+- **Advantages**: Auto-scaling, global CDN, zero-config deployments
+- **Considerations**: Cold starts, function timeout limits, database connection pooling
+- **Configuration**: Use Vercel's `vercel.json` for API routes and environment variables
+
+#### **Frontend on Vercel (Static Site Generation)**
+- **Advantages**: Fast global delivery, automatic HTTPS, preview deployments
+- **Considerations**: Build-time environment variables, static asset optimization
+- **Configuration**: Use Vite build with environment variable injection
+
+#### **Database Considerations**
+- **External PostgreSQL**: Use external database service (not Vercel's database)
+- **Connection Pooling**: Implement connection pooling for serverless functions
+- **Environment Variables**: Secure database credentials in Vercel dashboard
+
+### **Vercel Configuration Files**
+
+#### **Backend vercel.json**
+```json
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "backend/src/production-index.ts",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/backend/src/production-index.ts"
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  }
+}
+```
+
+#### **Frontend vercel.json**
+```json
+{
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist"
+}
 ```
 
 ## Phase 2: Deployment Workflow Implementation
@@ -213,11 +272,11 @@ git checkout -b staging
 git push origin staging
 
 # 2. Deploy to staging
-# Backend will auto-deploy via Render
+# Backend will auto-deploy via Vercel
 # Frontend will auto-deploy via Vercel
 
 # 3. Test staging environment
-curl https://tcc-backend-staging.onrender.com/health
+curl https://tcc-backend-staging.vercel.app/health
 # Test all critical user workflows
 ```
 
@@ -231,11 +290,11 @@ git merge staging
 git push origin production
 
 # 2. Monitor deployment
-# Check Render logs for backend
+# Check Vercel logs for backend
 # Check Vercel logs for frontend
 
 # 3. Verify production health
-curl https://your-backend-app.onrender.com/health
+curl https://your-backend-app.vercel.app/health
 ```
 
 #### **Step 4: Post-Deployment Validation**
@@ -360,16 +419,16 @@ window.addEventListener('error', (event) => {
 
 #### **4.2 Manual Rollback Procedures**
 
-**Backend Rollback (Render)**
+**Backend Rollback (Vercel)**
 ```bash
 # 1. Identify last known good deployment
-# Check Render dashboard for deployment history
+# Check Vercel dashboard for deployment history
 
 # 2. Rollback to previous version
-# Use Render's "Rollback" button in dashboard
+vercel rollback [deployment-url]
 
 # 3. Verify rollback success
-curl https://your-backend-app.onrender.com/health
+curl https://your-backend-app.vercel.app/health
 
 # 4. Notify team of rollback
 ```
@@ -396,7 +455,7 @@ vercel rollback [deployment-url]
 # Check backup timestamps and choose appropriate one
 
 # 2. Restore database
-# Use Render's database restore feature or pg_restore
+# Use Vercel's database restore feature or pg_restore
 
 # 3. Verify data integrity
 # Run data validation queries
@@ -451,25 +510,25 @@ vercel rollback [deployment-url]
 
 ## Deployment Timeline
 
-### **Week 1: Environment Setup**
-- **Days 1-2**: Create staging infrastructure
-- **Days 3-4**: Configure staging environment variables
-- **Day 5**: Test staging deployment process
+### **Week 1: Vercel Environment Setup**
+- **Days 1-2**: Create staging projects on Vercel (frontend + backend)
+- **Days 3-4**: Configure Vercel environment variables and database connections
+- **Day 5**: Test staging deployment process and health checks
 
 ### **Week 2: Production Fixes**
-- **Days 1-2**: Fix current Vercel production issues
-- **Days 3-4**: Validate production backend health
-- **Day 5**: Test production deployment process
+- **Days 1-2**: Fix current Vercel production issues and update configurations
+- **Days 3-4**: Validate production backend health and database connectivity
+- **Day 5**: Test production deployment process and rollback procedures
 
 ### **Week 3: Workflow Implementation**
-- **Days 1-2**: Implement deployment workflow
-- **Days 3-4**: Set up monitoring and alerting
-- **Day 5**: Test rollback procedures
+- **Days 1-2**: Implement Vercel deployment workflow and branch strategies
+- **Days 3-4**: Set up monitoring, alerting, and Vercel-specific optimizations
+- **Day 5**: Test rollback procedures and recovery processes
 
 ### **Week 4: Security & Performance**
-- **Days 1-2**: Implement security hardening
-- **Days 3-4**: Optimize performance
-- **Day 5**: Final testing and documentation
+- **Days 1-2**: Implement security hardening for Vercel serverless functions
+- **Days 3-4**: Optimize performance for Vercel's global CDN and edge functions
+- **Day 5**: Final testing, documentation, and team training
 
 ## Success Criteria
 
