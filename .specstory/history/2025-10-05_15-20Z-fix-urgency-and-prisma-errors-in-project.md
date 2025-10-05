@@ -5153,9 +5153,158 @@ Absolutely! We can improve the layout to better utilize the available space. Let
 
 Tool use: **search_replace**
 
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/HealthcareDashboard.tsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -674,5 +674,5 @@
+                                </div>
+                              </div>
+-                             <div className="mt-2 flex items-center space-x-6 text-sm text-gray-500">
++                             <div className="mt-2 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 text-sm text-gray-500">
+                                <div>
+                                  <div className="font-medium">Transport Level:</div>
+```
+
+</details>
+
 ---
 
+Perfect! Now let me commit this layout improvement:
 
+
+---
+
+Cancelled
+
+---
+
+_**User (2025-10-03 22:38Z)**_
+
+Almost. Let's make it so they don't wrap to a second line.
+
+---
+
+_**Assistant (default)**_
+
+I understand! You want the grid items to stay on one row and not wrap to multiple lines. Let me adjust the grid to use more columns so everything fits on a single line:
+
+
+---
+
+Tool use: **search_replace**
+
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/HealthcareDashboard.tsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -674,5 +674,5 @@
+                                </div>
+                              </div>
+-                             <div className="mt-2 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 text-sm text-gray-500">
++                             <div className="mt-2 grid grid-cols-6 gap-4 text-sm text-gray-500">
+                                <div>
+                                  <div className="font-medium">Transport Level:</div>
+```
+
+</details>
+
+---
+
+Perfect! Now let me commit this change:
+
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git add -A && git commit -m "feat(ui): optimize completed trips layout with single-row grid
+
+- Use grid-cols-6 to keep all trip details on one row
+- Prevent wrapping to multiple lines for better visual consistency
+- Maximize horizontal space utilization in completed trips display"
+```
+
+```
+[main 0b3bea9a] feat(ui): optimize completed trips layout with single-row grid
+ 2 files changed, 169 insertions(+), 1 deletion(-)
+
+```
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git push backup main
+```
+
+```
+To /Users/scooper/Code/tcc-new-project-backup-20250922_105547
+   71fa84fc..0b3bea9a  main -> main
+
+```
+
+---
+
+Perfect! 🎉
+
+## ✅ **Completed Trips Layout Optimized!**
+
+### 🔧 **Single-Row Grid Layout**
+
+**Before (wrapping):**
+```
+Transport Level:    Urgency:        Request Time:
+BLS                 Routine         10/5/2025, 9:40:05 AM
+
+Pickup Time:        Wait Time:      Completion Time:
+10/5/2025, 10:55:02 AM  1h 14m      N/A
+```
+
+**After (single row):**
+```
+Transport Level:    Urgency:    Request Time:    Pickup Time:    Wait Time:    Completion Time:
+BLS                 Routine     10/5/2025,       10/5/2025,      1h 14m        N/A
+                                9:40:05 AM       10:55:02 AM
+```
+
+### 🎯 **Benefits**
+
+- **Single Row Layout**: All 6 fields fit on one horizontal line
+- **Better Space Utilization**: Takes full advantage of available width
+- **Consistent Visual Flow**: No wrapping breaks the reading pattern
+- **Professional Appearance**: Clean, organized grid layout
+- **Improved Readability**: All information visible at once
+
+The completed trips display now uses the full horizontal space efficiently with a clean single-row layout! 🚀
+
+
+---
+
+Tool use: **todo_write**
+
+## Todo List
+
+- [x] Fix backend routes/trips.ts to accept and pass urgencyLevel
+- [x] Fix tripService.ts to handle urgencyLevel and pickupLocation relation
+- [x] Fix EnhancedTripForm.tsx to send urgencyLevel and merge defaults
+- [x] Fix HealthcareDashboard.tsx to display urgencyLevel and correct High Priority tile
+- [x] Ensure dropdownOptions.ts returns merged urgency defaults
+- [x] Restart services, commit, push, and verify functionality
+- [x] Enhanced transport request display with improved layout and styling
+- [x] Remove redundant urgency pill from completed trips display
+- [x] Remove redundant COMPLETED status pill from completed trips display
+- [x] Improve completed trips time formatting with two-line layout
+- [x] Fix Transport Level and Urgency formatting to consistent two-line layout
+- [x] Optimize completed trips layout with single-row grid system
 
 ---
 

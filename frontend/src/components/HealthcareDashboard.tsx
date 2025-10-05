@@ -668,7 +668,7 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                             <div className="flex items-center space-x-4">
                               <div>
                                 <h4 className="text-lg font-medium text-gray-900">Patient {trip.patientId}</h4>
-                                <p className="text-sm text-gray-500">
+                                <p className="text-base text-gray-600">
                                   {trip.origin} → {trip.destination}
                                 </p>
                               </div>
