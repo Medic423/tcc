@@ -100,7 +100,8 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
             requestTime: new Date(trip.createdAt).toLocaleString(),
             priority: trip.priority,
             urgencyLevel: trip.urgencyLevel,
-            completionTime: trip.completionTimestamp ? new Date(trip.completionTimestamp).toLocaleString() : null
+            completionTime: trip.completionTimestamp ? new Date(trip.completionTimestamp).toLocaleString() : null,
+            completionTimestampISO: trip.completionTimestamp || null
           }));
           
           // Filter out completed trips from main list
@@ -378,8 +379,8 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                         </dt>
                         <dd className="text-lg font-medium text-gray-900">
                           {completedTrips.filter(trip => {
-                            if (!trip.completionTime) return false;
-                            const completedDate = new Date(trip.completionTime);
+                            if (!trip.completionTimestampISO) return false;
+                            const completedDate = new Date(trip.completionTimestampISO);
                             const now = new Date();
                             return completedDate.getFullYear() === now.getFullYear() &&
                               completedDate.getMonth() === now.getMonth() &&
@@ -406,7 +407,7 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                           High Priority
                         </dt>
                         <dd className="text-lg font-medium text-gray-900">
-                          {trips.filter(trip => trip.status !== 'COMPLETED' && (trip.urgencyLevel === 'Emergent' || trip.priority === 'HIGH')).length}
+                          {trips.filter(trip => (trip.status === 'PENDING' || trip.status === 'ACCEPTED' || trip.status === 'IN_PROGRESS') && (trip.urgencyLevel === 'Emergent' || trip.priority === 'HIGH')).length}
                         </dd>
                       </dl>
                     </div>

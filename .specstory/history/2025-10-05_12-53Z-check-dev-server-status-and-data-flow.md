@@ -5306,3 +5306,85 @@ If you want the EMS dashboard to show equivalent tiles, I can mirror the same lo
 
 ---
 
+_**User (2025-10-03 22:38Z)**_
+
+Let's wait on showing these tiles in EMS. I want to fix the last few UI display issues so we move on to cleaning up EMS. In the screen shot you'll note that the display of "Routine" twice. Once on the right side in this "PENDING  Routine  Edit  Complete" set of choices and then again in this line "BLS • Routine • 10/5/2025, 10:20:07 AM"
+
+I would remove it from this line:  "PENDING  Routine  Edit  Complete" to make more room for the data lines on the left. 
+
+---
+
+_**Assistant (default)**_
+
+<think><details><summary>Thought Process</summary>**Modifying healthcare dashboard**
+
+I need to update the HealthcareDashboard by removing the urgency pill displayed on the right side labeled "Routine." I found it within lines 458-465, where it shows two spans for the status and urgency pills. The urgency pill needs to be removed from the transport requests list since that's the user's request. I’ll ensure it doesn’t appear in completed sections either. Once I edit the file, I’ll commit the changes and provide a status update.</details></think>
+
+---
+
+I'll remove the urgency chip from the active Transport Requests list to avoid duplication and give more space, then commit and push.
+
+---
+
+Tool use: **apply_patch**
+
+<details>
+        <summary>Apply patch for /Users/scooper/Code/tcc-new-project/frontend/src/components/HealthcareDashboard.tsx</summary>
+      
+
+```diff
+*** Begin Patch
+*** Update File: /Users/scooper/Code/tcc-new-project/frontend/src/components/HealthcareDashboard.tsx
+@@
+-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(trip.status)}`}>
+-                          {trip.status}
+-                        </span>
+-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getUrgencyLevelStyle(trip.urgencyLevel || 'Routine')}`}>
+-                          {trip.urgencyLevel || 'Routine'}
+-                        </span>
++                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(trip.status)}`}>
++                          {trip.status}
++                        </span>
+*** End Patch
+```
+
+---
+
+Tool use: **read_lints**
+
+<details>
+          <summary>Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `/Users/scooper/Code/tcc-new-project/frontend/src/components/HealthcareDashboard.tsx`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+git add -A && git commit -m "ui(healthcare-dashboard): remove duplicate urgency chip from active requests list for more space" && git push -u backup main
+```
+
+```
+[main 98f10c9f] ui(healthcare-dashboard): remove duplicate urgency chip from active requests list for more space
+ 2 files changed, 251 insertions(+), 3 deletions(-)
+To /Users/scooper/Code/tcc-new-project-backup-20250922_105547
+   2b8ae8ff..98f10c9f  main -> main
+branch 'main' set up to track 'backup/main'.
+
+```
+
+---
+
+Done. Removed the urgency chip from the right-side action row in `HealthcareDashboard.tsx`, so it now only appears once in the BLS • Routine • time line. Changes pushed to main.
+
+---
+
