@@ -3806,3 +3806,243 @@ Do you want initial defaults seeded now (BLS, Routine, none for Diagnosis, Stret
 
 ---
 
+_**User (2025-10-03 22:38Z)**_
+
+Let's wait on defaults. Looking at Hospital Settings -> dropdown options we need to add the "Insurance Company" and "Special Needs" fields to the dropdown since insurers will vary and "Special Needs" may be some like "Bariatic Stretcher". Those need to be user configurable for a better experience. 
+
+---
+
+_**Assistant (default)**_
+
+
+
+---
+
+<think><details><summary>Thought Process</summary>**Updating categories**
+
+I need to update the allowed categories to include "Insurance Company" and "Special Needs." Previously, we had fixed categories set up, but now we want these to be user-configurable. I also spotted a Prisma error regarding `pickupLocationId`, but that seems to be unrelated. The task at hand is to ensure the UI reflects the new categories and update their display names in the backend. I'll decide on using 'insurance-company' and 'special-needs' for consistency with existing formats. Let's get this done!
+**Updating dropdown options**
+
+I need to review the `/api/dropdown-options` route to incorporate the new categories, "Insurance Company" and "Special Needs." The UI for HospitalSettings previously switched to fixed categories, but we now want to add these. I must make code changes in both relevant files and update the `getCategoryDisplayName` mapping with the new slugs. I’ll ensure the options saving includes the correct category keys. After adjusting the files, I’ll commit changes and create a todo for implementing these categories, then restart the dev services as per the user's instructions.
+**Handling database changes**
+
+I need to commit and push to the backup remote, but I'm wondering if I should warn about database changes. Actually, it seems like it's not necessary since the `DropdownOption` already supports categories. Adding new categories is just a configuration change in the app and doesn’t involve any schema modifications, so no DB migration is required. Before making tool calls, I’ll ensure to include status updates. I also plan to read both files and the backend route using parallel processing. Let's keep moving forward!</details></think>
+
+---
+
+I'll add two new dropdown categories end-to-end: update backend allowed categories and frontend HospitalSettings category list and display mapping, then restart services and commit on the current feature branch.
+
+---
+
+Tool use: **todo_write**
+
+## Todo List
+
+- [-] Add Insurance Company and Special Needs dropdown categories (BE/FE)
+- [ ] Restart services; commit and push category changes
+
+---
+
+<think><details><summary>Thought Process</summary>**Implementing dropdown modifications**
+
+I need to add two new categories—Insurance Company and Special Needs—to our dropdowns. Previously, we set a fixed list of categories: transport-level, urgency, diagnosis, and mobility. Now, we’ll update the backend route to include these new keys and possibly expose a categories list endpoint. The frontend file will also need to expand from four to six categories while keeping the previous design in mind. I’ll apply necessary updates and maintain our tool cadence.
+**Updating dropdown options**
+
+I need to restart services via a script as per the user rule. After that, I'll commit and push the branch to the backup remote and update the statuses of todos. I see that the `backend/src/routes/dropdownOptions.ts` file exists, so I'll read and patch it. We might also want to create an endpoint to list categories. After applying edits, a schema change isn’t needed, but I'll ensure to commit any changes and update the relevant documentation.</details></think>
+
+---
+
+I'll update backend and frontend to include the two new categories, then restart services and commit/push.
+
+---
+
+Tool use: **read_file**
+
+Read file: /Users/scooper/Code/tcc-new-project/backend/src/routes/dropdownOptions.ts
+
+---
+
+Tool use: **read_file**
+
+Read file: /Users/scooper/Code/tcc-new-project/frontend/src/components/HospitalSettings.tsx
+
+---
+
+<think><details><summary>Thought Process</summary>**Planning API updates**
+
+I need to ensure that the frontend API supports the creation of new categories since the allowed set check needs to pass. Luckily, there are no database schema changes required for this. As for the status updates, I'll make those as necessary. I'll also keep track on summarizing the overall changes. Okay, time to move ahead with the patches! Let’s get this done efficiently!</details></think>
+
+---
+
+I'll add the two new categories to both backend and frontend, restart services, and commit/push.
+
+---
+
+Tool use: **apply_patch**
+
+<details>
+        <summary>Apply patch for /Users/scooper/Code/tcc-new-project/backend/src/routes/dropdownOptions.ts</summary>
+      
+
+```diff
+*** Begin Patch
+*** Update File: /Users/scooper/Code/tcc-new-project/backend/src/routes/dropdownOptions.ts
+@@
+-const ALLOWED_CATEGORIES = new Set(['transport-level', 'urgency', 'diagnosis', 'mobility']);
++const ALLOWED_CATEGORIES = new Set([
++  'transport-level',
++  'urgency',
++  'diagnosis',
++  'mobility',
++  'insurance',
++  'special-needs'
++]);
+*** End Patch
+```
+
+---
+
+Tool use: **apply_patch**
+
+<details>
+        <summary>Apply patch for undefined</summary>
+      
+
+```diff
+
+```
+
+---
+
+Tool use: **read_lints**
+
+<details>
+          <summary>Read lints for 2 files</summary>
+      
+Lint paths:
+
+- `/Users/scooper/Code/tcc-new-project/backend/src/routes/dropdownOptions.ts`
+- `/Users/scooper/Code/tcc-new-project/frontend/src/components/HospitalSettings.tsx`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+
+---
+
+Tool use: **todo_write**
+
+## Todo List
+
+- [x] Add Insurance Company and Special Needs dropdown categories (BE/FE)
+- [-] Restart services; commit and push category changes
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+sleep 1 && /Users/scooper/Code/tcc-new-project/scripts/start-dev-complete.sh
+```
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+git add -A && git commit -m "feat(dropdowns): add insurance and special-needs categories (BE+FE)"
+```
+
+```
+[feature/dropdown-defaults 382da220] feat(dropdowns): add insurance and special-needs categories (BE+FE)
+ 3 files changed, 236 insertions(+), 3 deletions(-)
+
+```
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+git push -u backup feature/dropdown-defaults
+```
+
+```
+To /Users/scooper/Code/tcc-new-project-backup-20250922_105547
+   01de1d53..382da220  feature/dropdown-defaults -> feature/dropdown-defaults
+branch 'feature/dropdown-defaults' set up to track 'backup/feature/dropdown-defaults'.
+
+```
+
+---
+
+Tool use: **todo_write**
+
+## Todo List
+
+- [x] Add Insurance Company and Special Needs dropdown categories (BE/FE)
+- [x] Restart services; commit and push category changes
+
+---
+
+- Added two new categories end-to-end:
+  - Backend `ALLOWED_CATEGORIES`: now includes `insurance` and `special-needs`.
+  - `HospitalSettings` categories list and display names updated to show “Insurance Companies” and “Special Needs”.
+
+- Ops
+  - Services restarted with `scripts/start-dev-complete.sh`.
+  - Changes committed and pushed on `feature/dropdown-defaults`.
+
+You can now add options under Insurance Company and Special Needs in Hospital Settings.
+
+---
+
+_**User (2025-10-03 22:38Z)**_
+
+The Insurance Company and Special Needs fields in the trip creation form need to be updated to use the hospital settings options.
+
+---
+
+_**Assistant (default)**_
+
+
+
+---
+
+I'll update the trip form to load and use the new Insurance Company and Special Needs dropdown options, apply defaults if set, then restart services and commit.
+
+---
+
+Tool use: **todo_write**
+
+## Todo List
+
+- [-] Update trip creation form to use Insurance and Special Needs options
+- [ ] Commit, push, and restart after trip form update
+
+---
+
+<think><details><summary>Thought Process</summary>**Modifying the trip creation form**
+
+I need to change the frontend trip creation form to include dropdown options for insurance and special-needs. We'll reference the API for any existing defaults. Previously, I worked on EnhancedTripForm.tsx for other defaults like transport-level and urgency, so I'll extend that to fetch these new options and bind them to select inputs.
+
+I also need to verify if there are fields for insurance and special-needs; if not, I should add them. I'll use the apply_patch tool and ensure the backend allows these categories, which it does. I'll check the existing API methods too.</details></think>
+
+---
+
+Let me update the trip creation form to source Insurance Company and Special Needs from the new dropdown categories and apply defaults if set. Then I’ll restart services and commit.
+
+---
+
+Tool use: **read_file**
+
+Read file: /Users/scooper/Code/tcc-new-project/frontend/src/components/EnhancedTripForm.tsx
+
+---
+
+
+
+---
+
