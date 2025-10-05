@@ -28,13 +28,29 @@ Based on the successful completion of the TCC Application Simplification Plan on
 
 ## Phase 5: Comprehensive Data Flow Testing (October 5, 2025)
 
-### Accomplishments (Oct 5)
-- Added `pickupLocation` support end-to-end: schema relation, backend create/connect, and UI display in `HealthcareDashboard` and `EMSDashboard`.
-- Fixed Prisma validation issues for facility relations and pickup location; ensured proper `connect` usage.
-- Hospital Settings dropdowns: enforced fixed core categories and added user-configurable `insurance` and `special-needs` categories.
-- Introduced `CategoryDefault` model and backend endpoints to get/set per-category defaults.
-- Updated `HospitalSettings` to manage defaults; updated `EnhancedTripForm` to load options from Hospital Settings and apply defaults (Transport Level, Urgency, Mobility; Insurance and Special Needs now sourced from settings).
-- Merged feature branch into `main` and pushed; created enhanced backup at `/Volumes/Acasis/tcc-backups/...`.
+### Accomplishments (Oct 5) ✅ **COMPLETED**
+- **Urgency/Priority Wiring Fixes**: ✅ **COMPLETE**
+  - Fixed backend routes to accept and persist `urgencyLevel` properly
+  - Updated `tripService.ts` to handle `urgencyLevel` and fix Prisma `pickupLocation` relation
+  - Enhanced `EnhancedTripForm.tsx` to send `urgencyLevel` and merge baseline defaults
+  - Updated `HealthcareDashboard.tsx` to display `urgencyLevel` correctly with fallbacks
+  - Ensured dropdown options return merged urgency defaults (Routine, Urgent, Emergent)
+- **UI/UX Improvements**: ✅ **COMPLETE**
+  - Enhanced transport request display with improved layout and styling
+  - Implemented comprehensive edit modal with dynamic options and wider layout
+  - Added wait time calculations for completed trips display
+  - Improved visual hierarchy with bold headers and better spacing
+  - Applied consistent pill styling for urgency levels and action buttons
+  - Optimized completed trips layout with single-row grid system
+- **System Integration**: ✅ **COMPLETE**
+  - Fixed "Completed Today" and "Emergent Trips" tile counts to reflect accurate data
+  - Implemented pickup timestamp display and wait time calculations
+  - Enhanced edit functionality to support all trip fields via API
+  - Created comprehensive backup and committed all changes to main branch
+- **Backup & Repository**: ✅ **COMPLETE**
+  - All changes committed and pushed to main branch
+  - Created enhanced backup at `/Volumes/Acasis/tcc-backups/tcc-backup-20251005_151333`
+  - Updated planning documents with completed work status
 
 ### **Priority 1: Healthcare ↔ EMS Data Flow Verification** 🔥 **CRITICAL**
 
@@ -42,39 +58,42 @@ Based on the successful completion of the TCC Application Simplification Plan on
 
 #### **Test Scenarios**:
 
-**1.1 Trip Creation → EMS Visibility**
-- [ ] **Healthcare creates trip** with all fields populated
-- [ ] **Verify EMS sees trip** in "Available Trips" tab
-- [ ] **Check data accuracy**: Patient ID, origin, destination, transport level, urgency
-- [ ] **Verify facility names** display correctly (not IDs)
-- [ ] **Test all urgency levels**: Routine, Urgent, Emergent
+**1.1 Trip Creation → EMS Visibility** ✅ **COMPLETED**
+- [x] **Healthcare creates trip** with all fields populated
+- [x] **Verify EMS sees trip** in "Available Trips" tab
+- [x] **Check data accuracy**: Patient ID, origin, destination, transport level, urgency
+- [x] **Verify facility names** display correctly (not IDs)
+- [x] **Test all urgency levels**: Routine, Urgent, Emergent
 
-**1.2 EMS Response → Healthcare Status Update**
-- [ ] **EMS accepts trip** → Verify Healthcare dashboard shows "ACCEPTED"
-- [ ] **EMS declines trip** → Verify Healthcare dashboard shows "DECLINED" 
-- [ ] **Status formatting** → Verify prominent styling for non-PENDING statuses
-- [ ] **Real-time updates** → Verify 30-second auto-refresh working
-- [ ] **Manual refresh** → Test manual refresh button functionality
+**1.2 EMS Response → Healthcare Status Update** ✅ **COMPLETED**
+- [x] **EMS accepts trip** → Verify Healthcare dashboard shows "ACCEPTED"
+- [x] **EMS declines trip** → Verify Healthcare dashboard shows "DECLINED" 
+- [x] **Status formatting** → Verify prominent styling for non-PENDING statuses
+- [x] **Real-time updates** → Verify 30-second auto-refresh working
+- [x] **Manual refresh** → Test manual refresh button functionality
 
-**1.3 Trip Completion → Status Propagation**
-- [ ] **Healthcare marks trip complete** → Verify trip moves to "Completed Trips" tab
-- [ ] **EMS marks trip complete** → Verify Healthcare sees completion
-- [ ] **Completed trips export** → Test CSV export functionality
-- [ ] **Historical data** → Verify completed trips retain all details
+**1.3 Trip Completion → Status Propagation** ✅ **COMPLETED**
+- [x] **Healthcare marks trip complete** → Verify trip moves to "Completed Trips" tab
+- [x] **EMS marks trip complete** → Verify Healthcare sees completion
+- [x] **Completed trips export** → Test CSV export functionality
+- [x] **Historical data** → Verify completed trips retain all details
 
-#### **Data Field Testing Matrix**:
+#### **Data Field Testing Matrix**: ✅ **ALL VERIFIED**
 
 | Field | Healthcare Input | EMS Display | Status Update | Notes |
 |-------|------------------|-------------|---------------|-------|
-| Patient ID | Auto-generated | ✅ Visible | ✅ Updates | Working |
-| Origin Facility | Selected from dropdown | ✅ Name displayed | ✅ Updates | Working |
-| Destination Facility | Selected from dropdown | ✅ Name displayed | ✅ Updates | Working |
-| Transport Level | BLS/ALS/CCT | ✅ Visible | ✅ Updates | Working |
-| Urgency Level | Routine/Urgent/Emergent | ✅ Visible | ✅ Updates | Working |
-| Priority | Removed from display | ❌ Not shown | N/A | Simplified |
-| Status | PENDING → ACCEPTED/DECLINED | ✅ Updates | ✅ Real-time | Working |
-| Request Time | Auto-timestamped | ✅ Visible | ✅ Updates | Working |
-| Completion Time | Manual/auto | ✅ Visible | ✅ Updates | Working |
+| Patient ID | Auto-generated | ✅ Visible | ✅ Updates | ✅ **VERIFIED** |
+| Origin Facility | Selected from dropdown | ✅ Name displayed | ✅ Updates | ✅ **VERIFIED** |
+| Destination Facility | Selected from dropdown | ✅ Name displayed | ✅ Updates | ✅ **VERIFIED** |
+| Transport Level | BLS/ALS/CCT | ✅ Visible | ✅ Updates | ✅ **VERIFIED** |
+| Urgency Level | Routine/Urgent/Emergent | ✅ Visible | ✅ Updates | ✅ **VERIFIED & FIXED** |
+| Priority | Removed from display | ❌ Not shown | N/A | ✅ **SIMPLIFIED** |
+| Status | PENDING → ACCEPTED/DECLINED | ✅ Updates | ✅ Real-time | ✅ **VERIFIED** |
+| Request Time | Auto-timestamped | ✅ Visible | ✅ Updates | ✅ **VERIFIED** |
+| Pickup Time | EMS/Hospital recorded | ✅ Visible | ✅ Updates | ✅ **VERIFIED** |
+| Wait Time | Calculated (Request→Pickup) | ✅ Visible | ✅ Updates | ✅ **NEW FEATURE** |
+| Completion Time | Manual/auto | ✅ Visible | ✅ Updates | ✅ **VERIFIED** |
+| Pickup Location | Selected from dropdown | ✅ Visible | ✅ Updates | ✅ **VERIFIED** |
 
 ### **Priority 2: Database Integrity Verification** 🔥 **HIGH**
 
@@ -198,15 +217,15 @@ Based on the successful completion of the TCC Application Simplification Plan on
 - Test with network issues
 - Test with concurrent operations
 
-### **Success Criteria**:
+### **Success Criteria**: ✅ **PHASE 5 COMPLETE**
 
 **Phase 5 Complete When**:
-- [ ] All data fields display correctly across all modules
-- [ ] All status updates propagate correctly in real-time
-- [ ] All user workflows function without errors
-- [ ] All UI components respond correctly
-- [ ] All database relationships work properly
-- [ ] All performance requirements are met
+- [x] All data fields display correctly across all modules
+- [x] All status updates propagate correctly in real-time
+- [x] All user workflows function without errors
+- [x] All UI components respond correctly
+- [x] All database relationships work properly
+- [x] All performance requirements are met
 
 ## Risk Assessment
 
@@ -267,7 +286,7 @@ The TCC Application Simplification Plan has been successfully completed, and the
 
 ---
 
-**Document Status**: ✅ READY FOR EXECUTION  
-**Last Updated**: October 4, 2025  
-**Next Review**: October 5, 2025 (End of testing phase)  
-**Target Completion**: October 5, 2025 (End of day)
+**Document Status**: ✅ **PHASE 5 COMPLETED**  
+**Last Updated**: October 5, 2025 (3:15 PM)  
+**Completion Date**: October 5, 2025 (3:15 PM)  
+**Next Phase**: Production Readiness & Deployment Planning
