@@ -698,11 +698,6 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                               </div>
                             </div>
                           </div>
-                          <div className="ml-4 flex items-center space-x-2">
-                            <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${getStatusColor(trip.status)}`}>
-                              {trip.status}
-                            </span>
-                          </div>
                         </div>
                       </div>
                     ))}

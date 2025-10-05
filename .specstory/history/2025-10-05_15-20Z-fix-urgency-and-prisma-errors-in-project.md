@@ -4496,3 +4496,198 @@ The transport request cards now have a much cleaner, more organized layout that 
 
 ---
 
+_**User (2025-10-03 22:38Z)**_
+
+Great! Looks good. Now lets tweak the "Completed Trips" display. We have several redundancies. Take a look at the screen shot. The "Routine" on the far right of the display can be removed since there is:
+
+Urgency:
+Routine
+
+In the bottom two lines.
+
+---
+
+_**Assistant (default)**_
+
+Perfect! I can see the redundancy you're pointing out. The "Routine" pill on the far right is indeed redundant since we already have "Urgency: Routine" in the detailed information below. Let me remove that redundant pill from the completed trips display.
+
+
+---
+
+The string to replace was not found in the file.
+
+---
+
+Let me first read the current completed trips section to see the exact structure:
+
+
+---
+
+Tool use: **grep**
+
+<details>
+<summary>Grep for "Completed Trips" in "/Users/scooper/Code/tcc-new-project/frontend/src/components/HealthcareDashboard.tsx" • 2 matches</summary>
+
+Output mode: content
+
+
+| Content | Line |
+|------|------|
+| `\{ id: 'completed', name: 'Completed Trips', icon: CheckCircle \},` | L426 |
+| `<h2 className="text-2xl font-bold text-gray-900">Completed Trips</h2>` | L646 |
+
+
+</details>
+
+---
+
+Let me get more of the completed trips structure:
+
+
+---
+
+Tool use: **grep**
+
+<details>
+<summary>Grep for "ml-4 flex items-center space-x-2" in "/Users/scooper/Code/tcc-new-project/frontend/src/components/HealthcareDashboard.tsx" • 1 match</summary>
+
+Output mode: content
+
+
+| Content | Line |
+|------|------|
+| `<div className="ml-4 flex items-center space-x-2">` | L701 |
+
+
+</details>
+
+---
+
+Perfect! I can see the structure. There's a `getUrgencyLevelStyle` function being used. Let me remove the redundant urgency pill from the completed trips display:
+
+
+---
+
+Tool use: **search_replace**
+
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/HealthcareDashboard.tsx</summary>
+
+**Chunk 1**
+Lines added: undefined, lines removed: 3
+
+```diff
+@@ -703,7 +703,4 @@
+                                {trip.status}
+                              </span>
+-                             <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getUrgencyLevelStyle(trip.urgencyLevel || 'Routine')}`}>
+-                               {trip.urgencyLevel || 'Routine'}
+-                             </span>
+                            </div>
+                          </div>
+```
+
+</details>
+
+---
+
+Perfect! Now let me commit this cleanup:
+
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git add -A && git commit -m "feat(ui): remove redundant urgency pill from completed trips display
+
+- Remove duplicate urgency pill on right side of completed trip cards
+- Keep detailed 'Urgency: Routine' information in trip details
+- Clean up visual redundancy for better UX"
+```
+
+```
+[main 52b1cde9] feat(ui): remove redundant urgency pill from completed trips display
+ 2 files changed, 161 insertions(+), 3 deletions(-)
+
+```
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git push backup main
+```
+
+```
+To /Users/scooper/Code/tcc-new-project-backup-20250922_105547
+   bb4a0668..52b1cde9  main -> main
+
+```
+
+---
+
+Perfect! 🎉
+
+## ✅ **Completed Trips Display Cleaned Up!**
+
+### 🔧 **Redundancy Removed**
+
+**Before:**
+```
+Patient LEG-005
+Altoona Regional Emergency Department → UPMC Bedford Emergency Department
+Transport Level: BLS
+Urgency: Routine
+Request Time: 10/5/2025, 9:40:05 AM
+Pickup Time: 10/5/2025, 10:55:02 AM
+Wait Time: 1h 14m
+Completion Time: N/A
+[COMPLETED] [Routine]  ← Redundant urgency pill
+```
+
+**After:**
+```
+Patient LEG-005
+Altoona Regional Emergency Department → UPMC Bedford Emergency Department
+Transport Level: BLS
+Urgency: Routine  ← Only here, in the detailed info
+Request Time: 10/5/2025, 9:40:05 AM
+Pickup Time: 10/5/2025, 10:55:02 AM
+Wait Time: 1h 14m
+Completion Time: N/A
+[COMPLETED]  ← Clean, single status pill
+```
+
+### 🎯 **Benefits**
+
+- **Eliminated Redundancy**: Removed duplicate urgency information
+- **Cleaner Design**: Single status pill instead of two
+- **Better Focus**: Attention goes to the detailed information where it belongs
+- **Consistent Layout**: Matches the cleaner design pattern
+
+The completed trips display is now much cleaner and more focused! 🚀
+
+
+---
+
+Tool use: **todo_write**
+
+## Todo List
+
+- [x] Fix backend routes/trips.ts to accept and pass urgencyLevel
+- [x] Fix tripService.ts to handle urgencyLevel and pickupLocation relation
+- [x] Fix EnhancedTripForm.tsx to send urgencyLevel and merge defaults
+- [x] Fix HealthcareDashboard.tsx to display urgencyLevel and correct High Priority tile
+- [x] Ensure dropdownOptions.ts returns merged urgency defaults
+- [x] Restart services, commit, push, and verify functionality
+- [x] Enhanced transport request display with improved layout and styling
+- [x] Remove redundant urgency pill from completed trips display
+
+---
+
+
+
+---
+
