@@ -4042,3 +4042,296 @@ _**Assistant (default)**_
 
 ---
 
+Perfect! I understand the changes needed:
+
+1. **Move transport level (ALS/BLS) to top line**: `Patient TEST123 - ALS - Request Time: 10/5/2025, 1:10:32 PM`
+2. **Style "Emergent" urgency like the EMS "Decline" button** (pill format)
+3. **Change "Edit, Complete" buttons to pill style** to match the "Pending" status display
+
+Let me implement these changes:
+
+
+---
+
+Tool use: **search_replace**
+
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/HealthcareDashboard.tsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -556,5 +556,5 @@
+                        <div className="flex items-center space-x-4">
+                          <div>
+-                           <h4 className="text-lg font-medium text-gray-900">Patient {trip.patientId} - Request Time: {trip.requestTime}</h4>
++                           <h4 className="text-lg font-medium text-gray-900">Patient {trip.patientId} - {trip.transportLevel} - Request Time: {trip.requestTime}</h4>
+                            <p className="text-base text-gray-600">
+                              {trip.origin} → {trip.destination}
+```
+
+</details>
+
+---
+
+Now let me remove the transport level from the bottom line:
+
+
+---
+
+Tool use: **search_replace**
+
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/HealthcareDashboard.tsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -569,5 +569,5 @@
+                            )}
+                            <p className="text-xs text-gray-500">
+-                             {trip.transportLevel} • {trip.urgencyLevel || 'Routine'}
++                             {trip.urgencyLevel || 'Routine'}
+                            </p>
+                          </div>
+```
+
+</details>
+
+---
+
+Now let me style the urgency level as a pill (like the EMS "Decline" button). I need to replace the simple text with a styled pill:
+
+
+---
+
+Tool use: **search_replace**
+
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/HealthcareDashboard.tsx</summary>
+
+**Chunk 1**
+Lines added: 11, lines removed: 3
+
+```diff
+@@ -568,7 +568,15 @@
+                              </p>
+                            )}
+-                           <p className="text-xs text-gray-500">
+-                             {trip.urgencyLevel || 'Routine'}
+-                           </p>
++                           <div className="flex items-center space-x-2">
++                             <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
++                               (trip.urgencyLevel || 'Routine') === 'Emergent' 
++                                 ? 'bg-red-100 text-red-800' 
++                                 : (trip.urgencyLevel || 'Routine') === 'Urgent'
++                                 ? 'bg-yellow-100 text-yellow-800'
++                                 : 'bg-green-100 text-green-800'
++                             }`}>
++                               {trip.urgencyLevel || 'Routine'}
++                             </span>
++                           </div>
+                          </div>
+                        </div>
+```
+
+</details>
+
+---
+
+Now let me change the "Edit, Complete" buttons to pill style. First, let me find where those buttons are:
+
+
+---
+
+Tool use: **grep**
+
+---
+
+Let me search for the button area in the healthcare dashboard:
+
+
+---
+
+Tool use: **grep**
+
+---
+
+Let me search for buttons in the trip display area:
+
+
+---
+
+Tool use: **grep**
+
+<details>
+<summary>Grep for "button" in "/Users/scooper/Code/tcc-new-project/frontend/src/components/HealthcareDashboard.tsx" • 19 matches</summary>
+
+Output mode: content
+
+
+| Content | Line |
+|------|------|
+| `<button` | L408 |
+| `</button>` | L414 |
+| `<button` | L432 |
+| `</button>` | L443 |
+| `<button` | L588 |
+| `</button>` | L594 |
+| `<button` | L596 |
+| `</button>` | L602 |
+| `<button` | L649 |
+| `</button>` | L654 |
+| `<button` | L733 |
+| `</button>` | L739 |
+| `<button` | L913 |
+| `</button>` | L918 |
+| `<button` | L1100 |
+| `type="button"` | L1101 |
+| `</button>` | L1109 |
+| `<button` | L1110 |
+| `</button>` | L1116 |
+
+
+</details>
+
+---
+
+Perfect! I found the Edit and Complete buttons. Now let me change them to pill style to match the status display:
+
+
+---
+
+Tool use: **search_replace**
+
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/HealthcareDashboard.tsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -588,5 +588,5 @@
+                            <button
+                              onClick={() => handleEditTrip(trip)}
+-                             className="text-blue-600 hover:text-blue-900 text-xs px-2 py-1 rounded hover:bg-blue-50"
++                             className="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 hover:bg-blue-200"
+                              disabled={updating}
+                            >
+```
+
+**Chunk 2**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -596,5 +596,5 @@
+                              <button
+                                onClick={() => handleCompleteTrip(trip.id)}
+-                               className="text-green-600 hover:text-green-900 text-xs px-2 py-1 rounded hover:bg-green-50"
++                               className="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 hover:bg-green-200"
+                                disabled={updating}
+                              >
+```
+
+</details>
+
+---
+
+Perfect! Now let me commit these UI improvements:
+
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git add -A && git commit -m "feat(ui): enhance transport request display with improved layout and styling
+
+- Move transport level (ALS/BLS) to top line for better hierarchy
+- Style urgency level as colored pills (Emergent=red, Urgent=yellow, Routine=green)
+- Convert Edit/Complete buttons to pill style to match status display
+- Improve visual consistency across transport request cards"
+```
+
+```
+[main d138fa8d] feat(ui): enhance transport request display with improved layout and styling
+ 2 files changed, 290 insertions(+), 6 deletions(-)
+
+```
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git push backup main
+```
+
+```
+To /Users/scooper/Code/tcc-new-project-backup-20250922_105547
+   6aea4b35..d138fa8d  main -> main
+
+```
+
+---
+
+Tool use: **todo_write**
+
+## Todo List
+
+- [x] Fix backend routes/trips.ts to accept and pass urgencyLevel
+- [x] Fix tripService.ts to handle urgencyLevel and pickupLocation relation
+- [x] Fix EnhancedTripForm.tsx to send urgencyLevel and merge defaults
+- [x] Fix HealthcareDashboard.tsx to display urgencyLevel and correct High Priority tile
+- [x] Ensure dropdownOptions.ts returns merged urgency defaults
+- [x] Restart services, commit, push, and verify functionality
+- [x] Enhanced transport request display with improved layout and styling
+
+---
+
+Perfect! 🎉
+
+## ✅ **Transport Request Display Enhanced!**
+
+### 🔧 **Changes Made**
+
+1. **Moved Transport Level to Top Line**:
+   - **Before**: `Patient TEST123 - Request Time: 10/5/2025, 1:10:32 PM`
+   - **After**: `Patient TEST123 - ALS - Request Time: 10/5/2025, 1:10:32 PM`
+   - Transport level now prominently displayed with patient ID
+
+2. **Styled Urgency Level as Colored Pills**:
+   - **Emergent**: Red pill (`bg-red-100 text-red-800`)
+   - **Urgent**: Yellow pill (`bg-yellow-100 text-yellow-800`) 
+   - **Routine**: Green pill (`bg-green-100 text-green-800`)
+   - Matches EMS "Decline" button styling
+
+3. **Converted Edit/Complete Buttons to Pill Style**:
+   - **Edit Button**: Blue pill (`bg-blue-100 text-blue-800`)
+   - **Complete Button**: Green pill (`bg-green-100 text-green-800`)
+   - Now matches the "Pending" status display styling
+
+### 🎯 **New Display Layout**
+
+```
+Patient TEST123 - ALS - Request Time: 10/5/2025, 1:10:32 PM
+Bedford Memorial Hospital → Conemaugh Nason Medical Center
+Pickup: Cardiac Unit (Floor 4th Floor) • 10/5/2025, 2:15:30 PM
+[Emergent]  [Pending]  [Edit]  [Complete]
+   ↑           ↑         ↑        ↑
+ Red pill   Status   Blue pill  Green pill
+```
+
+### 🎨 **Visual Consistency**
+
+- All interactive elements now use consistent pill styling
+- Color coding matches urgency levels (red=emergency, yellow=urgent, green=routine)
+- Transport level prominently displayed for quick identification
+- Improved visual hierarchy and readability
+
+The display now has a much more professional and consistent look that matches modern UI patterns! 🚀
+
+---
+

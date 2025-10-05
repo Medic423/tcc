@@ -567,20 +567,18 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                               {trip.pickupTime && ` • ${trip.pickupTime}`}
                             </p>
                           )}
-                          <div className="flex items-center space-x-2">
-                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                              (trip.urgencyLevel || 'Routine') === 'Emergent' 
-                                ? 'bg-red-100 text-red-800' 
-                                : (trip.urgencyLevel || 'Routine') === 'Urgent'
-                                ? 'bg-yellow-100 text-yellow-800'
-                                : 'bg-green-100 text-green-800'
-                            }`}>
-                              {trip.urgencyLevel || 'Routine'}
-                            </span>
-                          </div>
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          (trip.urgencyLevel || 'Routine') === 'Emergent' 
+                            ? 'bg-red-100 text-red-800' 
+                            : (trip.urgencyLevel || 'Routine') === 'Urgent'
+                            ? 'bg-yellow-100 text-yellow-800'
+                            : 'bg-green-100 text-green-800'
+                        }`}>
+                          {trip.urgencyLevel || 'Routine'}
+                        </span>
                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(trip.status)}`}>
                           {trip.status}
                         </span>
