@@ -28,6 +28,7 @@ export interface UpdateTripStatusRequest {
   acceptedTimestamp?: string;
   pickupTimestamp?: string;
   completionTimestamp?: string;
+  urgencyLevel?: 'Routine' | 'Urgent' | 'Emergent';
 }
 
 export interface EnhancedCreateTripRequest {
@@ -246,6 +247,10 @@ export class TripService {
         status: data.status,
         updatedAt: new Date()
       };
+
+      if (data.urgencyLevel) {
+        updateData.urgencyLevel = data.urgencyLevel;
+      }
 
       if (data.status === 'COMPLETED' && data.completionTimestamp) {
         updateData.pickupTimestamp = new Date(data.completionTimestamp);

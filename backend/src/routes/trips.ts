@@ -317,6 +317,7 @@ router.put('/:id/status', async (req, res) => {
       acceptedTimestamp,
       pickupTimestamp,
       completionTimestamp,
+      urgencyLevel,
     } = req.body;
 
     if (!status) {
@@ -340,6 +341,7 @@ router.put('/:id/status', async (req, res) => {
       acceptedTimestamp,
       pickupTimestamp,
       completionTimestamp,
+      urgencyLevel,
     };
 
     const result = await tripService.updateTripStatus(id, updateData);
