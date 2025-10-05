@@ -29,6 +29,13 @@ export interface UpdateTripStatusRequest {
   pickupTimestamp?: string;
   completionTimestamp?: string;
   urgencyLevel?: 'Routine' | 'Urgent' | 'Emergent';
+  transportLevel?: string;
+  diagnosis?: string;
+  mobilityLevel?: string;
+  insuranceCompany?: string;
+  specialNeeds?: string;
+  oxygenRequired?: boolean;
+  monitoringRequired?: boolean;
 }
 
 export interface EnhancedCreateTripRequest {
@@ -248,9 +255,15 @@ export class TripService {
         updatedAt: new Date()
       };
 
-      if (data.urgencyLevel) {
-        updateData.urgencyLevel = data.urgencyLevel;
-      }
+      // Update optional fields if provided
+      if (data.urgencyLevel !== undefined) updateData.urgencyLevel = data.urgencyLevel;
+      if (data.transportLevel !== undefined) updateData.transportLevel = data.transportLevel;
+      if (data.diagnosis !== undefined) updateData.diagnosis = data.diagnosis;
+      if (data.mobilityLevel !== undefined) updateData.mobilityLevel = data.mobilityLevel;
+      if (data.insuranceCompany !== undefined) updateData.insuranceCompany = data.insuranceCompany;
+      if (data.specialNeeds !== undefined) updateData.specialNeeds = data.specialNeeds;
+      if (data.oxygenRequired !== undefined) updateData.oxygenRequired = data.oxygenRequired;
+      if (data.monitoringRequired !== undefined) updateData.monitoringRequired = data.monitoringRequired;
 
       if (data.status === 'COMPLETED' && data.completionTimestamp) {
         updateData.pickupTimestamp = new Date(data.completionTimestamp);

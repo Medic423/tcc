@@ -37,10 +37,19 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
   const [editingTrip, setEditingTrip] = useState<any>(null);
   const [editFormData, setEditFormData] = useState<any>({});
   const [updating, setUpdating] = useState(false);
+  const [editOptions, setEditOptions] = useState<any>({
+    transportLevel: [],
+    urgency: [],
+    diagnosis: [],
+    mobility: [],
+    insurance: [],
+    specialNeeds: []
+  });
 
   // Load trips from API
   useEffect(() => {
     loadTrips();
+    loadEditOptions();
     
     // Set up auto-refresh every 30 seconds to catch status updates from EMS
     const interval = setInterval(() => {
@@ -119,12 +128,77 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
     }
   };
 
+  const loadEditOptions = async () => {
+    try {
+      console.log('TCC_DEBUG: Loading edit options from hospital settings...');
+      
+      // Load dropdown options from backend Hospital Settings
+      const [tlRes, urgRes, diagRes, mobRes, insRes, snRes] = await Promise.all([
+        fetch('/api/dropdown-options/transport-level', {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        }).then(res => res.json()).catch(() => ({ success: false, data: [] })),
+        fetch('/api/dropdown-options/urgency', {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        }).then(res => res.json()).catch(() => ({ success: false, data: [] })),
+        fetch('/api/dropdown-options/diagnosis', {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        }).then(res => res.json()).catch(() => ({ success: false, data: [] })),
+        fetch('/api/dropdown-options/mobility', {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        }).then(res => res.json()).catch(() => ({ success: false, data: [] })),
+        fetch('/api/dropdown-options/insurance', {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        }).then(res => res.json()).catch(() => ({ success: false, data: [] })),
+        fetch('/api/dropdown-options/special-needs', {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        }).then(res => res.json()).catch(() => ({ success: false, data: [] }))
+      ]);
+
+      const toValues = (resp: any, fallback: string[]) => 
+        (resp?.success && Array.isArray(resp.data) ? resp.data.map((o: any) => o.value) : fallback);
+
+      // Ensure urgency always has baseline defaults merged with hospital settings
+      const urgencyDefaults = ['Routine', 'Urgent', 'Emergent'];
+      const urgencyFromAPI = toValues(urgRes, []);
+      const urgencyOptions = [...urgencyDefaults, ...urgencyFromAPI.filter(val => !urgencyDefaults.includes(val))];
+
+      const options = {
+        transportLevel: toValues(tlRes, ['BLS', 'ALS', 'CCT', 'Other']),
+        urgency: urgencyOptions,
+        diagnosis: toValues(diagRes, ['Cardiac', 'Respiratory', 'Neurological', 'Trauma']),
+        mobility: toValues(mobRes, ['Ambulatory', 'Wheelchair', 'Stretcher', 'Bed-bound']),
+        insurance: toValues(insRes, ['Medicare', 'Medicaid', 'Private', 'Self-pay']),
+        specialNeeds: toValues(snRes, ['Bariatric Stretcher'])
+      };
+
+      console.log('TCC_DEBUG: Setting edit options:', options);
+      setEditOptions(options);
+    } catch (error) {
+      console.error('Error loading edit options:', error);
+      // Fallback to basic options if API fails
+      setEditOptions({
+        transportLevel: ['BLS', 'ALS', 'CCT', 'Other'],
+        urgency: ['Routine', 'Urgent', 'Emergent'],
+        diagnosis: ['Cardiac', 'Respiratory', 'Neurological', 'Trauma'],
+        mobility: ['Ambulatory', 'Wheelchair', 'Stretcher', 'Bed-bound'],
+        insurance: ['Medicare', 'Medicaid', 'Private', 'Self-pay'],
+        specialNeeds: ['Bariatric Stretcher']
+      });
+    }
+  };
+
   const handleEditTrip = (trip: any) => {
     setEditingTrip(trip);
     setEditFormData({
       status: trip.status,
       transportLevel: trip.transportLevel,
-      urgencyLevel: trip.urgencyLevel || trip.priority
+      urgencyLevel: trip.urgencyLevel || 'Routine',
+      diagnosis: trip.diagnosis || '',
+      mobilityLevel: trip.mobilityLevel || '',
+      insuranceCompany: trip.insuranceCompany || '',
+      specialNeeds: trip.specialNeeds || '',
+      oxygenRequired: trip.oxygenRequired || false,
+      monitoringRequired: trip.monitoringRequired || false
     });
   };
 
@@ -141,6 +215,14 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
         },
         body: JSON.stringify({
           status: editFormData.status,
+          urgencyLevel: editFormData.urgencyLevel,
+          transportLevel: editFormData.transportLevel,
+          diagnosis: editFormData.diagnosis,
+          mobilityLevel: editFormData.mobilityLevel,
+          insuranceCompany: editFormData.insuranceCompany,
+          specialNeeds: editFormData.specialNeeds,
+          oxygenRequired: editFormData.oxygenRequired,
+          monitoringRequired: editFormData.monitoringRequired,
           ...(editFormData.status === 'COMPLETED' && { completionTimestamp: new Date().toISOString() })
         }),
       });
@@ -812,55 +894,164 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
       {/* Edit Trip Modal */}
       {editingTrip && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+          <div className="relative top-10 mx-auto p-5 border w-11/12 max-w-2xl shadow-lg rounded-md bg-white">
             <div className="mt-3">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Edit Trip Details</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Edit Trip Details - Patient {editingTrip.patientId}</h3>
               <form onSubmit={(e) => { e.preventDefault(); handleUpdateTrip(); }}>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Status
-                  </label>
-                  <select
-                    value={editFormData.status}
-                    onChange={(e) => setEditFormData({...editFormData, status: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-                  >
-                    <option value="PENDING">Pending</option>
-                    <option value="ACCEPTED">Accepted</option>
-                    <option value="IN_PROGRESS">In Progress</option>
-                    <option value="COMPLETED">Completed</option>
-                    <option value="CANCELLED">Cancelled</option>
-                  </select>
-                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                  {/* Status */}
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Status
+                    </label>
+                    <select
+                      value={editFormData.status}
+                      onChange={(e) => setEditFormData({...editFormData, status: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                    >
+                      <option value="PENDING">Pending</option>
+                      <option value="ACCEPTED">Accepted</option>
+                      <option value="IN_PROGRESS">In Progress</option>
+                      <option value="COMPLETED">Completed</option>
+                      <option value="CANCELLED">Cancelled</option>
+                    </select>
+                  </div>
 
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Transport Level
-                  </label>
-                  <select
-                    value={editFormData.transportLevel}
-                    onChange={(e) => setEditFormData({...editFormData, transportLevel: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-                  >
-                    <option value="BLS">BLS - Basic Life Support</option>
-                    <option value="ALS">ALS - Advanced Life Support</option>
-                    <option value="CCT">CCT - Critical Care Transport</option>
-                  </select>
-                </div>
+                  {/* Transport Level */}
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Transport Level
+                    </label>
+                    <select
+                      value={editFormData.transportLevel}
+                      onChange={(e) => setEditFormData({...editFormData, transportLevel: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                    >
+                      {editOptions.transportLevel.map((level: string) => (
+                        <option key={level} value={level}>
+                          {level === 'BLS' ? 'BLS - Basic Life Support' :
+                           level === 'ALS' ? 'ALS - Advanced Life Support' :
+                           level === 'CCT' ? 'CCT - Critical Care Transport' :
+                           level}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Urgency Level
-                  </label>
-                  <select
-                    value={editFormData.urgencyLevel}
-                    onChange={(e) => setEditFormData({...editFormData, urgencyLevel: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-                  >
-                    <option value="Routine">Routine</option>
-                    <option value="Urgent">Urgent</option>
-                    <option value="Emergent">Emergent</option>
-                  </select>
+                  {/* Urgency Level */}
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Urgency Level
+                    </label>
+                    <select
+                      value={editFormData.urgencyLevel}
+                      onChange={(e) => setEditFormData({...editFormData, urgencyLevel: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                    >
+                      {editOptions.urgency.map((urgency: string) => (
+                        <option key={urgency} value={urgency}>{urgency}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Diagnosis */}
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Primary Diagnosis
+                    </label>
+                    <select
+                      value={editFormData.diagnosis}
+                      onChange={(e) => setEditFormData({...editFormData, diagnosis: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                    >
+                      <option value="">Select diagnosis</option>
+                      {editOptions.diagnosis.map((diagnosis: string) => (
+                        <option key={diagnosis} value={diagnosis}>{diagnosis}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Mobility Level */}
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Mobility Level
+                    </label>
+                    <select
+                      value={editFormData.mobilityLevel}
+                      onChange={(e) => setEditFormData({...editFormData, mobilityLevel: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                    >
+                      <option value="">Select mobility level</option>
+                      {editOptions.mobility.map((mobility: string) => (
+                        <option key={mobility} value={mobility}>{mobility}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Insurance Company */}
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Insurance Company
+                    </label>
+                    <select
+                      value={editFormData.insuranceCompany}
+                      onChange={(e) => setEditFormData({...editFormData, insuranceCompany: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                    >
+                      <option value="">Select insurance company</option>
+                      {editOptions.insurance.map((insurance: string) => (
+                        <option key={insurance} value={insurance}>{insurance}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Special Needs */}
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Special Needs
+                    </label>
+                    <select
+                      value={editFormData.specialNeeds}
+                      onChange={(e) => setEditFormData({...editFormData, specialNeeds: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                    >
+                      <option value="">Select special needs</option>
+                      {editOptions.specialNeeds.map((specialNeed: string) => (
+                        <option key={specialNeed} value={specialNeed}>{specialNeed}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Clinical Requirements */}
+                  <div className="mb-4 md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Clinical Requirements
+                    </label>
+                    <div className="space-y-2">
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={editFormData.oxygenRequired}
+                          onChange={(e) => setEditFormData({...editFormData, oxygenRequired: e.target.checked})}
+                          className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                        />
+                        <label className="ml-2 block text-sm text-gray-900">
+                          Oxygen Required
+                        </label>
+                      </div>
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={editFormData.monitoringRequired}
+                          onChange={(e) => setEditFormData({...editFormData, monitoringRequired: e.target.checked})}
+                          className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                        />
+                        <label className="ml-2 block text-sm text-gray-900">
+                          Continuous Monitoring Required
+                        </label>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="flex justify-end space-x-3">

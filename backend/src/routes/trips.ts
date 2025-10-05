@@ -318,6 +318,13 @@ router.put('/:id/status', async (req, res) => {
       pickupTimestamp,
       completionTimestamp,
       urgencyLevel,
+      transportLevel,
+      diagnosis,
+      mobilityLevel,
+      insuranceCompany,
+      specialNeeds,
+      oxygenRequired,
+      monitoringRequired,
     } = req.body;
 
     if (!status) {
@@ -342,6 +349,13 @@ router.put('/:id/status', async (req, res) => {
       pickupTimestamp,
       completionTimestamp,
       urgencyLevel,
+      transportLevel,
+      diagnosis,
+      mobilityLevel,
+      insuranceCompany,
+      specialNeeds,
+      oxygenRequired,
+      monitoringRequired,
     };
 
     const result = await tripService.updateTripStatus(id, updateData);

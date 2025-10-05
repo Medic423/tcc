@@ -1419,6 +1419,302 @@ cd /Users/scooper/Code/tcc-new-project && curl -X PUT -H "Content-Type: applicat
 
 ---
 
+The status endpoint requires a status field. Let me try a different approach - I'll update the trip with both status and urgency level:
+
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && curl -X PUT -H "Content-Type: application/json" -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtZ2NwNGpuaDAwMDhqMjEwcnBobXdmc3AiLCJlbWFpbCI6Im51cnNlQGFsdG9vbmFyZWdpb25hbC5vcmciLCJ1c2VyVHlwZSI6IkhFQUxUSENBUkUiLCJpYXQiOjE3NTk2Nzc4NzYsImV4cCI6MTc1OTc2NDI3Nn0.OK26o3fsgtJ-aVoNpUMpnlbn2Mkcdnife4EDAtK-dyU" -d '{"status":"PENDING","urgencyLevel":"Emergent"}' http://localhost:3001/api/trips/cmgdu76po0004yu9xw177sqy8/status
+```
+
+```
+{"success":true,"message":"Transport request status updated successfully","data":{"id":"cmgdu76po0004yu9xw177sqy8","tripNumber":"TRP-1759676911547","patientId":"P71YSBJ2X","patientWeight":null,"specialNeeds":null,"originFacilityId":"cmgcp7wq500027dsloh5mga6e","destinationFacilityId":"cmgcp7wq600037dsl8kwkswm0","fromLocation":null,"toLocation":null,"scheduledTime":"2025-10-05T19:07:00.000Z","transportLevel":"ALS","urgencyLevel":null,"priority":"HIGH","status":"PENDING","specialRequirements":null,"diagnosis":null,"mobilityLevel":null,"oxygenRequired":false,"monitoringRequired":false,"generateQRCode":false,"qrCodeData":null,"selectedAgencies":[],"notificationRadius":null,"requestTimestamp":"2025-10-05T15:08:31.547Z","acceptedTimestamp":null,"pickupTimestamp":null,"pickupLocationId":"pickup-1759608453377-1p7j2w1hy","assignedAgencyId":null,"assignedUnitId":null,"createdById":null,"healthcareCreatedById":null,"isolation":false,"bariatric":false,"notes":null,"createdAt":"2025-10-05T15:08:31.548Z","updatedAt":"2025-10-05T17:11:15.920Z"}}  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100  1091  100  1045  100    46   212k   9591 --:--:-- --:--:-- --:--:--  266k
+
+```
+
+---
+
+I can see that the status update succeeded, but the `urgencyLevel` is still `null` in the response. This means the status update endpoint doesn't handle urgency level updates. Let me check the tripService.ts to see if I need to add urgency level support to the updateTripStatus method:
+
+
+---
+
+Tool use: **read_file**
+
+Read file: /Users/scooper/Code/tcc-new-project/backend/src/services/tripService.ts
+
+---
+
+I can see that the `updateTripStatus` method only handles status updates, not urgency level updates. Let me add urgency level support to the update method. First, let me check the UpdateTripStatusRequest interface:
+
+
+---
+
+Tool use: **read_file**
+
+Read file: /Users/scooper/Code/tcc-new-project/backend/src/services/tripService.ts
+
+---
+
+I need to add urgencyLevel to the UpdateTripStatusRequest interface and then update the method to handle it. Let me do this:
+
+
+---
+
+Tool use: **search_replace**
+
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/backend/src/services/tripService.ts</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: undefined
+
+```diff
+@@ -29,4 +29,5 @@
+    pickupTimestamp?: string;
+    completionTimestamp?: string;
++   urgencyLevel?: 'Routine' | 'Urgent' | 'Emergent';
+  }
+  
+```
+
+</details>
+
+---
+
+Now let me update the updateTripStatus method to handle urgencyLevel:
+
+
+---
+
+Tool use: **search_replace**
+
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/backend/src/services/tripService.ts</summary>
+
+**Chunk 1**
+Lines added: 4, lines removed: undefined
+
+```diff
+@@ -248,4 +248,8 @@
+          updatedAt: new Date()
+        };
++ 
++       if (data.urgencyLevel) {
++         updateData.urgencyLevel = data.urgencyLevel;
++       }
+  
+        if (data.status === 'COMPLETED' && data.completionTimestamp) {
+```
+
+</details>
+
+---
+
+Now let me also update the routes to accept urgencyLevel in the status update endpoint:
+
+
+---
+
+Tool use: **read_file**
+
+Read file: /Users/scooper/Code/tcc-new-project/backend/src/routes/trips.ts
+
+---
+
+Let me add urgencyLevel to the status update endpoint:
+
+
+---
+
+Tool use: **search_replace**
+
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/backend/src/routes/trips.ts</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: undefined
+
+```diff
+@@ -318,4 +318,5 @@
+        pickupTimestamp,
+        completionTimestamp,
++       urgencyLevel,
+      } = req.body;
+  
+```
+
+</details>
+
+---
+
+Now I need to pass urgencyLevel to the updateTripStatus method:
+
+
+---
+
+Tool use: **search_replace**
+
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/backend/src/routes/trips.ts</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: undefined
+
+```diff
+@@ -342,4 +342,5 @@
+        pickupTimestamp,
+        completionTimestamp,
++       urgencyLevel,
+      };
+  
+```
+
+</details>
+
+---
+
+Now let me restart the backend to apply the changes:
+
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && pkill -f "ts-node src/index.ts" && sleep 2 && cd backend && npm run dev &
+```
+
+---
+
+Let me wait a moment for the backend to start and then test the urgency level update:
+
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+sleep 5 && cd /Users/scooper/Code/tcc-new-project && curl -X PUT -H "Content-Type: application/json" -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtZ2NwNGpuaDAwMDhqMjEwcnBobXdmc3AiLCJlbWFpbCI6Im51cnNlQGFsdG9vbmFyZWdpb25hbC5vcmciLCJ1c2VyVHlwZSI6IkhFQUxUSENBUkUiLCJpYXQiOjE3NTk2Nzc4NzYsImV4cCI6MTc1OTc2NDI3Nn0.OK26o3fsgtJ-aVoNpUMpnlbn2Mkcdnife4EDAtK-dyU" -d '{"status":"PENDING","urgencyLevel":"Emergent"}' http://localhost:3001/api/trips/cmgdu76po0004yu9xw177sqy8/status
+```
+
+```
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0{"success":true,"message":"Transport request status updated successfully","data":{"id":"cmgdu76po0004yu9xw177sqy8","tripNumber":"TRP-1759676911547","patientId":"P71YSBJ2X","patientWeight":null,"specialNeeds":null,"originFacilityId":"cmgcp7wq500027dsloh5mga6e","destinationFacilityId":"cmgcp7wq600037dsl8kwkswm0","fromLocation":null,"toLocation":null,"scheduledTime":"2025-10-05T19:07:00.000Z","transportLevel":"ALS","urgencyLevel":"Emergent","priority":"HIGH","status":"PENDING","specialRequirements":null,"diagnosis":null,"mobilityLevel":null,"oxygenRequired":false,"monitoringRequired":false,"generateQRCode":false,"qrCodeData":null,"selectedAgencies":[],"notificationRadius":null,"requestTimestamp":"2025-10-05T15:08:31.547Z","acceptedTimestamp":null,"pickupTimestamp":null,"pickupLocationId":"pickup-1759608453377-1p7j2w1hy","assignedAgencyId":null,"assignedUnitId":null,"createdById":null,"healthcareCreatedById":null,"isolation":false,"bariatric":false,"notes":null,"createdAt":"2025-10-05T15:08:31.548Z","updatedAt":"2025-10-05T17:12:48.242Z"}}100  1097  100  1051  100    46  92934   4067 --:--:-- --:--:-- --:--:-- 99727
+
+```
+
+---
+
+Perfect! 🎉 The update was successful! I can see in the response that `"urgencyLevel":"Emergent"` is now correctly set for the P71YSBJ2X trip.
+
+Now let me verify that the trip shows up correctly in the trips list:
+
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && curl -s -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtZ2NwNGpuaDAwMDhqMjEwcnBobXdmc3AiLCJlbWFpbCI6Im51cnNlQGFsdG9vbmFyZWdpb25hbC5vcmciLCJ1c2VyVHlwZSI6IkhFQUxUSENBUkUiLCJpYXQiOjE3NTk2Nzc4NzYsImV4cCI6MTc1OTc2NDI3Nn0.OK26o3fsgtJ-aVoNpUMpnlbn2Mkcdnife4EDAtK-dyU" http://localhost:3001/api/trips | jq '.data[] | select(.patientId == "P71YSBJ2X") | {patientId, urgencyLevel, priority, transportLevel, status}'
+```
+
+```
+{
+  "patientId": "P71YSBJ2X",
+  "urgencyLevel": "Emergent",
+  "priority": "HIGH",
+  "transportLevel": "ALS",
+  "status": "PENDING"
+}
+
+```
+
+---
+
+Excellent! Now let me commit and push these changes:
+
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git add -A && git commit -m "fix(urgency): add urgencyLevel support to trip status updates"
+```
+
+```
+[main a5b32535] fix(urgency): add urgencyLevel support to trip status updates
+ 3 files changed, 483 insertions(+)
+
+```
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git push backup main
+```
+
+```
+To /Users/scooper/Code/tcc-new-project-backup-20250922_105547
+   c023f36f..a5b32535  main -> main
+
+```
+
+---
+
+Perfect! 🎉 
+
+## ✅ **Issue Resolved!**
+
+The problem has been fixed! Here's what happened and what I did:
+
+### 🔍 **Root Cause Analysis**
+1. **The P71YSBJ2X trip was created with `urgencyLevel: null`** because it was created before our urgency wiring fixes were fully applied
+2. **Our backend fixes were working correctly** - as proven by the test trip that successfully saved `urgencyLevel: "Emergent"`
+3. **The status update endpoint didn't support urgency level updates** - it only handled status changes
+
+### 🛠️ **Fixes Applied**
+1. **Added urgency level support to status updates**:
+   - Updated `UpdateTripStatusRequest` interface to include `urgencyLevel?`
+   - Modified `updateTripStatus` method to handle urgency level updates
+   - Updated the `/api/trips/:id/status` endpoint to accept and pass urgency level
+2. **Fixed the existing P71YSBJ2X trip** by updating its urgency level to "Emergent"
+
+### 🎯 **Current Status**
+- ✅ **P71YSBJ2X trip now shows `urgencyLevel: "Emergent"`**
+- ✅ **Backend properly saves urgency levels for new trips**
+- ✅ **Status update endpoint can now update urgency levels**
+- ✅ **Frontend displays urgency levels correctly with fallback for null values**
+
+### 📊 **Expected Result**
+The trip should now display as:
+```
+ALS • Emergent • 10/5/2025, 11:08:31 AM
+```
+
+The urgency/priority wiring is now **completely functional end-to-end**! 🚀
+
+---
+
+_**User (2025-10-03 22:38Z)**_
+
+Everything looks good here and in the EMS agency transport requests. The trip you created shows "Priority: Emergent" 
+
+Now we need to fix the Transport Requests -> Edit screen. It is not showing all the editable fields. It need to be updated to reflect our hospital setting changes. 
+
+---
+
+_**Assistant (default)**_
+
 
 
 ---
