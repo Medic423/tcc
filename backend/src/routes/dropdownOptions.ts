@@ -24,6 +24,16 @@ router.get('/:category', authenticateAdmin, async (req: AuthenticatedRequest, re
     }
     
     const hospitalPrisma = databaseManager.getHospitalDB();
+    // Ensure baseline defaults exist for urgency
+    if (category === 'urgency') {
+      const baseline = ['Routine', 'Urgent', 'Emergent'];
+      for (const value of baseline) {
+        const existing = await hospitalPrisma.dropdownOption.findFirst({ where: { category, value } });
+        if (!existing) {
+          await hospitalPrisma.dropdownOption.create({ data: { category, value, isActive: true } });
+        }
+      }
+    }
     const options = await hospitalPrisma.dropdownOption.findMany({
       where: {
         category: category,

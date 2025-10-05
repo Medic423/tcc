@@ -5388,3 +5388,262 @@ Done. Removed the urgency chip from the right-side action row in `HealthcareDash
 
 ---
 
+_**User (2025-10-03 22:38Z)**_
+
+The Completed Today and High Priority tiles still aren't updating. Looking at the list High Priority should show 0 and Completed Today should show 2. 
+
+---
+
+_**Assistant (default)**_
+
+<think><details><summary>Thought Process</summary>**Investigating tile update issues**
+
+I've changed the tiles in the Healthcare Dashboard, but the user says they're still not updating, specifically for High Priority and Completed Today counts. It looks like we filter trips to only show active trips, while Completed Today relies on completedTrip states. I need to consider if the formatting of completionTime may be causing issues. If we lose the ISO date due to transformation or there’s a timezone mismatch when comparing dates, that could be problematic. I should investigate further!
+**Examining the Completed Today tile**
+
+I'm considering whether the Completed Today tile might still be filtering trips incorrectly due to using the wrong state variable after a refresh. The count should be based on `completedTrips.filter`, which seems fine. For High Priority, we count from activeTrips, but if the list shows Routine, it should be zero. There could be a capitalization issue with urgencyLevel values, since our UI expects them formatted a certain way. Additionally, if urgencyLevel is null, it defaults to Routine, which could be misleading. I need to clarify these details!
+**Analyzing High Priority calculations**
+
+For the High Priority calculation, if the urgencyLevel is null, only the priority of 'HIGH' should count. If there’s no high priority, it should display as 0, yet the user is seeing a count greater than 0. I need to review the tile code for Completed Today and High Priority to ensure they're set up correctly. There's a chance the tiles aren't updating because the state isn't being tracked properly. Also, if completionTime strings aren't matching today’s date due to timezone differences, we might need to store the ISO date in transformedTrips. I should address that!
+**Updating calculations for accuracy**
+
+I need to calculate dates using the ISO format instead of the localized strings, which should help address those timezone issues for the user. It's essential to ensure that High Priority correctly excludes completed trips, which we’ve already filtered out in the trips array. I’ll make edits in the Healthcare Dashboard to include the ISO field and adjust the Completed Today calculation to use `trip.completionTimestampISO`. Time to dive into the loadTrips transformation and get this implemented! I'll commit and push the changes afterward.</details></think>
+
+---
+
+I’m going to update `HealthcareDashboard.tsx` to store the raw completion ISO timestamp and compute “Completed Today” from that instead of a localized string, which should fix the count. I’ll also recheck the high-priority logic remains based on active trips only. Then I’ll commit and push.
+
+---
+
+Tool use: **apply_patch**
+
+<details>
+        <summary>Apply patch for /Users/scooper/Code/tcc-new-project/frontend/src/components/HealthcareDashboard.tsx</summary>
+      
+
+```diff
+*** Begin Patch
+*** Update File: /Users/scooper/Code/tcc-new-project/frontend/src/components/HealthcareDashboard.tsx
+@@
+-          const transformedTrips = data.data.map((trip: any) => ({
++          const transformedTrips = data.data.map((trip: any) => ({
+             id: trip.id,
+             patientId: trip.patientId,
+             origin: trip.originFacility?.name || 'Unknown Origin',
+             destination: trip.destinationFacility?.name || 'Unknown Destination',
+             pickupLocation: trip.pickupLocation ? {
+               name: trip.pickupLocation.name,
+               floor: trip.pickupLocation.floor,
+               room: trip.pickupLocation.room,
+             } : null,
+             transportLevel: trip.transportLevel || 'BLS',
+             status: trip.status,
+             requestTime: new Date(trip.createdAt).toLocaleString(),
+             priority: trip.priority,
+             urgencyLevel: trip.urgencyLevel,
+-            completionTime: trip.completionTimestamp ? new Date(trip.completionTimestamp).toLocaleString() : null
++            completionTime: trip.completionTimestamp ? new Date(trip.completionTimestamp).toLocaleString() : null,
++            completionTimestampISO: trip.completionTimestamp || null
+           }));
+*** End Patch
+```
+
+---
+
+Tool use: **apply_patch**
+
+<details>
+        <summary>Apply patch for /Users/scooper/Code/tcc-new-project/frontend/src/components/HealthcareDashboard.tsx</summary>
+      
+
+```diff
+*** Begin Patch
+*** Update File: /Users/scooper/Code/tcc-new-project/frontend/src/components/HealthcareDashboard.tsx
+@@
+-                        <dd className="text-lg font-medium text-gray-900">
+-                          {completedTrips.filter(trip => {
+-                            if (!trip.completionTime) return false;
+-                            const completedDate = new Date(trip.completionTime);
+-                            const now = new Date();
+-                            return completedDate.getFullYear() === now.getFullYear() &&
+-                              completedDate.getMonth() === now.getMonth() &&
+-                              completedDate.getDate() === now.getDate();
+-                          }).length}
+-                        </dd>
++                        <dd className="text-lg font-medium text-gray-900">
++                          {completedTrips.filter(trip => {
++                            if (!trip.completionTimestampISO) return false;
++                            const completedDate = new Date(trip.completionTimestampISO);
++                            const now = new Date();
++                            return completedDate.getFullYear() === now.getFullYear() &&
++                              completedDate.getMonth() === now.getMonth() &&
++                              completedDate.getDate() === now.getDate();
++                          }).length}
++                        </dd>
+*** End Patch
+```
+
+---
+
+Tool use: **apply_patch**
+
+<details>
+        <summary>Apply patch for /Users/scooper/Code/tcc-new-project/frontend/src/components/HealthcareDashboard.tsx</summary>
+      
+
+```diff
+*** Begin Patch
+*** Update File: /Users/scooper/Code/tcc-new-project/frontend/src/components/HealthcareDashboard.tsx
+@@
+-                        <dd className="text-lg font-medium text-gray-900">
+-                          {trips.filter(trip => trip.status !== 'COMPLETED' && (trip.urgencyLevel === 'Emergent' || trip.priority === 'HIGH')).length}
+-                        </dd>
++                        <dd className="text-lg font-medium text-gray-900">
++                          {trips.filter(trip => (trip.status === 'PENDING' || trip.status === 'ACCEPTED' || trip.status === 'IN_PROGRESS') && (trip.urgencyLevel === 'Emergent' || trip.priority === 'HIGH')).length}
++                        </dd>
+*** End Patch
+```
+
+---
+
+Tool use: **read_lints**
+
+<details>
+          <summary>Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `/Users/scooper/Code/tcc-new-project/frontend/src/components/HealthcareDashboard.tsx`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+git add -A && git commit -m "fix(tiles): compute Completed Today from ISO timestamp; tighten High Priority to active statuses only" && git push -u backup main
+```
+
+```
+[main 46c9d996] fix(tiles): compute Completed Today from ISO timestamp; tighten High Priority to active statuses only
+ 2 files changed, 87 insertions(+), 4 deletions(-)
+To /Users/scooper/Code/tcc-new-project-backup-20250922_105547
+   98f10c9f..46c9d996  main -> main
+branch 'main' set up to track 'backup/main'.
+
+```
+
+---
+
+Fixed:
+- Completed Today: now counts trips using the raw completion ISO timestamp for accurate same-day detection.
+- High Priority: now only counts active trips (PENDING, ACCEPTED, IN_PROGRESS) with urgency Emergent or priority HIGH.
+
+Changes pushed to main. Please refresh; the tiles should show 2 and 0 respectively.
+
+---
+
+_**User (2025-10-03 22:38Z)**_
+
+I see the problem the Urgency Level dropdown doesn't have any of those values when you create the trip. They should be in a database table. Those need to be hardcoded choices and and thing added in the Hosital Setting would be added to those default values so the calculation will work. Does that make sense?
+
+---
+
+_**Assistant (default)**_
+
+
+
+---
+
+<think><details><summary>Thought Process</summary>**Proposing urgency settings solution**
+
+I need to propose that the Urgency Level dropdown should include hardcoded defaults along with any additions from hospital settings. The calculations will need to rely on these canonical values. I should seed options for the 'urgency' category with defaults like 'Emergent', 'Urgent', and 'Routine', possibly including 'Stat' as well. Earlier, we set up fixed categories, and now we need to ensure the backend can seed these dropdown options effectively during startup. A small seed function or script might really help!
+**Updating urgency defaults and handling schema**
+
+I need to ensure that the urgency defaults are present in the system. First, I'll check that the `seed-dropdown-options.js` file exists in the backend root and use read_file to inspect and update it. The frontend, specifically the EnhancedTripForm, should load urgency options from the API. If no options exist, the dropdown ends up empty, causing incorrect counts and trip entries. Also, I have to make sure the urgency level is correctly stored in the trip schema, as it's currently nullable. We didn’t wire urgency selection to the payload earlier, which is a problem.
+**Updating urgency level and trip details**
+
+Since the urgencyLevel is currently null, it seems only the priority field counts, which is acceptable. However, I still need to populate the dropdown. I'll outline my tasks: 
+
+First, I'll update the backend trips route to accept the 'urgencyLevel' field and ensure the tripService.createTrip sets it correctly. I also need to seed the urgency dropdown with default options like Emergent, Urgent, and Routine. 
+
+On the frontend, I'll make sure the EnhancedTripForm sends the selected urgencyLevel, mapping it appropriately. 
+
+Lastly, I'll address the Prisma error regarding pickupLocationId, ensuring it isn’t included in the data object anymore.
+**Adjusting pickupLocationId and seeding**
+
+I need to update the code to ensure that pickupLocationId isn’t set or included at all. It’s time to read and make edits in the relevant files: `tripService.ts`, `trips.ts`, and `EnhancedTripForm.tsx`. I’ll use parallel read_file for efficiency.
+
+After that, I'll apply the necessary patches and run lints. Then, I'll restart the services following the user's instructions. I also need to update the `seed-dropdown-options.js` to seed the urgency dropdown defaults. Let's get started!</details></think>
+
+---
+
+I'll locate and fix three things now: 1) ensure the backend accepts and stores `urgencyLevel` on trip creation, 2) seed default urgency options (Emergent, Urgent, Routine) into the database, and 3) make the form send `urgencyLevel`. I’ll also remove any stray `pickupLocationId` scalar from the Prisma create call that’s causing the validation error. Then I’ll restart services and push.
+
+---
+
+Tool use: **read_file**
+
+Read file: /Users/scooper/Code/tcc-new-project/backend/src/services/tripService.ts
+
+---
+
+<think><details><summary>Thought Process</summary>**Implementing urgency options**
+
+I need to verify that the backend includes an urgency selection for the dropdown options. The main task is to agree on fixes and proceed. I see that I should modify the `createEnhancedTrip` to use `pickupLocation connect`. For the urgency options, either I can hardcode defaults alongside dynamic fetching on the frontend or adjust the backend to always include certain base options. I’ll update the `EnhancedTripForm` to ensure those defaults are visible in the dropdown. Plus, should I seed the database for this?
+**Implementing urgency defaults**
+
+I’m considering how to seed default options effectively. I could either add a seed script or update the `dropdownOptions` to create them if they’re missing. I plan to implement a small backend utility that modifies the `GET /:category` route — if the category is 'urgency', it would prepend the default options and then include those from the database. I also need to make sure that the `DropdownOption` model in the hospital database is correctly mapped and utilized. Time to check `dropdownOptions.ts`.</details></think>
+
+---
+
+Tool use: **read_file**
+
+Read file: /Users/scooper/Code/tcc-new-project/backend/src/routes/dropdownOptions.ts
+
+---
+
+<think><details><summary>Thought Process</summary>**Planning system updates**
+
+I need to issue a status update and then focus on tools. I'll create a to-do list to fix the urgency options union and adjust the pickupLocationId scalar. The tasks include writing todos, applying patches to specific files, and ensuring the urgencyLevel is managed correctly. I also want to run lints and restart the development script in the background. Finally, I’ll commit and push to the backup remote on main and confirm the implementation. Let’s get started!</details></think>
+
+---
+
+I'll update the urgency options to always include the default three values merged with any Hospital Settings additions, and fix the Prisma error by using a relation connect for `pickupLocation` in the enhanced trip creation. Then I'll restart services and push the changes.
+
+---
+
+Tool use: **todo_write**
+
+## Todo List
+
+- [-] Return default urgency options merged with Hospital Settings additions
+- [ ] Use relation connect for pickupLocation in enhanced trip create
+- [ ] Restart services; commit and push fixes to main
+
+---
+
+I’m going to read the enhanced trip creation logic and update it to remove the stray pickupLocationId scalar and use a relation connect. I’ll also implement merging default urgency values with Hospital Settings options in the API used by the form. Then I’ll restart services and push.
+
+---
+
+Tool use: **read_file**
+
+Read file: /Users/scooper/Code/tcc-new-project/frontend/src/components/EnhancedTripForm.tsx
+
+---
+
+<think><details><summary>Thought Process</summary>**Analyzing error sources**
+
+I see that the Enhanced create path has an urgency level already stored, but it seems to use the pickupLocationId scalar, which is where the error stems from. The EnhancedTripForm is currently set up with a simple endpoint instead of the enhanced version. The error logs reveal a prisma validation error indicating that pickupLocationId is null within transportRequest.create at createTrip. It seems like the older method createTrip has pickupLocationId, while the current one does not, only connecting the relation. I should fix createEnhancedTrip to utilize relation connect for pickupLocation.
+**Implementing changes**
+
+I need to adjust tripService.createTrip to pull in urgencyLevel from (data as any).urgencyLevel and ensure it doesn’t set it to null. For createEnhanced</details></think>
+
+---
+

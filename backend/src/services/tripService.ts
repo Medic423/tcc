@@ -303,7 +303,7 @@ export class TripService {
     try {
       const tripNumber = `TRP-${Date.now()}`;
       
-      const tripData = {
+      const tripData: any = {
         tripNumber,
         patientId: data.patientId || 'PAT-UNKNOWN',
         patientWeight: data.patientWeight || null,
@@ -329,11 +329,15 @@ export class TripService {
         requestTimestamp: new Date(),
         acceptedTimestamp: null,
         pickupTimestamp: null,
-        pickupLocationId: data.pickupLocationId || null,
         notes: data.notes || null,
         isolation: false,
         bariatric: false,
       };
+
+      // Connect pickup location relation if provided
+      if (data.pickupLocationId) {
+        tripData.pickup_locations = { connect: { id: data.pickupLocationId } };
+      }
 
       const trip = await prisma.transportRequest.create({
         data: tripData
