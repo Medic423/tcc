@@ -409,7 +409,7 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                         <dd className="text-lg font-medium text-gray-900">
                           {trips.filter(trip => 
                             (trip.status === 'PENDING' || trip.status === 'ACCEPTED' || trip.status === 'IN_PROGRESS') && 
-                            (trip.urgencyLevel === 'Emergent' || trip.priority === 'HIGH')
+                            ((trip.urgencyLevel === 'Emergent') || trip.priority === 'HIGH')
                           ).length}
                         </dd>
                       </dl>
@@ -462,7 +462,7 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                             </p>
                           )}
                           <p className="text-xs text-gray-500">
-                            {trip.transportLevel} • {trip.urgencyLevel} • {trip.requestTime}
+                            {trip.transportLevel} • {trip.urgencyLevel || 'Routine'} • {trip.requestTime}
                           </p>
                         </div>
                       </div>
@@ -566,7 +566,7 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                                 <span className="font-medium">Transport Level:</span> {trip.transportLevel}
                               </div>
                               <div>
-                                <span className="font-medium">Urgency:</span> {trip.urgencyLevel}
+                                <span className="font-medium">Urgency:</span> {trip.urgencyLevel || 'Routine'}
                               </div>
                               <div>
                                 <span className="font-medium">Request Time:</span> {trip.requestTime}
