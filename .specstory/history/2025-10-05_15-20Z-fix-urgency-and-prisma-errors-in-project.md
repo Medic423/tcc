@@ -5518,7 +5518,103 @@ Perfect! Now let me commit this styling improvement:
 
 Tool use: **run_terminal_cmd**
 
+```bash
+cd /Users/scooper/Code/tcc-new-project && git add -A && git commit -m "feat(ui): enhance completed trips header labels with bold dark grey styling
+
+- Make header labels (Transport Level:, Urgency:, etc.) bold with font-bold
+- Change header color to text-gray-800 for better contrast and readability
+- Keep data values in text-gray-500 for clear visual hierarchy
+- Improve visual distinction between labels and values"
+```
+
+```
+[main a4d4bd8f] feat(ui): enhance completed trips header labels with bold dark grey styling
+ 2 files changed, 228 insertions(+), 12 deletions(-)
+
+```
+
 ---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git push backup main
+```
+
+```
+To /Users/scooper/Code/tcc-new-project-backup-20250922_105547
+   c914b3fa..a4d4bd8f  main -> main
+
+```
+
+---
+
+Perfect! 🎉
+
+## ✅ **Completed Trips Header Labels Enhanced!**
+
+### 🔧 **Styling Improvements**
+
+**Before:**
+```
+Transport Level:    Urgency:        Request Time:    ← font-medium, text-gray-500
+BLS                 Routine         10/5/2025, 9:40:05 AM
+```
+
+**After:**
+```
+Transport Level:    Urgency:        Request Time:    ← font-bold, text-gray-800
+BLS                 Routine         10/5/2025, 9:40:05 AM  ← text-gray-500
+```
+
+### 🎯 **Visual Hierarchy Enhancement**
+
+- **Header Labels**: Now `font-bold text-gray-800` (bold, dark grey)
+- **Data Values**: Remain `text-gray-500` (lighter grey)
+- **Wait Time**: Keeps special `text-green-600 font-semibold` styling
+- **Better Contrast**: Clear distinction between labels and values
+
+### 🎨 **Improved Readability**
+
+The completed trips display now has much better visual hierarchy:
+1. **Patient ID**: `text-lg` (largest)
+2. **Route Information**: `text-base` (medium)
+3. **Header Labels**: `font-bold text-gray-800` (bold, dark)
+4. **Data Values**: `text-gray-500` (supporting information)
+
+The bold, dark grey headers make it much easier to quickly scan and identify each piece of information! 🚀
+
+
+---
+
+Tool use: **todo_write**
+
+## Todo List
+
+- [x] Fix backend routes/trips.ts to accept and pass urgencyLevel
+- [x] Fix tripService.ts to handle urgencyLevel and pickupLocation relation
+- [x] Fix EnhancedTripForm.tsx to send urgencyLevel and merge defaults
+- [x] Fix HealthcareDashboard.tsx to display urgencyLevel and correct High Priority tile
+- [x] Ensure dropdownOptions.ts returns merged urgency defaults
+- [x] Restart services, commit, push, and verify functionality
+- [x] Enhanced transport request display with improved layout and styling
+- [x] Remove redundant urgency pill from completed trips display
+- [x] Remove redundant COMPLETED status pill from completed trips display
+- [x] Improve completed trips time formatting with two-line layout
+- [x] Fix Transport Level and Urgency formatting to consistent two-line layout
+- [x] Optimize completed trips layout with single-row grid system
+- [x] Increase font size for origin and destination in completed trips
+- [x] Enhance completed trips header labels with bold dark grey styling
+
+---
+
+_**User (2025-10-03 22:38Z)**_
+
+We're looking good. Let's move all of our working changes up to the main branch in git, commit and push to the repository. Then run ./scripts/backup-run-all.sh /Volumes/Acasis/ and update the planning documents.
+
+---
+
+_**Assistant (default)**_
 
 
 
