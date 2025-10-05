@@ -681,20 +681,24 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                                 <span className="font-medium">Urgency:</span> {trip.urgencyLevel || 'Routine'}
                               </div>
                               <div>
-                                <span className="font-medium">Request Time:</span> {trip.requestTime}
+                                <div className="font-medium">Request Time:</div>
+                                <div>{trip.requestTime}</div>
                               </div>
                               {trip.pickupTime && (
                                 <div>
-                                  <span className="font-medium">Pickup Time:</span> {trip.pickupTime}
+                                  <div className="font-medium">Pickup Time:</div>
+                                  <div>{trip.pickupTime}</div>
                                 </div>
                               )}
                               {trip.waitTime && (
                                 <div>
-                                  <span className="font-medium">Wait Time:</span> <span className="text-green-600 font-semibold">{trip.waitTime}</span>
+                                  <div className="font-medium">Wait Time:</div>
+                                  <div className="text-green-600 font-semibold">{trip.waitTime}</div>
                                 </div>
                               )}
                               <div>
-                                <span className="font-medium">Completion Time:</span> {trip.completionTime || 'N/A'}
+                                <div className="font-medium">Completion Time:</div>
+                                <div>{trip.completionTime || 'N/A'}</div>
                               </div>
                             </div>
                           </div>

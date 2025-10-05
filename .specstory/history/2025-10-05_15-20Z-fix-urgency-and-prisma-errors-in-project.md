@@ -4687,7 +4687,139 @@ Tool use: **todo_write**
 
 ---
 
+_**User (2025-10-03 22:38Z)**_
 
+Since the trip is in the "Completed Trips" list there is no need for the "Completed" pill display on the right. It can be removed.
+
+---
+
+_**Assistant (default)**_
+
+Absolutely! You're right - since we're already in the "Completed Trips" section, the "COMPLETED" pill is redundant. Let me remove it:
+
+
+---
+
+Tool use: **search_replace**
+
+
+<details><summary>Edit file: /Users/scooper/Code/tcc-new-project/frontend/src/components/HealthcareDashboard.tsx</summary>
+
+**Chunk 1**
+Lines added: undefined, lines removed: 5
+
+```diff
+@@ -699,9 +699,4 @@
+                              </div>
+                            </div>
+-                           <div className="ml-4 flex items-center space-x-2">
+-                             <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${getStatusColor(trip.status)}`}>
+-                               {trip.status}
+-                             </span>
+-                           </div>
+                          </div>
+                        </div>
+```
+
+</details>
+
+---
+
+Perfect! Now let me commit this final cleanup:
+
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git add -A && git commit -m "feat(ui): remove redundant COMPLETED pill from completed trips display
+
+- Remove unnecessary COMPLETED status pill from completed trips cards
+- Since trips are already in 'Completed Trips' section, status pill is redundant
+- Clean up right side of completed trip cards for better visual focus"
+```
+
+```
+[main 97ec72b7] feat(ui): remove redundant COMPLETED pill from completed trips display
+ 2 files changed, 195 insertions(+), 5 deletions(-)
+
+```
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+cd /Users/scooper/Code/tcc-new-project && git push backup main
+```
+
+```
+To /Users/scooper/Code/tcc-new-project-backup-20250922_105547
+   52b1cde9..97ec72b7  main -> main
+
+```
+
+---
+
+Perfect! 🎉
+
+## ✅ **Completed Trips Display Fully Optimized!**
+
+### 🔧 **Final Cleanup**
+
+**Before:**
+```
+Patient LEG-005
+Altoona Regional Emergency Department → UPMC Bedford Emergency Department
+Transport Level: BLS
+Urgency: Routine
+Request Time: 10/5/2025, 9:40:05 AM
+Pickup Time: 10/5/2025, 10:55:02 AM
+Wait Time: 1h 14m
+Completion Time: N/A
+[COMPLETED]  ← Redundant status pill
+```
+
+**After:**
+```
+Patient LEG-005
+Altoona Regional Emergency Department → UPMC Bedford Emergency Department
+Transport Level: BLS
+Urgency: Routine
+Request Time: 10/5/2025, 9:40:05 AM
+Pickup Time: 10/5/2025, 10:55:02 AM
+Wait Time: 1h 14m
+Completion Time: N/A
+← Clean, no redundant pills
+```
+
+### 🎯 **Benefits**
+
+- **Eliminated All Redundancy**: Removed both urgency and status pills
+- **Cleaner Focus**: Attention goes directly to the trip details and metrics
+- **Better Space Utilization**: More room for important information
+- **Contextual Design**: Status is implicit from the section title "Completed Trips"
+- **Professional Appearance**: Clean, uncluttered interface
+
+The completed trips display is now perfectly optimized with no redundant information! 🚀
+
+
+---
+
+Tool use: **todo_write**
+
+## Todo List
+
+- [x] Fix backend routes/trips.ts to accept and pass urgencyLevel
+- [x] Fix tripService.ts to handle urgencyLevel and pickupLocation relation
+- [x] Fix EnhancedTripForm.tsx to send urgencyLevel and merge defaults
+- [x] Fix HealthcareDashboard.tsx to display urgencyLevel and correct High Priority tile
+- [x] Ensure dropdownOptions.ts returns merged urgency defaults
+- [x] Restart services, commit, push, and verify functionality
+- [x] Enhanced transport request display with improved layout and styling
+- [x] Remove redundant urgency pill from completed trips display
+- [x] Remove redundant COMPLETED status pill from completed trips display
 
 ---
 
