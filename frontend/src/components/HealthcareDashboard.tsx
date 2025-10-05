@@ -377,7 +377,14 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                           Completed Today
                         </dt>
                         <dd className="text-lg font-medium text-gray-900">
-                          {trips.filter(trip => trip.status === 'COMPLETED').length}
+                          {completedTrips.filter(trip => {
+                            if (!trip.completionTime) return false;
+                            const completedDate = new Date(trip.completionTime);
+                            const now = new Date();
+                            return completedDate.getFullYear() === now.getFullYear() &&
+                              completedDate.getMonth() === now.getMonth() &&
+                              completedDate.getDate() === now.getDate();
+                          }).length}
                         </dd>
                       </dl>
                     </div>
@@ -399,7 +406,7 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                           High Priority
                         </dt>
                         <dd className="text-lg font-medium text-gray-900">
-                          {trips.filter(trip => trip.urgencyLevel === 'Emergent' || trip.priority === 'HIGH').length}
+                          {trips.filter(trip => trip.status !== 'COMPLETED' && (trip.urgencyLevel === 'Emergent' || trip.priority === 'HIGH')).length}
                         </dd>
                       </dl>
                     </div>
