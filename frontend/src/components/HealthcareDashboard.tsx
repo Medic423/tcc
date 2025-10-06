@@ -16,6 +16,7 @@ import {
 import Notifications from './Notifications';
 import EnhancedTripForm from './EnhancedTripForm';
 import HospitalSettings from './HospitalSettings';
+import { tripsAPI } from '../services/api';
 
 interface HealthcareDashboardProps {
   user: {
@@ -121,8 +122,8 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
           const transformedTrips = data.data.map((trip: any) => ({
             id: trip.id,
             patientId: trip.patientId,
-            origin: trip.originFacility?.name || 'Unknown Origin',
-            destination: trip.destinationFacility?.name || 'Unknown Destination',
+            origin: trip.originFacility?.name || trip.origin?.name || trip.originName || 'Unknown Origin',
+            destination: trip.destinationFacility?.name || trip.destination?.name || trip.destinationName || 'Unknown Destination',
             pickupLocation: trip.pickupLocation ? {
               name: trip.pickupLocation.name,
               floor: trip.pickupLocation.floor,
@@ -222,6 +223,36 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
         insurance: ['Medicare', 'Medicaid', 'Private', 'Self-pay'],
         specialNeeds: ['Bariatric Stretcher']
       });
+    }
+  };
+
+  const markArrival = async (tripId: string) => {
+    console.log('TCC_DEBUG: Healthcare markArrival click', { tripId });
+    setUpdating(true);
+    try {
+      const res = await tripsAPI.updateStatus(tripId, { arrivalTimestamp: new Date().toISOString() });
+      console.log('TCC_DEBUG: markArrival response', res.status);
+      await loadTrips();
+    } catch (e: any) {
+      console.error('TCC_DEBUG: markArrival error', e);
+      alert(e?.response?.data?.error || e?.message || 'Failed to mark arrival');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const markDeparture = async (tripId: string) => {
+    console.log('TCC_DEBUG: Healthcare markDeparture click', { tripId });
+    setUpdating(true);
+    try {
+      const res = await tripsAPI.updateStatus(tripId, { departureTimestamp: new Date().toISOString() });
+      console.log('TCC_DEBUG: markDeparture response', res.status);
+      await loadTrips();
+    } catch (e: any) {
+      console.error('TCC_DEBUG: markDeparture error', e);
+      alert(e?.response?.data?.error || e?.message || 'Failed to mark departure');
+    } finally {
+      setUpdating(false);
     }
   };
 
