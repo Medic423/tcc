@@ -130,6 +130,93 @@ cd /path/to/backup
 ./restore-complete.sh
 ```
 
+### **Isolated Restore (Dry Run) Procedure**
+Restore to a separate temp directory and a non-production DB namespace to validate backups without touching your live environment.
+
+1) Prepare temp directory
+```bash
+RESTORE_ROOT="/Volumes/Acasis/tcc-backups/<backup-folder>"
+TEST_DIR="/tmp/tcc-restore-test"
+rm -rf "$TEST_DIR" && mkdir -p "$TEST_DIR"
+cp -r "$RESTORE_ROOT/project" "$TEST_DIR/"
+```
+
+2) Optional: validate scripts from the restored copy
+```bash
+pushd "$TEST_DIR/project" >/dev/null
+./scripts/check-backend-health.sh || true
+./scripts/check-frontend-errors.sh || true
+popd >/dev/null
+```
+
+3) Optional: isolated DB import (use a separate DB name or Docker)
+- Recommended: import `databases/medport_ems.sql` into a disposable local DB (e.g., `tcc_ems_test`) or a Docker Postgres container.
+- Do not run restore scripts against your live DBs.
+
+4) Optional: run services from the restored copy
+```bash
+pushd "$TEST_DIR/project" >/dev/null
+# Set env vars to point to the isolated DB (e.g., *_TEST URLs)
+# Then start backend/frontend in different ports if needed.
+popd >/dev/null
+```
+
+5) Cleanup
+```bash
+rm -rf "$TEST_DIR"
+```
+
+Add this dry run to the weekly routine before major merges/releases.
+
+### **Docker Postgres Snapshot DB (Keep in Sync)**
+Maintain a local Docker Postgres with a restorable snapshot of the latest backup for safe testing.
+
+1) Start Docker Postgres (one-time)
+```bash
+docker run --name tcc-pg-test \
+  -e POSTGRES_PASSWORD=postgres \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_DB=tcc_ems_test \
+  -p 5544:5432 -d postgres:16-alpine
+```
+
+2) Import the latest DB from a backup folder
+```bash
+RESTORE_ROOT="/Volumes/Acasis/tcc-backups/<backup-folder>"
+docker cp "$RESTORE_ROOT/databases/medport_ems.sql" tcc-pg-test:/tmp/medport_ems.sql
+docker exec -i tcc-pg-test \
+  psql -U postgres -d tcc_ems_test -f /tmp/medport_ems.sql
+```
+
+3) Verify
+```bash
+docker exec -i tcc-pg-test psql -U postgres -d tcc_ems_test -c "SELECT count(*) FROM transport_requests;"
+```
+
+4) Update the Docker DB when a new backup is created
+```bash
+# Option A: Re-import over the same DB (fast for small DBs)
+docker cp "/Volumes/Acasis/tcc-backups/<new-backup>/databases/medport_ems.sql" tcc-pg-test:/tmp/medport_ems.sql
+docker exec -i tcc-pg-test psql -U postgres -d tcc_ems_test -f /tmp/medport_ems.sql
+
+# Option B: Recreate the DB (ensures a clean state)
+docker exec -i tcc-pg-test psql -U postgres -c "DROP DATABASE IF EXISTS tcc_ems_test;"
+docker exec -i tcc-pg-test psql -U postgres -c "CREATE DATABASE tcc_ems_test;"
+docker exec -i tcc-pg-test psql -U postgres -d tcc_ems_test -f /tmp/medport_ems.sql
+```
+
+5) Point a local app instance at Docker DB (optional)
+```bash
+# Example .env override for backend
+DATABASE_URL=postgresql://postgres:postgres@localhost:5544/tcc_ems_test?schema=public
+```
+
+6) Stop/Start the container
+```bash
+docker stop tcc-pg-test
+docker start tcc-pg-test
+```
+
 ### **Safe Development Startup:**
 ```bash
 ./scripts/start-dev-complete.sh
