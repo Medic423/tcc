@@ -41,24 +41,24 @@ Implement unit assignment to transport requests and add comprehensive trip track
 
 ---
 
-### **Phase 2: EMS Dashboard Updates** ⏳ **PENDING**
+### **Phase 2: EMS Dashboard Updates** 🚧 **IN PROGRESS**
 
-#### **2.1 Available Trips Enhancement** ⏳ **PENDING**
-- [ ] Replace "Accept" button with "Accept & Assign Unit" modal
-- [ ] Add unit selection dropdown showing available units
-- [ ] Display unit information: "Agency Name - Unit Number"
-- [ ] Add validation: unit selection required before acceptance
-- [ ] Show confirmation dialog with unit details
+#### **2.1 Available Trips Enhancement** ✅ **COMPLETED (Oct 6, 2025)**
+- [x] Replace "Accept" button with Unit Selection Modal
+- [x] Fetch available units from `GET /api/units/on-duty`
+- [x] Display unit number, type, capabilities, and status
+- [x] Require unit selection prior to acceptance
+- [x] Assign via `PUT /api/trips/:id/status` with `assignedUnitId`
 
-#### **2.2 My Trips Display Updates** ⏳ **PENDING**
-- [ ] Show assigned unit information for accepted trips
-- [ ] Display unit status and assignment details
-- [ ] Add visual indicators for unit assignment status
+#### **2.2 My Trips Display Updates** ✅ **COMPLETED (Oct 6, 2025)**
+- [x] Show assigned unit number and type on trip cards
+- [x] Display unit status indicator
+- [x] Preserve existing layout and styling
 
-#### **2.3 Unit Status Management** ⏳ **PENDING**
-- [ ] Update unit status when trips are accepted/completed
-- [ ] Prevent double-assignment of units
-- [ ] Handle unit status updates in real-time
+#### **2.3 Unit Status Management** 🚧 **IN PROGRESS**
+- [x] Update unit status when accepting trips (AVAILABLE → COMMITTED)
+- [x] Update unit status when completing trips (COMMITTED → AVAILABLE)
+- [ ] Real-time updates via dashboard refresh/poll (future: websockets)
 
 ---
 
@@ -133,7 +133,7 @@ Implement unit assignment to transport requests and add comprehensive trip track
 
 ---
 
-### **Phase 6: Testing & Validation** ⏳ **PENDING**
+### **Phase 6: Testing & Validation** 🚧 **IN PROGRESS**
 
 #### **6.1 Unit Testing** ⏳ **PENDING**
 - [ ] Test unit assignment API endpoints
@@ -270,8 +270,8 @@ PUT /api/trips/:id/status - Mark arrival/departure
 ## 🔄 **Progress Tracking**
 
 **Last Updated**: October 5, 2025
-**Current Phase**: Planning
-**Next Milestone**: Begin Phase 1 - Backend Foundation
+**Current Phase**: Phase 2 - EMS Dashboard Updates
+**Next Milestone**: Complete unit status real-time updates
 **Blockers**: None identified
 **Dependencies**: None
 

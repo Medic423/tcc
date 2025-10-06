@@ -17,6 +17,8 @@ import {
 import Notifications from './Notifications';
 import UnitsManagement from './UnitsManagement';
 import AgencySettings from './AgencySettings';
+import UnitSelectionModal from './UnitSelectionModal';
+import TripStatusButtons from './TripStatusButtons';
 // import RevenueSettings from './RevenueSettings'; // Replaced by AgencySettings
 // import EMSAnalytics from './EMSAnalytics'; // Moved to backup - will move to Admin later
 
@@ -85,6 +87,10 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Unit selection modal state
+  const [isUnitModalOpen, setIsUnitModalOpen] = useState(false);
+  const [unitModalTripId, setUnitModalTripId] = useState<string | null>(null);
+
   // Load trips from API
   useEffect(() => {
     loadTrips();
@@ -142,6 +148,11 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
                  transportLevel: trip.transportLevel || 'BLS',
                  urgencyLevel: trip.urgencyLevel || 'Routine',
                  status: trip.status,
+                 assignedUnit: trip.assignedUnit ? {
+                   unitNumber: trip.assignedUnit.unitNumber,
+                   type: trip.assignedUnit.type,
+                   currentStatus: trip.assignedUnit.currentStatus
+                 } : null,
                  pickupTime: trip.actualStartTime ? new Date(trip.actualStartTime).toLocaleString() : 'Not started',
                  scheduledTime: trip.scheduledTime
                }));
@@ -381,32 +392,9 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
     setActiveTab('overview');
   };
 
-  const handleAcceptTrip = async (tripId: string) => {
-    try {
-      const response = await fetch(`/api/trips/${tripId}/status`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          status: 'ACCEPTED',
-          assignedAgencyId: user.id, // Using user ID as agency ID for now
-          acceptedTimestamp: new Date().toISOString()
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to accept trip');
-      }
-
-      // Reload trips to get updated data
-      await loadTrips();
-    } catch (error: any) {
-      console.error('Error accepting trip:', error);
-      setError(error.message || 'Failed to accept trip');
-    }
+  const handleAcceptTrip = (tripId: string) => {
+    setUnitModalTripId(tripId);
+    setIsUnitModalOpen(true);
   };
 
   const handleDeclineTrip = async (tripId: string) => {
@@ -535,6 +523,18 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <UnitSelectionModal
+          isOpen={isUnitModalOpen}
+          tripId={unitModalTripId}
+          onClose={() => {
+            setIsUnitModalOpen(false);
+            setUnitModalTripId(null);
+          }}
+          onAssigned={async () => {
+            await loadTrips();
+            setActiveTab('accepted');
+          }}
+        />
         {/* Overview tab removed - Available Trips is now the landing page */}
 
         {activeTab === 'available' && (
@@ -660,26 +660,19 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
                     </div>
                     <div className="ml-4 flex space-x-2">
                       {trip.status === 'ACCEPTED' && (
-                        <button
-                          onClick={() => handleUpdateTripStatus(trip.id, 'IN_PROGRESS')}
-                          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 text-sm font-medium"
-                        >
-                          Start Trip
-                        </button>
-                      )}
-                      {trip.status === 'IN_PROGRESS' && (
-                        <button
-                          onClick={() => handleUpdateTripStatus(trip.id, 'COMPLETED')}
-                          className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 text-sm font-medium"
-                        >
-                          Complete Trip
-                        </button>
+                        <TripStatusButtons tripId={trip.id} status={trip.status} onUpdate={handleUpdateTripStatus} />
                       )}
                       {trip.status === 'COMPLETED' && (
                         <span className="text-sm text-gray-500">Completed</span>
                       )}
                     </div>
                   </div>
+                  {trip.assignedUnit && (
+                    <div className="mt-2 text-sm text-blue-600">
+                      Assigned Unit: {trip.assignedUnit.unitNumber}
+                      <span className="ml-2 text-xs text-gray-500">({trip.assignedUnit.type})</span>
+                    </div>
+                  )}
                 </div>
               ))}
               {acceptedTrips.length === 0 && (

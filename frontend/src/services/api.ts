@@ -188,6 +188,9 @@ export const tripsAPI = {
   delete: (id: string) =>
     api.delete(`/api/trips/${id}`),
 
+  updateStatus: (id: string, data: any) =>
+    api.put(`/api/trips/${id}/status`, data),
+
   // Trip form option endpoints
   getOptions: {
     diagnosis: () => api.get('/api/trips/options/diagnosis'),
@@ -200,6 +203,12 @@ export const tripsAPI = {
   // Agencies for facility within radius
   getAgenciesForHospital: (hospitalId: string, radius: number) =>
     api.get(`/api/trips/agencies/${encodeURIComponent(hospitalId)}`, { params: { radius } }),
+};
+
+// Units API
+export const unitsAPI = {
+  getOnDuty: () => api.get('/api/units/on-duty'),
+  getAll: () => api.get('/api/units'),
 };
 
 // Agencies API (legacy export for compatibility)
