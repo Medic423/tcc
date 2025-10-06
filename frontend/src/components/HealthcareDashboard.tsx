@@ -8,12 +8,14 @@ import {
   User,
   LogOut,
   Bell,
-  X
+  X,
+  AlertCircle
 } from 'lucide-react';
 import Notifications from './Notifications';
 import EnhancedTripForm from './EnhancedTripForm';
 import HospitalSettings from './HospitalSettings';
 import { asNumber, toFixed, toPercentage } from '../utils/numberUtils';
+import { tripsAPI } from '../services/api';
 
 interface HealthcareDashboardProps {
   user: {
@@ -120,7 +122,12 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
             status: trip.status || 'PENDING',
             requestTime: trip.createdAt ? new Date(trip.createdAt).toLocaleString() : 'Unknown',
             priority: trip.priority || 'MEDIUM',
-            urgencyLevel: trip.urgencyLevel || trip.priority || 'Routine'
+            urgencyLevel: trip.urgencyLevel || trip.priority || 'Routine',
+            arrivalTimestamp: trip.arrivalTimestamp,
+            departureTimestamp: trip.departureTimestamp,
+            pickupTimestamp: trip.pickupTimestamp,
+            assignedUnitId: trip.assignedUnitId,
+            assignedUnit: trip.assignedUnit
           }));
           setTrips(transformedTrips);
       }
@@ -244,6 +251,56 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
     }
   };
 
+  const markArrival = async (tripId: string) => {
+    setUpdating(true);
+    try {
+      console.log('TCC_DEBUG: markArrival called for trip:', tripId);
+      const trip = trips.find(t => t.id === tripId);
+      if (!trip) {
+        console.error('TCC_DEBUG: Trip not found:', tripId);
+        return;
+      }
+      
+      await tripsAPI.updateStatus(tripId, {
+        status: trip.status,
+        arrivalTimestamp: new Date().toISOString()
+      });
+      
+      console.log('TCC_DEBUG: markArrival successful for trip:', tripId);
+      await loadTrips();
+    } catch (error) {
+      console.error('TCC_DEBUG: markArrival error:', error);
+      alert('Failed to mark arrival');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const markDeparture = async (tripId: string) => {
+    setUpdating(true);
+    try {
+      console.log('TCC_DEBUG: markDeparture called for trip:', tripId);
+      const trip = trips.find(t => t.id === tripId);
+      if (!trip) {
+        console.error('TCC_DEBUG: Trip not found:', tripId);
+        return;
+      }
+      
+      await tripsAPI.updateStatus(tripId, {
+        status: trip.status,
+        departureTimestamp: new Date().toISOString()
+      });
+      
+      console.log('TCC_DEBUG: markDeparture successful for trip:', tripId);
+      await loadTrips();
+    } catch (error) {
+      console.error('TCC_DEBUG: markDeparture error:', error);
+      alert('Failed to mark departure');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
 
   // Add error boundary for render safety
   try {
@@ -291,6 +348,7 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
           <nav className="flex space-x-8">
             {[
               { id: 'trips', name: 'Transport Requests', icon: Clock },
+              { id: 'in-progress', name: 'In-Progress', icon: AlertCircle },
               { id: 'responses', name: 'Agency Responses', icon: Bell },
               { id: 'create', name: 'Create Request', icon: Plus },
               { id: 'hospital-settings', name: 'Hospital Settings', icon: Building2 }
@@ -451,6 +509,74 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                   <p className="text-gray-500">No transport requests found</p>
                 </div>
               )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'in-progress' && (
+          <div className="space-y-6">
+            <div className="bg-white rounded-lg shadow">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h3 className="text-lg font-medium text-gray-900">Accepted and Active Trips</h3>
+              </div>
+              <div className="p-6">
+                {trips.filter(trip => trip.status === 'ACCEPTED' || trip.status === 'IN_PROGRESS').length > 0 ? (
+                  <div className="space-y-4">
+                    {trips.filter(trip => trip.status === 'ACCEPTED' || trip.status === 'IN_PROGRESS').map((trip) => (
+                      <div key={trip.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                        <div className="flex items-center space-x-4">
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">
+                              Patient ID: {trip.patientId || 'Unknown'} - {trip.destination || 'Unknown'}
+                            </p>
+                            <p className="text-xs text-blue-600">
+                              Assigned Unit: {trip.assignedUnit?.unitNumber || trip.assignedUnitId ? 'Unit ' + (trip.assignedUnit?.unitNumber || trip.assignedUnitId) : 'Awaiting unit assignment'}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              Pickup Time: {trip.pickupTimestamp ? new Date(trip.pickupTimestamp).toLocaleString() : '—'}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              Arrival Time: {trip.arrivalTimestamp ? new Date(trip.arrivalTimestamp).toLocaleString() : '—'}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              Departure Time: {trip.departureTimestamp ? new Date(trip.departureTimestamp).toLocaleString() : '—'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(trip.status || 'PENDING')}`}>
+                            {trip.status || 'PENDING'}
+                          </span>
+                          <div className="flex space-x-2 ml-4">
+                            {!trip.arrivalTimestamp && (
+                              <button
+                                onClick={() => markArrival(trip.id)}
+                                className="text-blue-600 hover:text-blue-900 text-xs px-2 py-1 rounded hover:bg-blue-50"
+                                disabled={updating}
+                              >
+                                Mark Arrival
+                              </button>
+                            )}
+                            {trip.arrivalTimestamp && !trip.departureTimestamp && (
+                              <button
+                                onClick={() => markDeparture(trip.id)}
+                                className="text-green-600 hover:text-green-900 text-xs px-2 py-1 rounded hover:bg-green-50"
+                                disabled={updating}
+                              >
+                                Mark Departure
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500">No active trips found</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>

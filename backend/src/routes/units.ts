@@ -1,6 +1,7 @@
 import express from 'express';
 import { unitService, UnitFormData, UnitStatusUpdate } from '../services/unitService';
 import { authenticateAdmin, AuthenticatedRequest } from '../middleware/authenticateAdmin';
+import { databaseManager } from '../services/databaseManager';
 
 const router = express.Router();
 
@@ -23,7 +24,14 @@ router.get('/', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
     } else {
       // For admin users, get all units
       console.log('🔍 Units API: Getting all units for admin user');
-      units = await unitService.getAllUnits();
+      // For admin users, get units from all agencies
+      const allAgencies = await databaseManager.getEMSDB().eMSAgency.findMany();
+      const allUnits = [];
+      for (const agency of allAgencies) {
+        const agencyUnits = await unitService.getUnitsByAgency(agency.id);
+        allUnits.push(...agencyUnits);
+      }
+      units = allUnits;
     }
     
     console.log('🔍 Units API: units found:', units.length);
@@ -133,14 +141,26 @@ router.get('/on-duty', authenticateAdmin, async (req: AuthenticatedRequest, res)
     if (user.userType === 'EMS') {
       const agencyId = user.id; // EMS users have agencyId as their id
       console.log('TCC_DEBUG: Getting on-duty units for EMS agency:', agencyId);
-      units = await unitService.getOnDutyUnits(agencyId);
+      units = await unitService.getAvailableUnits(agencyId);
     } else if (user.userType === 'ADMIN') {
       console.log('TCC_DEBUG: ADMIN requesting on-duty units across all agencies');
-      const allUnits = await unitService.getAllUnits();
+      // For admin users, get units from all agencies
+      const allAgencies = await databaseManager.getEMSDB().eMSAgency.findMany();
+      const allUnits = [];
+      for (const agency of allAgencies) {
+        const agencyUnits = await unitService.getUnitsByAgency(agency.id);
+        allUnits.push(...agencyUnits);
+      }
       units = allUnits.filter(u => u.isActive && u.currentStatus === 'AVAILABLE');
     } else {
       console.log('TCC_DEBUG: Non-EMS user requesting on-duty units - returning global available list');
-      const allUnits = await unitService.getAllUnits();
+      // For non-EMS users, get units from all agencies
+      const allAgencies = await databaseManager.getEMSDB().eMSAgency.findMany();
+      const allUnits = [];
+      for (const agency of allAgencies) {
+        const agencyUnits = await unitService.getUnitsByAgency(agency.id);
+        allUnits.push(...agencyUnits);
+      }
       units = allUnits.filter(u => u.isActive && u.currentStatus === 'AVAILABLE');
     }
 
@@ -398,7 +418,9 @@ router.patch('/:id/duty', authenticateAdmin, async (req: AuthenticatedRequest, r
       });
     }
 
-    const updatedUnit = await unitService.updateUnitDutyStatus(id, isActive);
+    const updatedUnit = await unitService.updateUnitStatus(id, { 
+      status: isActive ? 'AVAILABLE' : 'OFF_DUTY' 
+    });
     console.log('🔍 Units API PATCH duty: unit updated:', updatedUnit);
     
     res.json({

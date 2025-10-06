@@ -189,9 +189,9 @@ router.get('/units', async (req: AuthenticatedRequest, res) => {
       emsPrisma.unit.count({ where: { agencyId, currentStatus: 'OUT_OF_SERVICE' } }),
       emsPrisma.unit.findMany({
         where: { agencyId },
-        orderBy: { totalTripsCompleted: 'desc' },
+        orderBy: { unitNumber: 'asc' },
         take: 5,
-        select: { id: true, unitNumber: true, totalTripsCompleted: true, averageResponseTime: true }
+        select: { id: true, unitNumber: true, currentStatus: true }
       })
     ]);
 
