@@ -16,7 +16,7 @@ import {
 import Notifications from './Notifications';
 import EnhancedTripForm from './EnhancedTripForm';
 import HospitalSettings from './HospitalSettings';
-import { tripsAPI } from '../services/api';
+import { tripsAPI, unitsAPI } from '../services/api';
 
 interface HealthcareDashboardProps {
   user: {
@@ -148,9 +148,45 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
             completionTime: trip.completionTimestamp ? new Date(trip.completionTimestamp).toLocaleString() : null,
             completionTimestampISO: trip.completionTimestamp || null
           }));
+
+          try {
+            console.log('TCC_DEBUG: Healthcare transformed active trips (sample)', transformedTrips.slice(0, 3));
+            console.log('TCC_DEBUG: Healthcare raw trips (sample)', (data.data || []).slice(0, 3));
+          } catch {}
           
           // Filter out completed and cancelled trips from main list
-          const activeTrips = transformedTrips.filter(trip => trip.status !== 'COMPLETED' && trip.status !== 'CANCELLED');
+          let activeTrips = transformedTrips.filter(trip => trip.status !== 'COMPLETED' && trip.status !== 'CANCELLED');
+
+          // Frontend fallback: hydrate assigned unit details if not included in API
+          try {
+            const missingUnitIds = Array.from(new Set(
+              activeTrips
+                .filter(t => !t.assignedUnitNumber && t.assignedUnitId)
+                .map(t => t.assignedUnitId)
+                .filter(Boolean)
+            ));
+            if (missingUnitIds.length > 0) {
+              const results = await Promise.all(missingUnitIds.map((id: string) => 
+                unitsAPI.getById(id).then(r => ({ id, unit: r.data?.data || null })).catch(() => ({ id, unit: null }))
+              ));
+              const idToUnit: Record<string, any> = {};
+              results.forEach(({ id, unit }) => { if (unit) idToUnit[id] = unit; });
+              activeTrips = activeTrips.map(t => {
+                if (!t.assignedUnitNumber && t.assignedUnitId && idToUnit[t.assignedUnitId]) {
+                  const u = idToUnit[t.assignedUnitId];
+                  return {
+                    ...t,
+                    assignedUnitNumber: u.unitNumber || null,
+                    assignedUnitType: u.type || null,
+                  };
+                }
+                return t;
+              });
+            }
+          } catch (e) {
+            console.log('TCC_DEBUG: unit hydration skipped due to error', e);
+          }
+
           setTrips(activeTrips);
           setFilteredTrips(activeTrips); // Initialize filtered trips
           
