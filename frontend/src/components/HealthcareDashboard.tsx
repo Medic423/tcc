@@ -139,14 +139,14 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
             completionTimestampISO: trip.completionTimestamp || null
           }));
           
-          // Filter out completed trips from main list
-          const activeTrips = transformedTrips.filter(trip => trip.status !== 'COMPLETED');
+          // Filter out completed and cancelled trips from main list
+          const activeTrips = transformedTrips.filter(trip => trip.status !== 'COMPLETED' && trip.status !== 'CANCELLED');
           setTrips(activeTrips);
           setFilteredTrips(activeTrips); // Initialize filtered trips
           
-          // Set completed trips for the completed tab with wait time calculation
+          // Set completed/cancelled trips for the completed tab with wait time calculation
           const completed = transformedTrips
-            .filter(trip => trip.status === 'COMPLETED')
+            .filter(trip => trip.status === 'COMPLETED' || trip.status === 'CANCELLED')
             .map(trip => ({
               ...trip,
               waitTime: calculateWaitTime(trip.requestTimeISO, trip.pickupTimeISO)
