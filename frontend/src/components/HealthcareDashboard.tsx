@@ -736,7 +736,9 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                               )}
                               <div>
                                 <div className="font-bold text-gray-800">Completion Time:</div>
-                                <div className="text-gray-500">{trip.completionTime || 'N/A'}</div>
+                                <div className="text-gray-500">
+                                  {trip.status === 'CANCELLED' ? 'Cancelled' : (trip.completionTime || 'N/A')}
+                                </div>
                               </div>
                             </div>
                           </div>
