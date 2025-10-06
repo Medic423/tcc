@@ -165,10 +165,13 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                 .map(t => t.assignedUnitId)
                 .filter(Boolean)
             ));
+            console.log('TCC_DEBUG: Healthcare unit hydration - missingUnitIds', missingUnitIds);
+            console.log('TCC_DEBUG: Healthcare unit hydration - assigned fields sample', activeTrips.slice(0,3).map(t => ({ id: t.id, assignedUnitId: t.assignedUnitId, assignedUnitNumber: t.assignedUnitNumber, assignedUnitType: t.assignedUnitType })));
             if (missingUnitIds.length > 0) {
               const results = await Promise.all(missingUnitIds.map((id: string) => 
                 unitsAPI.getById(id).then(r => ({ id, unit: r.data?.data || null })).catch(() => ({ id, unit: null }))
               ));
+              console.log('TCC_DEBUG: Healthcare unit hydration - fetched units', results);
               const idToUnit: Record<string, any> = {};
               results.forEach(({ id, unit }) => { if (unit) idToUnit[id] = unit; });
               activeTrips = activeTrips.map(t => {
@@ -182,6 +185,7 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                 }
                 return t;
               });
+              console.log('TCC_DEBUG: Healthcare unit hydration - after merge sample', activeTrips.slice(0,3).map(t => ({ id: t.id, assignedUnitId: t.assignedUnitId, assignedUnitNumber: t.assignedUnitNumber, assignedUnitType: t.assignedUnitType })));
             }
           } catch (e) {
             console.log('TCC_DEBUG: unit hydration skipped due to error', e);
