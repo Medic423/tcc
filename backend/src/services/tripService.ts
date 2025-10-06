@@ -27,6 +27,8 @@ export interface UpdateTripStatusRequest {
   assignedUnitId?: string;
   acceptedTimestamp?: string;
   pickupTimestamp?: string;
+  arrivalTimestamp?: string;
+  departureTimestamp?: string;
   completionTimestamp?: string;
   urgencyLevel?: 'Routine' | 'Urgent' | 'Emergent';
   transportLevel?: string;
@@ -184,6 +186,19 @@ export class TripService {
               floor: true,
               room: true
             }
+          },
+          assignedUnit: {
+            select: {
+              id: true,
+              unitNumber: true,
+              type: true,
+              agency: {
+                select: {
+                  id: true,
+                  name: true
+                }
+              }
+            }
           }
         }
       });
@@ -227,6 +242,19 @@ export class TripService {
               floor: true,
               room: true
             }
+          },
+          assignedUnit: {
+            select: {
+              id: true,
+              unitNumber: true,
+              type: true,
+              agency: {
+                select: {
+                  id: true,
+                  name: true
+                }
+              }
+            }
           }
         }
       });
@@ -250,6 +278,14 @@ export class TripService {
     console.log('TCC_DEBUG: Updating trip status:', { id, data });
     
     try {
+      // Validate unit assignment if provided
+      if (data.assignedUnitId) {
+        const unit = await this.validateUnitAssignment(data.assignedUnitId, data.assignedAgencyId);
+        if (!unit) {
+          return { success: false, error: 'Invalid unit assignment or unit not available' };
+        }
+      }
+
       const updateData: any = {
         status: data.status,
         updatedAt: new Date()
@@ -265,13 +301,50 @@ export class TripService {
       if (data.oxygenRequired !== undefined) updateData.oxygenRequired = data.oxygenRequired;
       if (data.monitoringRequired !== undefined) updateData.monitoringRequired = data.monitoringRequired;
 
-      if (data.status === 'COMPLETED' && data.completionTimestamp) {
-        updateData.pickupTimestamp = new Date(data.completionTimestamp);
+      // Handle unit assignment
+      if (data.assignedUnitId) {
+        updateData.assignedUnitId = data.assignedUnitId;
+      }
+      if (data.assignedAgencyId) {
+        updateData.assignedAgencyId = data.assignedAgencyId;
+      }
+
+      // Handle timestamps
+      if (data.acceptedTimestamp) {
+        updateData.acceptedTimestamp = new Date(data.acceptedTimestamp);
+      }
+      if (data.pickupTimestamp) {
+        updateData.pickupTimestamp = new Date(data.pickupTimestamp);
+      }
+      if (data.arrivalTimestamp) {
+        updateData.arrivalTimestamp = new Date(data.arrivalTimestamp);
+      }
+      if (data.departureTimestamp) {
+        updateData.departureTimestamp = new Date(data.departureTimestamp);
+      }
+      if (data.completionTimestamp) {
+        updateData.completionTimestamp = new Date(data.completionTimestamp);
+      }
+
+      // Update unit status if assigning to a trip
+      if (data.assignedUnitId && data.status === 'ACCEPTED') {
+        await this.updateUnitStatus(data.assignedUnitId, 'COMMITTED');
+      }
+
+      // Update unit status if completing/cancelling a trip
+      if (data.assignedUnitId && (data.status === 'COMPLETED' || data.status === 'CANCELLED')) {
+        await this.updateUnitStatus(data.assignedUnitId, 'AVAILABLE');
       }
 
       const trip = await prisma.transportRequest.update({
         where: { id },
-        data: updateData
+        data: updateData,
+        include: {
+          assignedUnit: true,
+          pickupLocation: true,
+          originFacility: true,
+          destinationFacility: true
+        }
       });
 
       console.log('TCC_DEBUG: Trip status updated successfully:', trip.id);
@@ -701,6 +774,71 @@ export class TripService {
     // For now, return a simple success response
     // This can be expanded to actually update trip assignment
     return { success: true, data: { tripId, agencyResponseId: data.agencyResponseId }, error: null };
+  }
+
+  /**
+   * Validate unit assignment
+   */
+  private async validateUnitAssignment(unitId: string, agencyId?: string): Promise<any> {
+    try {
+      console.log('TCC_DEBUG: Validating unit assignment:', { unitId, agencyId });
+      
+      const emsDB = databaseManager.getEMSDB();
+      const unit = await emsDB.unit.findUnique({
+        where: { id: unitId },
+        include: { agency: true }
+      });
+
+      if (!unit) {
+        console.log('TCC_DEBUG: Unit not found:', unitId);
+        return null;
+      }
+
+      if (!unit.isActive) {
+        console.log('TCC_DEBUG: Unit is not active:', unitId);
+        return null;
+      }
+
+      if (unit.status !== 'AVAILABLE') {
+        console.log('TCC_DEBUG: Unit is not available:', unitId, 'status:', unit.status);
+        return null;
+      }
+
+      // If agencyId is provided, validate unit belongs to that agency
+      if (agencyId && unit.agencyId !== agencyId) {
+        console.log('TCC_DEBUG: Unit does not belong to agency:', unitId, 'agencyId:', agencyId);
+        return null;
+      }
+
+      console.log('TCC_DEBUG: Unit assignment validated successfully:', unitId);
+      return unit;
+    } catch (error) {
+      console.error('TCC_DEBUG: Error validating unit assignment:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Update unit status
+   */
+  private async updateUnitStatus(unitId: string, status: string): Promise<void> {
+    try {
+      console.log('TCC_DEBUG: Updating unit status:', { unitId, status });
+      
+      const emsDB = databaseManager.getEMSDB();
+      await emsDB.unit.update({
+        where: { id: unitId },
+        data: { 
+          status: status,
+          updatedAt: new Date()
+        }
+      });
+
+      console.log('TCC_DEBUG: Unit status updated successfully:', unitId, 'to', status);
+    } catch (error) {
+      console.error('TCC_DEBUG: Error updating unit status:', error);
+      // Don't throw error as this is not critical to trip update
+    }
   }
 }
 

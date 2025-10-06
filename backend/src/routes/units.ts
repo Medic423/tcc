@@ -117,6 +117,42 @@ router.get('/available', authenticateAdmin, async (req: AuthenticatedRequest, re
 });
 
 /**
+ * GET /api/units/on-duty
+ * Get on-duty units for the authenticated EMS agency (for trip assignment)
+ */
+router.get('/on-duty', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
+  try {
+    const user = req.user;
+    console.log('TCC_DEBUG: Get on-duty units request from user:', user);
+    
+    if (!user || user.userType !== 'EMS') {
+      return res.status(403).json({
+        success: false,
+        error: 'Only EMS users can access on-duty units'
+      });
+    }
+
+    const agencyId = user.id; // EMS users have agencyId as their id
+    console.log('TCC_DEBUG: Getting on-duty units for agency:', agencyId);
+
+    const units = await unitService.getOnDutyUnits(agencyId);
+    
+    console.log('TCC_DEBUG: Found on-duty units:', units.length);
+    
+    res.json({
+      success: true,
+      data: units
+    });
+  } catch (error) {
+    console.error('Error getting on-duty units:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to retrieve on-duty units'
+    });
+  }
+});
+
+/**
  * GET /api/units/analytics
  * Get unit analytics for the agency
  */
