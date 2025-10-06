@@ -768,10 +768,10 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                 <h3 className="text-lg font-medium text-gray-900">Accepted and Active Trips</h3>
               </div>
               <div className="p-6">
-                {trips.filter(t => (t.status === 'ACCEPTED' || t.status === 'IN_PROGRESS') && (t.assignedUnitId || t.assignedUnitNumber)).length > 0 ? (
+                {trips.filter(t => t.status === 'ACCEPTED' || t.status === 'IN_PROGRESS').length > 0 ? (
                   <div className="space-y-4">
                     {trips
-                      .filter(t => (t.status === 'ACCEPTED' || t.status === 'IN_PROGRESS') && (t.assignedUnitId || t.assignedUnitNumber))
+                      .filter(t => t.status === 'ACCEPTED' || t.status === 'IN_PROGRESS')
                       .map((trip) => (
                       <div key={trip.id} className="border border-gray-200 rounded-lg p-4">
                         <div className="flex items-start justify-between">
@@ -784,7 +784,10 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                                 <div className="text-gray-600">
                                   {trip.assignedUnitNumber
                                     ? `${trip.assignedUnitNumber}${trip.assignedUnitType ? ` (${trip.assignedUnitType})` : ''}`
-                                    : (trip.assignedUnitId ? `#${trip.assignedUnitId}` : '—')}
+                                    : (trip.assignedUnitId
+                                        ? `#${trip.assignedUnitId}`
+                                        : (trip.status === 'ACCEPTED' ? 'Awaiting unit assignment' : '—')
+                                      )}
                                 </div>
                               </div>
                               <div>
