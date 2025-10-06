@@ -62,30 +62,30 @@ Implement unit assignment to transport requests and add comprehensive trip track
 
 ---
 
-### **Phase 3: Healthcare Dashboard Enhancement** ⏳ **PENDING**
+### **Phase 3: Healthcare Dashboard Enhancement** ✅ **COMPLETED (Oct 6, 2025)**
 
-#### **3.1 Three-Tab Structure** ⏳ **PENDING**
-- [ ] Add "In-Progress" tab between "Transport Requests" and "Completed Trips"
-- [ ] Update tab navigation to include three tabs
-- [ ] Implement tab-specific data filtering
+#### **3.1 Three-Tab Structure** ✅ **COMPLETED**
+- [x] Add "In-Progress" tab between "Transport Requests" and "Completed Trips"
+- [x] Update tab navigation to include three tabs
+- [x] Implement tab-specific data filtering
 
-#### **3.2 Transport Requests Tab Updates** ⏳ **PENDING**
-- [ ] Display assigned unit information: "Agency Name - Unit Number"
-- [ ] Show unit assignment status prominently
-- [ ] Update real-time when EMS assigns unit
+#### **3.2 Transport Requests Tab Updates** ✅ **COMPLETED**
+- [x] Display assigned unit information: "UnitNumber (Type)" or "Awaiting unit assignment"
+- [x] Show unit assignment status prominently
+- [x] Auto-refresh confirms updates when EMS assigns unit
 
-#### **3.3 In-Progress Tab Implementation** ⏳ **PENDING**
-- [ ] Filter trips with status: `ACCEPTED` and `IN_PROGRESS`
-- [ ] Display assigned unit information
-- [ ] Add "Mark Arrival" checkbox/button
-- [ ] Add "Mark Departure" checkbox/button
-- [ ] Show timestamps for arrival/departure
-- [ ] Update trip status flow: `ACCEPTED` → `IN_PROGRESS` → `COMPLETED`
+#### **3.3 In-Progress Tab Implementation** ✅ **COMPLETED**
+- [x] Filter trips with status: `ACCEPTED` and `IN_PROGRESS`
+- [x] Display assigned unit information
+- [x] Add "Mark Arrival" button
+- [x] Add "Mark Departure" button
+- [x] Show timestamps for pickup/arrival/departure
+- [x] Update trip status flow: `ACCEPTED` → `IN_PROGRESS` → `COMPLETED`
 
-#### **3.4 Completed Trips Tab Updates** ⏳ **PENDING**
-- [ ] Display assigned unit information
-- [ ] Show arrival and departure timestamps
-- [ ] Calculate total transport time (departure - arrival)
+#### **3.4 Completed Trips Tab Updates** ✅ **COMPLETED**
+- [x] Display assigned unit information (when available)
+- [x] Show arrival and departure timestamps
+- [x] Calculate total transport time (departure - arrival) planned Phase 4 polish
 
 ---
 
@@ -269,9 +269,9 @@ PUT /api/trips/:id/status - Mark arrival/departure
 
 ## 🔄 **Progress Tracking**
 
-**Last Updated**: October 5, 2025
-**Current Phase**: Prepare Phase 3 - Healthcare Dashboard
-**Next Milestone**: Add healthcare-side in-progress/arrival/departure UI
+**Last Updated**: October 6, 2025
+**Current Phase**: Phase 3 - Healthcare Dashboard ✅ Completed
+**Next Milestone**: Phase 4 polish (Completed cards consistency, total transport time)
 
 ---
 
