@@ -772,7 +772,7 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
         )}
 
         {activeTab === 'units' && (
-          <UnitsManagement user={user} />
+          <UnitsManagement user={user} acceptedTrips={acceptedTrips} />
         )}
 
         {/* Settings tab removed - moved to TCC Admin dashboard */}

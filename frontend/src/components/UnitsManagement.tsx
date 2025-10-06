@@ -38,9 +38,10 @@ interface UnitsManagementProps {
     userType: string;
     agencyName?: string;
   };
+  acceptedTrips?: any[];
 }
 
-const UnitsManagement: React.FC<UnitsManagementProps> = ({ user }) => {
+const UnitsManagement: React.FC<UnitsManagementProps> = ({ user, acceptedTrips = [] }) => {
   const [units, setUnits] = useState<Unit[]>([]);
   const [analytics, setAnalytics] = useState<UnitAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
@@ -338,7 +339,7 @@ const UnitsManagement: React.FC<UnitsManagementProps> = ({ user }) => {
               <Activity className="h-8 w-8 text-blue-600" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">Active Trips</p>
-                <p className="text-2xl font-semibold text-gray-900">{analytics.committedUnits}</p>
+                <p className="text-2xl font-semibold text-gray-900">{acceptedTrips.length}</p>
               </div>
             </div>
           </div>
@@ -347,8 +348,10 @@ const UnitsManagement: React.FC<UnitsManagementProps> = ({ user }) => {
             <div className="flex items-center">
               <BarChart3 className="h-8 w-8 text-purple-600" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Efficiency</p>
-                <p className="text-2xl font-semibold text-gray-900">{Math.round(analytics.efficiency * 100)}%</p>
+                <p className="text-sm font-medium text-gray-500">Response Rate</p>
+                <p className="text-2xl font-semibold text-gray-900">
+                  {analytics?.averageResponseTime ? `${Math.round(analytics.averageResponseTime)} min` : 'N/A'}
+                </p>
               </div>
             </div>
           </div>
