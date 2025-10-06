@@ -113,47 +113,34 @@ const UnitsManagement: React.FC<UnitsManagementProps> = ({ user }) => {
     setFormError(null);
 
     try {
-      // TODO: Backend doesn't have POST /api/units endpoint yet
-      // For now, simulate unit creation with mock data
-      console.log('TCC_DEBUG: Simulating unit creation with data:', formData);
+      console.log('TCC_DEBUG: Creating unit with data:', formData);
       
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Call the real API
+      const api = (await import('../services/api')).default;
+      const response = await api.post('/api/units', formData);
       
-      // Create mock unit
-      const mockUnit: Unit = {
-        id: `mock-unit-${Date.now()}`,
-        agencyId: 'mock-agency',
-        unitNumber: formData.unitNumber,
-        type: formData.type,
-        capabilities: formData.capabilities,
-        currentStatus: 'AVAILABLE',
-        currentLocation: 'Station 1',
-        crew: [],
-        isActive: formData.isActive,
-        totalTripsCompleted: 0,
-        averageResponseTime: 0,
-        lastMaintenanceDate: new Date(),
-        nextMaintenanceDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-
-      // Add to local state
-      setUnits(prev => [...prev, mockUnit]);
-      
-      // Close modals and reset form
-      setShowCreateModal(false);
-      setShowEditModal(false);
-      setSelectedUnit(null);
-      resetForm();
-      
-      // Show success message
-      console.log('TCC_DEBUG: Mock unit created successfully:', mockUnit);
+      if (response.data.success) {
+        const newUnit = response.data.data;
+        console.log('TCC_DEBUG: Unit created successfully:', newUnit);
+        
+        // Add to local state
+        setUnits(prev => [...prev, newUnit]);
+        
+        // Close modals and reset form
+        setShowCreateModal(false);
+        setShowEditModal(false);
+        setSelectedUnit(null);
+        resetForm();
+        
+        // Refresh the units list to get the latest data
+        await fetchUnits();
+      } else {
+        throw new Error(response.data.error || 'Failed to create unit');
+      }
       
     } catch (error: any) {
       console.error('Error saving unit:', error);
-      setFormError(error.message);
+      setFormError(error.response?.data?.error || error.message || 'Failed to create unit');
     } finally {
       setFormLoading(false);
     }

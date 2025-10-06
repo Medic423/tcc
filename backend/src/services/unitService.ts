@@ -1,4 +1,5 @@
 import { PrismaClient as EMSPrismaClient } from '@prisma/client';
+import { databaseManager } from './databaseManager';
 
 // Types for unit management
 export interface Unit {
@@ -49,7 +50,7 @@ class UnitService {
   private prisma: EMSPrismaClient;
 
   constructor() {
-    this.prisma = new EMSPrismaClient();
+    this.prisma = databaseManager.getEMSDB();
   }
 
   /**
@@ -57,48 +58,20 @@ class UnitService {
    */
   async getUnitsByAgency(agencyId: string): Promise<Unit[]> {
     try {
-      // TODO: Implement proper Unit model in Prisma schema
-      // For now, return mock data to get the system working
       console.log('TCC_DEBUG: getUnitsByAgency called with agencyId:', agencyId);
       
-      const mockUnits: Unit[] = [
-        {
-          id: '1',
+      const units = await this.prisma.unit.findMany({
+        where: {
           agencyId: agencyId,
-          unitNumber: 'U001',
-          type: 'AMBULANCE',
-          capabilities: ['BLS'],
-          currentStatus: 'AVAILABLE',
-          currentLocation: 'Station 1',
-          crew: ['John Doe', 'Jane Smith'],
-          isActive: true,
-          totalTripsCompleted: 0,
-          averageResponseTime: 0,
-          lastMaintenanceDate: new Date(),
-          nextMaintenanceDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-          createdAt: new Date(),
-          updatedAt: new Date()
+          isActive: true
         },
-        {
-          id: '2',
-          agencyId: agencyId,
-          unitNumber: 'U002',
-          type: 'AMBULANCE',
-          capabilities: ['ALS'],
-          currentStatus: 'ON_CALL',
-          currentLocation: 'En Route',
-          crew: ['Bob Johnson', 'Alice Brown'],
-          isActive: true,
-          totalTripsCompleted: 0,
-          averageResponseTime: 0,
-          lastMaintenanceDate: new Date(),
-          nextMaintenanceDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-          createdAt: new Date(),
-          updatedAt: new Date()
+        orderBy: {
+          createdAt: 'desc'
         }
-      ];
+      });
 
-      return mockUnits;
+      console.log('TCC_DEBUG: Found units:', units.length);
+      return units.map(unit => this.mapPrismaUnitToUnit(unit));
     } catch (error) {
       console.error('Error getting units by agency:', error);
       throw new Error('Failed to retrieve units');
@@ -144,28 +117,27 @@ class UnitService {
    */
   async createUnit(unitData: UnitFormData, agencyId: string): Promise<Unit> {
     try {
-      // TODO: Implement proper Unit model in Prisma schema
       console.log('TCC_DEBUG: createUnit called with data:', unitData);
       
-      const mockUnit: Unit = {
-        id: 'new-unit-id',
-        agencyId: agencyId,
-        unitNumber: unitData.unitNumber,
-        type: unitData.type,
-        capabilities: unitData.capabilities,
-        currentStatus: 'AVAILABLE',
-        currentLocation: 'Station 1',
-        crew: [],
-        isActive: unitData.isActive,
-        totalTripsCompleted: 0,
-        averageResponseTime: 0,
-        lastMaintenanceDate: new Date(),
-        nextMaintenanceDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
+      // Create unit in database
+      const createdUnit = await this.prisma.unit.create({
+        data: {
+          agencyId: agencyId,
+          unitNumber: unitData.unitNumber,
+          type: unitData.type,
+          capabilities: unitData.capabilities,
+          currentStatus: 'AVAILABLE',
+          currentLocation: { address: 'Station 1', coordinates: { lat: 0, lng: 0 } },
+          isActive: unitData.isActive,
+          totalTripsCompleted: 0,
+          averageResponseTime: 0,
+          lastMaintenanceDate: new Date(),
+          nextMaintenanceDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+        }
+      });
 
-      return mockUnit;
+      console.log('TCC_DEBUG: Unit created successfully:', createdUnit);
+      return this.mapPrismaUnitToUnit(createdUnit);
     } catch (error) {
       console.error('Error creating unit:', error);
       throw new Error('Failed to create unit');
@@ -256,30 +228,21 @@ class UnitService {
    */
   async getAvailableUnits(agencyId: string): Promise<Unit[]> {
     try {
-      // TODO: Implement proper Unit model in Prisma schema
       console.log('TCC_DEBUG: getAvailableUnits called with agencyId:', agencyId);
       
-      const mockUnits: Unit[] = [
-        {
-          id: '1',
+      const units = await this.prisma.unit.findMany({
+        where: {
           agencyId: agencyId,
-          unitNumber: 'U001',
-          type: 'AMBULANCE',
-          capabilities: ['BLS'],
           currentStatus: 'AVAILABLE',
-          currentLocation: 'Station 1',
-          crew: ['John Doe', 'Jane Smith'],
-          isActive: true,
-          totalTripsCompleted: 0,
-          averageResponseTime: 0,
-          lastMaintenanceDate: new Date(),
-          nextMaintenanceDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-          createdAt: new Date(),
-          updatedAt: new Date()
+          isActive: true
+        },
+        orderBy: {
+          createdAt: 'desc'
         }
-      ];
+      });
 
-      return mockUnits;
+      console.log('TCC_DEBUG: Found available units:', units.length);
+      return units.map(unit => this.mapPrismaUnitToUnit(unit));
     } catch (error) {
       console.error('Error getting available units:', error);
       throw new Error('Failed to retrieve available units');
@@ -317,15 +280,25 @@ class UnitService {
    * Map Prisma unit to Unit interface
    */
   private mapPrismaUnitToUnit(unit: any): Unit {
+    // Handle currentLocation - it could be a JSON object or string
+    let currentLocation = 'Unknown';
+    if (unit.currentLocation) {
+      if (typeof unit.currentLocation === 'string') {
+        currentLocation = unit.currentLocation;
+      } else if (unit.currentLocation.address) {
+        currentLocation = unit.currentLocation.address;
+      }
+    }
+
     return {
       id: unit.id,
-      agencyId: unit.agencyId,
+      agencyId: unit.agencyId || '',
       unitNumber: unit.unitNumber,
       type: unit.type,
       capabilities: unit.capabilities || [],
       currentStatus: unit.currentStatus || 'AVAILABLE',
-      currentLocation: unit.currentLocation || 'Unknown',
-      crew: unit.crew || [],
+      currentLocation: currentLocation,
+      crew: [], // Crew is not stored in the current schema
       isActive: unit.isActive !== false,
       totalTripsCompleted: unit.totalTripsCompleted || 0,
       averageResponseTime: unit.averageResponseTime || 0,
