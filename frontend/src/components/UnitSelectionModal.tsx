@@ -40,6 +40,11 @@ const UnitSelectionModal: React.FC<UnitSelectionModalProps> = ({ isOpen, tripId,
 
   const handleAssign = async () => {
     if (!tripId || !selectedUnitId) return;
+    const selectedUnit = units.find(u => u.id === selectedUnitId);
+    if (selectedUnit && selectedUnit.currentStatus !== 'AVAILABLE') {
+      setError('Selected unit is not AVAILABLE. Please choose an available unit.');
+      return;
+    }
     setAssigning(true);
     setError(null);
     try {
@@ -76,12 +81,13 @@ const UnitSelectionModal: React.FC<UnitSelectionModalProps> = ({ isOpen, tripId,
           ) : (
             <div className="space-y-3 max-h-96 overflow-auto">
               {units.map((unit) => (
-                <label key={unit.id} className="flex items-start gap-3 p-3 border rounded hover:bg-gray-50 cursor-pointer">
+                <label key={unit.id} className={`flex items-start gap-3 p-3 border rounded hover:bg-gray-50 ${unit.currentStatus !== 'AVAILABLE' ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}` }>
                   <input
                     type="radio"
                     name="unit"
                     className="mt-1"
                     checked={selectedUnitId === unit.id}
+                    disabled={unit.currentStatus !== 'AVAILABLE'}
                     onChange={() => setSelectedUnitId(unit.id)}
                   />
                   <div className="flex-1">

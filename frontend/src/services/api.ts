@@ -209,6 +209,7 @@ export const tripsAPI = {
 export const unitsAPI = {
   getOnDuty: () => api.get('/api/units/on-duty'),
   getAll: () => api.get('/api/units'),
+  getById: (id: string) => api.get(`/api/units/${id}`),
 };
 
 // Agencies API (legacy export for compatibility)

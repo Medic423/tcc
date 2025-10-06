@@ -149,6 +149,7 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
                  urgencyLevel: trip.urgencyLevel || 'Routine',
                  status: trip.status,
                  assignedUnit: trip.assignedUnit ? {
+                   id: trip.assignedUnit.id,
                    unitNumber: trip.assignedUnit.unitNumber,
                    type: trip.assignedUnit.type,
                    currentStatus: trip.assignedUnit.currentStatus
@@ -659,19 +660,17 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
                       </div>
                     </div>
                     <div className="ml-4 flex space-x-2">
-                      {trip.status === 'ACCEPTED' && (
-                        <TripStatusButtons tripId={trip.id} status={trip.status} onUpdate={handleUpdateTripStatus} />
-                      )}
+                      <TripStatusButtons tripId={trip.id} status={trip.status} onUpdate={handleUpdateTripStatus} />
                       {trip.status === 'COMPLETED' && (
                         <span className="text-sm text-gray-500">Completed</span>
                       )}
                     </div>
                   </div>
                   {trip.assignedUnit && (
-                    <div className="mt-2 text-sm text-blue-600">
-                      Assigned Unit: {trip.assignedUnit.unitNumber}
-                      <span className="ml-2 text-xs text-gray-500">({trip.assignedUnit.type})</span>
-                    </div>
+                      <div className="mt-2 text-sm text-blue-600">
+                        Assigned Unit: {trip.assignedUnit.unitNumber}
+                        <span className="ml-2 text-xs text-gray-500">({trip.assignedUnit.type})</span>
+                      </div>
                   )}
                 </div>
               ))}
