@@ -309,3 +309,8 @@ PUT /api/trips/:id/status - Mark arrival/departure
 ---
 
 *This document will be updated as implementation progresses. Each completed item should be marked with ✅ and include completion date.*
+
+## 🔧 UI Tweaks (Healthcare Portal)
+- Replaced `Edit` pill with an edit icon on Transport Requests.
+- Added `Delete` (trash) icon with confirmation to remove requests safely.
+- Lists auto-refresh after delete to reflect current state.

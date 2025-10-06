@@ -9,7 +9,9 @@ import {
   User,
   LogOut,
   Bell,
-  X
+  X,
+  Edit,
+  Trash2
 } from 'lucide-react';
 import Notifications from './Notifications';
 import EnhancedTripForm from './EnhancedTripForm';
@@ -305,6 +307,27 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
     }
   };
 
+  const handleDeleteTrip = async (tripId: string) => {
+    const confirmed = confirm('Delete this transport request? This cannot be undone.');
+    if (!confirmed) return;
+    try {
+      const response = await fetch(`/api/trips/${tripId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to delete trip');
+      }
+      await loadTrips();
+    } catch (error: any) {
+      console.error('Error deleting trip:', error);
+      alert(error.message || 'Failed to delete trip');
+    }
+  };
+
   // Settings state
 
   const handleLogout = () => {
@@ -584,21 +607,31 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                         </span>
                         <div className="flex space-x-2 ml-4">
                           <button
+                            title="Edit"
                             onClick={() => handleEditTrip(trip)}
-                            className="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 hover:bg-blue-200"
+                            className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-blue-100 text-blue-800 hover:bg-blue-200"
                             disabled={updating}
                           >
-                            Edit
+                            <Edit className="h-4 w-4" />
                           </button>
                           {trip.status !== 'COMPLETED' && (
                             <button
+                              title="Complete"
                               onClick={() => handleCompleteTrip(trip.id)}
-                              className="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 hover:bg-green-200"
+                              className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-green-100 text-green-800 hover:bg-green-200"
                               disabled={updating}
                             >
-                              Complete
+                              <CheckCircle className="h-4 w-4" />
                             </button>
                           )}
+                          <button
+                            title="Delete"
+                            onClick={() => handleDeleteTrip(trip.id)}
+                            className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-red-100 text-red-800 hover:bg-red-200"
+                            disabled={updating}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
                         </div>
                       </div>
                     </div>
