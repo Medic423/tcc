@@ -5,39 +5,39 @@ Implement unit assignment to transport requests and add comprehensive trip track
 
 ## 📋 **Implementation Plan**
 
-### **Phase 1: Backend Foundation** ⏳ **PENDING**
+### **Phase 1: Backend Foundation** ✅ **COMPLETED**
 
-#### **1.1 Unit Management API** ⏳ **PENDING**
-- [ ] Create `GET /api/units/on-duty` endpoint
+#### **1.1 Unit Management API** ✅ **COMPLETED**
+- [x] Create `GET /api/units/on-duty` endpoint
   - Filter units by status: `ON_DUTY` and `AVAILABLE`
   - Return only units belonging to authenticated EMS agency
   - Include unit details: id, name, agencyName
-- [ ] Create `GET /api/units/:id` endpoint for unit details
-- [ ] Add unit status validation in existing unit endpoints
+- [x] Create `GET /api/units/:id` endpoint for unit details
+- [x] Add unit status validation in existing unit endpoints
 
-#### **1.2 Trip Assignment API** ⏳ **PENDING**
-- [ ] Extend `PUT /api/trips/:id/status` to accept `assignedUnitId`
-- [ ] Add validation: unit must belong to accepting EMS agency
-- [ ] Add validation: unit must be `ON_DUTY` and `AVAILABLE`
-- [ ] Update unit status to `ASSIGNED` when assigned to trip
-- [ ] Update unit status to `ON_DUTY` when trip completed/cancelled
+#### **1.2 Trip Assignment API** ✅ **COMPLETED**
+- [x] Extend `PUT /api/trips/:id/status` to accept `assignedUnitId`
+- [x] Add validation: unit must belong to accepting EMS agency
+- [x] Add validation: unit must be `ON_DUTY` and `AVAILABLE`
+- [x] Update unit status to `ASSIGNED` when assigned to trip
+- [x] Update unit status to `ON_DUTY` when trip completed/cancelled
 
-#### **1.3 Trip Status Enhancement** ⏳ **PENDING**
-- [ ] Add `IN_PROGRESS` status to trip status enum
-- [ ] Modify trip acceptance flow: `PENDING` → `ACCEPTED` → `IN_PROGRESS` → `COMPLETED`
-- [ ] Add `arrivalTimestamp` and `departureTimestamp` fields to TransportRequest model
-- [ ] Update `PUT /api/trips/:id/status` to handle arrival/departure timestamps
+#### **1.3 Trip Status Enhancement** ✅ **COMPLETED**
+- [x] Add `IN_PROGRESS` status to trip status enum
+- [x] Modify trip acceptance flow: `PENDING` → `ACCEPTED` → `IN_PROGRESS` → `COMPLETED`
+- [x] Add `arrivalTimestamp` and `departureTimestamp` fields to TransportRequest model
+- [x] Update `PUT /api/trips/:id/status` to handle arrival/departure timestamps
 
-#### **1.4 Database Schema Updates** ⏳ **PENDING**
-- [ ] Add `arrivalTimestamp` field to TransportRequest model
-- [ ] Add `departureTimestamp` field to TransportRequest model
-- [ ] Ensure `assignedUnitId` relation is properly configured
-- [ ] Create database migration for new fields
+#### **1.4 Database Schema Updates** ✅ **COMPLETED**
+- [x] Add `arrivalTimestamp` field to TransportRequest model
+- [x] Add `departureTimestamp` field to TransportRequest model
+- [x] Ensure `assignedUnitId` relation is properly configured
+- [x] Create database migration for new fields
 
-#### **1.5 Trip Retrieval Enhancement** ⏳ **PENDING**
-- [ ] Update trip queries to include `assignedUnit` relation data
-- [ ] Add `assignedAgency` relation data for healthcare dashboard
-- [ ] Ensure all trip endpoints return unit assignment information
+#### **1.5 Trip Retrieval Enhancement** ✅ **COMPLETED**
+- [x] Update trip queries to include `assignedUnit` relation data
+- [x] Add `assignedAgency` relation data for healthcare dashboard
+- [x] Ensure all trip endpoints return unit assignment information
 
 ---
 
