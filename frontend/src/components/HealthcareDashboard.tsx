@@ -135,12 +135,14 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
             requestTimeISO: trip.createdAt,
             pickupTime: trip.pickupTimestamp ? new Date(trip.pickupTimestamp).toLocaleString() : null,
             pickupTimeISO: trip.pickupTimestamp,
+            assignedUnitId: trip.assignedUnitId || null,
+            assignedUnitNumber: trip.assignedUnit?.unitNumber || null,
+            assignedUnitType: trip.assignedUnit?.type || null,
             arrivalTime: trip.arrivalTimestamp ? new Date(trip.arrivalTimestamp).toLocaleString() : null,
             arrivalTimestampISO: trip.arrivalTimestamp || null,
             departureTime: trip.departureTimestamp ? new Date(trip.departureTimestamp).toLocaleString() : null,
             departureTimestampISO: trip.departureTimestamp || null,
             assignedAgencyId: trip.assignedAgencyId || null,
-            assignedUnitId: trip.assignedUnitId || null,
             priority: trip.priority,
             urgencyLevel: trip.urgencyLevel,
             completionTime: trip.completionTimestamp ? new Date(trip.completionTimestamp).toLocaleString() : null,
@@ -737,7 +739,11 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                             <div className="mt-2 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                               <div>
                                 <div className="font-bold text-gray-800">Assigned Unit</div>
-                                <div className="text-gray-600">{trip.assignedUnitId ? `#${trip.assignedUnitId}` : '—'}</div>
+                                <div className="text-gray-600">
+                                  {trip.assignedUnitNumber
+                                    ? `${trip.assignedUnitNumber}${trip.assignedUnitType ? ` (${trip.assignedUnitType})` : ''}`
+                                    : (trip.assignedUnitId ? `#${trip.assignedUnitId}` : '—')}
+                                </div>
                               </div>
                               <div>
                                 <div className="font-bold text-gray-800">Pickup Time</div>
