@@ -226,11 +226,11 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
     }
   };
 
-  const markArrival = async (tripId: string) => {
-    console.log('TCC_DEBUG: Healthcare markArrival click', { tripId });
+  const markArrival = async (tripId: string, currentStatus: string) => {
+    console.log('TCC_DEBUG: Healthcare markArrival click', { tripId, currentStatus });
     setUpdating(true);
     try {
-      const res = await tripsAPI.updateStatus(tripId, { arrivalTimestamp: new Date().toISOString() });
+      const res = await tripsAPI.updateStatus(tripId, { status: currentStatus, arrivalTimestamp: new Date().toISOString() });
       console.log('TCC_DEBUG: markArrival response', res.status);
       await loadTrips();
     } catch (e: any) {
@@ -241,11 +241,11 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
     }
   };
 
-  const markDeparture = async (tripId: string) => {
-    console.log('TCC_DEBUG: Healthcare markDeparture click', { tripId });
+  const markDeparture = async (tripId: string, currentStatus: string) => {
+    console.log('TCC_DEBUG: Healthcare markDeparture click', { tripId, currentStatus });
     setUpdating(true);
     try {
-      const res = await tripsAPI.updateStatus(tripId, { departureTimestamp: new Date().toISOString() });
+      const res = await tripsAPI.updateStatus(tripId, { status: currentStatus, departureTimestamp: new Date().toISOString() });
       console.log('TCC_DEBUG: markDeparture response', res.status);
       await loadTrips();
     } catch (e: any) {
@@ -756,7 +756,7 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                           <div className="flex items-center space-x-2">
                             {!trip.arrivalTimestampISO && (
                               <button
-                                onClick={() => markArrival(trip.id)}
+                                onClick={() => markArrival(trip.id, trip.status)}
                                 disabled={updating}
                                 className="px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 disabled:opacity-50"
                               >
@@ -765,7 +765,7 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                             )}
                             {trip.arrivalTimestampISO && !trip.departureTimestampISO && (
                               <button
-                                onClick={() => markDeparture(trip.id)}
+                                onClick={() => markDeparture(trip.id, trip.status)}
                                 disabled={updating}
                                 className="px-3 py-2 bg-indigo-600 text-white rounded-md text-sm hover:bg-indigo-700 disabled:opacity-50"
                               >
