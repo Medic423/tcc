@@ -26,6 +26,54 @@ interface HealthcareDashboardProps {
     facilityName?: string;
     facilityType?: string;
   };
+
+  const markArrival = async (tripId: string) => {
+    setUpdating(true);
+    try {
+      const response = await fetch(`/api/trips/${tripId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ arrivalTimestamp: new Date().toISOString() }),
+      });
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err?.error || 'Failed to mark arrival');
+      }
+      await loadTrips();
+    } catch (e: any) {
+      console.error('TCC_DEBUG: markArrival error', e);
+      alert(e?.message || 'Failed to mark arrival');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const markDeparture = async (tripId: string) => {
+    setUpdating(true);
+    try {
+      const response = await fetch(`/api/trips/${tripId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ departureTimestamp: new Date().toISOString() }),
+      });
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err?.error || 'Failed to mark departure');
+      }
+      await loadTrips();
+    } catch (e: any) {
+      console.error('TCC_DEBUG: markDeparture error', e);
+      alert(e?.message || 'Failed to mark departure');
+    } finally {
+      setUpdating(false);
+    }
+  };
   onLogout: () => void;
 }
 
@@ -133,6 +181,12 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
             requestTimeISO: trip.createdAt,
             pickupTime: trip.pickupTimestamp ? new Date(trip.pickupTimestamp).toLocaleString() : null,
             pickupTimeISO: trip.pickupTimestamp,
+            arrivalTime: trip.arrivalTimestamp ? new Date(trip.arrivalTimestamp).toLocaleString() : null,
+            arrivalTimestampISO: trip.arrivalTimestamp || null,
+            departureTime: trip.departureTimestamp ? new Date(trip.departureTimestamp).toLocaleString() : null,
+            departureTimestampISO: trip.departureTimestamp || null,
+            assignedAgencyId: trip.assignedAgencyId || null,
+            assignedUnitId: trip.assignedUnitId || null,
             priority: trip.priority,
             urgencyLevel: trip.urgencyLevel,
             completionTime: trip.completionTimestamp ? new Date(trip.completionTimestamp).toLocaleString() : null,
@@ -449,6 +503,7 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
           <nav className="flex space-x-8">
             {[
               { id: 'trips', name: 'Transport Requests', icon: Clock },
+              { id: 'in-progress', name: 'In-Progress', icon: AlertCircle },
               { id: 'completed', name: 'Completed Trips', icon: CheckCircle },
               { id: 'create', name: 'Create Request', icon: Plus },
               { id: 'hospital-settings', name: 'Hospital Settings', icon: Building2 }
@@ -673,6 +728,80 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                 setActiveTab('trips');
               }}
             />
+          </div>
+        )}
+
+        {activeTab === 'in-progress' && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-gray-900">In-Progress</h2>
+            </div>
+
+            <div className="bg-white rounded-lg shadow">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h3 className="text-lg font-medium text-gray-900">Accepted and Active Trips</h3>
+              </div>
+              <div className="p-6">
+                {trips.filter(t => t.status === 'ACCEPTED' || t.status === 'IN_PROGRESS').length > 0 ? (
+                  <div className="space-y-4">
+                    {trips.filter(t => t.status === 'ACCEPTED' || t.status === 'IN_PROGRESS').map((trip) => (
+                      <div key={trip.id} className="border border-gray-200 rounded-lg p-4">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <h4 className="text-lg font-medium text-gray-900">Patient {trip.patientId}</h4>
+                            <p className="text-base text-gray-600">{trip.origin} → {trip.destination}</p>
+                            <div className="mt-2 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                              <div>
+                                <div className="font-bold text-gray-800">Assigned Unit</div>
+                                <div className="text-gray-600">{trip.assignedUnitId ? `#${trip.assignedUnitId}` : '—'}</div>
+                              </div>
+                              <div>
+                                <div className="font-bold text-gray-800">Pickup Time</div>
+                                <div className="text-gray-600">{trip.pickupTime || '—'}</div>
+                              </div>
+                              <div>
+                                <div className="font-bold text-gray-800">Arrival Time</div>
+                                <div className="text-gray-600">{trip.arrivalTime || '—'}</div>
+                              </div>
+                              <div>
+                                <div className="font-bold text-gray-800">Departure Time</div>
+                                <div className="text-gray-600">{trip.departureTime || '—'}</div>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            {!trip.arrivalTimestampISO && (
+                              <button
+                                onClick={() => markArrival(trip.id)}
+                                disabled={updating}
+                                className="px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 disabled:opacity-50"
+                              >
+                                Mark Arrival
+                              </button>
+                            )}
+                            {trip.arrivalTimestampISO && !trip.departureTimestampISO && (
+                              <button
+                                onClick={() => markDeparture(trip.id)}
+                                disabled={updating}
+                                className="px-3 py-2 bg-indigo-600 text-white rounded-md text-sm hover:bg-indigo-700 disabled:opacity-50"
+                              >
+                                Mark Departure
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <Clock className="mx-auto h-12 w-12 text-gray-400" />
+                    <h3 className="mt-2 text-sm font-medium text-gray-900">No in-progress trips</h3>
+                    <p className="mt-1 text-sm text-gray-500">Trips will appear here after EMS accepts and starts them.</p>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
 
