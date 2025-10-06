@@ -27,53 +27,6 @@ interface HealthcareDashboardProps {
     facilityType?: string;
   };
 
-  const markArrival = async (tripId: string) => {
-    setUpdating(true);
-    try {
-      const response = await fetch(`/api/trips/${tripId}/status`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ arrivalTimestamp: new Date().toISOString() }),
-      });
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        throw new Error(err?.error || 'Failed to mark arrival');
-      }
-      await loadTrips();
-    } catch (e: any) {
-      console.error('TCC_DEBUG: markArrival error', e);
-      alert(e?.message || 'Failed to mark arrival');
-    } finally {
-      setUpdating(false);
-    }
-  };
-
-  const markDeparture = async (tripId: string) => {
-    setUpdating(true);
-    try {
-      const response = await fetch(`/api/trips/${tripId}/status`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ departureTimestamp: new Date().toISOString() }),
-      });
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        throw new Error(err?.error || 'Failed to mark departure');
-      }
-      await loadTrips();
-    } catch (e: any) {
-      console.error('TCC_DEBUG: markDeparture error', e);
-      alert(e?.message || 'Failed to mark departure');
-    } finally {
-      setUpdating(false);
-    }
-  };
   onLogout: () => void;
 }
 
