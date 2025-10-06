@@ -94,6 +94,10 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
   // Load trips from API
   useEffect(() => {
     loadTrips();
+    const interval = setInterval(() => {
+      loadTrips();
+    }, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   const loadTrips = async () => {
@@ -579,6 +583,9 @@ const EMSDashboard: React.FC<EMSDashboardProps> = ({ user, onLogout }) => {
                               {trip.origin} → {trip.destination}
                             </p>
                           </div>
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor('PENDING')}`}>
+                            PENDING
+                          </span>
                         </div>
                         <div className="mt-2 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
                           <div>
