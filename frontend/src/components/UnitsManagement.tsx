@@ -9,7 +9,6 @@ import {
   AlertCircle,
   Truck,
   Activity,
-  BarChart3,
   Filter,
   Search,
   RefreshCw,
@@ -340,18 +339,6 @@ const UnitsManagement: React.FC<UnitsManagementProps> = ({ user, acceptedTrips =
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">Active Trips</p>
                 <p className="text-2xl font-semibold text-gray-900">{acceptedTrips.length}</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-white p-6 rounded-lg shadow">
-            <div className="flex items-center">
-              <BarChart3 className="h-8 w-8 text-purple-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Response Rate</p>
-                <p className="text-2xl font-semibold text-gray-900">
-                  {analytics?.averageResponseTime ? `${Math.round(analytics.averageResponseTime)} min` : 'N/A'}
-                </p>
               </div>
             </div>
           </div>
