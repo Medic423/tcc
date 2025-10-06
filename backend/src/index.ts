@@ -22,6 +22,7 @@ import dropdownOptionsRoutes from './routes/dropdownOptions';
 import pickupLocationRoutes from './routes/pickupLocations';
 import emsAnalyticsRoutes from './routes/emsAnalytics';
 import backupRoutes from './routes/backup';
+import maintenanceRoutes from './routes/maintenance';
 
 // Load environment variables
 dotenv.config();
@@ -94,6 +95,7 @@ app.use('/api/tcc/pickup-locations', pickupLocationRoutes);
 app.use('/api/ems/analytics', emsAnalyticsRoutes);
 app.use('/api/optimize', optimizationRoutes);
 app.use('/api/backup', backupRoutes);
+app.use('/api/maintenance', maintenanceRoutes);
 
 // Public endpoints for healthcare users
 app.get('/api/public/categories', async (req, res) => {

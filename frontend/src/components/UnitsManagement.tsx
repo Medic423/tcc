@@ -511,10 +511,8 @@ const UnitsManagement: React.FC<UnitsManagementProps> = ({ user, acceptedTrips =
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         <div>
                           <div>{unit.totalTripsCompleted} trips</div>
-                          {unit.averageResponseTime && (
-                            <div className="text-gray-500">
-                              {unit.averageResponseTime.toFixed(1)}min avg
-                            </div>
+                          {unit.currentStatus === 'COMMITTED' && (
+                            <div className="text-orange-600">Active now</div>
                           )}
                         </div>
                       </td>
