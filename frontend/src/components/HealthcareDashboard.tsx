@@ -308,23 +308,26 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
   };
 
   const handleDeleteTrip = async (tripId: string) => {
-    const confirmed = confirm('Delete this transport request? This cannot be undone.');
+    const confirmed = confirm('Cancel this transport request? This cannot be undone.');
     if (!confirmed) return;
     try {
-      const response = await fetch(`/api/trips/${tripId}`, {
-        method: 'DELETE',
+      // Use status update as a soft-delete (CANCELLED), since DELETE endpoint may not exist
+      const response = await fetch(`/api/trips/${tripId}/status`, {
+        method: 'PUT',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify({ status: 'CANCELLED' })
       });
       if (!response.ok) {
         const err = await response.json().catch(() => ({}));
-        throw new Error(err.error || 'Failed to delete trip');
+        throw new Error(err.error || 'Failed to cancel trip');
       }
       await loadTrips();
     } catch (error: any) {
-      console.error('Error deleting trip:', error);
-      alert(error.message || 'Failed to delete trip');
+      console.error('Error cancelling trip:', error);
+      alert(error.message || 'Failed to cancel trip');
     }
   };
 
