@@ -48,10 +48,11 @@ const UnitSelectionModal: React.FC<UnitSelectionModalProps> = ({ isOpen, tripId,
     setAssigning(true);
     setError(null);
     try {
+      const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
       await tripsAPI.updateStatus(tripId, {
         status: 'ACCEPTED',
         assignedUnitId: selectedUnitId,
-        assignedAgencyId: JSON.parse(localStorage.getItem('user') || '{}').id,
+        assignedAgencyId: storedUser.agencyId || storedUser.id,
         acceptedTimestamp: new Date().toISOString(),
       });
       onAssigned();
