@@ -10,18 +10,22 @@ const router = express.Router();
  */
 router.get('/', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
   try {
-    const agencyId = req.user?.id; // Assuming user ID is the agency ID for EMS users
+    const user = req.user;
     console.log('🔍 Units API: req.user:', req.user);
-    console.log('🔍 Units API: agencyId:', agencyId);
     
-    if (!agencyId) {
-      return res.status(400).json({
-        success: false,
-        error: 'Agency ID not found'
-      });
+    let units;
+    
+    if (user?.userType === 'EMS') {
+      // For EMS users, get units for their agency
+      const agencyId = user.id; // EMS users have agencyId as their id
+      console.log('🔍 Units API: agencyId for EMS user:', agencyId);
+      units = await unitService.getUnitsByAgency(agencyId);
+    } else {
+      // For admin users, get all units
+      console.log('🔍 Units API: Getting all units for admin user');
+      units = await unitService.getAllUnits();
     }
-
-    const units = await unitService.getUnitsByAgency(agencyId);
+    
     console.log('🔍 Units API: units found:', units.length);
     
     res.json({
@@ -113,6 +117,46 @@ router.get('/available', authenticateAdmin, async (req: AuthenticatedRequest, re
 });
 
 /**
+ * GET /api/units/on-duty
+ * Get on-duty units for the authenticated EMS agency (for trip assignment)
+ */
+router.get('/on-duty', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
+  try {
+    const user = req.user;
+    console.log('TCC_DEBUG: Get on-duty units request from user:', user);
+
+    if (!user) {
+      return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
+
+    let units;
+    if (user.userType === 'EMS') {
+      const agencyId = user.id; // EMS users have agencyId as their id
+      console.log('TCC_DEBUG: Getting on-duty units for EMS agency:', agencyId);
+      units = await unitService.getOnDutyUnits(agencyId);
+    } else if (user.userType === 'ADMIN') {
+      console.log('TCC_DEBUG: ADMIN requesting on-duty units across all agencies');
+      const allUnits = await unitService.getAllUnits();
+      units = allUnits.filter(u => u.isActive && u.currentStatus === 'AVAILABLE');
+    } else {
+      console.log('TCC_DEBUG: Non-EMS user requesting on-duty units - returning global available list');
+      const allUnits = await unitService.getAllUnits();
+      units = allUnits.filter(u => u.isActive && u.currentStatus === 'AVAILABLE');
+    }
+
+    console.log('TCC_DEBUG: Found on-duty units:', units.length);
+
+    res.json({ success: true, data: units });
+  } catch (error) {
+    console.error('Error getting on-duty units:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to retrieve on-duty units'
+    });
+  }
+});
+
+/**
  * GET /api/units/analytics
  * Get unit analytics for the agency
  */
@@ -171,45 +215,6 @@ router.get('/:id', authenticateAdmin, async (req: AuthenticatedRequest, res) => 
   }
 });
 
-/**
- * POST /api/units
- * Create a new unit
- */
-router.post('/', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
-  try {
-    const agencyId = req.user?.id;
-    
-    if (!agencyId) {
-      return res.status(400).json({
-        success: false,
-        error: 'Agency ID not found'
-      });
-    }
-
-    const unitData: UnitFormData = req.body;
-    
-    // Validate required fields
-    if (!unitData.unitNumber || !unitData.type) {
-      return res.status(400).json({
-        success: false,
-        error: 'Unit number and type are required'
-      });
-    }
-
-    const unit = await unitService.createUnit(agencyId, unitData);
-    
-    res.status(201).json({
-      success: true,
-      data: unit
-    });
-  } catch (error) {
-    console.error('Error creating unit:', error);
-    res.status(500).json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to create unit'
-    });
-  }
-});
 
 /**
  * PUT /api/units/:id
@@ -220,7 +225,22 @@ router.put('/:id', authenticateAdmin, async (req: AuthenticatedRequest, res) => 
     const { id } = req.params;
     const unitData: Partial<UnitFormData> = req.body;
     
-    const unit = await unitService.updateUnit(id, unitData);
+    // Validate required fields for update
+    if (unitData.unitNumber !== undefined && !unitData.unitNumber) {
+      return res.status(400).json({
+        success: false,
+        error: 'Unit number cannot be empty'
+      });
+    }
+    
+    if (unitData.type !== undefined && !unitData.type) {
+      return res.status(400).json({
+        success: false,
+        error: 'Unit type cannot be empty'
+      });
+    }
+    
+    const unit = await unitService.updateUnit(id, unitData as UnitFormData);
     
     res.json({
       success: true,
@@ -266,36 +286,6 @@ router.put('/:id/status', authenticateAdmin, async (req: AuthenticatedRequest, r
   }
 });
 
-/**
- * POST /api/units/:id/assign-trip
- * Assign trip to unit
- */
-router.post('/:id/assign-trip', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
-  try {
-    const { id } = req.params;
-    const { tripId, tripDetails } = req.body;
-    
-    if (!tripId || !tripDetails) {
-      return res.status(400).json({
-        success: false,
-        error: 'Trip ID and trip details are required'
-      });
-    }
-
-    const unit = await unitService.assignTripToUnit(id, tripId, tripDetails);
-    
-    res.json({
-      success: true,
-      data: unit
-    });
-  } catch (error) {
-    console.error('Error assigning trip to unit:', error);
-    res.status(500).json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to assign trip to unit'
-    });
-  }
-});
 
 /**
  * PUT /api/units/:id
@@ -380,47 +370,47 @@ router.delete('/:id', authenticateAdmin, async (req: AuthenticatedRequest, res) 
 });
 
 /**
- * POST /api/units/:id/complete-trip
- * Complete trip assignment
+ * PATCH /api/units/:id/duty
+ * Toggle unit duty status (on/off duty)
  */
-router.post('/:id/complete-trip', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
+router.patch('/:id/duty', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
   try {
     const { id } = req.params;
+    const { isActive } = req.body;
+    const agencyId = req.user?.id;
     
-    const unit = await unitService.completeTripAssignment(id);
+    console.log('🔍 Units API PATCH duty: req.user:', req.user);
+    console.log('🔍 Units API PATCH duty: agencyId:', agencyId);
+    console.log('🔍 Units API PATCH duty: unitId:', id);
+    console.log('🔍 Units API PATCH duty: isActive:', isActive);
     
-    res.json({
-      success: true,
-      data: unit
-    });
-  } catch (error) {
-    console.error('Error completing trip assignment:', error);
-    res.status(500).json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to complete trip assignment'
-    });
-  }
-});
+    if (!agencyId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Agency ID not found'
+      });
+    }
 
-/**
- * DELETE /api/units/:id
- * Deactivate unit (soft delete)
- */
-router.delete('/:id', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
-  try {
-    const { id } = req.params;
-    
-    const unit = await unitService.deactivateUnit(id);
+    if (typeof isActive !== 'boolean') {
+      return res.status(400).json({
+        success: false,
+        error: 'isActive must be a boolean value'
+      });
+    }
+
+    const updatedUnit = await unitService.updateUnitDutyStatus(id, isActive);
+    console.log('🔍 Units API PATCH duty: unit updated:', updatedUnit);
     
     res.json({
       success: true,
-      data: unit
+      data: updatedUnit,
+      message: `Unit ${isActive ? 'activated' : 'deactivated'} successfully`
     });
   } catch (error) {
-    console.error('Error deactivating unit:', error);
+    console.error('Error updating unit duty status:', error);
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to deactivate unit'
+      error: 'Failed to update unit duty status'
     });
   }
 });
