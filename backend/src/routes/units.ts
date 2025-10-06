@@ -124,25 +124,29 @@ router.get('/on-duty', authenticateAdmin, async (req: AuthenticatedRequest, res)
   try {
     const user = req.user;
     console.log('TCC_DEBUG: Get on-duty units request from user:', user);
-    
-    if (!user || user.userType !== 'EMS') {
-      return res.status(403).json({
-        success: false,
-        error: 'Only EMS users can access on-duty units'
-      });
+
+    if (!user) {
+      return res.status(401).json({ success: false, error: 'Unauthorized' });
     }
 
-    const agencyId = user.id; // EMS users have agencyId as their id
-    console.log('TCC_DEBUG: Getting on-duty units for agency:', agencyId);
+    let units;
+    if (user.userType === 'EMS') {
+      const agencyId = user.id; // EMS users have agencyId as their id
+      console.log('TCC_DEBUG: Getting on-duty units for EMS agency:', agencyId);
+      units = await unitService.getOnDutyUnits(agencyId);
+    } else if (user.userType === 'ADMIN') {
+      console.log('TCC_DEBUG: ADMIN requesting on-duty units across all agencies');
+      const allUnits = await unitService.getAllUnits();
+      units = allUnits.filter(u => u.isActive && u.currentStatus === 'AVAILABLE');
+    } else {
+      console.log('TCC_DEBUG: Non-EMS user requesting on-duty units - returning global available list');
+      const allUnits = await unitService.getAllUnits();
+      units = allUnits.filter(u => u.isActive && u.currentStatus === 'AVAILABLE');
+    }
 
-    const units = await unitService.getOnDutyUnits(agencyId);
-    
     console.log('TCC_DEBUG: Found on-duty units:', units.length);
-    
-    res.json({
-      success: true,
-      data: units
-    });
+
+    res.json({ success: true, data: units });
   } catch (error) {
     console.error('Error getting on-duty units:', error);
     res.status(500).json({

@@ -314,3 +314,4 @@ PUT /api/trips/:id/status - Mark arrival/departure
 - Replaced `Edit` pill with an edit icon on Transport Requests.
 - Added `Delete` (trash) icon with confirmation to remove requests safely.
 - Lists auto-refresh after delete to reflect current state.
+  

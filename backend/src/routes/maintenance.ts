@@ -3,24 +3,25 @@ import { authenticateAdmin, AuthenticatedRequest } from '../middleware/authentic
 import { databaseManager } from '../services/databaseManager';
 
 const router = Router();
-const prisma = databaseManager.getCenterDB();
+const centerDb = databaseManager.getCenterDB();
+const emsDb = databaseManager.getEMSDB();
 
 // WARNING: Dev-only reset endpoint. Resets trips/units to a clean state.
 router.post('/reset-dev-state', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
   try {
     console.log('TCC_DEBUG: RESET_DEV_STATE invoked by', req.user?.email);
 
-    const cancel = await prisma.transportRequest.updateMany({
+    const cancel = await centerDb.transportRequest.updateMany({
       where: { status: { in: ['PENDING','ACCEPTED','IN_PROGRESS'] } },
       data: { status: 'CANCELLED', completionTimestamp: new Date() }
     });
-    const cleared = await prisma.transportRequest.updateMany({
+    const cleared = await centerDb.transportRequest.updateMany({
       where: { status: { not: 'COMPLETED' } },
       data: { assignedUnitId: null }
     });
-    const freeUnits = await prisma.unit.updateMany({
+    const freeUnits = await emsDb.unit.updateMany({
       where: {},
-      data: { currentStatus: 'AVAILABLE' }
+      data: { status: 'AVAILABLE', currentStatus: 'AVAILABLE' }
     });
 
     res.json({ success: true, data: { tripsCancelled: cancel.count, tripsCleared: cleared.count, unitsFreed: freeUnits.count } });
