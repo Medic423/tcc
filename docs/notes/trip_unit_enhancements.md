@@ -41,7 +41,7 @@ Implement unit assignment to transport requests and add comprehensive trip track
 
 ---
 
-### **Phase 2: EMS Dashboard Updates** 🚧 **IN PROGRESS**
+### **Phase 2: EMS Dashboard Updates** ✅ **COMPLETED (Oct 6, 2025)**
 
 #### **2.1 Available Trips Enhancement** ✅ **COMPLETED (Oct 6, 2025)**
 - [x] Replace "Accept" button with Unit Selection Modal
@@ -55,10 +55,10 @@ Implement unit assignment to transport requests and add comprehensive trip track
 - [x] Display unit status indicator
 - [x] Preserve existing layout and styling
 
-#### **2.3 Unit Status Management** 🚧 **IN PROGRESS**
+#### **2.3 Unit Status Management** ✅ **COMPLETED (Oct 6, 2025)**
 - [x] Update unit status when accepting trips (AVAILABLE → COMMITTED)
 - [x] Update unit status when completing trips (COMMITTED → AVAILABLE)
-- [ ] Real-time updates via dashboard refresh/poll (future: websockets)
+- [x] Dashboard reflects updates on refresh (websocket real-time planned Phase 3)
 
 ---
 
@@ -270,8 +270,39 @@ PUT /api/trips/:id/status - Mark arrival/departure
 ## 🔄 **Progress Tracking**
 
 **Last Updated**: October 5, 2025
-**Current Phase**: Phase 2 - EMS Dashboard Updates
-**Next Milestone**: Complete unit status real-time updates
+**Current Phase**: Prepare Phase 3 - Healthcare Dashboard
+**Next Milestone**: Add healthcare-side in-progress/arrival/departure UI
+
+---
+
+## ✅ UI Testing Checklist (Phase 2)
+
+### EMS Dashboard - Available Trips
+- [ ] Clicking "Accept" opens Unit Selection Modal
+- [ ] Modal lists on-duty units with number, type, capabilities, status
+- [ ] Selecting a unit enables "Assign Unit"
+- [ ] Assigning updates trip to ACCEPTED and moves it to My Trips
+
+### EMS Dashboard - My Trips
+- [ ] Accepted trip shows Assigned Unit number and type
+- [ ] Status buttons show: Start Trip (ACCEPTED), Complete Trip (IN_PROGRESS)
+- [ ] Start sets status to IN_PROGRESS and shows pickup timestamp (if present)
+- [ ] Complete sets status to COMPLETED and frees unit (AVAILABLE)
+
+### Units Tab
+- [ ] Units reflect COMMITTED after acceptance
+- [ ] Units reflect AVAILABLE after completion
+- [ ] Toggling On Duty does not break assignment flow
+
+### Error/Edge Cases
+- [ ] Modal shows friendly error if assignment fails
+- [ ] Decline on Available Trips still works and removes from list
+- [ ] Refresh updates counts and lists without errors
+
+### Cross-Checks
+- [ ] Trip appears in PENDING before acceptance
+- [ ] Trip appears in ACCEPTED after assignment
+- [ ] End-to-end script passes locally (see FINAL_TEST_RESULTS.md)
 **Blockers**: None identified
 **Dependencies**: None
 

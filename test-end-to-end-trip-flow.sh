@@ -3,9 +3,32 @@
 echo "🧪 Testing End-to-End Trip Data Flow"
 echo "===================================="
 
+# Configuration
+API_BASE="http://localhost:5001"
+EMS_EMAIL="fferguson@movalleyems.com"
+EMS_PASSWORD="movalley123"
+
+# Authenticate as EMS to obtain token and user id
+echo "🔐 Authenticating EMS user..."
+LOGIN_RESPONSE=$(curl -s -X POST "$API_BASE/api/auth/ems/login" \
+  -H "Content-Type: application/json" \
+  -d "{\"email\":\"$EMS_EMAIL\",\"password\":\"$EMS_PASSWORD\"}")
+
+LOGIN_SUCCESS=$(echo "$LOGIN_RESPONSE" | jq -r '.success // false')
+if [ "$LOGIN_SUCCESS" != "true" ]; then
+  echo "❌ EMS login failed"
+  echo "$LOGIN_RESPONSE"
+  exit 1
+fi
+
+TOKEN=$(echo "$LOGIN_RESPONSE" | jq -r '.token // .data.token')
+EMS_USER_ID=$(echo "$LOGIN_RESPONSE" | jq -r '.user.id // .data.user.id')
+AUTH_HEADER="Authorization: Bearer $TOKEN"
+echo "✅ EMS login succeeded; user: $EMS_USER_ID"
+
 # Check if servers are running
 echo "📡 Checking server status..."
-if curl -s http://localhost:5001/api/trips > /dev/null; then
+if curl -s -H "$AUTH_HEADER" "$API_BASE/api/trips" > /dev/null; then
     echo "✅ Backend server is running on port 5001"
 else
     echo "❌ Backend server is not running on port 5001"
@@ -22,12 +45,12 @@ fi
 # Test 1: Check current trips in database
 echo ""
 echo "🔍 Test 1: Current trips in database"
-TRIPS_COUNT=$(curl -s "http://localhost:5001/api/trips" | jq '.data | length')
+TRIPS_COUNT=$(curl -s -H "$AUTH_HEADER" "$API_BASE/api/trips" | jq '.data | length')
 echo "Found $TRIPS_COUNT trips in database"
 
 if [ "$TRIPS_COUNT" -gt 0 ]; then
     echo "📊 Sample trip data:"
-    curl -s "http://localhost:5001/api/trips" | jq '.data[0] | {tripNumber, patientId, status, fromLocation, toLocation, createdAt}'
+    curl -s -H "$AUTH_HEADER" "$API_BASE/api/trips" | jq '.data[0] | {tripNumber, patientId, status, fromLocation, toLocation, createdAt}'
 else
     echo "⚠️  No trips found in database"
 fi
@@ -35,12 +58,12 @@ fi
 # Test 2: Check PENDING trips (for EMS Dashboard)
 echo ""
 echo "🔍 Test 2: PENDING trips (for EMS Dashboard)"
-PENDING_COUNT=$(curl -s "http://localhost:5001/api/trips?status=PENDING" | jq '.data | length')
+PENDING_COUNT=$(curl -s -H "$AUTH_HEADER" "$API_BASE/api/trips?status=PENDING" | jq '.data | length')
 echo "Found $PENDING_COUNT PENDING trips"
 
 if [ "$PENDING_COUNT" -gt 0 ]; then
     echo "📊 Sample PENDING trip:"
-    curl -s "http://localhost:5001/api/trips?status=PENDING" | jq '.data[0] | {tripNumber, patientId, status, fromLocation, toLocation}'
+    curl -s -H "$AUTH_HEADER" "$API_BASE/api/trips?status=PENDING" | jq '.data[0] | {tripNumber, patientId, status, fromLocation, toLocation}'
 else
     echo "⚠️  No PENDING trips found"
 fi
@@ -48,7 +71,7 @@ fi
 # Test 3: Check ACCEPTED/IN_PROGRESS/COMPLETED trips (for EMS Dashboard)
 echo ""
 echo "🔍 Test 3: ACCEPTED/IN_PROGRESS/COMPLETED trips (for EMS Dashboard)"
-ACCEPTED_COUNT=$(curl -s "http://localhost:5001/api/trips?status=ACCEPTED,IN_PROGRESS,COMPLETED" | jq '.data | length')
+ACCEPTED_COUNT=$(curl -s -H "$AUTH_HEADER" "$API_BASE/api/trips?status=ACCEPTED,IN_PROGRESS,COMPLETED" | jq '.data | length')
 echo "Found $ACCEPTED_COUNT ACCEPTED/IN_PROGRESS/COMPLETED trips"
 
 # Test 4: Create a new test trip
@@ -75,8 +98,9 @@ NEW_TRIP_DATA='{
 }'
 
 echo "Creating new trip..."
-NEW_TRIP_RESPONSE=$(curl -s -X POST "http://localhost:5001/api/trips/enhanced" \
+NEW_TRIP_RESPONSE=$(curl -s -X POST "$API_BASE/api/trips/enhanced" \
   -H "Content-Type: application/json" \
+  -H "$AUTH_HEADER" \
   -d "$NEW_TRIP_DATA")
 
 echo "Response: $NEW_TRIP_RESPONSE"
@@ -93,7 +117,7 @@ if echo "$NEW_TRIP_RESPONSE" | jq -e '.success' > /dev/null; then
     # Test 5: Verify trip appears in TCC Trips View
     echo ""
     echo "🔍 Test 5: Verify trip appears in TCC Trips View"
-    UPDATED_TRIPS_COUNT=$(curl -s "http://localhost:5001/api/trips" | jq '.data | length')
+    UPDATED_TRIPS_COUNT=$(curl -s -H "$AUTH_HEADER" "$API_BASE/api/trips" | jq '.data | length')
     echo "Total trips after creation: $UPDATED_TRIPS_COUNT"
     
     if [ "$UPDATED_TRIPS_COUNT" -gt "$TRIPS_COUNT" ]; then
@@ -105,7 +129,7 @@ if echo "$NEW_TRIP_RESPONSE" | jq -e '.success' > /dev/null; then
     # Test 6: Verify trip appears in EMS Dashboard (PENDING status)
     echo ""
     echo "🔍 Test 6: Verify trip appears in EMS Dashboard (PENDING status)"
-    UPDATED_PENDING_COUNT=$(curl -s "http://localhost:5001/api/trips?status=PENDING" | jq '.data | length')
+    UPDATED_PENDING_COUNT=$(curl -s -H "$AUTH_HEADER" "$API_BASE/api/trips?status=PENDING" | jq '.data | length')
     echo "PENDING trips after creation: $UPDATED_PENDING_COUNT"
     
     if [ "$UPDATED_PENDING_COUNT" -gt "$PENDING_COUNT" ]; then
@@ -117,11 +141,12 @@ if echo "$NEW_TRIP_RESPONSE" | jq -e '.success' > /dev/null; then
     # Test 7: Test trip status update (Accept trip)
     echo ""
     echo "🔍 Test 7: Test trip status update (Accept trip)"
-    ACCEPT_RESPONSE=$(curl -s -X PUT "http://localhost:5001/api/trips/$NEW_TRIP_ID/status" \
+    ACCEPT_RESPONSE=$(curl -s -X PUT "$API_BASE/api/trips/$NEW_TRIP_ID/status" \
       -H "Content-Type: application/json" \
+      -H "$AUTH_HEADER" \
       -d '{
         "status": "ACCEPTED",
-        "assignedAgencyId": "test-agency-id"
+        "assignedAgencyId": "'$EMS_USER_ID'"
       }')
     
     echo "Accept response: $ACCEPT_RESPONSE"
@@ -135,7 +160,7 @@ if echo "$NEW_TRIP_RESPONSE" | jq -e '.success' > /dev/null; then
         # Test 8: Verify trip appears in EMS Dashboard as ACCEPTED
         echo ""
         echo "🔍 Test 8: Verify trip appears in EMS Dashboard as ACCEPTED"
-        UPDATED_ACCEPTED_COUNT=$(curl -s "http://localhost:5001/api/trips?status=ACCEPTED,IN_PROGRESS,COMPLETED" | jq '.data | length')
+        UPDATED_ACCEPTED_COUNT=$(curl -s -H "$AUTH_HEADER" "$API_BASE/api/trips?status=ACCEPTED,IN_PROGRESS,COMPLETED" | jq '.data | length')
         echo "ACCEPTED/IN_PROGRESS/COMPLETED trips after acceptance: $UPDATED_ACCEPTED_COUNT"
         
         if [ "$UPDATED_ACCEPTED_COUNT" -gt "$ACCEPTED_COUNT" ]; then
