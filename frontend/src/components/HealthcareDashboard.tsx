@@ -768,9 +768,11 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                 <h3 className="text-lg font-medium text-gray-900">Accepted and Active Trips</h3>
               </div>
               <div className="p-6">
-                {trips.filter(t => t.status === 'ACCEPTED' || t.status === 'IN_PROGRESS').length > 0 ? (
+                {trips.filter(t => (t.status === 'ACCEPTED' || t.status === 'IN_PROGRESS') && (t.assignedUnitId || t.assignedUnitNumber)).length > 0 ? (
                   <div className="space-y-4">
-                    {trips.filter(t => t.status === 'ACCEPTED' || t.status === 'IN_PROGRESS').map((trip) => (
+                    {trips
+                      .filter(t => (t.status === 'ACCEPTED' || t.status === 'IN_PROGRESS') && (t.assignedUnitId || t.assignedUnitNumber))
+                      .map((trip) => (
                       <div key={trip.id} className="border border-gray-200 rounded-lg p-4">
                         <div className="flex items-start justify-between">
                           <div>
@@ -787,7 +789,7 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
                               </div>
                               <div>
                                 <div className="font-bold text-gray-800">Pickup Time</div>
-                                <div className="text-gray-600">{trip.pickupTime || '—'}</div>
+                                <div className="text-gray-600">{trip.pickupTime || (trip.arrivalTime ? '—' : '—')}</div>
                               </div>
                               <div>
                                 <div className="font-bold text-gray-800">Arrival Time</div>

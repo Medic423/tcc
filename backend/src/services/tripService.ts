@@ -204,6 +204,16 @@ export class TripService {
       });
 
       console.log('TCC_DEBUG: Found trips:', trips.length);
+      try {
+        console.log('TCC_DEBUG: Trips sample fields →',
+          trips.slice(0, 3).map(t => ({
+            id: t.id,
+            status: (t as any).status,
+            assignedUnitId: (t as any).assignedUnitId,
+            assignedUnit: t.assignedUnit ? { id: t.assignedUnit.id, unitNumber: t.assignedUnit.unitNumber, type: t.assignedUnit.type } : null
+          }))
+        );
+      } catch {}
       return { success: true, data: trips };
     } catch (error) {
       console.error('TCC_DEBUG: Error getting trips:', error);
