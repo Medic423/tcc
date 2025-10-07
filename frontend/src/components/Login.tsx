@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ArrowLeft } from 'lucide-react';
 import { authAPI } from '../services/api';
 
 interface User {
@@ -10,9 +11,10 @@ interface User {
 
 interface LoginProps {
   onLogin: (user: User, token: string) => void;
+  onBack?: () => void;
 }
 
-const Login: React.FC<LoginProps> = ({ onLogin }) => {
+const Login: React.FC<LoginProps> = ({ onLogin, onBack }) => {
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -128,6 +130,18 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             </button>
           </div>
 
+          {onBack && (
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={onBack}
+                className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900"
+              >
+                <ArrowLeft className="h-4 w-4 mr-1" />
+                Back to Login Options
+              </button>
+            </div>
+          )}
         </form>
       </div>
     </div>
