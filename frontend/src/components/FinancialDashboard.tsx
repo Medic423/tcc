@@ -218,17 +218,22 @@ const FinancialDashboard: React.FC = () => {
     }).format(amount);
   };
 
-  const formatPercentage = (value: number) => {
+  const formatPercentage = (value: number | null | undefined) => {
+    if (value === null || value === undefined || isNaN(value)) {
+      return '0.0%';
+    }
     return `${value.toFixed(1)}%`;
   };
 
-  const getProfitMarginColor = (margin: number) => {
+  const getProfitMarginColor = (margin: number | null | undefined) => {
+    if (margin === null || margin === undefined || isNaN(margin)) return 'text-gray-600';
     if (margin >= 20) return 'text-green-600';
     if (margin >= 10) return 'text-yellow-600';
     return 'text-red-600';
   };
 
-  const getProfitMarginBgColor = (margin: number) => {
+  const getProfitMarginBgColor = (margin: number | null | undefined) => {
+    if (margin === null || margin === undefined || isNaN(margin)) return 'bg-gray-100';
     if (margin >= 20) return 'bg-green-100';
     if (margin >= 10) return 'bg-yellow-100';
     return 'bg-red-100';
