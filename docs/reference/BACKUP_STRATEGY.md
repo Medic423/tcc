@@ -34,6 +34,62 @@ You correctly identified that **Git does NOT maintain critical files** needed fo
 ### **Layer 3: Git Repository**
 - **Purpose**: Source code version control
 - **Limitation**: Missing environment files and configurations
+- **Critical Requirement**: ALL commits must be user-verified working states (see workflow below)
+
+## **CRITICAL: Git Commit Workflow**
+
+### **❌ AI MUST NEVER Commit Without User Verification**
+
+**The Problem:**
+- AI commits code thinking "this should work"
+- User tests and discovers it doesn't work
+- Multiple fix commits pollute git history
+- Result: No "known good" states to recover to
+
+**The Solution:**
+```
+1. AI makes changes
+2. AI runs automated checks (linting, type checking, build)
+3. AI tells user: "Changes ready for testing"
+4. User tests thoroughly in the UI
+5. User explicitly says: "commit this" or "this works, commit it"
+6. ONLY THEN does AI create commit
+7. Commit message includes "USER VERIFIED WORKING" or similar confirmation
+```
+
+### **Why This Matters for Recovery:**
+
+**Without Verification (Unreliable):**
+```bash
+git log --oneline
+abc1234 feat: add Phase 3           ← Does this work? Unknown!
+def5678 fix: Phase 3 bugs           ← Does THIS work? Unknown!
+ghi9012 fix: more Phase 3 fixes     ← Which one is safe?!
+```
+
+**With Verification (Reliable):**
+```bash
+git log --oneline
+abc1234 feat: add Phase 3 - USER VERIFIED     ← ✅ Works!
+def5678 feat: add Phase 2 - USER VERIFIED     ← ✅ Works!
+ghi9012 feat: add Phase 1 - USER VERIFIED     ← ✅ Works!
+# ANY commit is safe to restore to!
+```
+
+### **Benefits:**
+- ✅ Every commit is a "known good" checkpoint
+- ✅ Git history becomes reliable for recovery
+- ✅ Safe to use `git reset` to any commit
+- ✅ Combined with enhanced backups = trustworthy complete recovery
+- ✅ Prevents the git mess that caused previous data loss
+
+### **Emergency Rollback (Now Safe):**
+```bash
+# Since every commit is verified, rolling back is safe:
+git log --oneline  # All commits are "known good"
+git reset --hard <any-commit>  # Safe to use ANY commit
+git push --force-with-lease  # Update remote if needed
+```
 
 ## **Recovery Scenarios**
 
