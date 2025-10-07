@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import Login from './components/Login';
 import TCCDashboard from './components/TCCDashboard';
 import HealthcareDashboard from './components/HealthcareDashboard';
@@ -25,7 +25,8 @@ interface User {
 function AppContent() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [currentView, setCurrentView] = useState<'public' | 'healthcare-register' | 'ems-register' | 'login' | 'healthcare-login' | 'ems-login'>('public');
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -42,17 +43,21 @@ function AppContent() {
       setLoading(false);
     };
 
-    // Check for URL parameters to automatically show registration forms
-    const urlParams = new URLSearchParams(window.location.search);
-    const registerParam = urlParams.get('register');
-    if (registerParam === 'healthcare') {
-      setCurrentView('healthcare-register');
-    } else if (registerParam === 'ems') {
-      setCurrentView('ems-register');
-    }
-
     checkAuth();
   }, []);
+
+  // Handle browser back button navigation
+  useEffect(() => {
+    const handlePopState = (event: PopStateEvent) => {
+      // If user is logged in and tries to go back to login pages, redirect to dashboard
+      if (user && (location.pathname === '/' || location.pathname.startsWith('/login') || location.pathname.startsWith('/register'))) {
+        navigate('/dashboard', { replace: true });
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [user, location.pathname, navigate]);
 
   const handleLogin = (userData: User, token: string) => {
     console.log('TCC_DEBUG: handleLogin called with userData:', userData);
@@ -64,54 +69,53 @@ function AppContent() {
     
     console.log('TCC_DEBUG: User state set, localStorage updated');
     
-    // Only redirect for ADMIN/USER types, healthcare/EMS show their dashboards directly
+    // Use React Router navigation instead of window.location
     if (userData.userType === 'ADMIN' || userData.userType === 'USER') {
       console.log('TCC_DEBUG: Redirecting to dashboard for admin/user');
-      window.location.href = '/dashboard';
+      navigate('/dashboard', { replace: true });
     } else {
       console.log('TCC_DEBUG: No redirect needed for healthcare/EMS - component should re-render');
     }
-    // No redirect needed for healthcare/EMS - component re-renders with new user state
   };
 
   const handleLogout = () => {
     setUser(null);
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    setCurrentView('public');
+    navigate('/', { replace: true });
   };
 
   const handleRoleSelect = (role: 'healthcare' | 'ems' | 'tcc') => {
     if (role === 'tcc') {
-      setCurrentView('login');
+      navigate('/login');
     } else if (role === 'healthcare') {
-      setCurrentView('healthcare-login');
+      navigate('/healthcare-login');
     } else if (role === 'ems') {
-      setCurrentView('ems-login');
+      navigate('/ems-login');
     }
   };
 
   const handleShowRegistration = (role: 'healthcare' | 'ems') => {
     if (role === 'healthcare') {
-      setCurrentView('healthcare-register');
+      navigate('/healthcare-register');
     } else {
-      setCurrentView('ems-register');
+      navigate('/ems-register');
     }
   };
 
   const handleRegistrationSuccess = () => {
-    setCurrentView('public');
+    navigate('/');
   };
 
   const handleBackToPublic = () => {
-    setCurrentView('public');
+    navigate('/');
   };
 
   const handleClearSession = () => {
     setUser(null);
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    setCurrentView('public');
+    navigate('/');
   };
 
   console.log('TCC_DEBUG: App render - user:', user, 'loading:', loading);
@@ -150,48 +154,45 @@ function AppContent() {
     }
   }
 
-  // If not logged in, show public interface
+  // If not logged in, show public interface with proper routing
   return (
     <div className="min-h-screen bg-gray-50">
       <Routes>
-        <Route path="*" element={
-          <>
-            {currentView === 'public' && (
-              <PublicLogin 
-                onRoleSelect={handleRoleSelect}
-                onShowRegistration={handleShowRegistration}
-                onClearSession={handleClearSession}
-              />
-            )}
-            {currentView === 'healthcare-register' && (
-              <HealthcareRegistration 
-                onBack={handleBackToPublic}
-                onSuccess={handleRegistrationSuccess}
-              />
-            )}
-            {currentView === 'ems-register' && (
-              <EMSRegistration 
-                onBack={handleBackToPublic}
-                onSuccess={handleRegistrationSuccess}
-              />
-            )}
-            {currentView === 'login' && (
-              <Login onLogin={handleLogin} />
-            )}
-            {currentView === 'healthcare-login' && (
-              <HealthcareLogin 
-                onBack={handleBackToPublic}
-                onLogin={handleLogin}
-              />
-            )}
-            {currentView === 'ems-login' && (
-              <EMSLogin 
-                onBack={handleBackToPublic}
-                onLogin={handleLogin}
-              />
-            )}
-          </>
+        <Route path="/" element={
+          <PublicLogin 
+            onRoleSelect={handleRoleSelect}
+            onShowRegistration={handleShowRegistration}
+            onClearSession={handleClearSession}
+          />
         } />
+        <Route path="/healthcare-register" element={
+          <HealthcareRegistration 
+            onBack={handleBackToPublic}
+            onSuccess={handleRegistrationSuccess}
+          />
+        } />
+        <Route path="/ems-register" element={
+          <EMSRegistration 
+            onBack={handleBackToPublic}
+            onSuccess={handleRegistrationSuccess}
+          />
+        } />
+        <Route path="/login" element={
+          <Login onLogin={handleLogin} onBack={handleBackToPublic} />
+        } />
+        <Route path="/healthcare-login" element={
+          <HealthcareLogin 
+            onBack={handleBackToPublic}
+            onLogin={handleLogin}
+          />
+        } />
+        <Route path="/ems-login" element={
+          <EMSLogin 
+            onBack={handleBackToPublic}
+            onLogin={handleLogin}
+          />
+        } />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>
   );

@@ -265,35 +265,57 @@ const EMSRegistration: React.FC<EMSRegistrationProps> = ({ onBack, onSuccess }) 
     }
 
     try {
-      // TODO: Backend doesn't have working POST /api/auth/ems/register endpoint yet
-      // For now, simulate EMS agency registration with mock data
-      console.log('TCC_DEBUG: Simulating EMS agency registration with data:', formData);
+      console.log('TCC_DEBUG: Submitting EMS agency registration with data:', formData);
 
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      // Mock successful registration
-      const mockResponse = {
-        success: true,
-        message: 'EMS agency registration submitted for approval',
-        user: {
-          id: `ems-${Date.now()}`,
-          email: formData.email,
+      const response = await fetch('http://localhost:5001/api/auth/ems/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           name: formData.contactName,
+          email: formData.email,
+          password: formData.password,
           agencyName: formData.agencyName,
-          userType: 'EMS',
-          isActive: true // Auto-approve new EMS registrations
-        }
-      };
+          phone: formData.phone,
+          address: formData.address,
+          city: formData.city,
+          state: formData.state,
+          zipCode: formData.zipCode,
+          latitude: parseFloat(formData.latitude),
+          longitude: parseFloat(formData.longitude),
+          serviceArea: formData.serviceArea, // Send as array
+          capabilities: formData.capabilities, // Send capabilities array
+          operatingHours: formData.operatingHours.start && formData.operatingHours.end 
+            ? `${formData.operatingHours.start} - ${formData.operatingHours.end}`
+            : '24/7',
+        }),
+      });
 
-      console.log('TCC_DEBUG: Mock EMS agency registration successful:', mockResponse);
+      const data = await response.json();
+
+      if (!response.ok) {
+        // Show the specific error message from the backend
+        const errorMessage = data.error || data.message || 'Registration failed. Please try again.';
+        throw new Error(errorMessage);
+      }
+
+      console.log('TCC_DEBUG: EMS registration successful:', data);
       setSuccess(true);
       setTimeout(() => {
         onSuccess();
       }, 2000);
     } catch (err: any) {
       console.error('EMS registration error:', err);
-      const errorMessage = err.message || 'Registration failed. Please try again.';
+      // Show the specific error message
+      let errorMessage = 'Registration failed. Please try again.';
+      
+      if (err.message) {
+        errorMessage = err.message;
+      } else if (err.response?.data?.error) {
+        errorMessage = err.response.data.error;
+      }
+      
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -357,25 +379,6 @@ const EMSRegistration: React.FC<EMSRegistrationProps> = ({ onBack, onSuccess }) 
             </p>
           </div>
           <div className="px-6 py-6">
-            {/* Mock Implementation Notice */}
-            <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 mb-6">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-yellow-800">
-                    Mock Implementation
-                  </h3>
-                  <div className="mt-2 text-sm text-yellow-700">
-                    <p>EMS agency registration is currently simulated locally. The form will validate and show success, but the registration won't persist. Backend API endpoint needs to be implemented.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
             <form className="space-y-6" onSubmit={handleSubmit}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
