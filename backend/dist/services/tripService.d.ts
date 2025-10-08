@@ -36,6 +36,7 @@ export interface EnhancedCreateTripRequest {
     specialNeeds?: string;
     insuranceCompany?: string;
     fromLocation: string;
+    fromLocationId?: string;
     pickupLocationId?: string;
     toLocation: string;
     scheduledTime: string;
@@ -50,6 +51,7 @@ export interface EnhancedCreateTripRequest {
     notificationRadius?: number;
     notes?: string;
     priority?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+    healthcareUserId?: string;
 }
 export declare class TripService {
     /**
@@ -90,6 +92,8 @@ export declare class TripService {
             pickupLocationId: string | null;
             originFacilityId: string | null;
             destinationFacilityId: string | null;
+            fromLocationId: string | null;
+            isMultiLocationFacility: boolean;
             specialRequirements: string | null;
             arrivalTimestamp: Date | null;
             departureTimestamp: Date | null;
@@ -112,9 +116,18 @@ export declare class TripService {
         transportLevel?: string;
         priority?: string;
         agencyId?: string;
+        fromLocationId?: string;
+        healthcareUserId?: string;
     }): Promise<{
         success: boolean;
         data: ({
+            healthcareLocation: {
+                id: string;
+                facilityType: string;
+                city: string;
+                state: string;
+                locationName: string;
+            } | null;
             originFacility: {
                 id: string;
                 name: string;
@@ -173,6 +186,8 @@ export declare class TripService {
             pickupLocationId: string | null;
             originFacilityId: string | null;
             destinationFacilityId: string | null;
+            fromLocationId: string | null;
+            isMultiLocationFacility: boolean;
             specialRequirements: string | null;
             arrivalTimestamp: Date | null;
             departureTimestamp: Date | null;
@@ -255,6 +270,8 @@ export declare class TripService {
             pickupLocationId: string | null;
             originFacilityId: string | null;
             destinationFacilityId: string | null;
+            fromLocationId: string | null;
+            isMultiLocationFacility: boolean;
             specialRequirements: string | null;
             arrivalTimestamp: Date | null;
             departureTimestamp: Date | null;
@@ -387,6 +404,8 @@ export declare class TripService {
             pickupLocationId: string | null;
             originFacilityId: string | null;
             destinationFacilityId: string | null;
+            fromLocationId: string | null;
+            isMultiLocationFacility: boolean;
             specialRequirements: string | null;
             arrivalTimestamp: Date | null;
             departureTimestamp: Date | null;
@@ -422,6 +441,14 @@ export declare class TripService {
     createEnhancedTrip(data: EnhancedCreateTripRequest): Promise<{
         success: boolean;
         data: {
+            healthcareLocation: {
+                id: string;
+                facilityType: string;
+                city: string;
+                state: string;
+                locationName: string;
+            } | null;
+        } & {
             id: string;
             createdAt: Date;
             updatedAt: Date;
@@ -454,6 +481,8 @@ export declare class TripService {
             pickupLocationId: string | null;
             originFacilityId: string | null;
             destinationFacilityId: string | null;
+            fromLocationId: string | null;
+            isMultiLocationFacility: boolean;
             specialRequirements: string | null;
             arrivalTimestamp: Date | null;
             departureTimestamp: Date | null;
@@ -514,6 +543,8 @@ export declare class TripService {
             pickupLocationId: string | null;
             originFacilityId: string | null;
             destinationFacilityId: string | null;
+            fromLocationId: string | null;
+            isMultiLocationFacility: boolean;
             specialRequirements: string | null;
             arrivalTimestamp: Date | null;
             departureTimestamp: Date | null;
@@ -610,6 +641,8 @@ export declare class TripService {
             pickupLocationId: string | null;
             originFacilityId: string | null;
             destinationFacilityId: string | null;
+            fromLocationId: string | null;
+            isMultiLocationFacility: boolean;
             specialRequirements: string | null;
             arrivalTimestamp: Date | null;
             departureTimestamp: Date | null;
@@ -665,6 +698,14 @@ export declare class TripService {
     createTripWithResponses(data: any): Promise<{
         success: boolean;
         data: {
+            healthcareLocation: {
+                id: string;
+                facilityType: string;
+                city: string;
+                state: string;
+                locationName: string;
+            } | null;
+        } & {
             id: string;
             createdAt: Date;
             updatedAt: Date;
@@ -697,6 +738,8 @@ export declare class TripService {
             pickupLocationId: string | null;
             originFacilityId: string | null;
             destinationFacilityId: string | null;
+            fromLocationId: string | null;
+            isMultiLocationFacility: boolean;
             specialRequirements: string | null;
             arrivalTimestamp: Date | null;
             departureTimestamp: Date | null;
@@ -749,6 +792,8 @@ export declare class TripService {
             pickupLocationId: string | null;
             originFacilityId: string | null;
             destinationFacilityId: string | null;
+            fromLocationId: string | null;
+            isMultiLocationFacility: boolean;
             specialRequirements: string | null;
             arrivalTimestamp: Date | null;
             departureTimestamp: Date | null;
@@ -805,6 +850,8 @@ export declare class TripService {
             pickupLocationId: string | null;
             originFacilityId: string | null;
             destinationFacilityId: string | null;
+            fromLocationId: string | null;
+            isMultiLocationFacility: boolean;
             specialRequirements: string | null;
             arrivalTimestamp: Date | null;
             departureTimestamp: Date | null;

@@ -68,6 +68,7 @@ class TripService {
      */
     async getTrips(filters) {
         console.log('TCC_DEBUG: Getting trips with filters:', filters);
+        console.log('MULTI_LOC: Location filters - fromLocationId:', filters?.fromLocationId, 'healthcareUserId:', filters?.healthcareUserId);
         try {
             const where = {};
             if (filters?.status) {
@@ -80,6 +81,24 @@ class TripService {
                 }
                 else {
                     where.status = filters.status;
+                }
+            }
+            // ✅ NEW: Filter by specific location
+            if (filters?.fromLocationId) {
+                where.fromLocationId = filters.fromLocationId;
+                console.log('MULTI_LOC: Filtering by location ID:', filters.fromLocationId);
+            }
+            // ✅ NEW: Filter by all locations for a healthcare user
+            if (filters?.healthcareUserId && !filters?.fromLocationId) {
+                // Get all location IDs for this user
+                const locations = await prisma.healthcareLocation.findMany({
+                    where: { healthcareUserId: filters.healthcareUserId },
+                    select: { id: true }
+                });
+                const locationIds = locations.map(loc => loc.id);
+                if (locationIds.length > 0) {
+                    where.fromLocationId = { in: locationIds };
+                    console.log('MULTI_LOC: Filtering by user locations:', locationIds.length, 'locations');
                 }
             }
             if (filters?.transportLevel) {
@@ -115,6 +134,15 @@ class TripService {
                             name: true,
                             floor: true,
                             room: true
+                        }
+                    },
+                    healthcareLocation: {
+                        select: {
+                            id: true,
+                            locationName: true,
+                            city: true,
+                            state: true,
+                            facilityType: true
                         }
                     },
                     assignedUnit: {
@@ -323,8 +351,19 @@ class TripService {
      */
     async createEnhancedTrip(data) {
         console.log('TCC_DEBUG: Creating enhanced trip with data:', data);
+        console.log('MULTI_LOC: fromLocationId:', data.fromLocationId, 'healthcareUserId:', data.healthcareUserId);
         try {
             const tripNumber = `TRP-${Date.now()}`;
+            // ✅ Determine if this is from a multi-location facility
+            let isMultiLocationFacility = false;
+            if (data.healthcareUserId) {
+                const healthcareUser = await prisma.healthcareUser.findUnique({
+                    where: { id: data.healthcareUserId },
+                    select: { manageMultipleLocations: true }
+                });
+                isMultiLocationFacility = healthcareUser?.manageMultipleLocations || false;
+                console.log('MULTI_LOC: User manages multiple locations:', isMultiLocationFacility);
+            }
             const tripData = {
                 tripNumber,
                 patientId: data.patientId || 'PAT-UNKNOWN',
@@ -333,6 +372,8 @@ class TripService {
                 originFacilityId: null, // Not used in enhanced version
                 destinationFacilityId: null, // Not used in enhanced version
                 fromLocation: data.fromLocation,
+                fromLocationId: data.fromLocationId || null, // ✅ NEW: Healthcare location reference
+                isMultiLocationFacility, // ✅ NEW: Analytics flag
                 toLocation: data.toLocation,
                 scheduledTime: new Date(data.scheduledTime),
                 transportLevel: data.transportLevel,
@@ -354,15 +395,28 @@ class TripService {
                 notes: data.notes || null,
                 isolation: false,
                 bariatric: false,
+                healthcareCreatedById: data.healthcareUserId || null,
             };
             // Connect pickup location relation if provided
             if (data.pickupLocationId) {
                 tripData.pickupLocation = { connect: { id: data.pickupLocationId } };
             }
             const trip = await prisma.transportRequest.create({
-                data: tripData
+                data: tripData,
+                include: {
+                    healthcareLocation: {
+                        select: {
+                            id: true,
+                            locationName: true,
+                            city: true,
+                            state: true,
+                            facilityType: true
+                        }
+                    }
+                }
             });
             console.log('TCC_DEBUG: Enhanced trip created successfully:', trip.id);
+            console.log('MULTI_LOC: Trip created with location:', trip.healthcareLocation?.locationName || 'N/A');
             return { success: true, data: trip };
         }
         catch (error) {

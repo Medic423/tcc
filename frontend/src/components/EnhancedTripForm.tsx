@@ -149,6 +149,64 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
 
   const [destinationMode, setDestinationMode] = useState<'select' | 'manual'>('select');
   const [loadingPickupLocations, setLoadingPickupLocations] = useState(false);
+  // Phase A: Geographic filtering state
+  const [showAllStates, setShowAllStates] = useState(false);
+
+  // Phase A: Function to reload facilities when geographic filter changes
+  const reloadFacilities = async () => {
+    if (!user.manageMultipleLocations) return; // Only for multi-location users
+    
+    try {
+      console.log('PHASE_A: Reloading facilities with showAllStates:', showAllStates);
+      
+      // Get the user's primary healthcare location for origin coordinates
+      const healthcareLocationsResponse = await api.get('/api/healthcare/locations/active');
+      if (healthcareLocationsResponse.data?.success && Array.isArray(healthcareLocationsResponse.data.data)) {
+        const healthcareLocations = healthcareLocationsResponse.data.data;
+        const primaryLocation = healthcareLocations.find(loc => loc.isPrimary) || healthcareLocations[0];
+        
+        let facilitiesResponse;
+        
+        if (showAllStates) {
+          // Load all facilities with geographic filtering
+          console.log('PHASE_A: Loading all facilities within 100 miles');
+          facilitiesResponse = await api.get('/api/tcc/facilities', {
+            params: {
+              originLat: primaryLocation.latitude,
+              originLng: primaryLocation.longitude,
+              radius: 100,
+              isActive: true
+            }
+          });
+        } else {
+          // Load PA facilities only with geographic filtering
+          console.log('PHASE_A: Loading PA facilities within 100 miles');
+          facilitiesResponse = await api.get('/api/tcc/facilities', {
+            params: {
+              state: 'PA',
+              originLat: primaryLocation.latitude,
+              originLng: primaryLocation.longitude,
+              radius: 100,
+              isActive: true
+            }
+          });
+        }
+        
+        if (facilitiesResponse.data?.success && Array.isArray(facilitiesResponse.data.data)) {
+          const facilities = facilitiesResponse.data.data;
+          console.log('PHASE_A: Reloaded', facilities.length, 'facilities');
+          
+          // Update form options
+          setFormOptions(prev => ({
+            ...prev,
+            facilities
+          }));
+        }
+      }
+    } catch (error) {
+      console.error('PHASE_A: Error reloading facilities:', error);
+    }
+  };
 
   const steps = [
     { id: 1, name: 'Patient Info', icon: User },
@@ -164,13 +222,7 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
     console.log('MULTI_LOC: user.manageMultipleLocations:', user.manageMultipleLocations);
     
     loadFormOptions();
-    // Load healthcare locations for multi-location users
-    if (user.manageMultipleLocations) {
-      console.log('MULTI_LOC: Calling loadHealthcareLocations()');
-      loadHealthcareLocations();
-    } else {
-      console.log('MULTI_LOC: NOT calling loadHealthcareLocations - manageMultipleLocations is:', user.manageMultipleLocations);
-    }
+    // Note: loadHealthcareLocations is now handled within loadFormOptions
   }, []);
 
   // Load pickup locations when fromLocation is set (including pre-selected facility)
@@ -210,15 +262,65 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
     try {
       console.log('TCC_DEBUG: Loading real form options from API...');
       
-      // Load real facilities from API
-      const facilitiesResponse = await api.get('/api/tcc/facilities');
-      console.log('TCC_DEBUG: Facilities API response:', facilitiesResponse.data);
-      
+      // Phase A: Smart defaults for geographic filtering
       let facilities = [];
-      if (facilitiesResponse.data?.success && Array.isArray(facilitiesResponse.data.data)) {
-        facilities = facilitiesResponse.data.data;
-        console.log('TCC_DEBUG: Loaded', facilities.length, 'real facilities');
+      let healthcareLocations: HealthcareLocation[] = [];
+      
+      if (user.manageMultipleLocations) {
+        // For Penn Highlands users, load healthcare locations AND facilities with geographic filtering
+        console.log('PHASE_A: Loading healthcare locations and facilities for Penn Highlands user');
+        
+        // Get the user's healthcare locations for the "From Location" dropdown
+        const healthcareLocationsResponse = await api.get('/api/healthcare/locations/active');
+        if (healthcareLocationsResponse.data?.success && Array.isArray(healthcareLocationsResponse.data.data)) {
+          healthcareLocations = healthcareLocationsResponse.data.data;
+          console.log('MULTI_LOC: Loaded', healthcareLocations.length, 'healthcare locations for form options:', healthcareLocations);
+          
+          const primaryLocation = healthcareLocations.find(loc => loc.isPrimary) || healthcareLocations[0];
+          
+          if (primaryLocation && primaryLocation.latitude && primaryLocation.longitude) {
+            console.log('PHASE_A: Using primary location as origin:', primaryLocation.locationName);
+            
+            // Load facilities within 100 miles of the primary location, limited to PA
+            const facilitiesResponse = await api.get('/api/tcc/facilities', {
+              params: {
+                state: 'PA', // Filter to Pennsylvania only
+                originLat: primaryLocation.latitude,
+                originLng: primaryLocation.longitude,
+                radius: 100, // 100 miles radius
+                isActive: true
+              }
+            });
+            
+            if (facilitiesResponse.data?.success && Array.isArray(facilitiesResponse.data.data)) {
+              facilities = facilitiesResponse.data.data;
+              console.log('PHASE_A: Loaded', facilities.length, 'PA facilities within 100 miles of', primaryLocation.locationName);
+            }
+          } else {
+            console.warn('PHASE_A: Primary location missing coordinates, falling back to PA facilities only');
+            // Fallback to PA facilities only without geographic filtering
+            const facilitiesResponse = await api.get('/api/tcc/facilities', {
+              params: { state: 'PA', isActive: true }
+            });
+            if (facilitiesResponse.data?.success && Array.isArray(facilitiesResponse.data.data)) {
+              facilities = facilitiesResponse.data.data;
+            }
+          }
+        }
       } else {
+        // For single-location users, load all facilities (existing behavior)
+        console.log('PHASE_A: Loading all facilities for single-location user');
+        const facilitiesResponse = await api.get('/api/tcc/facilities');
+        
+        if (facilitiesResponse.data?.success && Array.isArray(facilitiesResponse.data.data)) {
+          facilities = facilitiesResponse.data.data;
+          console.log('TCC_DEBUG: Loaded', facilities.length, 'real facilities');
+        }
+        // Ensure healthcareLocations is empty for single-location users
+        healthcareLocations = [];
+      }
+      
+      if (facilities.length === 0) {
         console.warn('TCC_DEBUG: Failed to load facilities, using fallback');
         facilities = [];
       }
@@ -250,11 +352,26 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
         facilities: facilities,
         agencies: [],
         pickupLocations: [],
-        healthcareLocations: [] // ✅ Initialize empty array for healthcare locations
+        healthcareLocations: healthcareLocations // ✅ Use the loaded healthcare locations
       };
  
       console.log('TCC_DEBUG: Setting real form options:', options);
+      console.log('MULTI_LOC: Healthcare locations being set in formOptions:', healthcareLocations.length, 'locations');
       setFormOptions(options);
+      
+      // Set default fromLocation and fromLocationId for multi-location users
+      if (user.manageMultipleLocations && healthcareLocations.length > 0) {
+        const primaryLocation = healthcareLocations.find(loc => loc.isPrimary);
+        console.log('MULTI_LOC: Primary location found:', primaryLocation);
+        if (primaryLocation) {
+          setFormData(prev => ({
+            ...prev,
+            fromLocation: primaryLocation.locationName,
+            fromLocationId: primaryLocation.id
+          }));
+          console.log('MULTI_LOC: Set default location:', primaryLocation.locationName);
+        }
+      }
  
       // Apply defaults from backend
       try {
@@ -297,40 +414,8 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
     }
   };
 
-  const loadHealthcareLocations = async () => {
-    try {
-      console.log('MULTI_LOC: Loading healthcare locations for user:', user.id);
-      console.log('MULTI_LOC: User manageMultipleLocations:', user.manageMultipleLocations);
-      const response = await api.get('/api/healthcare/locations/active');
-      console.log('MULTI_LOC: API response:', response.data);
-      
-      if (response.data?.success && Array.isArray(response.data.data)) {
-        const locations = response.data.data;
-        console.log('MULTI_LOC: Loaded', locations.length, 'healthcare locations:', locations);
-        
-        setFormOptions(prev => ({
-          ...prev,
-          healthcareLocations: locations
-        }));
-        
-        // Set default fromLocation and fromLocationId for multi-location users
-        const primaryLocation = locations.find(loc => loc.isPrimary);
-        console.log('MULTI_LOC: Primary location found:', primaryLocation);
-        if (primaryLocation) {
-          setFormData(prev => ({
-            ...prev,
-            fromLocation: primaryLocation.locationName,
-            fromLocationId: primaryLocation.id
-          }));
-          console.log('MULTI_LOC: Set default location:', primaryLocation.locationName);
-        }
-      } else {
-        console.warn('MULTI_LOC: Failed to load healthcare locations - response:', response.data);
-      }
-    } catch (error) {
-      console.error('MULTI_LOC: Error loading healthcare locations:', error);
-    }
-  };
+  // Note: loadHealthcareLocations functionality has been moved into loadFormOptions
+  // to prevent race conditions and ensure healthcare locations are properly set
 
   const loadAgenciesForHospital = async (hospitalId: string) => {
     try {
@@ -778,18 +863,24 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
                   <option value="">Select origin facility</option>
                   {/* Show healthcare locations for multi-location users */}
                   {user.manageMultipleLocations ? (
-                    formOptions.healthcareLocations.map((location) => (
-                      <option key={location.id} value={location.locationName}>
-                        {location.locationName} - {location.city}, {location.state}
-                      </option>
-                    ))
+                    <>
+                      {console.log('MULTI_LOC: Rendering healthcare locations dropdown with', formOptions.healthcareLocations.length, 'locations:', formOptions.healthcareLocations)}
+                      {formOptions.healthcareLocations.map((location) => (
+                        <option key={location.id} value={location.locationName}>
+                          {location.locationName} - {location.city}, {location.state}
+                        </option>
+                      ))}
+                    </>
                   ) : (
                     /* Show regular facilities for single-location users */
-                    formOptions.facilities.map((facility) => (
-                      <option key={facility.id} value={facility.name}>
-                        {facility.name} - {facility.type}
-                      </option>
-                    ))
+                    <>
+                      {console.log('MULTI_LOC: Rendering facilities dropdown with', formOptions.facilities.length, 'facilities:', formOptions.facilities)}
+                      {formOptions.facilities.map((facility) => (
+                        <option key={facility.id} value={facility.name}>
+                          {facility.name} - {facility.type}
+                        </option>
+                      ))}
+                    </>
                   )}
                 </select>
               </div>
@@ -937,6 +1028,36 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
                 {destinationMode === 'select' && formOptions.facilities.length === 0 && (
                   <p className="text-sm text-gray-500 mt-1">Loading facilities...</p>
                 )}
+                
+                {/* Phase A: Geographic filtering toggle for multi-location users */}
+                {user.manageMultipleLocations && destinationMode === 'select' && (
+                  <div className="mt-2 flex items-center space-x-2">
+                    <label className="flex items-center text-sm text-gray-600">
+                      <input
+                        type="checkbox"
+                        checked={showAllStates}
+                        onChange={(e) => {
+                          setShowAllStates(e.target.checked);
+                          // Reload facilities when toggle changes
+                          setTimeout(() => reloadFacilities(), 100);
+                        }}
+                        className="mr-2 rounded border-gray-300 text-green-600 focus:ring-green-500"
+                      />
+                      Show facilities from all states
+                    </label>
+                    {!showAllStates && (
+                      <span className="text-xs text-gray-500">
+                        (Currently showing PA facilities within 100 miles)
+                      </span>
+                    )}
+                    {showAllStates && (
+                      <span className="text-xs text-gray-500">
+                        (Currently showing all facilities within 100 miles)
+                      </span>
+                    )}
+                  </div>
+                )}
+                
                 {destinationMode === 'manual' && (
                   <p className="text-sm text-gray-500 mt-1">
                     Enter the full facility name and location (e.g., "Johns Hopkins Hospital, Baltimore, MD")

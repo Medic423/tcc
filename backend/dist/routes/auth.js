@@ -119,7 +119,8 @@ router.get('/verify', authenticateAdmin_1.authenticateAdmin, (req, res) => {
  */
 router.post('/healthcare/register', async (req, res) => {
     try {
-        const { email, password, name, facilityName, facilityType, address, city, state, zipCode, phone, latitude, longitude } = req.body;
+        const { email, password, name, facilityName, facilityType, manageMultipleLocations, // ✅ NEW: Multi-location flag
+        address, city, state, zipCode, phone, latitude, longitude } = req.body;
         if (!email || !password || !name || !facilityName || !facilityType) {
             return res.status(400).json({
                 success: false,
@@ -160,6 +161,7 @@ router.post('/healthcare/register', async (req, res) => {
             });
         }
         // Create new healthcare user
+        console.log('MULTI_LOC: Creating healthcare user with manageMultipleLocations:', manageMultipleLocations);
         const user = await hospitalDB.healthcareUser.create({
             data: {
                 email,
@@ -167,6 +169,7 @@ router.post('/healthcare/register', async (req, res) => {
                 name,
                 facilityName,
                 facilityType,
+                manageMultipleLocations: manageMultipleLocations || false, // ✅ NEW: Multi-location flag
                 userType: 'HEALTHCARE',
                 isActive: false // Requires admin approval
             }
@@ -290,12 +293,17 @@ router.put('/healthcare/facility/update', authenticateAdmin_1.authenticateAdmin,
  * Update EMS agency information (Authenticated)
  */
 router.put('/ems/agency/update', authenticateAdmin_1.authenticateAdmin, async (req, res) => {
+    console.log('TCC_DEBUG: EMS AGENCY UPDATE ROUTE HIT!');
+    console.log('TCC_DEBUG: Request method:', req.method);
+    console.log('TCC_DEBUG: Request URL:', req.url);
+    console.log('TCC_DEBUG: Request path:', req.path);
     try {
         console.log('TCC_DEBUG: EMS agency update request received:', {
             userId: req.user?.id,
             userType: req.user?.userType,
             body: req.body
         });
+        console.log('TCC_DEBUG: Full request body:', JSON.stringify(req.body, null, 2));
         const userId = req.user?.id;
         if (!userId) {
             console.log('TCC_DEBUG: No user ID found in request');
@@ -309,9 +317,22 @@ router.put('/ems/agency/update', authenticateAdmin_1.authenticateAdmin, async (r
         const db = databaseManager_1.databaseManager.getCenterDB();
         const centerDB = databaseManager_1.databaseManager.getCenterDB();
         console.log('TCC_DEBUG: Attempting to update EMS user record...');
-        // Update EMS user record
+        console.log('TCC_DEBUG: Looking for EMS user by email:', req.user?.email);
+        // Find EMS user by email first
+        const existingUser = await db.eMSUser.findUnique({
+            where: { email: req.user?.email }
+        });
+        if (!existingUser) {
+            console.log('TCC_DEBUG: EMS user not found with email:', req.user?.email);
+            return res.status(404).json({
+                success: false,
+                error: 'EMS user not found'
+            });
+        }
+        console.log('TCC_DEBUG: Found EMS user:', existingUser.id);
+        // Update EMS user record using the found user ID
         const updatedUser = await db.eMSUser.update({
-            where: { id: userId },
+            where: { id: existingUser.id },
             data: {
                 agencyName: updateData.agencyName,
                 email: updateData.email,
@@ -339,8 +360,9 @@ router.put('/ems/agency/update', authenticateAdmin_1.authenticateAdmin, async (r
                     city: updateData.city,
                     state: updateData.state,
                     zipCode: updateData.zipCode,
-                    serviceArea: updateData.serviceType ? [updateData.serviceType] : [],
-                    capabilities: updateData.serviceType ? [updateData.serviceType] : [],
+                    serviceArea: updateData.capabilities || [],
+                    capabilities: updateData.capabilities || [],
+                    operatingHours: updateData.operatingHours || '24/7',
                     updatedAt: new Date()
                 }
             });
@@ -357,8 +379,9 @@ router.put('/ems/agency/update', authenticateAdmin_1.authenticateAdmin, async (r
                     city: updateData.city,
                     state: updateData.state,
                     zipCode: updateData.zipCode,
-                    serviceArea: updateData.serviceType ? [updateData.serviceType] : [],
-                    capabilities: updateData.serviceType ? [updateData.serviceType] : [],
+                    serviceArea: updateData.capabilities || [],
+                    capabilities: updateData.capabilities || [],
+                    operatingHours: updateData.operatingHours || '24/7',
                     isActive: true,
                     status: "ACTIVE"
                 }
@@ -373,10 +396,13 @@ router.put('/ems/agency/update', authenticateAdmin_1.authenticateAdmin, async (r
     }
     catch (error) {
         console.error('TCC_DEBUG: Update EMS agency error:', error);
+        console.error('TCC_DEBUG: Error message:', error.message);
+        console.error('TCC_DEBUG: Error code:', error.code);
         console.error('TCC_DEBUG: Error stack:', error.stack);
         res.status(500).json({
             success: false,
-            error: 'Failed to update agency information'
+            error: 'Failed to update agency information',
+            details: error.message
         });
     }
 });
@@ -720,6 +746,7 @@ router.post('/healthcare/login', async (req, res) => {
             secure: process.env.NODE_ENV === 'production',
             maxAge: 24 * 60 * 60 * 1000
         });
+        console.log('MULTI_LOC: Healthcare login - manageMultipleLocations:', user.manageMultipleLocations);
         res.json({
             success: true,
             message: 'Login successful',
@@ -729,7 +756,8 @@ router.post('/healthcare/login', async (req, res) => {
                 name: user.name,
                 userType: 'HEALTHCARE',
                 facilityName: user.facilityName,
-                facilityType: user.facilityType
+                facilityType: user.facilityType,
+                manageMultipleLocations: user.manageMultipleLocations // ✅ NEW: Multi-location flag
             },
             token
         });

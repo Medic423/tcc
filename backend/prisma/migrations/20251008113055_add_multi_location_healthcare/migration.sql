@@ -40,3 +40,4 @@ ALTER TABLE "healthcare_locations" ADD CONSTRAINT "healthcare_locations_healthca
 ALTER TABLE "transport_requests" ADD CONSTRAINT "transport_requests_fromLocationId_fkey" 
     FOREIGN KEY ("fromLocationId") REFERENCES "healthcare_locations"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
+

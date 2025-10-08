@@ -6,6 +6,7 @@ export interface User {
     facilityName?: string;
     agencyName?: string;
     agencyId?: string;
+    manageMultipleLocations?: boolean;
 }
 export interface LoginCredentials {
     email: string;

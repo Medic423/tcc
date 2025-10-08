@@ -13,44 +13,55 @@ router.get('/hospital/:hospitalId', authenticateAdmin_1.authenticateAdmin, async
         const { hospitalId } = req.params;
         const { includeInactive } = req.query;
         console.log('TCC_DEBUG: Loading pickup locations for ID:', hospitalId);
-        // First, try to find if this ID is a facility
-        const facility = await databaseManager_1.databaseManager.getPrismaClient().facility.findUnique({
+        // Check if this ID is a healthcare location (for multi-location facilities)
+        const healthcareLocation = await databaseManager_1.databaseManager.getPrismaClient().healthcareLocation.findUnique({
             where: { id: hospitalId }
         });
         let actualHospitalId = hospitalId;
-        if (facility) {
-            console.log('TCC_DEBUG: Found facility:', facility.name, 'type:', facility.type);
-            // If it's a facility, we need to find the corresponding hospital
-            if (facility.type === 'HOSPITAL') {
-                // Find matching hospital by name
-                const matchingHospital = await databaseManager_1.databaseManager.getPrismaClient().hospital.findFirst({
-                    where: {
-                        OR: [
-                            { name: { contains: facility.name, mode: 'insensitive' } },
-                            { name: { contains: 'Altoona Regional', mode: 'insensitive' } } // Special case for Altoona facilities
-                        ]
+        if (healthcareLocation) {
+            console.log('TCC_DEBUG: Found healthcare location:', healthcareLocation.locationName);
+            // Use the healthcare location ID directly
+            actualHospitalId = healthcareLocation.id;
+        }
+        else {
+            // First, try to find if this ID is a facility
+            const facility = await databaseManager_1.databaseManager.getPrismaClient().facility.findUnique({
+                where: { id: hospitalId }
+            });
+            if (facility) {
+                console.log('TCC_DEBUG: Found facility:', facility.name, 'type:', facility.type);
+                // If it's a facility, we need to find the corresponding hospital
+                if (facility.type === 'HOSPITAL') {
+                    // Find matching hospital by name
+                    const matchingHospital = await databaseManager_1.databaseManager.getPrismaClient().hospital.findFirst({
+                        where: {
+                            OR: [
+                                { name: { contains: facility.name, mode: 'insensitive' } },
+                                { name: { contains: 'Altoona Regional', mode: 'insensitive' } } // Special case for Altoona facilities
+                            ]
+                        }
+                    });
+                    if (matchingHospital) {
+                        actualHospitalId = matchingHospital.id;
+                        console.log('TCC_DEBUG: Mapped facility to hospital:', matchingHospital.name);
                     }
-                });
-                if (matchingHospital) {
-                    actualHospitalId = matchingHospital.id;
-                    console.log('TCC_DEBUG: Mapped facility to hospital:', matchingHospital.name);
+                    else {
+                        console.log('TCC_DEBUG: No matching hospital found for facility:', facility.name);
+                        // Return empty array if no matching hospital
+                        return res.json({
+                            success: true,
+                            data: []
+                        });
+                    }
                 }
                 else {
-                    console.log('TCC_DEBUG: No matching hospital found for facility:', facility.name);
-                    // Return empty array if no matching hospital
+                    console.log('TCC_DEBUG: Facility is not a hospital type:', facility.type);
+                    // Return empty array for non-hospital facilities
                     return res.json({
                         success: true,
                         data: []
                     });
                 }
-            }
-            else {
-                console.log('TCC_DEBUG: Facility is not a hospital type:', facility.type);
-                // Return empty array for non-hospital facilities
-                return res.json({
-                    success: true,
-                    data: []
-                });
             }
         }
         const whereClause = {
@@ -134,15 +145,25 @@ router.post('/', authenticateAdmin_1.authenticateAdmin, async (req, res) => {
                 error: 'Hospital ID and name are required'
             });
         }
-        // Verify hospital exists
+        // Verify hospital or healthcare location exists
         const hospital = await databaseManager_1.databaseManager.getPrismaClient().hospital.findUnique({
             where: { id: hospitalId }
         });
+        // If not found in Hospital table, check HealthcareLocation table
         if (!hospital) {
-            return res.status(404).json({
-                success: false,
-                error: 'Hospital not found'
+            const healthcareLocation = await databaseManager_1.databaseManager.getPrismaClient().healthcareLocation.findUnique({
+                where: { id: hospitalId }
             });
+            if (!healthcareLocation) {
+                return res.status(404).json({
+                    success: false,
+                    error: 'Hospital or healthcare location not found'
+                });
+            }
+            console.log('TCC_DEBUG: Creating pickup location for healthcare location:', healthcareLocation.locationName);
+        }
+        else {
+            console.log('TCC_DEBUG: Creating pickup location for hospital:', hospital.name);
         }
         // Check if pickup location with same name already exists for this hospital
         const existingLocation = await databaseManager_1.databaseManager.getPrismaClient().pickup_locations.findFirst({
@@ -169,15 +190,8 @@ router.post('/', authenticateAdmin_1.authenticateAdmin, async (req, res) => {
                 floor: floor?.trim() || null,
                 room: room?.trim() || null,
                 updatedAt: new Date()
-            },
-            include: {
-                hospitals: {
-                    select: {
-                        id: true,
-                        name: true
-                    }
-                }
             }
+            // Note: Not including hospitals relation since it's optional and may not exist for healthcare locations
         });
         res.status(201).json({
             success: true,

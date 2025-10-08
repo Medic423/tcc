@@ -10,7 +10,7 @@ const databaseManager_1 = require("./databaseManager");
 class AuthService {
     constructor() {
         this.jwtSecret = process.env.JWT_SECRET || 'fallback-secret-key';
-        this.emsPrisma = databaseManager_1.databaseManager.getEMSDB();
+        this.emsPrisma = databaseManager_1.databaseManager.getPrismaClient(); // ✅ FIXED: Use unified database
         console.log('TCC_DEBUG: AuthService constructor - JWT_SECRET loaded:', this.jwtSecret ? 'YES' : 'NO');
         console.log('TCC_DEBUG: JWT_SECRET value:', this.jwtSecret);
     }
@@ -18,8 +18,8 @@ class AuthService {
         try {
             console.log('TCC_DEBUG: AuthService.login called with:', { email: credentials.email, password: credentials.password ? '***' : 'missing' });
             const { email, password } = credentials;
-            // Use single database to find user
-            const db = databaseManager_1.databaseManager.getCenterDB();
+            // Use unified database to find user
+            const db = databaseManager_1.databaseManager.getPrismaClient(); // ✅ FIXED: Use unified database
             let user = null;
             let userType = 'ADMIN';
             let userData;
@@ -99,7 +99,8 @@ class AuthService {
                 userType: userType,
                 facilityName: userType === 'HEALTHCARE' ? user.facilityName : undefined,
                 agencyName: userType === 'EMS' ? user.agencyName : undefined,
-                agencyId: userType === 'EMS' ? user.agencyId : undefined
+                agencyId: userType === 'EMS' ? user.agencyId : undefined,
+                manageMultipleLocations: userType === 'HEALTHCARE' ? user.manageMultipleLocations : undefined // ✅ NEW: Multi-location flag
             };
             return {
                 success: true,
