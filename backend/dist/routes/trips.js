@@ -47,7 +47,7 @@ const router = express_1.default.Router();
 router.post('/', async (req, res) => {
     try {
         console.log('TCC_DEBUG: Create trip request received:', req.body);
-        const { patientId, originFacilityId, destinationFacilityId, transportLevel, priority, specialNeeds, readyStart, readyEnd, isolation, bariatric, } = req.body;
+        const { patientId, originFacilityId, destinationFacilityId, transportLevel, urgencyLevel, priority, specialNeeds, readyStart, readyEnd, isolation, bariatric, pickupLocationId, } = req.body;
         // Validation
         if (!patientId || !originFacilityId || !destinationFacilityId || !transportLevel || !priority) {
             return res.status(400).json({
@@ -72,6 +72,7 @@ router.post('/', async (req, res) => {
             originFacilityId,
             destinationFacilityId,
             transportLevel,
+            urgencyLevel: urgencyLevel || 'Routine',
             priority,
             specialNeeds,
             readyStart,
@@ -80,7 +81,10 @@ router.post('/', async (req, res) => {
             bariatric: bariatric || false,
             createdById: null, // TODO: Get from authenticated user
         };
-        const result = await tripService_1.tripService.createTrip(tripData);
+        const result = await tripService_1.tripService.createTrip({
+            ...tripData,
+            pickupLocationId,
+        });
         if (!result.success) {
             return res.status(400).json({
                 success: false,
@@ -268,7 +272,7 @@ router.put('/:id/status', async (req, res) => {
     try {
         console.log('TCC_DEBUG: Update trip status request:', { id: req.params.id, body: req.body });
         const { id } = req.params;
-        const { status, assignedAgencyId, assignedUnitId, acceptedTimestamp, pickupTimestamp, completionTimestamp, } = req.body;
+        const { status, assignedAgencyId, assignedUnitId, acceptedTimestamp, pickupTimestamp, arrivalTimestamp, departureTimestamp, completionTimestamp, urgencyLevel, transportLevel, diagnosis, mobilityLevel, insuranceCompany, specialNeeds, oxygenRequired, monitoringRequired, } = req.body;
         if (!status) {
             return res.status(400).json({
                 success: false,
@@ -287,7 +291,17 @@ router.put('/:id/status', async (req, res) => {
             assignedUnitId,
             acceptedTimestamp,
             pickupTimestamp,
+            arrivalTimestamp,
+            departureTimestamp,
             completionTimestamp,
+            urgencyLevel,
+            transportLevel,
+            diagnosis,
+            mobilityLevel,
+            insuranceCompany,
+            specialNeeds,
+            oxygenRequired,
+            monitoringRequired,
         };
         const result = await tripService_1.tripService.updateTripStatus(id, updateData);
         if (!result.success) {

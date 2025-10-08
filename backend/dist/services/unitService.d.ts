@@ -74,6 +74,10 @@ declare class UnitService {
      */
     getAvailableUnits(agencyId: string): Promise<Unit[]>;
     /**
+     * Get on-duty units for trip assignment (AVAILABLE status only)
+     */
+    getOnDutyUnits(agencyId: string): Promise<Unit[]>;
+    /**
      * Get unit analytics for an agency
      */
     getUnitAnalytics(agencyId: string): Promise<UnitAnalytics>;

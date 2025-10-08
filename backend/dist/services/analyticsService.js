@@ -10,17 +10,23 @@ class AnalyticsService {
     async getSystemOverview() {
         const prisma = databaseManager_1.databaseManager.getCenterDB();
         try {
-            const [totalTrips, activeAgencies, activeHospitals, totalUnits, activeUnits] = await Promise.all([
+            const [totalTrips, totalHospitals, activeHospitals, totalAgencies, activeAgencies, totalUnits, activeUnits] = await Promise.all([
                 prisma.trip.count(),
+                prisma.hospital.count(),
+                prisma.hospital.count({ where: { isActive: true } }),
+                prisma.eMSAgency.count(),
                 prisma.eMSAgency.count({ where: { isActive: true } }),
-                prisma.facility.count({ where: { isActive: true } }),
                 prisma.unit.count(),
                 prisma.unit.count({ where: { isActive: true } })
             ]);
             return {
                 totalTrips,
+                totalHospitals,
+                totalAgencies,
+                totalFacilities: totalHospitals, // Using hospitals as facilities count
+                activeHospitals,
                 activeAgencies,
-                activeFacilities: activeHospitals,
+                activeFacilities: activeHospitals, // Using active hospitals as active facilities
                 totalUnits,
                 activeUnits
             };
@@ -29,6 +35,10 @@ class AnalyticsService {
             console.error('Error getting system overview:', error);
             return {
                 totalTrips: 0,
+                totalHospitals: 0,
+                totalAgencies: 0,
+                totalFacilities: 0,
+                activeHospitals: 0,
                 activeAgencies: 0,
                 activeFacilities: 0,
                 totalUnits: 0,
@@ -39,9 +49,10 @@ class AnalyticsService {
     async getTripStatistics() {
         const prisma = databaseManager_1.databaseManager.getCenterDB();
         try {
-            const [totalTrips, pendingTrips, completedTrips, cancelledTrips] = await Promise.all([
+            const [totalTrips, pendingTrips, acceptedTrips, completedTrips, cancelledTrips] = await Promise.all([
                 prisma.trip.count(),
                 prisma.trip.count({ where: { status: 'PENDING' } }),
+                prisma.trip.count({ where: { status: 'ACCEPTED' } }),
                 prisma.trip.count({ where: { status: 'COMPLETED' } }),
                 prisma.trip.count({ where: { status: 'CANCELLED' } })
             ]);
@@ -65,6 +76,7 @@ class AnalyticsService {
             return {
                 totalTrips,
                 pendingTrips,
+                acceptedTrips,
                 completedTrips,
                 cancelledTrips,
                 tripsByLevel: tripsByLevelFormatted,
@@ -76,6 +88,7 @@ class AnalyticsService {
             return {
                 totalTrips: 0,
                 pendingTrips: 0,
+                acceptedTrips: 0,
                 completedTrips: 0,
                 cancelledTrips: 0,
                 tripsByLevel: {},

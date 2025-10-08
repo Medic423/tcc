@@ -245,15 +245,15 @@ const Analytics: React.FC = () => {
                   <div className="space-y-3">
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-500">BLS</span>
-                      <span className="text-sm font-medium text-gray-900">{tripStats.tripsByLevel.BLS}</span>
+                      <span className="text-sm font-medium text-gray-900">{tripStats.tripsByLevel.BLS || 0}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-500">ALS</span>
-                      <span className="text-sm font-medium text-gray-900">{tripStats.tripsByLevel.ALS}</span>
+                      <span className="text-sm font-medium text-gray-900">{tripStats.tripsByLevel.ALS || 0}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-500">CCT</span>
-                      <span className="text-sm font-medium text-gray-900">{tripStats.tripsByLevel.CCT}</span>
+                      <span className="text-sm font-medium text-gray-900">{tripStats.tripsByLevel.CCT || 0}</span>
                     </div>
                   </div>
                 </div>

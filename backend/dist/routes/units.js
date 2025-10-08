@@ -109,6 +109,44 @@ router.get('/available', authenticateAdmin_1.authenticateAdmin, async (req, res)
     }
 });
 /**
+ * GET /api/units/on-duty
+ * Get on-duty units for the authenticated EMS agency (for trip assignment)
+ */
+router.get('/on-duty', authenticateAdmin_1.authenticateAdmin, async (req, res) => {
+    try {
+        const user = req.user;
+        console.log('TCC_DEBUG: Get on-duty units request from user:', user);
+        if (!user) {
+            return res.status(401).json({ success: false, error: 'Unauthorized' });
+        }
+        let units;
+        if (user.userType === 'EMS') {
+            const agencyId = user.id; // EMS users have agencyId as their id
+            console.log('TCC_DEBUG: Getting on-duty units for EMS agency:', agencyId);
+            units = await unitService_1.unitService.getOnDutyUnits(agencyId);
+        }
+        else if (user.userType === 'ADMIN') {
+            console.log('TCC_DEBUG: ADMIN requesting on-duty units across all agencies');
+            const allUnits = await unitService_1.unitService.getAllUnits();
+            units = allUnits.filter(u => u.isActive && u.currentStatus === 'AVAILABLE');
+        }
+        else {
+            console.log('TCC_DEBUG: Non-EMS user requesting on-duty units - returning global available list');
+            const allUnits = await unitService_1.unitService.getAllUnits();
+            units = allUnits.filter(u => u.isActive && u.currentStatus === 'AVAILABLE');
+        }
+        console.log('TCC_DEBUG: Found on-duty units:', units.length);
+        res.json({ success: true, data: units });
+    }
+    catch (error) {
+        console.error('Error getting on-duty units:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to retrieve on-duty units'
+        });
+    }
+});
+/**
  * GET /api/units/analytics
  * Get unit analytics for the agency
  */

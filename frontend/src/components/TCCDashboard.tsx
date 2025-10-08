@@ -57,13 +57,16 @@ const TCCDashboard: React.FC<TCCDashboardProps> = ({ user, onLogout }) => {
       { name: 'Notifications', href: '/dashboard/notifications', icon: Bell },
     ];
 
-    // Admin users see all tabs including Settings and Financial
+    // Admin users see all tabs including Financial and Settings
     if (user.userType === 'ADMIN') {
-      return [
-        ...baseNavigation,
-        { name: 'Settings', href: '/dashboard/settings', icon: Menu },
+      // Insert Financial right after Analytics
+      const navWithFinancial = [
+        ...baseNavigation.slice(0, 3), // Overview, Trips, Analytics
         { name: 'Financial', href: '/dashboard/financial', icon: DollarSign },
+        ...baseNavigation.slice(3), // Units, Healthcare, EMS, Route, Notifications
+        { name: 'Settings', href: '/dashboard/settings', icon: Menu },
       ];
+      return navWithFinancial;
     } 
     
     // Regular users see all tabs except Settings and Financial

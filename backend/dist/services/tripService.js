@@ -17,13 +17,12 @@ class TripService {
                 patientId: data.patientId,
                 patientWeight: null,
                 specialNeeds: data.specialNeeds || null,
-                originFacilityId: data.originFacilityId,
-                destinationFacilityId: data.destinationFacilityId,
+                // Use relation connects for facilities (Prisma expects relation objects here)
                 fromLocation: null,
                 toLocation: null,
                 scheduledTime: new Date(data.readyStart),
                 transportLevel: data.transportLevel,
-                urgencyLevel: null,
+                urgencyLevel: data.urgencyLevel || 'Routine',
                 priority: data.priority,
                 status: 'PENDING',
                 specialRequirements: data.specialNeeds || null,
@@ -38,11 +37,21 @@ class TripService {
                 requestTimestamp: new Date(),
                 acceptedTimestamp: null,
                 pickupTimestamp: null,
-                pickupLocationId: null,
                 notes: null,
                 isolation: data.isolation || false,
                 bariatric: data.bariatric || false,
             };
+            // Connect origin/destination facilities if provided
+            if (data.originFacilityId) {
+                tripData.originFacility = { connect: { id: data.originFacilityId } };
+            }
+            if (data.destinationFacilityId) {
+                tripData.destinationFacility = { connect: { id: data.destinationFacilityId } };
+            }
+            // Connect pickup location if provided
+            if (data.pickupLocationId) {
+                tripData.pickupLocation = { connect: { id: data.pickupLocationId } };
+            }
             const trip = await prisma.transportRequest.create({
                 data: tripData
             });
@@ -99,10 +108,40 @@ class TripService {
                             name: true,
                             type: true
                         }
+                    },
+                    pickupLocation: {
+                        select: {
+                            id: true,
+                            name: true,
+                            floor: true,
+                            room: true
+                        }
+                    },
+                    assignedUnit: {
+                        select: {
+                            id: true,
+                            unitNumber: true,
+                            type: true,
+                            agency: {
+                                select: {
+                                    id: true,
+                                    name: true
+                                }
+                            }
+                        }
                     }
                 }
             });
             console.log('TCC_DEBUG: Found trips:', trips.length);
+            try {
+                console.log('TCC_DEBUG: Trips sample fields →', trips.slice(0, 3).map(t => ({
+                    id: t.id,
+                    status: t.status,
+                    assignedUnitId: t.assignedUnitId,
+                    assignedUnit: t.assignedUnit ? { id: t.assignedUnit.id, unitNumber: t.assignedUnit.unitNumber, type: t.assignedUnit.type } : null
+                })));
+            }
+            catch { }
             return { success: true, data: trips };
         }
         catch (error) {
@@ -132,6 +171,27 @@ class TripService {
                             name: true,
                             type: true
                         }
+                    },
+                    pickupLocation: {
+                        select: {
+                            id: true,
+                            name: true,
+                            floor: true,
+                            room: true
+                        }
+                    },
+                    assignedUnit: {
+                        select: {
+                            id: true,
+                            unitNumber: true,
+                            type: true,
+                            agency: {
+                                select: {
+                                    id: true,
+                                    name: true
+                                }
+                            }
+                        }
                     }
                 }
             });
@@ -152,16 +212,74 @@ class TripService {
     async updateTripStatus(id, data) {
         console.log('TCC_DEBUG: Updating trip status:', { id, data });
         try {
+            // Validate unit assignment if provided
+            if (data.assignedUnitId) {
+                const unit = await this.validateUnitAssignment(data.assignedUnitId, data.assignedAgencyId);
+                if (!unit) {
+                    return { success: false, error: 'Invalid unit assignment or unit not available' };
+                }
+            }
             const updateData = {
                 status: data.status,
                 updatedAt: new Date()
             };
-            if (data.status === 'COMPLETED' && data.completionTimestamp) {
-                updateData.pickupTimestamp = new Date(data.completionTimestamp);
+            // Update optional fields if provided
+            if (data.urgencyLevel !== undefined)
+                updateData.urgencyLevel = data.urgencyLevel;
+            if (data.transportLevel !== undefined)
+                updateData.transportLevel = data.transportLevel;
+            if (data.diagnosis !== undefined)
+                updateData.diagnosis = data.diagnosis;
+            if (data.mobilityLevel !== undefined)
+                updateData.mobilityLevel = data.mobilityLevel;
+            if (data.insuranceCompany !== undefined)
+                updateData.insuranceCompany = data.insuranceCompany;
+            if (data.specialNeeds !== undefined)
+                updateData.specialNeeds = data.specialNeeds;
+            if (data.oxygenRequired !== undefined)
+                updateData.oxygenRequired = data.oxygenRequired;
+            if (data.monitoringRequired !== undefined)
+                updateData.monitoringRequired = data.monitoringRequired;
+            // Handle unit assignment
+            if (data.assignedUnitId) {
+                updateData.assignedUnitId = data.assignedUnitId;
+            }
+            if (data.assignedAgencyId) {
+                updateData.assignedAgencyId = data.assignedAgencyId;
+            }
+            // Handle timestamps
+            if (data.acceptedTimestamp) {
+                updateData.acceptedTimestamp = new Date(data.acceptedTimestamp);
+            }
+            if (data.pickupTimestamp) {
+                updateData.pickupTimestamp = new Date(data.pickupTimestamp);
+            }
+            if (data.arrivalTimestamp) {
+                updateData.arrivalTimestamp = new Date(data.arrivalTimestamp);
+            }
+            if (data.departureTimestamp) {
+                updateData.departureTimestamp = new Date(data.departureTimestamp);
+            }
+            if (data.completionTimestamp) {
+                updateData.completionTimestamp = new Date(data.completionTimestamp);
+            }
+            // Update unit status if assigning to a trip
+            if (data.assignedUnitId && data.status === 'ACCEPTED') {
+                await this.updateUnitStatus(data.assignedUnitId, 'COMMITTED');
+            }
+            // Update unit status if completing/cancelling a trip
+            if (data.assignedUnitId && (data.status === 'COMPLETED' || data.status === 'CANCELLED')) {
+                await this.updateUnitStatus(data.assignedUnitId, 'AVAILABLE');
             }
             const trip = await prisma.transportRequest.update({
                 where: { id },
-                data: updateData
+                data: updateData,
+                include: {
+                    assignedUnit: true,
+                    pickupLocation: true,
+                    originFacility: true,
+                    destinationFacility: true
+                }
             });
             console.log('TCC_DEBUG: Trip status updated successfully:', trip.id);
             return { success: true, data: trip };
@@ -233,11 +351,14 @@ class TripService {
                 requestTimestamp: new Date(),
                 acceptedTimestamp: null,
                 pickupTimestamp: null,
-                pickupLocationId: data.pickupLocationId || null,
                 notes: data.notes || null,
                 isolation: false,
                 bariatric: false,
             };
+            // Connect pickup location relation if provided
+            if (data.pickupLocationId) {
+                tripData.pickupLocation = { connect: { id: data.pickupLocationId } };
+            }
             const trip = await prisma.transportRequest.create({
                 data: tripData
             });
@@ -529,6 +650,63 @@ class TripService {
         // For now, return a simple success response
         // This can be expanded to actually update trip assignment
         return { success: true, data: { tripId, agencyResponseId: data.agencyResponseId }, error: null };
+    }
+    /**
+     * Validate unit assignment
+     */
+    async validateUnitAssignment(unitId, agencyId) {
+        try {
+            console.log('TCC_DEBUG: Validating unit assignment:', { unitId, agencyId });
+            const emsDB = databaseManager_1.databaseManager.getEMSDB();
+            const unit = await emsDB.unit.findUnique({
+                where: { id: unitId },
+                include: { agency: true }
+            });
+            if (!unit) {
+                console.log('TCC_DEBUG: Unit not found:', unitId);
+                return null;
+            }
+            if (!unit.isActive) {
+                console.log('TCC_DEBUG: Unit is not active:', unitId);
+                return null;
+            }
+            if (unit.status !== 'AVAILABLE') {
+                console.log('TCC_DEBUG: Unit is not available:', unitId, 'status:', unit.status);
+                return null;
+            }
+            // If agencyId is provided, validate unit belongs to that agency
+            if (agencyId && unit.agencyId !== agencyId) {
+                console.log('TCC_DEBUG: Unit does not belong to agency:', unitId, 'agencyId:', agencyId);
+                return null;
+            }
+            console.log('TCC_DEBUG: Unit assignment validated successfully:', unitId);
+            return unit;
+        }
+        catch (error) {
+            console.error('TCC_DEBUG: Error validating unit assignment:', error);
+            return null;
+        }
+    }
+    /**
+     * Update unit status
+     */
+    async updateUnitStatus(unitId, status) {
+        try {
+            console.log('TCC_DEBUG: Updating unit status:', { unitId, status });
+            const emsDB = databaseManager_1.databaseManager.getEMSDB();
+            await emsDB.unit.update({
+                where: { id: unitId },
+                data: {
+                    status: status,
+                    updatedAt: new Date()
+                }
+            });
+            console.log('TCC_DEBUG: Unit status updated successfully:', unitId, 'to', status);
+        }
+        catch (error) {
+            console.error('TCC_DEBUG: Error updating unit status:', error);
+            // Don't throw error as this is not critical to trip update
+        }
     }
 }
 exports.TripService = TripService;
