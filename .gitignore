@@ -1,2 +1,5 @@
 project/
 .vercel
+
+# Cursor AI conversation history (auto-generated, can cause git conflicts)
+.specstory/
