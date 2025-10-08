@@ -1,5 +1,9 @@
 interface SystemOverview {
     totalTrips: number;
+    totalHospitals: number;
+    totalAgencies: number;
+    totalFacilities: number;
+    activeHospitals: number;
     activeAgencies: number;
     activeFacilities: number;
     totalUnits: number;
@@ -8,6 +12,7 @@ interface SystemOverview {
 interface TripStatistics {
     totalTrips: number;
     pendingTrips: number;
+    acceptedTrips: number;
     completedTrips: number;
     cancelledTrips: number;
     tripsByLevel: Record<string, number>;

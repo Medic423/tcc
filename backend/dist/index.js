@@ -26,6 +26,7 @@ const dropdownOptions_1 = __importDefault(require("./routes/dropdownOptions"));
 const pickupLocations_1 = __importDefault(require("./routes/pickupLocations"));
 const emsAnalytics_1 = __importDefault(require("./routes/emsAnalytics"));
 const backup_1 = __importDefault(require("./routes/backup"));
+const maintenance_1 = __importDefault(require("./routes/maintenance"));
 // Load environment variables
 dotenv_1.default.config();
 const app = (0, express_1.default)();
@@ -93,6 +94,7 @@ app.use('/api/tcc/pickup-locations', pickupLocations_1.default);
 app.use('/api/ems/analytics', emsAnalytics_1.default);
 app.use('/api/optimize', optimization_1.default);
 app.use('/api/backup', backup_1.default);
+app.use('/api/maintenance', maintenance_1.default);
 // Public endpoints for healthcare users
 app.get('/api/public/categories', async (req, res) => {
     try {

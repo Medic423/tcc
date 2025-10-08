@@ -145,7 +145,18 @@ router.post('/healthcare/register', async (req, res) => {
         if (existingUser) {
             return res.status(400).json({
                 success: false,
-                error: 'Email already exists'
+                error: 'An account with this email already exists. Please use a different email or try logging in.'
+            });
+        }
+        // Also check if facility name already exists
+        const centerDB = databaseManager_1.databaseManager.getCenterDB();
+        const existingFacility = await centerDB.hospital.findFirst({
+            where: { name: facilityName }
+        });
+        if (existingFacility) {
+            return res.status(400).json({
+                success: false,
+                error: 'A facility with this name already exists. Please use a different facility name.'
             });
         }
         // Create new healthcare user
@@ -161,7 +172,6 @@ router.post('/healthcare/register', async (req, res) => {
             }
         });
         // Also create a corresponding Hospital record in Center database for TCC dashboard
-        const centerDB = databaseManager_1.databaseManager.getCenterDB();
         await centerDB.hospital.create({
             data: {
                 name: facilityName,
@@ -395,14 +405,24 @@ router.post('/ems/register', async (req, res) => {
             }
         }
         const db = databaseManager_1.databaseManager.getCenterDB();
-        // Check if user already exists
+        // Check if user already exists in EMS database
         const existingUser = await db.eMSUser.findUnique({
             where: { email }
         });
         if (existingUser) {
             return res.status(400).json({
                 success: false,
-                error: 'Email already exists'
+                error: 'An account with this email already exists. Please use a different email or try logging in.'
+            });
+        }
+        // Also check if agency name already exists
+        const existingAgency = await db.eMSAgency.findFirst({
+            where: { name: agencyName }
+        });
+        if (existingAgency) {
+            return res.status(400).json({
+                success: false,
+                error: 'An agency with this name already exists. Please use a different agency name.'
             });
         }
         // Create new EMS user

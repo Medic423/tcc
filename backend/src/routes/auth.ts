@@ -301,12 +301,17 @@ router.put('/healthcare/facility/update', authenticateAdmin, async (req: Authent
  * Update EMS agency information (Authenticated)
  */
 router.put('/ems/agency/update', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
+  console.log('TCC_DEBUG: EMS AGENCY UPDATE ROUTE HIT!');
+  console.log('TCC_DEBUG: Request method:', req.method);
+  console.log('TCC_DEBUG: Request URL:', req.url);
+  console.log('TCC_DEBUG: Request path:', req.path);
   try {
     console.log('TCC_DEBUG: EMS agency update request received:', {
       userId: req.user?.id,
       userType: req.user?.userType,
       body: req.body
     });
+    console.log('TCC_DEBUG: Full request body:', JSON.stringify(req.body, null, 2));
 
     const userId = req.user?.id;
     if (!userId) {
@@ -324,10 +329,26 @@ router.put('/ems/agency/update', authenticateAdmin, async (req: AuthenticatedReq
     const centerDB = databaseManager.getCenterDB();
 
     console.log('TCC_DEBUG: Attempting to update EMS user record...');
+    console.log('TCC_DEBUG: Looking for EMS user by email:', req.user?.email);
     
-    // Update EMS user record
+    // Find EMS user by email first
+    const existingUser = await db.eMSUser.findUnique({
+      where: { email: req.user?.email }
+    });
+    
+    if (!existingUser) {
+      console.log('TCC_DEBUG: EMS user not found with email:', req.user?.email);
+      return res.status(404).json({
+        success: false,
+        error: 'EMS user not found'
+      });
+    }
+    
+    console.log('TCC_DEBUG: Found EMS user:', existingUser.id);
+    
+    // Update EMS user record using the found user ID
     const updatedUser = await db.eMSUser.update({
-      where: { id: userId },
+      where: { id: existingUser.id },
       data: {
         agencyName: updateData.agencyName,
         email: updateData.email,
@@ -359,8 +380,9 @@ router.put('/ems/agency/update', authenticateAdmin, async (req: AuthenticatedReq
           city: updateData.city,
           state: updateData.state,
           zipCode: updateData.zipCode,
-          serviceArea: updateData.serviceType ? [updateData.serviceType] : [],
-          capabilities: updateData.serviceType ? [updateData.serviceType] : [],
+          serviceArea: updateData.capabilities || [],
+          capabilities: updateData.capabilities || [],
+          operatingHours: updateData.operatingHours || '24/7',
           updatedAt: new Date()
         }
       });
@@ -376,8 +398,9 @@ router.put('/ems/agency/update', authenticateAdmin, async (req: AuthenticatedReq
           city: updateData.city,
           state: updateData.state,
           zipCode: updateData.zipCode,
-          serviceArea: updateData.serviceType ? [updateData.serviceType] : [],
-          capabilities: updateData.serviceType ? [updateData.serviceType] : [],
+          serviceArea: updateData.capabilities || [],
+          capabilities: updateData.capabilities || [],
+          operatingHours: updateData.operatingHours || '24/7',
           isActive: true,
           status: "ACTIVE"
         }
@@ -394,10 +417,13 @@ router.put('/ems/agency/update', authenticateAdmin, async (req: AuthenticatedReq
 
   } catch (error) {
     console.error('TCC_DEBUG: Update EMS agency error:', error);
+    console.error('TCC_DEBUG: Error message:', (error as Error).message);
+    console.error('TCC_DEBUG: Error code:', (error as any).code);
     console.error('TCC_DEBUG: Error stack:', (error as Error).stack);
     res.status(500).json({
       success: false,
-      error: 'Failed to update agency information'
+      error: 'Failed to update agency information',
+      details: (error as Error).message
     });
   }
 });

@@ -7,11 +7,32 @@ const express_1 = __importDefault(require("express"));
 const databaseManager_1 = require("../services/databaseManager");
 const authenticateAdmin_1 = require("../middleware/authenticateAdmin");
 const router = express_1.default.Router();
+const ALLOWED_CATEGORIES = new Set([
+    'transport-level',
+    'urgency',
+    'diagnosis',
+    'mobility',
+    'insurance',
+    'special-needs'
+]);
 // Get all dropdown options for a category
 router.get('/:category', authenticateAdmin_1.authenticateAdmin, async (req, res) => {
     try {
         const { category } = req.params;
+        if (!ALLOWED_CATEGORIES.has(category)) {
+            return res.status(400).json({ success: false, error: 'Invalid category' });
+        }
         const hospitalPrisma = databaseManager_1.databaseManager.getHospitalDB();
+        // Ensure baseline defaults exist for urgency
+        if (category === 'urgency') {
+            const baseline = ['Routine', 'Urgent', 'Emergent'];
+            for (const value of baseline) {
+                const existing = await hospitalPrisma.dropdownOption.findFirst({ where: { category, value } });
+                if (!existing) {
+                    await hospitalPrisma.dropdownOption.create({ data: { category, value, isActive: true } });
+                }
+            }
+        }
         const options = await hospitalPrisma.dropdownOption.findMany({
             where: {
                 category: category,
@@ -35,6 +56,56 @@ router.get('/:category', authenticateAdmin_1.authenticateAdmin, async (req, res)
         });
     }
 });
+// Get default option for a category
+router.get('/:category/default', authenticateAdmin_1.authenticateAdmin, async (req, res) => {
+    try {
+        const { category } = req.params;
+        if (!ALLOWED_CATEGORIES.has(category)) {
+            return res.status(400).json({ success: false, error: 'Invalid category' });
+        }
+        const hospitalPrisma = databaseManager_1.databaseManager.getHospitalDB();
+        const existing = await hospitalPrisma.categoryDefault.findUnique({
+            where: { category },
+            include: { option: true }
+        });
+        res.json({ success: true, data: existing || null });
+    }
+    catch (error) {
+        console.error('TCC_DEBUG: Get default option error:', error);
+        res.status(500).json({ success: false, error: 'Failed to get default option' });
+    }
+});
+// Set default option for a category
+router.post('/:category/default', authenticateAdmin_1.authenticateAdmin, async (req, res) => {
+    try {
+        const { category } = req.params;
+        const { optionId } = req.body;
+        if (!ALLOWED_CATEGORIES.has(category)) {
+            return res.status(400).json({ success: false, error: 'Invalid category' });
+        }
+        if (!optionId) {
+            return res.status(400).json({ success: false, error: 'optionId is required' });
+        }
+        const hospitalPrisma = databaseManager_1.databaseManager.getHospitalDB();
+        // Validate option exists and belongs to category
+        const option = await hospitalPrisma.dropdownOption.findUnique({ where: { id: optionId } });
+        if (!option || option.category !== category || !option.isActive) {
+            return res.status(400).json({ success: false, error: 'Invalid option for this category' });
+        }
+        // Upsert default for category
+        const updated = await hospitalPrisma.categoryDefault.upsert({
+            where: { category },
+            update: { optionId },
+            create: { category, optionId }
+        });
+        const withOption = await hospitalPrisma.categoryDefault.findUnique({ where: { category }, include: { option: true } });
+        res.json({ success: true, data: withOption, message: 'Default updated' });
+    }
+    catch (error) {
+        console.error('TCC_DEBUG: Set default option error:', error);
+        res.status(500).json({ success: false, error: 'Failed to set default option' });
+    }
+});
 // Add new dropdown option
 router.post('/', authenticateAdmin_1.authenticateAdmin, async (req, res) => {
     try {
@@ -44,6 +115,9 @@ router.post('/', authenticateAdmin_1.authenticateAdmin, async (req, res) => {
                 success: false,
                 error: 'Category and value are required'
             });
+        }
+        if (!ALLOWED_CATEGORIES.has(category)) {
+            return res.status(400).json({ success: false, error: 'Invalid category' });
         }
         const hospitalPrisma = databaseManager_1.databaseManager.getHospitalDB();
         // Check if option already exists
@@ -134,19 +208,9 @@ router.delete('/:id', authenticateAdmin_1.authenticateAdmin, async (req, res) =>
 // Get all categories
 router.get('/', authenticateAdmin_1.authenticateAdmin, async (req, res) => {
     try {
-        const hospitalPrisma = databaseManager_1.databaseManager.getHospitalDB();
-        const categories = await hospitalPrisma.dropdownOption.findMany({
-            select: {
-                category: true
-            },
-            distinct: ['category'],
-            where: {
-                isActive: true
-            }
-        });
         res.json({
             success: true,
-            data: categories.map((c) => c.category),
+            data: Array.from(ALLOWED_CATEGORIES),
             message: 'Categories retrieved successfully'
         });
     }

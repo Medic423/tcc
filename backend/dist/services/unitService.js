@@ -300,6 +300,53 @@ class UnitService {
         }
     }
     /**
+     * Get on-duty units for trip assignment (AVAILABLE status only)
+     */
+    async getOnDutyUnits(agencyId) {
+        try {
+            console.log('TCC_DEBUG: getOnDutyUnits called with agencyId:', agencyId);
+            const prisma = databaseManager_1.databaseManager.getEMSDB();
+            const units = await prisma.unit.findMany({
+                where: {
+                    agencyId: agencyId,
+                    isActive: true,
+                    status: 'AVAILABLE' // Only return units that are on-duty and available
+                },
+                include: {
+                    analytics: true,
+                    agency: true
+                },
+                orderBy: {
+                    unitNumber: 'asc'
+                }
+            });
+            // Transform Prisma units to our Unit interface
+            const transformedUnits = units.map((unit) => ({
+                id: unit.id,
+                agencyId: unit.agencyId,
+                unitNumber: unit.unitNumber,
+                type: unit.type,
+                capabilities: unit.capabilities,
+                currentStatus: unit.status,
+                currentLocation: unit.location ? JSON.stringify(unit.location) : 'Station',
+                crew: [], // Will be populated from separate crew management
+                isActive: unit.isActive,
+                totalTripsCompleted: unit.analytics?.totalTripsCompleted || 0,
+                averageResponseTime: unit.analytics?.averageResponseTime?.toNumber() || 0,
+                lastMaintenanceDate: unit.lastMaintenance || new Date(),
+                nextMaintenanceDate: unit.nextMaintenance || new Date(),
+                createdAt: unit.createdAt,
+                updatedAt: unit.updatedAt
+            }));
+            console.log('TCC_DEBUG: Found on-duty units:', transformedUnits.length);
+            return transformedUnits;
+        }
+        catch (error) {
+            console.error('Error getting on-duty units:', error);
+            throw new Error('Failed to retrieve on-duty units');
+        }
+    }
+    /**
      * Get unit analytics for an agency
      */
     async getUnitAnalytics(agencyId) {
