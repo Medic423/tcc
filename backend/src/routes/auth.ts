@@ -97,7 +97,8 @@ router.post('/healthcare/register', async (req, res) => {
       password, 
       name, 
       facilityName, 
-      facilityType, 
+      facilityType,
+      manageMultipleLocations, // ✅ NEW: Multi-location flag
       address, 
       city, 
       state, 
@@ -155,6 +156,7 @@ router.post('/healthcare/register', async (req, res) => {
     }
 
     // Create new healthcare user
+    console.log('MULTI_LOC: Creating healthcare user with manageMultipleLocations:', manageMultipleLocations);
     const user = await hospitalDB.healthcareUser.create({
       data: {
         email,
@@ -162,6 +164,7 @@ router.post('/healthcare/register', async (req, res) => {
         name,
         facilityName,
         facilityType,
+        manageMultipleLocations: manageMultipleLocations || false, // ✅ NEW: Multi-location flag
         userType: 'HEALTHCARE',
         isActive: false // Requires admin approval
       }
@@ -836,6 +839,7 @@ router.post('/healthcare/login', async (req, res) => {
       maxAge: 24 * 60 * 60 * 1000
     });
 
+    console.log('MULTI_LOC: Healthcare login - manageMultipleLocations:', user.manageMultipleLocations);
     res.json({
       success: true,
       message: 'Login successful',
@@ -845,7 +849,8 @@ router.post('/healthcare/login', async (req, res) => {
         name: user.name,
         userType: 'HEALTHCARE',
         facilityName: user.facilityName,
-        facilityType: user.facilityType
+        facilityType: user.facilityType,
+        manageMultipleLocations: user.manageMultipleLocations // ✅ NEW: Multi-location flag
       },
       token
     });

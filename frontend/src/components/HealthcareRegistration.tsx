@@ -18,6 +18,7 @@ const HealthcareRegistration: React.FC<HealthcareRegistrationProps> = ({ onBack,
   const [formData, setFormData] = useState({
     facilityName: '',
     facilityType: '',
+    manageMultipleLocations: false,
     contactName: '',
     email: '',
     phone: '',
@@ -152,10 +153,12 @@ const HealthcareRegistration: React.FC<HealthcareRegistrationProps> = ({ onBack,
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
+    const { name, value, type } = e.target;
+    const checked = (e.target as HTMLInputElement).checked;
+    
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: type === 'checkbox' ? checked : value
     }));
   };
 
@@ -220,6 +223,7 @@ const HealthcareRegistration: React.FC<HealthcareRegistrationProps> = ({ onBack,
           password: formData.password,
           facilityName: formData.facilityName,
           facilityType: formData.facilityType,
+          manageMultipleLocations: formData.manageMultipleLocations, // ✅ NEW: Multi-location flag
           phone: formData.phone,
           address: formData.address,
           city: formData.city,
@@ -351,6 +355,38 @@ const HealthcareRegistration: React.FC<HealthcareRegistrationProps> = ({ onBack,
                       <option key={type} value={type}>{type}</option>
                     ))}
                   </select>
+                </div>
+              </div>
+
+              {/* Multi-Location Checkbox */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-start">
+                  <div className="flex items-center h-5">
+                    <input
+                      type="checkbox"
+                      id="manageMultipleLocations"
+                      name="manageMultipleLocations"
+                      checked={formData.manageMultipleLocations}
+                      onChange={handleInputChange}
+                      className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                    />
+                  </div>
+                  <div className="ml-3">
+                    <label htmlFor="manageMultipleLocations" className="font-medium text-gray-900">
+                      Manage Multiple Locations
+                    </label>
+                    <p className="text-sm text-gray-600 mt-1">
+                      Check this if you manage multiple hospitals, clinics, or facilities that need to arrange transportation. 
+                      You'll be able to add and manage all your locations after creating your account.
+                    </p>
+                    {formData.manageMultipleLocations && (
+                      <div className="mt-2 bg-green-50 border border-green-200 rounded p-2">
+                        <p className="text-sm text-green-800">
+                          ✓ You'll be able to add your locations in Settings after registration
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 

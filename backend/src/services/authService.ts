@@ -10,6 +10,7 @@ export interface User {
   facilityName?: string;
   agencyName?: string;
   agencyId?: string;
+  manageMultipleLocations?: boolean; // ✅ NEW: Multi-location flag
 }
 
 export interface LoginCredentials {
@@ -30,7 +31,7 @@ export class AuthService {
 
   constructor() {
     this.jwtSecret = process.env.JWT_SECRET || 'fallback-secret-key';
-    this.emsPrisma = databaseManager.getEMSDB();
+    this.emsPrisma = databaseManager.getPrismaClient(); // ✅ FIXED: Use unified database
     console.log('TCC_DEBUG: AuthService constructor - JWT_SECRET loaded:', this.jwtSecret ? 'YES' : 'NO');
     console.log('TCC_DEBUG: JWT_SECRET value:', this.jwtSecret);
   }
@@ -40,8 +41,8 @@ export class AuthService {
       console.log('TCC_DEBUG: AuthService.login called with:', { email: credentials.email, password: credentials.password ? '***' : 'missing' });
       const { email, password } = credentials;
 
-      // Use single database to find user
-      const db = databaseManager.getCenterDB();
+      // Use unified database to find user
+      const db = databaseManager.getPrismaClient(); // ✅ FIXED: Use unified database
       let user: any = null;
       let userType: 'ADMIN' | 'USER' | 'HEALTHCARE' | 'EMS' = 'ADMIN';
       let userData: User;
@@ -135,7 +136,8 @@ export class AuthService {
         userType: userType,
         facilityName: userType === 'HEALTHCARE' ? (user as any).facilityName : undefined,
         agencyName: userType === 'EMS' ? (user as any).agencyName : undefined,
-        agencyId: userType === 'EMS' ? (user as any).agencyId : undefined
+        agencyId: userType === 'EMS' ? (user as any).agencyId : undefined,
+        manageMultipleLocations: userType === 'HEALTHCARE' ? (user as any).manageMultipleLocations : undefined // ✅ NEW: Multi-location flag
       };
 
       return {

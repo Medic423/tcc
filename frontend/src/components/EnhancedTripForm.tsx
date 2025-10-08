@@ -22,6 +22,7 @@ interface EnhancedTripFormProps {
     userType: string;
     facilityName?: string;
     facilityType?: string;
+    manageMultipleLocations?: boolean;
   };
   onTripCreated: () => void;
   onCancel?: () => void;
@@ -37,6 +38,7 @@ interface FormData {
   
   // Trip Details
   fromLocation: string;
+  fromLocationId: string; // ✅ NEW: Reference to healthcare location
   pickupLocationId: string;
   toLocation: string;
   scheduledTime: string;
@@ -79,6 +81,19 @@ interface PickupLocation {
   };
 }
 
+interface HealthcareLocation {
+  id: string;
+  locationName: string;
+  address: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  phone?: string;
+  facilityType: string;
+  isActive: boolean;
+  isPrimary: boolean;
+}
+
 interface FormOptions {
   diagnosis: string[];
   mobility: string[];
@@ -89,6 +104,7 @@ interface FormOptions {
   facilities: any[];
   agencies: any[];
   pickupLocations: PickupLocation[];
+  healthcareLocations: HealthcareLocation[]; // ✅ NEW: Healthcare locations for multi-location users
 }
 
 const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated, onCancel }) => {
@@ -105,7 +121,8 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
     specialNeeds: [],
     facilities: [],
     agencies: [],
-    pickupLocations: []
+    pickupLocations: [],
+    healthcareLocations: [] // ✅ NEW: Healthcare locations for multi-location users
   });
 
   const [formData, setFormData] = useState<FormData>({
@@ -115,6 +132,7 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
     insuranceCompany: '',
     generateQRCode: false,
     fromLocation: user.facilityName || '',
+    fromLocationId: '', // ✅ NEW: Will be set based on user's locations
     pickupLocationId: '',
     toLocation: '',
     scheduledTime: new Date().toISOString().slice(0, 16), // Default to current time in datetime-local format
@@ -141,7 +159,18 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
   ];
 
   useEffect(() => {
+    console.log('MULTI_LOC: EnhancedTripForm useEffect triggered');
+    console.log('MULTI_LOC: User object:', user);
+    console.log('MULTI_LOC: user.manageMultipleLocations:', user.manageMultipleLocations);
+    
     loadFormOptions();
+    // Load healthcare locations for multi-location users
+    if (user.manageMultipleLocations) {
+      console.log('MULTI_LOC: Calling loadHealthcareLocations()');
+      loadHealthcareLocations();
+    } else {
+      console.log('MULTI_LOC: NOT calling loadHealthcareLocations - manageMultipleLocations is:', user.manageMultipleLocations);
+    }
   }, []);
 
   // Load pickup locations when fromLocation is set (including pre-selected facility)
@@ -214,7 +243,8 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
         specialNeeds: toValues(snRes, ['Bariatric Stretcher']),
         facilities: facilities,
         agencies: [],
-        pickupLocations: []
+        pickupLocations: [],
+        healthcareLocations: [] // ✅ Initialize empty array for healthcare locations
       };
  
       console.log('TCC_DEBUG: Setting real form options:', options);
@@ -254,9 +284,45 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
         specialNeeds: ['Bariatric Stretcher'],
         facilities: [],
         agencies: [],
-        pickupLocations: []
+        pickupLocations: [],
+        healthcareLocations: [] // ✅ Initialize empty array for healthcare locations
       };
       setFormOptions(fallbackOptions);
+    }
+  };
+
+  const loadHealthcareLocations = async () => {
+    try {
+      console.log('MULTI_LOC: Loading healthcare locations for user:', user.id);
+      console.log('MULTI_LOC: User manageMultipleLocations:', user.manageMultipleLocations);
+      const response = await api.get('/api/healthcare/locations/active');
+      console.log('MULTI_LOC: API response:', response.data);
+      
+      if (response.data?.success && Array.isArray(response.data.data)) {
+        const locations = response.data.data;
+        console.log('MULTI_LOC: Loaded', locations.length, 'healthcare locations:', locations);
+        
+        setFormOptions(prev => ({
+          ...prev,
+          healthcareLocations: locations
+        }));
+        
+        // Set default fromLocation and fromLocationId for multi-location users
+        const primaryLocation = locations.find(loc => loc.isPrimary);
+        console.log('MULTI_LOC: Primary location found:', primaryLocation);
+        if (primaryLocation) {
+          setFormData(prev => ({
+            ...prev,
+            fromLocation: primaryLocation.locationName,
+            fromLocationId: primaryLocation.id
+          }));
+          console.log('MULTI_LOC: Set default location:', primaryLocation.locationName);
+        }
+      } else {
+        console.warn('MULTI_LOC: Failed to load healthcare locations - response:', response.data);
+      }
+    } catch (error) {
+      console.error('MULTI_LOC: Error loading healthcare locations:', error);
     }
   };
 
@@ -360,13 +426,27 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
-    }));
+    
+    // Handle healthcare location selection for multi-location users
+    if (name === 'fromLocation' && user.manageMultipleLocations) {
+      const selectedLocation = formOptions.healthcareLocations.find(loc => loc.locationName === value);
+      if (selectedLocation) {
+        setFormData(prev => ({
+          ...prev,
+          fromLocation: selectedLocation.locationName,
+          fromLocationId: selectedLocation.id
+        }));
+        console.log('MULTI_LOC: Selected healthcare location:', selectedLocation);
+      }
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
+      }));
+    }
 
-    // Load pickup locations when fromLocation changes
-    if (name === 'fromLocation' && value) {
+    // Load pickup locations when fromLocation changes (for regular facilities)
+    if (name === 'fromLocation' && value && !user.manageMultipleLocations) {
       const selectedFacility = formOptions.facilities.find(f => f.name === value);
       if (selectedFacility) {
         loadPickupLocationsForHospital(selectedFacility.id);
@@ -524,7 +604,10 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
         isolation: false,
         bariatric: parseFloat(formData.patientWeight) > 300, // Consider bariatric if weight > 300 lbs
         pickupLocationId: formData.pickupLocationId,
-        notes: formData.notes || ''
+        notes: formData.notes || '',
+        // ✅ NEW: Multi-location support
+        fromLocationId: user.manageMultipleLocations ? formData.fromLocationId : undefined,
+        healthcareUserId: user.manageMultipleLocations ? user.id : undefined
       };
 
       console.log('TCC_DEBUG: Submitting trip data:', tripData);
@@ -685,11 +768,21 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
                 >
                   <option value="">Select origin facility</option>
-                  {formOptions.facilities.map((facility) => (
-                    <option key={facility.id} value={facility.name}>
-                      {facility.name} - {facility.type}
-                    </option>
-                  ))}
+                  {/* Show healthcare locations for multi-location users */}
+                  {user.manageMultipleLocations ? (
+                    formOptions.healthcareLocations.map((location) => (
+                      <option key={location.id} value={location.locationName}>
+                        {location.locationName} - {location.city}, {location.state}
+                      </option>
+                    ))
+                  ) : (
+                    /* Show regular facilities for single-location users */
+                    formOptions.facilities.map((facility) => (
+                      <option key={facility.id} value={facility.name}>
+                        {facility.name} - {facility.type}
+                      </option>
+                    ))
+                  )}
                 </select>
               </div>
 

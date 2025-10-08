@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import Notifications from './Notifications';
 import EnhancedTripForm from './EnhancedTripForm';
-import HospitalSettings from './HospitalSettings';
+import HealthcareSettingsPanel from './HealthcareSettingsPanel';
 import { tripsAPI, unitsAPI } from '../services/api';
 
 interface HealthcareDashboardProps {
@@ -26,6 +26,7 @@ interface HealthcareDashboardProps {
     userType: string;
     facilityName?: string;
     facilityType?: string;
+    manageMultipleLocations?: boolean; // ✅ NEW: Multi-location flag
   };
 
   onLogout: () => void;
@@ -1127,7 +1128,7 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
 
 
         {activeTab === 'hospital-settings' && (
-          <HospitalSettings />
+          <HealthcareSettingsPanel user={user} />
         )}
       </main>
 

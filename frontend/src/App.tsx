@@ -20,6 +20,7 @@ interface User {
   facilityName?: string;
   facilityType?: string;
   agencyName?: string;
+  manageMultipleLocations?: boolean; // ✅ NEW: Multi-location flag
 }
 
 function AppContent() {
