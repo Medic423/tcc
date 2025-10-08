@@ -37,8 +37,8 @@ const HealthcareLogin: React.FC<HealthcareLoginProps> = ({ onBack, onLogin }) =>
       
       console.log('TCC_DEBUG: Attempting healthcare login with data:', formData);
 
-      // Use the unified API for healthcare login
-      const response = await authAPI.login(formData);
+      // Use the healthcare-specific API for healthcare login
+      const response = await authAPI.healthcareLogin(formData);
 
       if (response.data.success) {
         const { user, token } = response.data;

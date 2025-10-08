@@ -92,7 +92,7 @@ model Hospital {
   approvedBy       String?
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt
-  pickup_locations pickup_locations[]
+  // pickup_locations pickup_locations[] // Removed relation since pickup_locations can reference healthcare locations
 
   @@map("hospitals")
 }
@@ -312,7 +312,7 @@ model backhaul_opportunities {
 
 model pickup_locations {
   id           String             @id
-  hospitalId   String
+  hospitalId   String             // Can reference either Hospital.id or HealthcareLocation.id
   name         String
   description  String?
   contactPhone String?
@@ -322,7 +322,9 @@ model pickup_locations {
   isActive     Boolean            @default(true)
   createdAt    DateTime           @default(now())
   updatedAt    DateTime
-  hospitals    Hospital           @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+  // Note: hospitalId can reference either Hospital or HealthcareLocation
+  // We handle this in the application logic since Prisma doesn't support
+  // conditional foreign keys. No database-level foreign key constraint.
   trips        TransportRequest[]
   legacyTrips  Trip[]
 }

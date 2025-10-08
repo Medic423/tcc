@@ -57,7 +57,7 @@ const HealthcareSettingsPanel: React.FC<HealthcareSettingsPanelProps> = ({ user 
 
       {/* System Settings Tab */}
       {activeSettingsTab === 'system' && (
-        <HospitalSettings />
+        <HospitalSettings user={user} />
       )}
 
       {/* Locations Tab */}

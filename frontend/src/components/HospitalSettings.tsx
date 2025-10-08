@@ -44,7 +44,32 @@ interface PickupLocation {
   };
 }
 
-const HospitalSettings: React.FC = () => {
+interface HealthcareLocation {
+  id: string;
+  locationName: string;
+  address: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  phone?: string;
+  facilityType: string;
+  isActive: boolean;
+  isPrimary: boolean;
+}
+
+interface User {
+  id: string;
+  email: string;
+  name: string;
+  facilityName?: string;
+  manageMultipleLocations?: boolean;
+}
+
+interface HospitalSettingsProps {
+  user: User;
+}
+
+const HospitalSettings: React.FC<HospitalSettingsProps> = ({ user }) => {
   // Tab state
   const [activeTab, setActiveTab] = useState<'dropdowns' | 'pickup-locations' | 'main-contact'>('dropdowns');
   
@@ -265,12 +290,51 @@ const HospitalSettings: React.FC = () => {
   const loadHospitals = async () => {
     try {
       setPickupLoading(true);
-      const response = await api.get('/api/public/hospitals');
-      if (response.data.success) {
-        setHospitals(response.data.data);
-        // Set default hospital if available
-        if (response.data.data.length > 0) {
-          setSelectedHospital(response.data.data[0].id);
+      
+      // For multi-location users, load their healthcare locations
+      if (user.manageMultipleLocations) {
+        console.log('MULTI_LOC: Loading healthcare locations for pickup location management');
+        const response = await api.get('/api/healthcare/locations/active');
+        
+        if (response.data?.success && Array.isArray(response.data.data)) {
+          const healthcareLocations = response.data.data;
+          console.log('MULTI_LOC: Loaded', healthcareLocations.length, 'healthcare locations');
+          
+          // Transform healthcare locations to hospital format for the dropdown
+          const transformedLocations = healthcareLocations.map((loc: HealthcareLocation) => ({
+            id: loc.id,
+            name: loc.locationName,
+            address: loc.address,
+            city: loc.city,
+            state: loc.state,
+            zipCode: loc.zipCode,
+            phone: loc.phone || '',
+            email: '',
+            type: loc.facilityType,
+            capabilities: [],
+            region: loc.state,
+            isActive: loc.isActive
+          }));
+          
+          setHospitals(transformedLocations);
+          
+          // Set default to primary location
+          const primaryLocation = healthcareLocations.find(loc => loc.isPrimary);
+          if (primaryLocation) {
+            setSelectedHospital(primaryLocation.id);
+          } else if (transformedLocations.length > 0) {
+            setSelectedHospital(transformedLocations[0].id);
+          }
+        }
+      } else {
+        // For regular users, load regular hospitals
+        const response = await api.get('/api/public/hospitals');
+        if (response.data.success) {
+          setHospitals(response.data.data);
+          // Set default hospital if available
+          if (response.data.data.length > 0) {
+            setSelectedHospital(response.data.data[0].id);
+          }
         }
       }
     } catch (error) {

@@ -58,3 +58,4 @@ router.put('/:id/set-primary', (req, res) => healthcareLocationsController.setPr
 
 export default router;
 
+

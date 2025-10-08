@@ -175,13 +175,19 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
 
   // Load pickup locations when fromLocation is set (including pre-selected facility)
   useEffect(() => {
-    if (formData.fromLocation && formOptions.facilities.length > 0) {
+    // For multi-location users, use healthcare location ID
+    if (user.manageMultipleLocations && formData.fromLocationId) {
+      console.log('MULTI_LOC: Loading pickup locations for healthcare location:', formData.fromLocationId);
+      loadPickupLocationsForHospital(formData.fromLocationId);
+    }
+    // For regular users, use facility ID
+    else if (!user.manageMultipleLocations && formData.fromLocation && formOptions.facilities.length > 0) {
       const selectedFacility = formOptions.facilities.find(f => f.name === formData.fromLocation);
       if (selectedFacility) {
         loadPickupLocationsForHospital(selectedFacility.id);
       }
     }
-  }, [formData.fromLocation, formOptions.facilities]);
+  }, [formData.fromLocation, formData.fromLocationId, formOptions.facilities, user.manageMultipleLocations]);
 
   // Load agencies when reaching step 4 (Agency Selection)
   useEffect(() => {
@@ -437,6 +443,8 @@ const EnhancedTripForm: React.FC<EnhancedTripFormProps> = ({ user, onTripCreated
           fromLocationId: selectedLocation.id
         }));
         console.log('MULTI_LOC: Selected healthcare location:', selectedLocation);
+        // Load pickup locations for this healthcare location
+        loadPickupLocationsForHospital(selectedLocation.id);
       }
     } else {
       setFormData(prev => ({
