@@ -27,9 +27,16 @@ router.get('/', async (req, res) => {
             state: req.query.state,
             isActive: req.query.isActive ? req.query.isActive === 'true' : undefined,
             page: req.query.page ? parseInt(req.query.page) : 1,
-            limit: req.query.limit ? parseInt(req.query.limit) : 50
+            limit: req.query.limit ? parseInt(req.query.limit) : 50,
+            // Phase A: Geographic filtering parameters
+            radius: req.query.radius ? parseFloat(req.query.radius) : undefined,
+            originLat: req.query.originLat ? parseFloat(req.query.originLat) : undefined,
+            originLng: req.query.originLng ? parseFloat(req.query.originLng) : undefined,
+            showAllStates: req.query.showAllStates ? req.query.showAllStates === 'true' : undefined
         };
+        console.log('PHASE_A: Facilities API called with filters:', filters);
         const result = await facilityService_1.facilityService.getFacilities(filters);
+        console.log('PHASE_A: Found', result.facilities.length, 'facilities');
         res.json({
             success: true,
             data: result.facilities,

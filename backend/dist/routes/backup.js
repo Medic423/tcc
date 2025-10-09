@@ -55,42 +55,44 @@ router.post('/create', authenticateAdmin_1.authenticateAdmin, async (req, res) =
         if (!fs_1.default.existsSync(backupDir)) {
             fs_1.default.mkdirSync(backupDir, { recursive: true });
         }
-        // Export all data from all databases
+        // Export all data from consolidated database
         const backupData = {
             timestamp: new Date().toISOString(),
-            version: '1.0',
+            version: '2.0',
             backupType: 'full_database_export',
-            description: 'Complete TCC system backup including all databases and tables',
+            description: 'Complete TCC system backup from consolidated medport_ems database',
             systemInfo: {
                 nodeVersion: process.version,
                 platform: process.platform,
                 arch: process.arch,
                 uptime: process.uptime()
             },
-            databases: {
-                tcc: {},
-                ems: {},
-                hospital: {},
-                center: {}
-            }
+            database: {}
         };
-        // Export TCC database (main database)
+        // Export consolidated medport_ems database (all tables)
         try {
-            console.log('TCC_DEBUG: Exporting TCC database...');
-            // Get all tables from the main database (only tables that exist)
+            console.log('TCC_DEBUG: Exporting consolidated medport_ems database...');
+            // Get all tables from the consolidated database
             const trips = await prisma.$queryRaw `SELECT * FROM trips`;
             const hospitals = await prisma.$queryRaw `SELECT * FROM hospitals`;
             const facilities = await prisma.$queryRaw `SELECT * FROM facilities`;
             const centerUsers = await prisma.$queryRaw `SELECT * FROM center_users`;
-            const systemAnalytics = await prisma.$queryRaw `SELECT * FROM system_analytics`;
-            // Try to get agencies and dropdown_options if they exist
-            let agencies = [];
+            const healthcareUsers = await prisma.$queryRaw `SELECT * FROM healthcare_users`;
+            const emsUsers = await prisma.$queryRaw `SELECT * FROM ems_users`;
+            const agencies = await prisma.$queryRaw `SELECT * FROM agencies`;
+            const units = await prisma.$queryRaw `SELECT * FROM units`;
+            const healthcareLocations = await prisma.$queryRaw `SELECT * FROM healthcare_locations`;
+            const pickupLocations = await prisma.$queryRaw `SELECT * FROM pickup_locations`;
+            // Optional tables (may not exist in all environments)
+            let systemAnalytics = [];
             let dropdownOptions = [];
+            let agencyResponses = [];
+            let notifications = [];
             try {
-                agencies = await prisma.$queryRaw `SELECT * FROM agencies`;
+                systemAnalytics = await prisma.$queryRaw `SELECT * FROM system_analytics`;
             }
             catch (error) {
-                console.log('TCC_DEBUG: agencies table does not exist, skipping...');
+                console.log('TCC_DEBUG: system_analytics table does not exist, skipping...');
             }
             try {
                 dropdownOptions = await prisma.$queryRaw `SELECT * FROM dropdown_options`;
@@ -98,125 +100,54 @@ router.post('/create', authenticateAdmin_1.authenticateAdmin, async (req, res) =
             catch (error) {
                 console.log('TCC_DEBUG: dropdown_options table does not exist, skipping...');
             }
-            backupData.databases.tcc = {
-                trips,
-                hospitals,
-                agencies,
-                facilities,
+            try {
+                agencyResponses = await prisma.$queryRaw `SELECT * FROM agency_responses`;
+            }
+            catch (error) {
+                console.log('TCC_DEBUG: agency_responses table does not exist, skipping...');
+            }
+            try {
+                notifications = await prisma.$queryRaw `SELECT * FROM notification_logs`;
+            }
+            catch (error) {
+                console.log('TCC_DEBUG: notification_logs table does not exist, skipping...');
+            }
+            backupData.database = {
+                // User tables
                 centerUsers,
+                healthcareUsers,
+                emsUsers,
+                // Healthcare tables
+                hospitals,
+                facilities,
+                healthcareLocations,
+                pickupLocations,
+                // EMS tables
+                agencies,
+                units,
+                // Trip tables
+                trips,
+                agencyResponses,
+                // System tables
                 systemAnalytics,
-                dropdownOptions
+                dropdownOptions,
+                notifications
             };
-            console.log('TCC_DEBUG: TCC database exported successfully');
-        }
-        catch (error) {
-            console.error('Error exporting TCC data:', error);
-        }
-        // Export EMS database
-        try {
-            console.log('TCC_DEBUG: Exporting EMS database...');
-            const emsPrisma = new client_1.PrismaClient({
-                datasources: {
-                    db: {
-                        url: process.env.DATABASE_URL_EMS
-                    }
-                }
+            console.log('TCC_DEBUG: Consolidated database exported successfully');
+            console.log('TCC_DEBUG: Exported counts:', {
+                trips: trips.length,
+                hospitals: hospitals.length,
+                facilities: facilities.length,
+                agencies: agencies.length,
+                centerUsers: centerUsers.length,
+                healthcareUsers: healthcareUsers.length,
+                emsUsers: emsUsers.length,
+                units: units.length,
+                healthcareLocations: healthcareLocations.length
             });
-            // Try to export EMS data if database exists
-            let emsData = {};
-            try {
-                const emsTrips = await emsPrisma.$queryRaw `SELECT * FROM trips`;
-                emsData.trips = emsTrips;
-            }
-            catch (error) {
-                console.log('TCC_DEBUG: trips table does not exist in EMS database, skipping...');
-            }
-            try {
-                const emsUsers = await emsPrisma.$queryRaw `SELECT * FROM ems_users`;
-                emsData.users = emsUsers;
-            }
-            catch (error) {
-                console.log('TCC_DEBUG: ems_users table does not exist in EMS database, skipping...');
-            }
-            try {
-                const emsUnits = await emsPrisma.$queryRaw `SELECT * FROM units`;
-                emsData.units = emsUnits;
-            }
-            catch (error) {
-                console.log('TCC_DEBUG: units table does not exist in EMS database, skipping...');
-            }
-            backupData.databases.ems = emsData;
-            await emsPrisma.$disconnect();
-            console.log('TCC_DEBUG: EMS database exported successfully');
         }
         catch (error) {
-            console.error('Error exporting EMS data:', error);
-        }
-        // Export Hospital database
-        try {
-            console.log('TCC_DEBUG: Exporting Hospital database...');
-            const hospitalPrisma = new client_1.PrismaClient({
-                datasources: {
-                    db: {
-                        url: process.env.DATABASE_URL_HOSPITAL
-                    }
-                }
-            });
-            // Try to export Hospital data if database exists
-            let hospitalData = {};
-            try {
-                const hospitalTrips = await hospitalPrisma.$queryRaw `SELECT * FROM trips`;
-                hospitalData.trips = hospitalTrips;
-            }
-            catch (error) {
-                console.log('TCC_DEBUG: trips table does not exist in Hospital database, skipping...');
-            }
-            try {
-                const hospitalUsers = await hospitalPrisma.$queryRaw `SELECT * FROM healthcare_users`;
-                hospitalData.users = hospitalUsers;
-            }
-            catch (error) {
-                console.log('TCC_DEBUG: healthcare_users table does not exist in Hospital database, skipping...');
-            }
-            backupData.databases.hospital = hospitalData;
-            await hospitalPrisma.$disconnect();
-            console.log('TCC_DEBUG: Hospital database exported successfully');
-        }
-        catch (error) {
-            console.error('Error exporting Hospital data:', error);
-        }
-        // Export Center database
-        try {
-            console.log('TCC_DEBUG: Exporting Center database...');
-            const centerPrisma = new client_1.PrismaClient({
-                datasources: {
-                    db: {
-                        url: process.env.DATABASE_URL_CENTER
-                    }
-                }
-            });
-            // Try to export Center data if database exists
-            let centerData = {};
-            try {
-                const centerTrips = await centerPrisma.$queryRaw `SELECT * FROM trips`;
-                centerData.trips = centerTrips;
-            }
-            catch (error) {
-                console.log('TCC_DEBUG: trips table does not exist in Center database, skipping...');
-            }
-            try {
-                const centerUsers = await centerPrisma.$queryRaw `SELECT * FROM center_users`;
-                centerData.users = centerUsers;
-            }
-            catch (error) {
-                console.log('TCC_DEBUG: center_users table does not exist in Center database, skipping...');
-            }
-            backupData.databases.center = centerData;
-            await centerPrisma.$disconnect();
-            console.log('TCC_DEBUG: Center database exported successfully');
-        }
-        catch (error) {
-            console.error('Error exporting Center data:', error);
+            console.error('Error exporting consolidated database data:', error);
         }
         // Write backup file
         const filePath = path_1.default.join(backupDir, filename);

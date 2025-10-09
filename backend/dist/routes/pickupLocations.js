@@ -74,14 +74,6 @@ router.get('/hospital/:hospitalId', authenticateAdmin_1.authenticateAdmin, async
         console.log('TCC_DEBUG: Querying pickup locations with hospitalId:', actualHospitalId);
         const pickup_locationss = await databaseManager_1.databaseManager.getPrismaClient().pickup_locations.findMany({
             where: whereClause,
-            include: {
-                hospitals: {
-                    select: {
-                        id: true,
-                        name: true
-                    }
-                }
-            },
             orderBy: {
                 name: 'asc'
             }
@@ -105,15 +97,7 @@ router.get('/:id', authenticateAdmin_1.authenticateAdmin, async (req, res) => {
     try {
         const { id } = req.params;
         const pickup_locations = await databaseManager_1.databaseManager.getPrismaClient().pickup_locations.findUnique({
-            where: { id },
-            include: {
-                hospitals: {
-                    select: {
-                        id: true,
-                        name: true
-                    }
-                }
-            }
+            where: { id }
         });
         if (!pickup_locations) {
             return res.status(404).json({
@@ -201,9 +185,14 @@ router.post('/', authenticateAdmin_1.authenticateAdmin, async (req, res) => {
     }
     catch (error) {
         console.error('Error creating pickup location:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        const errorStack = error instanceof Error ? error.stack : undefined;
+        console.error('Error details:', errorMessage);
+        console.error('Error stack:', errorStack);
         res.status(500).json({
             success: false,
-            error: 'Failed to create pickup location'
+            error: 'Failed to create pickup location',
+            details: errorMessage
         });
     }
 });
@@ -249,14 +238,6 @@ router.put('/:id', authenticateAdmin_1.authenticateAdmin, async (req, res) => {
                 floor: floor?.trim() || existingLocation.floor,
                 room: room?.trim() || existingLocation.room,
                 isActive: isActive !== undefined ? isActive : existingLocation.isActive
-            },
-            include: {
-                hospitals: {
-                    select: {
-                        id: true,
-                        name: true
-                    }
-                }
             }
         });
         res.json({

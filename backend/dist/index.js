@@ -33,9 +33,15 @@ dotenv_1.default.config();
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 5001;
 // Middleware
+// Clean environment variables (remove any whitespace/newlines)
+const frontendUrl = (process.env.FRONTEND_URL || 'http://localhost:3000').trim().replace(/[\r\n]/g, '');
+const corsOrigin = (process.env.CORS_ORIGIN || frontendUrl).trim().replace(/[\r\n]/g, '');
+console.log('TCC_DEBUG: FRONTEND_URL =', JSON.stringify(process.env.FRONTEND_URL));
+console.log('TCC_DEBUG: Cleaned frontendUrl =', JSON.stringify(frontendUrl));
+console.log('TCC_DEBUG: Cleaned corsOrigin =', JSON.stringify(corsOrigin));
 app.use((0, helmet_1.default)());
 app.use((0, cors_1.default)({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: corsOrigin,
     credentials: true
 }));
 app.use((0, cookie_parser_1.default)());
@@ -292,8 +298,13 @@ async function startServer() {
         process.exit(1);
     }
 }
-// Start the server
-startServer();
+// Start the server (skip in Vercel serverless environment)
+if (!process.env.VERCEL) {
+    startServer();
+}
+else {
+    console.log('🔧 Running in Vercel serverless mode - server startup handled by Vercel');
+}
 // Graceful shutdown
 process.on('SIGINT', async () => {
     console.log('\n🛑 Shutting down server...');

@@ -646,25 +646,9 @@ router.post('/ems/login', async (req, res) => {
                 error: 'Invalid credentials'
             });
         }
-        // Find the user's agency
-        let agency = await db.eMSAgency.findFirst({
-            where: {
-                email: user.email
-            }
-        });
-        if (!agency) {
-            // If no agency found by email, get the first available agency
-            agency = await db.eMSAgency.findFirst();
-        }
-        if (!agency) {
-            return res.status(500).json({
-                success: false,
-                error: 'No agency found for EMS user'
-            });
-        }
-        // Use agencyId in the token for EMS users
+        // For EMS users, use the user ID directly (agency lookup optional)
         const token = jsonwebtoken_1.default.sign({
-            id: agency.id, // Use agencyId for EMS users
+            id: user.id, // Use user ID for EMS users
             email: user.email,
             userType: 'EMS'
         }, process.env.JWT_SECRET || 'fallback-secret', { expiresIn: '24h' });
@@ -683,7 +667,7 @@ router.post('/ems/login', async (req, res) => {
                 email: user.email,
                 name: user.name,
                 userType: 'EMS',
-                agencyName: agency.name
+                agencyName: user.agencyName
             },
             token
         });

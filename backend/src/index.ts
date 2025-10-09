@@ -32,9 +32,17 @@ const app = express();
 const PORT = process.env.PORT || 5001;
 
 // Middleware
+// Clean environment variables (remove any whitespace/newlines)
+const frontendUrl = (process.env.FRONTEND_URL || 'http://localhost:3000').trim().replace(/[\r\n]/g, '');
+const corsOrigin = (process.env.CORS_ORIGIN || frontendUrl).trim().replace(/[\r\n]/g, '');
+
+console.log('TCC_DEBUG: FRONTEND_URL =', JSON.stringify(process.env.FRONTEND_URL));
+console.log('TCC_DEBUG: Cleaned frontendUrl =', JSON.stringify(frontendUrl));
+console.log('TCC_DEBUG: Cleaned corsOrigin =', JSON.stringify(corsOrigin));
+
 app.use(helmet());
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: corsOrigin,
   credentials: true
 }));
 app.use(cookieParser());

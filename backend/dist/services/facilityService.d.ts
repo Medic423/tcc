@@ -21,6 +21,10 @@ export interface FacilitySearchFilters {
     isActive?: boolean;
     page?: number;
     limit?: number;
+    radius?: number;
+    originLat?: number;
+    originLng?: number;
+    showAllStates?: boolean;
 }
 export interface FacilityListResult {
     facilities: any[];
@@ -29,6 +33,12 @@ export interface FacilityListResult {
     totalPages: number;
 }
 export declare class FacilityService {
+    /**
+     * Calculate distance between two coordinates using Haversine formula
+     * Returns distance in miles
+     */
+    private calculateDistance;
+    private toRadians;
     createFacility(data: FacilityData): Promise<any>;
     getFacilities(filters?: FacilitySearchFilters): Promise<FacilityListResult>;
     getFacilityById(id: string): Promise<any | null>;
