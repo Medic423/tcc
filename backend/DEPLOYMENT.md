@@ -124,3 +124,14 @@ Expected response:
 - **Never change the development schema for production fixes**
 - **Use production-specific commands for Render deployment**
 - **Development environment remains unaffected by production changes**
+
+## Database Schema Update - 2025-10-09 14:59:34
+
+- Fixed dropdown_options column names (snake_case → camelCase)
+- Created dropdown_category_defaults table
+- Enhanced facilities table with missing columns
+- Created transport_requests, healthcare_locations, units, pickup_locations tables
+- Created agency_responses, notification_preferences, notification_logs tables
+
+**Status**: Database schema aligned with Prisma models ✅
+
