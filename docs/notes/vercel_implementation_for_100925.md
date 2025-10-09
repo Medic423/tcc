@@ -5,7 +5,25 @@
 **Goal**: Deploy the complete TCC system (including Penn Highlands multi-location feature) to Vercel production environment  
 **Timeline**: Full day implementation (October 9, 2025)  
 **Approach**: Phased deployment with comprehensive testing at each stage  
-**Current Status**: Pre-deployment preparation in progress
+**Current Status**: Pre-deployment preparation complete, ready for Vercel CLI verification
+
+## 🏗️ **DEPLOYMENT ARCHITECTURE**
+
+**Platform**: ✅ **Vercel (Frontend + Backend + Database)**
+
+**Components:**
+- **Frontend**: Vercel deployment (Vite build) → `https://traccems.com`
+- **Backend**: Vercel serverless functions (Express API) → `https://[backend-project].vercel.app`
+- **Database**: Vercel Postgres (managed PostgreSQL)
+- **Previous**: ~~Render backend~~ (account closed due to deployment issues)
+
+**Benefits of Vercel-Only Architecture:**
+- ✅ Single platform for all components (simpler management)
+- ✅ Automatic HTTPS and SSL certificates
+- ✅ Integrated database with automatic connection strings
+- ✅ Seamless GitHub integration and auto-deployments
+- ✅ Built-in monitoring and analytics
+- ✅ No cross-platform coordination needed
 
 ---
 
@@ -67,47 +85,65 @@
 
 ## 📅 **PHASE 1: VERCEL PROJECT SETUP** *(PENDING)*
 
-### **Step 1.1: Create Vercel Projects**
-- [ ] **Backend Project Setup**
+### **Step 1.1: Create/Update Vercel Projects**
+- [ ] **Inspect Existing Frontend Project**
+  - Verify current deployment at traccems.com
+  - Check GitHub connection to `Medic423/tcc`
+  - Review current build settings
+  - Determine if we update existing or create new
+
+- [ ] **Create Backend Project** *(New)*
   - Connect GitHub repository `Medic423/tcc`
   - Set root directory to `backend/`
-  - Framework preset: `Other`
+  - Framework preset: `Other` (Node.js Express)
   - Build command: `npm run build`
   - Output directory: `dist`
   - Node.js version: `18.x`
+  - Install command: `npm install && npx prisma generate`
 
-- [ ] **Frontend Project Setup**
-  - Connect GitHub repository `Medic423/tcc`
-  - Set root directory to `frontend/`
+- [ ] **Update Frontend Project** *(Existing)*
+  - Verify root directory: `frontend/`
   - Framework preset: `Vite`
   - Build command: `npm run build`
   - Output directory: `dist`
   - Node.js version: `18.x`
-  - Link to traccems.com domain
+  - Keep traccems.com domain
 
-### **Step 1.2: Database Decision**
-**Options:**
-1. Use existing Render database (DATABASE_URL in production.env)
-2. Create new Vercel Postgres database
-3. Migrate Render → Vercel Postgres
+### **Step 1.2: Database Setup**
+**Decision:** ✅ **Create new Vercel Postgres database**
 
-**Decision:** [TO BE DETERMINED]
+**Rationale:**
+- Render account closed (backend deployment failed previously)
+- Vercel Postgres integrates seamlessly with Vercel deployments
+- Simpler management with everything in one platform
+- Better performance (database and app in same infrastructure)
+
+**Actions:**
+- [ ] Create Vercel Postgres database
+- [ ] Configure connection pooling
+- [ ] Run Prisma migrations on new database
+- [ ] Seed with initial data (users, agencies, facilities)
 
 ### **Step 1.3: Environment Variables Setup**
-- [ ] **Backend Environment Variables**
+- [ ] **Backend Environment Variables** *(Vercel Project Settings)*
   ```
-  DATABASE_URL=[from chosen database]
-  JWT_SECRET=[new production secret]
+  DATABASE_URL=[from Vercel Postgres - automatic]
+  POSTGRES_PRISMA_URL=[from Vercel Postgres - automatic]
+  POSTGRES_URL_NON_POOLING=[from Vercel Postgres - automatic]
+  JWT_SECRET=[generate new production secret]
   NODE_ENV=production
   FRONTEND_URL=https://traccems.com
   CORS_ORIGIN=https://traccems.com
+  PORT=5001
   ```
 
-- [ ] **Frontend Environment Variables**
+- [ ] **Frontend Environment Variables** *(Vercel Project Settings)*
   ```
-  VITE_API_URL=[backend vercel URL]
+  VITE_API_URL=https://[backend-project].vercel.app
   VITE_ENVIRONMENT=production
   ```
+  
+**Note:** Vercel automatically provides database URLs when Postgres is linked to project
 
 ---
 
@@ -187,6 +223,7 @@
   - ✅ Created tracking document
   - ✅ Git working tree is now clean
   - ✅ Development environment protection confirmed
+- **Architecture Update**: ✅ Confirmed both frontend AND backend deploying to Vercel (Render account closed)
 - **Next**: Verify Vercel CLI connection and account access
 
 ---
