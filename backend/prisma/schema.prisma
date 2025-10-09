@@ -8,39 +8,36 @@ datasource db {
 }
 
 model CenterUser {
-  id                      String                   @id @default(cuid())
-  email                   String                   @unique
-  password                String
-  name                    String
-  userType                String
-  phone                   String?
-  emailNotifications      Boolean                  @default(true)
-  smsNotifications        Boolean                  @default(false)
-  isActive                Boolean                  @default(true)
-  createdAt               DateTime                 @default(now())
-  updatedAt               DateTime                 @updatedAt
-  notificationLogs        NotificationLog[]
-  notificationPreferences NotificationPreference[]
+  id                 String   @id @default(cuid())
+  email              String   @unique
+  password           String
+  name               String
+  userType           String
+  isActive           Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  phone              String?
+  emailNotifications Boolean? @default(true)
+  smsNotifications   Boolean? @default(false)
 
   @@map("center_users")
 }
 
 model HealthcareUser {
-  id                      String   @id @default(cuid())
+  id                      String   @id @default(dbgenerated("(gen_random_uuid())::text"))
   email                   String   @unique
   password                String
   name                    String
   facilityName            String
   facilityType            String
-  userType                String   @default("HEALTHCARE")
   isActive                Boolean  @default(true)
-  manageMultipleLocations Boolean  @default(false)
+  userType                String   @default("HEALTHCARE")
   createdAt               DateTime @default(now())
-  updatedAt               DateTime @updatedAt
+  updatedAt               DateTime @default(now()) @updatedAt
+  manageMultipleLocations Boolean? @default(false)
 
-  // Relations
-  locations HealthcareLocation[]
-
+  @@index([email])
+  @@index([isActive], map: "healthcare_users_is_active_idx")
   @@map("healthcare_users")
 }
 
@@ -56,14 +53,10 @@ model HealthcareLocation {
   facilityType     String
   isActive         Boolean  @default(true)
   isPrimary        Boolean  @default(false)
-  latitude         Float?   // ✅ NEW: GPS coordinates
-  longitude        Float?   // ✅ NEW: GPS coordinates
+  latitude         Float?
+  longitude        Float?
   createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-
-  // Relations
-  healthcareUser    HealthcareUser     @relation(fields: [healthcareUserId], references: [id], onDelete: Cascade)
-  transportRequests TransportRequest[]
+  updatedAt        DateTime @default(now()) @updatedAt
 
   @@index([healthcareUserId])
   @@index([isActive])
@@ -71,47 +64,46 @@ model HealthcareLocation {
 }
 
 model Hospital {
-  id               String             @id @default(cuid())
-  name             String
-  address          String
-  city             String
-  state            String
-  zipCode          String
-  phone            String?
-  email            String?
-  type             String
-  capabilities     String[]
-  region           String
-  coordinates      Json?
-  latitude         Float?
-  longitude        Float?
-  operatingHours   String?
-  isActive         Boolean            @default(true)
-  requiresReview   Boolean            @default(false)
-  approvedAt       DateTime?
-  approvedBy       String?
-  createdAt        DateTime           @default(now())
-  updatedAt        DateTime           @updatedAt
-  // pickup_locations pickup_locations[] // Removed relation since pickup_locations can reference healthcare locations
+  id             String    @id @default(cuid())
+  name           String
+  address        String
+  city           String
+  state          String
+  zipCode        String
+  phone          String?
+  email          String?
+  type           String
+  capabilities   String[]
+  region         String
+  coordinates    Json?
+  latitude       Float?
+  longitude      Float?
+  operatingHours String?
+  isActive       Boolean   @default(true)
+  requiresReview Boolean   @default(false)
+  approvedAt     DateTime?
+  approvedBy     String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   @@map("hospitals")
 }
 
 model EMSUser {
-  id         String   @id @default(cuid())
+  id         String   @id @default(dbgenerated("(gen_random_uuid())::text"))
   email      String   @unique
   password   String
   name       String
   agencyName String
-  agencyId   String? // Reference to EMSAgency
+  agencyType String
   isActive   Boolean  @default(true)
-  userType   String   @default("EMS") // EMS, ADMIN
+  userType   String   @default("EMS")
   createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  updatedAt  DateTime @default(now()) @updatedAt
+  agencyId   String?
 
-  // Relations
-  agency EMSAgency? @relation(fields: [agencyId], references: [id])
-
+  @@index([email])
+  @@index([isActive], map: "ems_users_is_active_idx")
   @@map("ems_users")
 }
 
@@ -131,8 +123,6 @@ model EMSAgency {
   pricingStructure     Json?
   isActive             Boolean   @default(true)
   status               String    @default("ACTIVE")
-  addedBy              String? // Missing field that was causing errors
-  addedAt              DateTime  @default(now())
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
   acceptsNotifications Boolean   @default(true)
@@ -146,76 +136,46 @@ model EMSAgency {
   requiresReview       Boolean   @default(false)
   serviceRadius        Int?
   totalUnits           Int       @default(0)
-  units                Unit[]
-  users                EMSUser[]
 
   @@map("ems_agencies")
 }
 
 model Trip {
-  id                       String            @id @default(cuid())
-  tripNumber               String            @unique
-  patientId                String
-  patientWeight            String?
-  specialNeeds             String?
-  fromLocation             String
-  toLocation               String
-  scheduledTime            DateTime
-  transportLevel           String
-  urgencyLevel             String
-  diagnosis                String?
-  mobilityLevel            String?
-  oxygenRequired           Boolean           @default(false)
-  monitoringRequired       Boolean           @default(false)
-  generateQRCode           Boolean           @default(false)
-  qrCodeData               String?
-  selectedAgencies         String[]
-  notificationRadius       Int?
-  transferRequestTime      DateTime?
-  transferAcceptedTime     DateTime?
-  emsArrivalTime           DateTime?
-  emsDepartureTime         DateTime?
-  actualStartTime          DateTime?
-  actualEndTime            DateTime?
-  status                   String
-  priority                 String
-  notes                    String?
-  assignedTo               String?
-  assignedAgencyId         String?
-  assignedUnitId           String?
-  acceptedTimestamp        DateTime?
-  pickupTimestamp          DateTime?
-  completionTimestamp      DateTime?
-  createdAt                DateTime          @default(now())
-  updatedAt                DateTime          @updatedAt
-  actualTripTimeMinutes    Int?
-  backhaulOpportunity      Boolean           @default(false)
-  completionTimeMinutes    Int?
-  customerSatisfaction     Int?
-  deadheadMiles            Float?
-  destinationLatitude      Float?
-  destinationLongitude     Float?
-  distanceMiles            Float?
-  efficiency               Decimal?          @db.Decimal(5, 2)
-  estimatedTripTimeMinutes Int?
-  insuranceCompany         String?
-  insurancePayRate         Decimal?          @db.Decimal(10, 2)
-  loadedMiles              Decimal?          @db.Decimal(10, 2)
-  originLatitude           Float?
-  originLongitude          Float?
-  perMileRate              Decimal?          @db.Decimal(8, 2)
-  performanceScore         Decimal?          @db.Decimal(5, 2)
-  requestTimestamp         DateTime?         @default(now())
-  responseTimeMinutes      Int?
-  revenuePerHour           Decimal?          @db.Decimal(10, 2)
-  tripCost                 Decimal?          @db.Decimal(10, 2)
-  pickupLocationId         String?
-  maxResponses             Int               @default(5)
-  responseDeadline         DateTime?
-  responseStatus           String            @default("PENDING")
-  selectionMode            String            @default("SPECIFIC_AGENCIES")
-  agencyResponses          AgencyResponse[]
-  pickup_locations         pickup_locations? @relation(fields: [pickupLocationId], references: [id])
+  id                   String    @id @default(cuid())
+  tripNumber           String    @unique
+  patientId            String
+  patientWeight        String?
+  specialNeeds         String?
+  fromLocation         String
+  toLocation           String
+  scheduledTime        DateTime
+  transportLevel       String
+  urgencyLevel         String
+  diagnosis            String?
+  mobilityLevel        String?
+  oxygenRequired       Boolean   @default(false)
+  monitoringRequired   Boolean   @default(false)
+  generateQRCode       Boolean   @default(false)
+  qrCodeData           String?
+  selectedAgencies     String[]
+  notificationRadius   Int?
+  transferRequestTime  DateTime?
+  transferAcceptedTime DateTime?
+  emsArrivalTime       DateTime?
+  emsDepartureTime     DateTime?
+  actualStartTime      DateTime?
+  actualEndTime        DateTime?
+  status               String
+  priority             String
+  notes                String?
+  assignedTo           String?
+  assignedAgencyId     String?
+  assignedUnitId       String?
+  acceptedTimestamp    DateTime?
+  pickupTimestamp      DateTime?
+  completionTimestamp  DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 
   @@map("trips")
 }
@@ -230,8 +190,7 @@ model AgencyResponse {
   estimatedArrival  DateTime?
   isSelected        Boolean   @default(false)
   createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-  trip              Trip      @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  updatedAt         DateTime  @default(now()) @updatedAt
 
   @@map("agency_responses")
 }
@@ -242,7 +201,6 @@ model SystemAnalytics {
   metricValue Json
   timestamp   DateTime @default(now())
   userId      String?
-  createdAt   DateTime @default(now())
 
   @@map("system_analytics")
 }
@@ -300,56 +258,18 @@ model CostCenter {
   @@map("cost_centers")
 }
 
-model backhaul_opportunities {
-  id           String   @id
-  tripId1      String
-  tripId2      String
-  revenueBonus Decimal? @db.Decimal(10, 2)
-  efficiency   Decimal? @db.Decimal(5, 2)
-  createdAt    DateTime @default(now())
-  isActive     Boolean  @default(true)
-}
-
 model pickup_locations {
-  id           String             @id
-  hospitalId   String             // Can reference either Hospital.id or HealthcareLocation.id
+  id           String   @id
+  hospitalId   String
   name         String
   description  String?
   contactPhone String?
   contactEmail String?
   floor        String?
   room         String?
-  isActive     Boolean            @default(true)
-  createdAt    DateTime           @default(now())
-  updatedAt    DateTime
-  // Note: hospitalId can reference either Hospital or HealthcareLocation
-  // We handle this in the application logic since Prisma doesn't support
-  // conditional foreign keys. No database-level foreign key constraint.
-  trips        TransportRequest[]
-  legacyTrips  Trip[]
-}
-
-model pricing_models {
-  id                  String   @id
-  agencyId            String?
-  name                String
-  isActive            Boolean  @default(true)
-  baseRates           Json
-  perMileRates        Json
-  priorityMultipliers Json
-  peakHourMultipliers Json
-  weekendMultipliers  Json
-  seasonalMultipliers Json
-  zoneMultipliers     Json
-  distanceTiers       Json
-  specialRequirements Json
-  isolationPricing    Decimal? @db.Decimal(8, 2)
-  bariatricPricing    Decimal? @db.Decimal(8, 2)
-  oxygenPricing       Decimal? @db.Decimal(8, 2)
-  monitoringPricing   Decimal? @db.Decimal(8, 2)
-  insuranceRates      Json
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now())
 }
 
 model route_optimization_settings {
@@ -382,87 +302,68 @@ model route_optimization_settings {
   isActive                     Boolean  @default(true)
   createdAt                    DateTime @default(now())
   updatedAt                    DateTime
+
+  @@index([agencyId])
+  @@index([isActive])
 }
 
 model Unit {
-  id              String             @id @default(cuid())
+  id              String    @id @default(cuid())
   agencyId        String
   unitNumber      String
   type            String
-  status          String             @default("AVAILABLE")
-  currentStatus   String             @default("AVAILABLE")
+  status          String    @default("AVAILABLE")
+  currentStatus   String    @default("AVAILABLE")
   currentLocation String?
-  capabilities    String[]
-  crewSize        Int                @default(2)
-  equipment       String[]
+  capabilities    String[]  @default([])
+  crewSize        Int       @default(2)
+  equipment       String[]  @default([])
   location        Json?
   latitude        Float?
   longitude       Float?
   lastMaintenance DateTime?
   nextMaintenance DateTime?
-  isActive        Boolean            @default(true)
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
-  analytics       unit_analytics?
-  agency          EMSAgency          @relation(fields: [agencyId], references: [id], onDelete: Cascade)
-  assignedTrips   TransportRequest[]
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @default(now()) @updatedAt
 
   @@unique([agencyId, unitNumber])
   @@map("units")
 }
 
-model unit_analytics {
-  id                  String   @id
-  unitId              String   @unique
-  performanceScore    Decimal? @db.Decimal(5, 2)
-  efficiency          Decimal? @db.Decimal(5, 2)
-  totalTrips          Int      @default(0)
-  totalTripsCompleted Int      @default(0)
-  averageResponseTime Decimal? @db.Decimal(5, 2)
-  // totalRevenue        Decimal? @db.Decimal(12, 2)  // Commented out - complex financial tracking
-  // totalCosts          Decimal? @db.Decimal(12, 2)  // Commented out - complex financial tracking
-  // profitMargin        Decimal? @db.Decimal(5, 2)   // Commented out - complex financial tracking
-  lastUpdated         DateTime @default(now())
-  unit                Unit     @relation(fields: [unitId], references: [id], onDelete: Cascade)
-
-  @@map("unit_analytics")
-}
-
 model NotificationPreference {
-  id               String     @id @default(cuid())
+  id               String   @id @default(cuid())
   userId           String
   notificationType String
-  emailEnabled     Boolean    @default(true)
-  smsEnabled       Boolean    @default(false)
-  createdAt        DateTime   @default(now())
-  updatedAt        DateTime   @updatedAt
-  user             CenterUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emailEnabled     Boolean  @default(true)
+  smsEnabled       Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @default(now()) @updatedAt
 
   @@unique([userId, notificationType])
   @@map("notification_preferences")
 }
 
 model NotificationLog {
-  id               String     @id @default(cuid())
+  id               String    @id @default(cuid())
   userId           String
   notificationType String
   channel          String
   status           String
-  sentAt           DateTime   @default(now())
+  sentAt           DateTime  @default(now())
   deliveredAt      DateTime?
   errorMessage     String?
-  user             CenterUser @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("notification_logs")
 }
 
 model DropdownOption {
-  id         String           @id @default(cuid())
+  id         String           @id @default(dbgenerated("(gen_random_uuid())::text"))
   category   String
   value      String
-  isActive   Boolean          @default(true)
-  createdAt  DateTime         @default(now())
-  updatedAt  DateTime         @updatedAt
+  isActive   Boolean?         @default(true)
+  createdAt  DateTime?        @default(now())
+  updatedAt  DateTime?        @default(now()) @updatedAt
   defaultFor CategoryDefault?
 
   @@unique([category, value])
@@ -473,9 +374,9 @@ model CategoryDefault {
   id        String         @id @default(cuid())
   category  String         @unique
   optionId  String         @unique
-  option    DropdownOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
   createdAt DateTime       @default(now())
   updatedAt DateTime       @updatedAt
+  option    DropdownOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
 
   @@map("dropdown_category_defaults")
 }
@@ -490,8 +391,8 @@ model TransportRequest {
   destinationFacilityId   String?
   fromLocation            String?
   toLocation              String?
-  fromLocationId          String? // ✅ Reference to HealthcareLocation
-  isMultiLocationFacility Boolean   @default(false) // ✅ Analytics flag
+  fromLocationId          String?
+  isMultiLocationFacility Boolean   @default(false)
   scheduledTime           DateTime?
   transportLevel          String
   urgencyLevel            String?
@@ -504,37 +405,24 @@ model TransportRequest {
   monitoringRequired      Boolean   @default(false)
   generateQRCode          Boolean   @default(false)
   qrCodeData              String?
-  selectedAgencies        String[]
+  selectedAgencies        String[]  @default([])
   notificationRadius      Int?
-  // transferRequestTime   DateTime?               // Commented out - complex tracking
-  // transferAcceptedTime  DateTime?              // Commented out - complex tracking  
-  // emsArrivalTime        DateTime?              // Commented out - complex tracking
-  // emsDepartureTime      DateTime?              // Commented out - complex tracking
-  requestTimestamp        DateTime  @default(now()) // ✅ Time trip was saved by hospital
-  acceptedTimestamp       DateTime? // ✅ Time trip was accepted by EMS
-  pickupTimestamp         DateTime? // ✅ Time patient is ready for pickup
-  arrivalTimestamp        DateTime? // ✅ Time unit arrives at hospital
-  departureTimestamp      DateTime? // ✅ Time unit departs from hospital
-  completionTimestamp     DateTime? // ✅ Time trip is completed
-  pickupLocationId        String? // ✅ Pickup location reference
+  requestTimestamp        DateTime  @default(now())
+  acceptedTimestamp       DateTime?
+  pickupTimestamp         DateTime?
+  arrivalTimestamp        DateTime?
+  departureTimestamp      DateTime?
+  completionTimestamp     DateTime?
+  pickupLocationId        String?
   assignedAgencyId        String?
   assignedUnitId          String?
   createdById             String?
   healthcareCreatedById   String?
-  // readyStart            DateTime?             // Commented out - complex tracking
-  // readyEnd              DateTime?             // Commented out - complex tracking
   isolation               Boolean   @default(false)
   bariatric               Boolean   @default(false)
   notes                   String?
   createdAt               DateTime  @default(now())
-  updatedAt               DateTime  @updatedAt
-
-  // Relationships
-  originFacility      Facility?           @relation("OriginFacility", fields: [originFacilityId], references: [id])
-  destinationFacility Facility?           @relation("DestinationFacility", fields: [destinationFacilityId], references: [id])
-  pickupLocation      pickup_locations?   @relation(fields: [pickupLocationId], references: [id])
-  assignedUnit        Unit?               @relation(fields: [assignedUnitId], references: [id])
-  healthcareLocation  HealthcareLocation? @relation(fields: [fromLocationId], references: [id], onDelete: SetNull)
+  updatedAt               DateTime  @default(now()) @updatedAt
 
   @@index([fromLocationId])
   @@index([isMultiLocationFacility])
@@ -544,29 +432,36 @@ model TransportRequest {
 model Facility {
   id             String    @id @default(cuid())
   name           String
+  type           String
   address        String
   city           String
   state          String
   zipCode        String
   phone          String?
   email          String?
-  type           String
-  capabilities   String[]
   region         String
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  capabilities   String[]  @default([])
   coordinates    Json?
   latitude       Float?
   longitude      Float?
   operatingHours String?
-  isActive       Boolean   @default(true)
-  requiresReview Boolean   @default(false)
+  requiresReview Boolean?  @default(false)
   approvedAt     DateTime?
   approvedBy     String?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-
-  // Relationships
-  originTrips      TransportRequest[] @relation("OriginFacility")
-  destinationTrips TransportRequest[] @relation("DestinationFacility")
 
   @@map("facilities")
+}
+
+model agencies {
+  id          String   @id
+  name        String
+  type        String
+  region      String
+  contactInfo Json?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime
 }

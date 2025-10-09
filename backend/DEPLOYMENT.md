@@ -135,3 +135,11 @@ Expected response:
 
 **Status**: Database schema aligned with Prisma models ✅
 
+
+## Prisma Client Update - 2025-10-09 15:16:54
+
+- Updated Prisma schema to match Vercel Postgres database
+- Fixed center_users table with missing columns
+- Created all test users (admin@tcc.com, test@ems.com, test@hospital.com)
+- Regenerated Prisma client with correct schema
+
