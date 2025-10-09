@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { CheckCircle, AlertCircle } from 'lucide-react';
+import api from '../services/api';
 
 interface AgencySettingsProps {
   user: {
@@ -133,30 +134,9 @@ const AgencySettings: React.FC<AgencySettingsProps> = ({ user, onSaveSuccess }) 
       };
 
       console.log('TCC_DEBUG: Payload being sent:', payload);
-      console.log('TCC_DEBUG: Token from localStorage:', localStorage.getItem('token') ? 'PRESENT' : 'MISSING');
-      console.log('TCC_DEBUG: Making request to: http://localhost:5001/api/auth/ems/agency/update');
 
-      const agencyResponse = await fetch('http://localhost:5001/api/auth/ems/agency/update', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(payload)
-      });
-
-      console.log('TCC_DEBUG: Response status:', agencyResponse.status);
-      console.log('TCC_DEBUG: Response ok:', agencyResponse.ok);
-      console.log('TCC_DEBUG: Response headers:', Object.fromEntries(agencyResponse.headers.entries()));
-
-      if (!agencyResponse.ok) {
-        const errorData = await agencyResponse.json();
-        console.log('TCC_DEBUG: Error data:', errorData);
-        throw new Error(errorData.error || errorData.message || 'Failed to save agency settings');
-      }
-
-      const responseData = await agencyResponse.json();
-      console.log('TCC_DEBUG: Success response:', responseData);
+      const response = await api.put('/api/auth/ems/agency/update', payload);
+      console.log('TCC_DEBUG: Success response:', response.data);
 
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);

@@ -85,9 +85,12 @@ const HealthcareLocationSettings: React.FC<HealthcareLocationSettingsProps> = ({
         }
       });
 
-      if (response.data) {
-        setLocations(response.data);
-        console.log('MULTI_LOC: Loaded', response.data.length, 'locations');
+      if (response.data?.success && Array.isArray(response.data.data)) {
+        setLocations(response.data.data);
+        console.log('MULTI_LOC: Loaded', response.data.data.length, 'locations');
+      } else {
+        console.error('MULTI_LOC: Invalid response format:', response.data);
+        setLocations([]);
       }
     } catch (error: any) {
       console.error('MULTI_LOC: Error loading locations:', error);
@@ -355,7 +358,7 @@ const HealthcareLocationSettings: React.FC<HealthcareLocationSettingsProps> = ({
         </div>
       ) : (
         <div className="space-y-3">
-          {locations.map((location) => (
+          {(Array.isArray(locations) ? locations : []).map((location) => (
             <div 
               key={location.id}
               className="flex items-start justify-between p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
