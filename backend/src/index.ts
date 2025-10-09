@@ -309,8 +309,12 @@ async function startServer() {
   }
 }
 
-// Start the server
-startServer();
+// Start the server (skip in Vercel serverless environment)
+if (!process.env.VERCEL) {
+  startServer();
+} else {
+  console.log('🔧 Running in Vercel serverless mode - server startup handled by Vercel');
+}
 
 // Graceful shutdown
 process.on('SIGINT', async () => {
