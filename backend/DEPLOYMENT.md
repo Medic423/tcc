@@ -143,3 +143,11 @@ Expected response:
 - Created all test users (admin@tcc.com, test@ems.com, test@hospital.com)
 - Regenerated Prisma client with correct schema
 
+
+## Fix Agencies 500 Error - 2025-10-09 15:31:10
+
+- Removed old conflicting Prisma clients (ems, hospital, center)
+- Regenerated Prisma client with correct schema
+- Fixed agencies endpoint 500 error
+- Should resolve TCC Agencies: 500 error
+
