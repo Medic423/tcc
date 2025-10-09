@@ -16,7 +16,7 @@ import {
 import Notifications from './Notifications';
 import EnhancedTripForm from './EnhancedTripForm';
 import HealthcareSettingsPanel from './HealthcareSettingsPanel';
-import { tripsAPI, unitsAPI } from '../services/api';
+import { tripsAPI, unitsAPI, dropdownOptionsAPI } from '../services/api';
 
 interface HealthcareDashboardProps {
   user: {
@@ -111,10 +111,7 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
 
   const loadTrips = async () => {
     try {
-      const response = await fetch('/api/trips', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
+      const response = await tripsAPI.getAll({
       });
       if (response.ok) {
         const data = await response.json();
@@ -214,26 +211,14 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
     try {
       console.log('TCC_DEBUG: Loading edit options from hospital settings...');
       
-      // Load dropdown options from backend Hospital Settings
+      // Load dropdown options from backend Hospital Settings using configured api instance
       const [tlRes, urgRes, diagRes, mobRes, insRes, snRes] = await Promise.all([
-        fetch('/api/dropdown-options/transport-level', {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-        }).then(res => res.json()).catch(() => ({ success: false, data: [] })),
-        fetch('/api/dropdown-options/urgency', {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-        }).then(res => res.json()).catch(() => ({ success: false, data: [] })),
-        fetch('/api/dropdown-options/diagnosis', {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-        }).then(res => res.json()).catch(() => ({ success: false, data: [] })),
-        fetch('/api/dropdown-options/mobility', {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-        }).then(res => res.json()).catch(() => ({ success: false, data: [] })),
-        fetch('/api/dropdown-options/insurance', {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-        }).then(res => res.json()).catch(() => ({ success: false, data: [] })),
-        fetch('/api/dropdown-options/special-needs', {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-        }).then(res => res.json()).catch(() => ({ success: false, data: [] }))
+        dropdownOptionsAPI.getByCategory('transport-level').catch(() => ({ data: { success: false, data: [] }})),
+        dropdownOptionsAPI.getByCategory('urgency').catch(() => ({ data: { success: false, data: [] }})),
+        dropdownOptionsAPI.getByCategory('diagnosis').catch(() => ({ data: { success: false, data: [] }})),
+        dropdownOptionsAPI.getByCategory('mobility').catch(() => ({ data: { success: false, data: [] }})),
+        dropdownOptionsAPI.getByCategory('insurance').catch(() => ({ data: { success: false, data: [] }})),
+        dropdownOptionsAPI.getByCategory('special-needs').catch(() => ({ data: { success: false, data: [] }}))
       ]);
 
       const toValues = (resp: any, fallback: string[]) => 
@@ -319,29 +304,21 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
     
     setUpdating(true);
     try {
-      const response = await fetch(`/api/trips/${editingTrip.id}/status`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          status: editFormData.status,
-          urgencyLevel: editFormData.urgencyLevel,
-          transportLevel: editFormData.transportLevel,
-          diagnosis: editFormData.diagnosis,
-          mobilityLevel: editFormData.mobilityLevel,
-          insuranceCompany: editFormData.insuranceCompany,
-          specialNeeds: editFormData.specialNeeds,
-          oxygenRequired: editFormData.oxygenRequired,
-          monitoringRequired: editFormData.monitoringRequired,
-          ...(editFormData.status === 'COMPLETED' && { completionTimestamp: new Date().toISOString() })
-        }),
+      const response = await tripsAPI.updateStatus(editingTrip.id, {
+        status: editFormData.status,
+        urgencyLevel: editFormData.urgencyLevel,
+        transportLevel: editFormData.transportLevel,
+        diagnosis: editFormData.diagnosis,
+        mobilityLevel: editFormData.mobilityLevel,
+        insuranceCompany: editFormData.insuranceCompany,
+        specialNeeds: editFormData.specialNeeds,
+        oxygenRequired: editFormData.oxygenRequired,
+        monitoringRequired: editFormData.monitoringRequired,
+        ...(editFormData.status === 'COMPLETED' && { completionTimestamp: new Date().toISOString() })
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update trip');
+      if (!response.data.success) {
+        throw new Error(response.data.error || 'Failed to update trip');
       }
 
       // Reload trips to get updated data
@@ -393,17 +370,11 @@ const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({ user, onLogou
     if (!confirmed) return;
     try {
       // Use status update as a soft-delete (CANCELLED), since DELETE endpoint may not exist
-      const response = await fetch(`/api/trips/${tripId}/status`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ status: 'CANCELLED' })
+      const response = await tripsAPI.updateStatus(tripId, {
+        status: 'CANCELLED'
       });
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        throw new Error(err.error || 'Failed to cancel trip');
+      if (!response.data.success) {
+        throw new Error(response.data.error || 'Failed to cancel trip');
       }
       await loadTrips();
     } catch (error: any) {
